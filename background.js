@@ -381,7 +381,7 @@ async function handleTick(payload) {
         // Ví dụ: 180s * 1.15 = 207s
         thresholds.SCROLL_THRESHOLD_SEC = Math.round(baseThresholds.SCROLL_THRESHOLD_SEC * multiplier);
         thresholds.PRESENCE_THRESHOLD_SEC = Math.round(baseThresholds.PRESENCE_THRESHOLD_SEC * multiplier);
-        console.log("[THRESH]", currentSensitivity, multiplier, thresholds);
+        console.log(`[THRESH] Mode: ${currentSensitivity.toUpperCase()} | Multiplier: ${multiplier}x | ScrollLimit: ${thresholds.SCROLL_THRESHOLD_SEC}s | PresenceLimit: ${thresholds.PRESENCE_THRESHOLD_SEC}s`);
         // --- [STEP A] SAFE ZONE CHECK (FAIL-FAST) ---
         // Check ngay lập tức trước khi chạy bất kỳ logic nặng nào
         const whitelist = storage.atom_whitelist || DEFAULT_WHITELIST;

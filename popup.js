@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Check for Store update and show banner
     checkAndShowUpdateBanner();
 
+    // Display current sensitivity mode
+    displaySensitivityMode();
+
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
     if (tab && tab.url) {
@@ -184,6 +187,39 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } catch (e) {
             console.log("ATOM: Update banner check failed", e);
+        }
+    }
+
+    // Display current sensitivity mode in popup
+    async function displaySensitivityMode() {
+        try {
+            const data = await chrome.storage.local.get(['user_sensitivity', 'adaptive_multiplier']);
+            const sensitivity = data.user_sensitivity || 'balanced';
+            const multiplier = data.adaptive_multiplier || 1.0;
+
+            const badge = document.getElementById('sensitivity-badge');
+            const label = document.getElementById('sensitivity-label');
+
+            if (badge && label) {
+                // Remove all mode classes first
+                badge.classList.remove('gentle', 'balanced', 'strict');
+                badge.classList.add(sensitivity);
+
+                // Set label text with multiplier info if not 1.0
+                const modeLabels = {
+                    gentle: 'Gentle',
+                    balanced: 'Balanced',
+                    strict: 'Strict'
+                };
+
+                let labelText = modeLabels[sensitivity] || 'Balanced';
+                if (multiplier !== 1.0) {
+                    labelText += ` ×${multiplier.toFixed(1)}`;
+                }
+                label.innerText = labelText;
+            }
+        } catch (e) {
+            console.log("ATOM: Failed to display sensitivity mode", e);
         }
     }
 

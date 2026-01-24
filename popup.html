@@ -96,6 +96,41 @@
             margin-top: 4px;
         }
 
+        .sensitivity-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .sensitivity-badge.gentle {
+            color: #60A5FA;
+            border-color: rgba(96, 165, 250, 0.3);
+        }
+
+        .sensitivity-badge.balanced {
+            color: var(--primary);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .sensitivity-badge.strict {
+            color: #FBBF24;
+            border-color: rgba(251, 191, 36, 0.3);
+        }
+
+        .sensitivity-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
         /* --- SAFE ZONE (Redesigned) --- */
         .safe-zone-card {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
@@ -271,6 +306,10 @@
     <div class="header">
         <h2 data-i18n="popup_title">ATOM</h2>
         <div class="subtitle">Intelligent Attention Compass</div>
+        <div id="sensitivity-badge" class="sensitivity-badge">
+            <span class="dot"></span>
+            <span id="sensitivity-label">Loading...</span>
+        </div>
     </div>
 
     <!-- Update Banner (hidden by default) -->
