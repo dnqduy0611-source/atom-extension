@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnClear = document.getElementById('btn-clear');
     const btnWeb = document.getElementById('btn-website');
     const btnReportBug = document.getElementById('btn-report-bug');
+    const updateBanner = document.getElementById('update-banner');
+
+    // Check for Store update and show banner
+    checkAndShowUpdateBanner();
 
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
@@ -160,6 +164,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnReportBug.addEventListener('click', () => {
             chrome.tabs.create({ url: chrome.runtime.getURL('bug_report.html') });
         });
+    }
+
+    // Check and show update banner
+    async function checkAndShowUpdateBanner() {
+        try {
+            const data = await chrome.storage.local.get(['store_update_available', 'store_url', 'update_dismissed']);
+
+            if (data.store_update_available && data.store_url && !data.update_dismissed) {
+                const banner = document.getElementById('update-banner');
+                if (banner) {
+                    banner.style.display = 'block';
+
+                    // Click to open Store
+                    banner.addEventListener('click', () => {
+                        chrome.tabs.create({ url: data.store_url });
+                    });
+                }
+            }
+        } catch (e) {
+            console.log("ATOM: Update banner check failed", e);
+        }
     }
 
 });

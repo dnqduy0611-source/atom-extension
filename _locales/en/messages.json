@@ -394,5 +394,11 @@
   },
   "bug_privacy_link": {
     "message": "View Privacy Policy"
+  },
+  "update_title": {
+    "message": "ATOM is on Chrome Store!"
+  },
+  "update_desc": {
+    "message": "Click here to install the official version for automatic updates."
   }
 }

@@ -125,6 +125,86 @@ chrome.runtime.onInstalled.addListener(async (details) => {
             contexts: ["page"]
         });
     });
+
+    // 5. Kiểm tra cập nhật từ Store (chỉ chạy khi cài đặt hoặc update)
+    checkForStoreUpdate();
+});
+
+// =========================
+// AUTO UPDATE NOTIFICATION
+// =========================
+const UPDATE_CHECK_URL = "https://raw.githubusercontent.com/dnqduy0611-source/atom-extension/main/version.json";
+const UPDATE_CHECK_INTERVAL = 6 * 60 * 60 * 1000; // 6 giờ
+
+async function checkForStoreUpdate() {
+    try {
+        // Kiểm tra xem đã tắt thông báo chưa
+        const { update_dismissed } = await chrome.storage.local.get(['update_dismissed']);
+        if (update_dismissed) return;
+
+        // Fetch version.json từ GitHub
+        const response = await fetch(UPDATE_CHECK_URL, { cache: 'no-store' });
+        if (!response.ok) return;
+
+        const data = await response.json();
+
+        // Nếu Store đã có bản chính thức
+        if (data.store_available && data.store_url) {
+            // Lưu thông tin để popup hiển thị
+            await chrome.storage.local.set({
+                store_update_available: true,
+                store_url: data.store_url,
+                store_message_vi: data.message_vi,
+                store_message_en: data.message_en
+            });
+
+            // Hiển thị notification (nếu browser hỗ trợ)
+            const lang = chrome.i18n.getUILanguage();
+            const message = lang.startsWith('vi') ? data.message_vi : data.message_en;
+
+            chrome.notifications.create('atom-store-update', {
+                type: 'basic',
+                iconUrl: 'icons/icon128.png',
+                title: 'ATOM - Update Available!',
+                message: message,
+                buttons: [
+                    { title: lang.startsWith('vi') ? 'Mở Chrome Store' : 'Open Chrome Store' },
+                    { title: lang.startsWith('vi') ? 'Để sau' : 'Later' }
+                ],
+                priority: 2
+            });
+
+            console.log("✅ ATOM: Store version available!", data.store_url);
+        }
+    } catch (error) {
+        console.log("ATOM: Update check failed (this is normal if offline)", error.message);
+    }
+}
+
+// Xử lý click notification
+chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
+    if (notificationId === 'atom-store-update') {
+        if (buttonIndex === 0) {
+            // Mở Chrome Store
+            chrome.storage.local.get(['store_url'], (result) => {
+                if (result.store_url) {
+                    chrome.tabs.create({ url: result.store_url });
+                }
+            });
+        } else {
+            // Tắt thông báo (không hiển thị lại)
+            chrome.storage.local.set({ update_dismissed: true });
+        }
+        chrome.notifications.clear(notificationId);
+    }
+});
+
+// Đặt lịch kiểm tra định kỳ (mỗi 6 giờ khi extension active)
+chrome.alarms.create('check-store-update', { periodInMinutes: 360 });
+chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === 'check-store-update') {
+        checkForStoreUpdate();
+    }
 });
 // =========================
 // DAILY ROLLUP (VN timezone)
