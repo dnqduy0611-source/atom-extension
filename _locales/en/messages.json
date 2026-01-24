@@ -400,5 +400,35 @@
   },
   "update_desc": {
     "message": "Click here to install the official version for automatic updates."
+  },
+  "bug_guide_title": {
+    "message": "📖 How to fill this form (click to expand)"
+  },
+  "bug_guide_type": {
+    "message": "1. Bug Type:"
+  },
+  "bug_guide_type_desc": {
+    "message": "Choose the category that best describes your issue."
+  },
+  "bug_guide_summary": {
+    "message": "2. Summary:"
+  },
+  "bug_guide_summary_desc": {
+    "message": "Write a short, clear title (e.g., \"Intervention not showing on YouTube\")."
+  },
+  "bug_guide_steps": {
+    "message": "3. Steps to Reproduce:"
+  },
+  "bug_guide_steps_desc": {
+    "message": "List the exact steps to trigger the bug. Be specific!"
+  },
+  "bug_guide_expected": {
+    "message": "4. Expected vs Actual:"
+  },
+  "bug_guide_expected_desc": {
+    "message": "Explain what you expected to happen and what actually happened."
+  },
+  "bug_guide_tip": {
+    "message": "Keep \"Include debug data\" checked - it helps us fix bugs faster!"
   }
 }

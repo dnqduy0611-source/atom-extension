@@ -302,6 +302,56 @@
             </div>
         </div>
 
+        <!-- Quick Guide (Collapsible) -->
+        <details
+            style="margin-bottom: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden;">
+            <summary
+                style="padding: 14px 16px; cursor: pointer; font-weight: 600; font-size: 13px; color: var(--foreground); display: flex; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <path d="M12 17h.01" />
+                </svg>
+                <span data-i18n="bug_guide_title">📖 How to fill this form (click to expand)</span>
+            </summary>
+            <div style="padding: 0 16px 16px 16px; font-size: 12px; color: var(--muted); line-height: 1.6;">
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: var(--foreground);" data-i18n="bug_guide_type">1. Bug Type:</strong>
+                    <span data-i18n="bug_guide_type_desc">Choose the category that best describes your issue.</span>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: var(--foreground);" data-i18n="bug_guide_summary">2. Summary:</strong>
+                    <span data-i18n="bug_guide_summary_desc">Write a short, clear title (e.g., "Intervention not showing
+                        on YouTube").</span>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: var(--foreground);" data-i18n="bug_guide_steps">3. Steps to
+                        Reproduce:</strong>
+                    <span data-i18n="bug_guide_steps_desc">List the exact steps to trigger the bug. Be specific!</span>
+                    <div
+                        style="margin-top: 6px; padding: 8px 12px; background: var(--background); border-radius: 8px; font-family: monospace; font-size: 11px;">
+                        1. Open YouTube<br>
+                        2. Scroll for 5 minutes<br>
+                        3. No intervention appeared
+                    </div>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: var(--foreground);" data-i18n="bug_guide_expected">4. Expected vs
+                        Actual:</strong>
+                    <span data-i18n="bug_guide_expected_desc">Explain what you expected to happen and what actually
+                        happened.</span>
+                </div>
+                <div
+                    style="padding: 10px 12px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border-left: 3px solid var(--primary);">
+                    <strong style="color: var(--primary);">💡 Tip:</strong>
+                    <span data-i18n="bug_guide_tip">Keep "Include debug data" checked - it helps us fix bugs
+                        faster!</span>
+                </div>
+            </div>
+        </details>
+
+
         <!-- Bug Report Form -->
         <form id="bug-form">
             <!-- Bug Type -->

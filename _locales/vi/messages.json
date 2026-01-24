@@ -400,5 +400,35 @@
   },
   "update_desc": {
     "message": "Nhấn vào đây để cài đặt phiên bản chính thức và nhận cập nhật tự động."
+  },
+  "bug_guide_title": {
+    "message": "📖 Hướng dẫn điền form (nhấn để mở rộng)"
+  },
+  "bug_guide_type": {
+    "message": "1. Loại lỗi:"
+  },
+  "bug_guide_type_desc": {
+    "message": "Chọn danh mục mô tả đúng nhất vấn đề của bạn."
+  },
+  "bug_guide_summary": {
+    "message": "2. Tóm tắt:"
+  },
+  "bug_guide_summary_desc": {
+    "message": "Viết tiêu đề ngắn gọn (ví dụ: \"Không hiển thị can thiệp trên YouTube\")."
+  },
+  "bug_guide_steps": {
+    "message": "3. Các bước tái hiện:"
+  },
+  "bug_guide_steps_desc": {
+    "message": "Liệt kê các bước chính xác để gặp lỗi. Càng chi tiết càng tốt!"
+  },
+  "bug_guide_expected": {
+    "message": "4. Kỳ vọng vs Thực tế:"
+  },
+  "bug_guide_expected_desc": {
+    "message": "Giải thích bạn mong đợi điều gì xảy ra và thực tế như thế nào."
+  },
+  "bug_guide_tip": {
+    "message": "Giữ tick \"Đính kèm dữ liệu debug\" - giúp chúng tôi sửa lỗi nhanh hơn!"
   }
 }

@@ -2,7 +2,7 @@
   "default_locale": "vi",
   "manifest_version": 3,
   "name": "ATOM - Mindful Browsing",
-  "version": "1.5.1",
+  "version": "1.5.3.1",
   "description": "AI-powered attention operating system.",
   "permissions": [
     "storage",
