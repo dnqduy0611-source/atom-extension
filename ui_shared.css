@@ -1,0 +1,66 @@
+/* --- ATOM UI SHARED THEME --- */
+:root {
+    --background: #050505;
+    --foreground: #ffffff;
+    --primary: #10B981;
+    --primary-glow: rgba(16, 185, 129, 0.4);
+    --surface: rgba(255, 255, 255, 0.05);
+    --border: rgba(255, 255, 255, 0.1);
+    --muted: #a3a3a3;
+    --danger: #ef4444;
+    --danger-bg: rgba(239, 68, 68, 0.1);
+}
+
+body.light-mode {
+    --background: #F0FDFA;
+    --foreground: #111827;
+    --primary: #0D9488;
+    --primary-glow: rgba(13, 148, 136, 0.3);
+    --surface: #ffffff;
+    --border: #CCFBF1;
+    --muted: #4B5563;
+    --danger-bg: #FEE2E2;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--background);
+    color: var(--foreground);
+    margin: 0;
+    min-height: 100vh;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* --- COMMON COMPONENTS --- */
+
+/* Icon Button (Round, transparent) */
+.icon-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn:hover {
+    color: var(--primary);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+body.light-mode .icon-btn {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Standard Header Controls Container */
+.header-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 8px;
+}

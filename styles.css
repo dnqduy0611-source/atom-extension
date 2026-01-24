@@ -1,0 +1,444 @@
+/* styles.css - ATOM COMPANION (DARK WEB THEME) */
+
+:host {
+    --atom-bg: #050505;
+    --atom-primary: #10B981;
+    --atom-glow: rgba(16, 185, 129, 0.4);
+    --atom-surface: rgba(255, 255, 255, 0.05);
+    --atom-text: #ffffff;
+    --atom-text-muted: #a3a3a3;
+    --atom-border: rgba(255, 255, 255, 0.1);
+}
+
+/* LIGHT MODE OVERRIDES */
+body.light-mode {
+    --atom-bg: #F0FDFA;
+    /* Teal-50 */
+    --atom-primary: #0D9488;
+    /* Teal-600 */
+    --atom-glow: rgba(13, 148, 136, 0.3);
+    --atom-surface: #ffffff;
+    --atom-text: #111827;
+    /* Gray-900 */
+    --atom-text-muted: #4B5563;
+    /* Gray-600 */
+    --atom-border: #CCFBF1;
+    /* Teal-100 */
+    background-color: var(--atom-bg);
+    color: var(--atom-text);
+}
+
+/* Ensure variables propagate to root for HTML pages */
+:root {
+    --background: #050505;
+    --foreground: #ffffff;
+    --primary: #10B981;
+    --primary-glow: rgba(16, 185, 129, 0.4);
+    --surface: rgba(255, 255, 255, 0.05);
+    --border: rgba(255, 255, 255, 0.1);
+    --muted: #a3a3a3;
+    --danger: #ef4444;
+}
+
+:root.light-mode {
+    --background: #F0FDFA;
+    --foreground: #111827;
+    --primary: #0D9488;
+    --primary-glow: rgba(13, 148, 136, 0.3);
+    --surface: #ffffff;
+    --border: #CCFBF1;
+    --muted: #4B5563;
+}
+
+/* 1. Overlay: Dark Glassmorphism "Linear" Style */
+#atom-overlay {
+    pointer-events: auto !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(5, 5, 5, 0.85);
+    /* Deep Black overlay */
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    z-index: 2147483647;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    visibility: hidden;
+}
+
+#atom-overlay.state-visible {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* 2. MODE HÍT THỞ: Dark Gateway Style */
+.breath-circle {
+    width: 180px;
+    height: 180px;
+    /* Darker center for "Black hole" effect */
+    background: radial-gradient(circle, #000000 30%, rgba(16, 185, 129, 0.2) 100%);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 40px;
+    /* Subtle initial glow */
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.1);
+    transition: all 0.5s ease-out;
+    border: 1px solid rgba(16, 185, 129, 0.1);
+}
+
+.breath-circle.active {
+    /* Active state before animation takes over full control */
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 0 50px rgba(16, 185, 129, 0.3);
+}
+
+/* Missing Class Added */
+.anim-breathe {
+    animation: breathe-cycle 19s linear forwards;
+}
+
+@keyframes breathe-cycle {
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+        box-shadow: 0 0 30px rgba(16, 185, 129, 0.1);
+    }
+
+    21% {
+        /* Inhale end (4s) */
+        transform: scale(1.5);
+        opacity: 1;
+        box-shadow: 0 0 80px rgba(16, 185, 129, 0.4);
+        border-color: rgba(16, 185, 129, 0.8);
+    }
+
+    58% {
+        /* Hold end (11s) */
+        transform: scale(1.5);
+        opacity: 1;
+        box-shadow: 0 0 80px rgba(16, 185, 129, 0.4);
+    }
+
+    100% {
+        /* Exhale end (19s) */
+        transform: scale(1);
+        opacity: 0.6;
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.05);
+    }
+}
+
+/* 3. MODE TAP: Glass Ripple */
+/* 3. MODE TAP: Clean Ring */
+.tap-circle {
+    cursor: pointer;
+    pointer-events: auto !important;
+    position: relative;
+    width: 120px;
+    height: 120px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.tap-circle:active {
+    transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Icon bên trong */
+.tap-icon-svg {
+    width: 40px;
+    height: 40px;
+    color: rgba(255, 255, 255, 0.7);
+    transition: color 0.3s ease;
+}
+
+.tap-circle.active .tap-icon-svg {
+    color: #10B981;
+    /* Emerald-400 */
+}
+
+/* Progress Ring SVG Wrapper */
+.ring-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+    pointer-events: none;
+}
+
+.progress-ring-circle {
+    stroke: #10B981;
+    stroke-width: 4;
+    fill: transparent;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.1s linear;
+    /* Mượt mà */
+}
+
+/* 4. MODE STILLNESS: Timer Ring */
+.still-circle {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.still-timer-text {
+    font-size: 64px;
+    font-weight: 300;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-variant-numeric: tabular-nums;
+}
+
+/* 4. TEXT */
+.hint-text {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 18px;
+    color: var(--atom-text-muted) !important;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-shadow: none;
+    margin-top: 20px;
+}
+
+/* 5. NHẬT KÝ (JOURNAL): Dark Glass Card */
+#atom-journal-dialog {
+    position: fixed;
+    bottom: 80px;
+    right: 30px;
+    top: auto;
+    left: auto;
+    transform: translateY(20px);
+    display: none;
+    flex-direction: column;
+    z-index: 2147483647;
+    background: rgba(10, 10, 10, 0.95) !important;
+    /* Dark bg */
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.5);
+    padding: 24px;
+    width: 380px;
+    border-radius: 24px;
+    color: white;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#atom-journal-dialog.visible {
+    display: flex !important;
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+.journal-title {
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.tag-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.journal-tag {
+    background: rgba(255, 255, 255, 0.05);
+    color: #a3a3a3;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 20px;
+    margin: 4px;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+
+.journal-tag.selected {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10B981;
+    border-color: #10B981;
+}
+
+.journal-input {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff !important;
+    font-size: 15px;
+    padding: 16px;
+    border-radius: 12px;
+    width: 100%;
+    min-height: 100px;
+    resize: none;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.journal-input:focus {
+    outline: none;
+    border-color: #10B981;
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.emoji-row {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+    gap: 10px;
+}
+
+.emoji-btn {
+    font-size: 32px;
+    background: none;
+    border: 2px solid transparent;
+    border-radius: 15px;
+    cursor: pointer !important;
+    padding: 8px;
+    transition: all 0.2s ease;
+    line-height: 1;
+    pointer-events: auto !important;
+    opacity: 0.7;
+}
+
+.emoji-btn:hover {
+    transform: scale(1.2);
+    background: rgba(255, 255, 255, 0.1);
+    opacity: 1;
+}
+
+.emoji-btn.selected {
+    background: rgba(16, 185, 129, 0.2) !important;
+    border-color: #10B981 !important;
+    transform: scale(1.1);
+    opacity: 1;
+}
+
+.journal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+    padding: 10px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#btn-expand-text {
+    font-size: 14px !important;
+    font-weight: 500;
+    color: #a3a3a3 !important;
+    text-decoration: none !important;
+    cursor: pointer;
+}
+
+#btn-expand-text:hover {
+    color: #fff !important;
+}
+
+.btn-save-journal {
+    font-size: 14px !important;
+    font-weight: 700;
+    color: #000 !important;
+    background: #10B981;
+    padding: 8px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+    transition: all 0.2s;
+}
+
+.btn-save-journal:hover {
+    background: #34d399;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+}
+
+#ai-response-area {
+    display: none;
+    margin-top: 15px;
+    padding: 18px;
+    background: rgba(16, 185, 129, 0.05) !important;
+    border-radius: 12px;
+    border: 1px solid rgba(16, 185, 129, 0.2) !important;
+    color: #d1fae5 !important;
+    font-size: 15px;
+    line-height: 1.6;
+    max-height: 250px;
+    overflow-y: auto;
+    font-weight: 400;
+}
+
+/* PRESENCE ORB (Small corner indicator) */
+#atom-presence-orb {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    z-index: 2147483640;
+    pointer-events: none;
+    background: var(--atom-bg);
+    border: 1px solid var(--atom-primary);
+    box-shadow: 0 0 10px var(--atom-primary);
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 1.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+#atom-presence-orb.visible {
+    opacity: 0.8;
+    transform: scale(1);
+}
+
+.orb-core-light {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40%;
+    height: 40%;
+    background: var(--atom-primary);
+    border-radius: 50%;
+    filter: blur(4px);
+}
+
+/* Helper classes */
+.ui-mode.hidden {
+    display: none !important;
+}
+
+#atom-overlay {
+    pointer-events: auto;
+}
+
+.breath-circle,
+.tap-circle {
+    pointer-events: auto;
+    z-index: 10;
+}

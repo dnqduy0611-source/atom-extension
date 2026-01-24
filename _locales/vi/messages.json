@@ -1,0 +1,398 @@
+{
+  "appName": {
+    "message": "ATOM - Mindful Browsing"
+  },
+  "appDesc": {
+    "message": "Hệ điều hành sự chú ý tích hợp AI."
+  },
+  "red_zone_1": {
+    "message": "Mình dừng lại một chút nhé?"
+  },
+  "red_zone_2": {
+    "message": "Mắt bạn có vẻ mỏi rồi..."
+  },
+  "red_zone_3": {
+    "message": "Cùng nhau tĩnh lặng 1 xíu nào."
+  },
+  "red_zone_4": {
+    "message": "Bạn đã vất vả rồi, hít thở sâu nhé."
+  },
+  "red_zone_5": {
+    "message": "Mình ở đây. Nghỉ 10 giây nhé."
+  },
+  "red_zone_6": {
+    "message": "Thế giới chờ được, nhưng bạn cần nghỉ ngơi."
+  },
+  "yellow_zone_1": {
+    "message": "Mình vẫn ở đây với bạn..."
+  },
+  "yellow_zone_2": {
+    "message": "Chậm lại một chút."
+  },
+  "micro_copy_1": {
+    "message": "Kết thúc phiên này nhé?"
+  },
+  "micro_copy_2": {
+    "message": "Điểm dừng hợp lý chưa?"
+  },
+  "micro_copy_3": {
+    "message": "Đủ cho lúc này chưa?"
+  },
+  "micro_copy_4": {
+    "message": "Một khoảng nghỉ nhỏ."
+  },
+  "btn_stop_session": {
+    "message": "Dừng tại đây"
+  },
+  "btn_snooze": {
+    "message": "Để sau"
+  },
+  "btn_rest_short": {
+    "message": "Nghỉ ngơi"
+  },
+  "ui_breath_hold_start": {
+    "message": "Giữ để bắt đầu..."
+  },
+  "ui_breath_inhale": {
+    "message": "Hít vào... (4s)"
+  },
+  "ui_breath_hold": {
+    "message": "Giữ hơi... (7s)"
+  },
+  "ui_breath_exhale": {
+    "message": "Thở ra... (8s)"
+  },
+  "ui_breath_success": {
+    "message": "Tuyệt vời."
+  },
+  "ui_breath_fail": {
+    "message": "Hãy giữ hết hơi hít vào (4s)..."
+  },
+  "ui_tap_hold": {
+    "message": "Giữ 3 giây để tiếp tục"
+  },
+  "ui_tap_fail": {
+    "message": "Giữ lâu hơn để xác nhận"
+  },
+  "ui_stillness_hint": {
+    "message": "Giữ chuột đứng yên trong 7 giây..."
+  },
+  "ui_stillness_success": {
+    "message": "Tâm trí đã tĩnh lặng."
+  },
+  "ui_stillness_warning": {
+    "message": "Đừng di chuyển..."
+  },
+  "ui_stillness_fail": {
+    "message": "Đã bỏ qua."
+  },
+  "journal_ask_title": {
+    "message": "Bạn muốn ghi lại cảm xúc không?"
+  },
+  "journal_btn_skip": {
+    "message": "Bỏ qua"
+  },
+  "journal_btn_write": {
+    "message": "Viết nhật ký"
+  },
+  "journal_form_title": {
+    "message": "Bạn cảm thấy thế nào?"
+  },
+  "journal_btn_expand": {
+    "message": "+ Thêm ghi chú"
+  },
+  "journal_btn_saved": {
+    "message": "ĐÃ LƯU ✓"
+  },
+  "journal_btn_processing": {
+    "message": "Đang đọc..."
+  },
+  "journal_btn_understood": {
+    "message": "Đã hiểu, cảm ơn!"
+  },
+  "journal_placeholder": {
+    "message": "Ghi chú nhanh..."
+  },
+  "journal_ai_title": {
+    "message": "Tin nhắn từ ATOM:"
+  },
+  "tag_habit": {
+    "message": "Thói quen"
+  },
+  "tag_procrastinate": {
+    "message": "Trì hoãn"
+  },
+  "tag_stress": {
+    "message": "Căng thẳng"
+  },
+  "tag_fomo": {
+    "message": "Sợ bỏ lỡ"
+  },
+  "tag_inspiration": {
+    "message": "Tìm cảm hứng"
+  },
+  "opt_title": {
+    "message": "Cài đặt ATOM"
+  },
+  "opt_hero_title": {
+    "message": "⚛️ Kích hoạt Trí tuệ nhân tạo"
+  },
+  "opt_hero_desc": {
+    "message": "ATOM sử dụng Google Gemini để trò chuyện và đưa ra lời khuyên tâm lý. Kết nối Key riêng của bạn để dùng miễn phí & bảo mật."
+  },
+  "opt_btn_get_key": {
+    "message": "👉 Lấy Key Miễn Phí từ Google (30s)"
+  },
+  "opt_guide_1": {
+    "message": "Bấm nút xanh bên trên để mở <b>Google AI Studio</b>."
+  },
+  "opt_guide_2": {
+    "message": "Đăng nhập Gmail, bấm <b>Get API key</b> (Menu trái)."
+  },
+  "opt_guide_3": {
+    "message": "Chọn <b>Create API key in new project</b>."
+  },
+  "opt_guide_4": {
+    "message": "Copy đoạn mã (bắt đầu bằng <code>AIza...</code>) và dán xuống dưới."
+  },
+  "opt_input_label": {
+    "message": "Dán Key của bạn vào đây:"
+  },
+  "opt_sens_label": {
+    "message": "Mức độ nhạy cảm:"
+  },
+  "opt_sens_gentle_title": {
+    "message": "Nhẹ nhàng"
+  },
+  "opt_sens_gentle_desc": {
+    "message": "Can thiệp sau ~5 phút lướt"
+  },
+  "opt_sens_balanced_title": {
+    "message": "Cân bằng"
+  },
+  "opt_sens_balanced_desc": {
+    "message": "Can thiệp sau ~3 phút"
+  },
+  "opt_sens_strict_title": {
+    "message": "Nghiêm khắc"
+  },
+  "opt_sens_strict_desc": {
+    "message": "Can thiệp sau ~1 phút"
+  },
+  "opt_btn_save": {
+    "message": "Lưu Cài Đặt"
+  },
+  "opt_save_success": {
+    "message": "Đã lưu thành công!"
+  },
+  "offline_quote_1": {
+    "message": "Hít thở sâu nào. Thế giới có thể chờ đợi."
+  },
+  "offline_quote_2": {
+    "message": "Một khoảng dừng nhỏ sẽ giúp bạn đi xa hơn."
+  },
+  "offline_quote_3": {
+    "message": "Đôi khi, không làm gì là điều tốt nhất nên làm lúc này."
+  },
+  "offline_quote_4": {
+    "message": "Bạn đã vất vả rồi, hãy thả lỏng vai một chút."
+  },
+  "offline_quote_5": {
+    "message": "Uống một ngụm nước và nhìn ra xa xăm?"
+  },
+  "popup_title": {
+    "message": "Bảng điều khiển ATOM"
+  },
+  "popup_status_desc": {
+    "message": "ATOM đang bảo vệ sự chú ý của bạn."
+  },
+  "popup_btn_export": {
+    "message": "Xuất dữ liệu"
+  },
+  "popup_btn_settings": {
+    "message": "Cài đặt"
+  },
+  "popup_btn_clear": {
+    "message": "Reset"
+  },
+  "popup_btn_journal": {
+    "message": "Nhật Ký"
+  },
+  "popup_msg_packing": {
+    "message": "⏳ Đang đóng gói..."
+  },
+  "popup_msg_downloaded": {
+    "message": "✅ Đã tải xuống!"
+  },
+  "popup_msg_error": {
+    "message": "❌ Lỗi: "
+  },
+  "popup_confirm_reset": {
+    "message": "Bạn có chắc muốn xóa toàn bộ dữ liệu học máy và lịch sử? Hành động này không thể hoàn tác."
+  },
+  "pop_lbl_current_site": {
+    "message": "Trang hiện tại"
+  },
+  "pop_system_page": {
+    "message": "Trang hệ thống"
+  },
+  "pop_unknown_page": {
+    "message": "Trang không xác định"
+  },
+  "pop_btn_safe_add_new": {
+    "message": "Tắt ATOM"
+  },
+  "pop_btn_safe_remove_new": {
+    "message": "Bật ATOM"
+  },
+  "pop_status_running": {
+    "message": "ATOM đang chạy"
+  },
+  "pop_status_off": {
+    "message": "ATOM đã tắt"
+  },
+  "pop_loading": {
+    "message": "Đang tải..."
+  },
+  "jnl_title": {
+    "message": "Hành Trình Tĩnh Lặng"
+  },
+  "jnl_desc": {
+    "message": "Những khoảnh khắc bạn đã chia sẻ cùng ATOM"
+  },
+  "jnl_empty_title": {
+    "message": "Chưa có nhật ký nào"
+  },
+  "jnl_empty_desc": {
+    "message": "Hãy thử viết nhật ký khi ATOM hỏi bạn nhé!"
+  },
+  "jnl_label_ai": {
+    "message": "ATOM PHẢN HỒI"
+  },
+  "jnl_no_note": {
+    "message": "Không có ghi chú"
+  },
+  "jnl_at": {
+    "message": "Tại:"
+  },
+  "jnl_unknown_context": {
+    "message": "Không rõ"
+  },
+  "ai_thinking_error": {
+    "message": "ATOM đang suy ngẫm, hãy thử lại sau nhé!"
+  },
+  "fallback_location": {
+    "message": "nơi này"
+  },
+  "fallback_activity_work": {
+    "message": "công việc"
+  },
+  "fallback_activity_general": {
+    "message": "mọi việc"
+  },
+  "opt_debug_title": {
+    "message": "Chế độ Gỡ lỗi"
+  },
+  "opt_debug_enable_title": {
+    "message": "Bật ghi log chi tiết"
+  },
+  "opt_debug_enable_desc": {
+    "message": "Hiển thị log chi tiết trong console trình duyệt"
+  },
+  "opt_debug_export": {
+    "message": "Xuất log gỡ lỗi"
+  },
+  "opt_debug_collecting": {
+    "message": "Đang thu thập..."
+  },
+  "opt_debug_copied": {
+    "message": "✅ Đã sao chép!"
+  },
+  "opt_debug_failed": {
+    "message": "❌ Thất bại - Xem Console"
+  },
+  "popup_btn_report_bug": {
+    "message": "Báo lỗi"
+  },
+  "bug_title": {
+    "message": "Báo lỗi - ATOM"
+  },
+  "bug_header": {
+    "message": "Báo cáo lỗi"
+  },
+  "bug_subheader": {
+    "message": "Giúp chúng tôi cải thiện ATOM bằng cách mô tả lỗi bạn gặp phải"
+  },
+  "bug_auto_collected": {
+    "message": "Thông tin tự động thu thập"
+  },
+  "bug_type_label": {
+    "message": "Loại lỗi"
+  },
+  "bug_type_placeholder": {
+    "message": "-- Chọn loại --"
+  },
+  "bug_type_intervention": {
+    "message": "Không hiển thị can thiệp"
+  },
+  "bug_type_ui": {
+    "message": "Lỗi giao diện"
+  },
+  "bug_type_performance": {
+    "message": "Hiệu năng/Lag"
+  },
+  "bug_type_crash": {
+    "message": "Extension bị crash"
+  },
+  "bug_type_ai": {
+    "message": "Lỗi AI/Gemini"
+  },
+  "bug_type_other": {
+    "message": "Khác"
+  },
+  "bug_summary_label": {
+    "message": "Tóm tắt"
+  },
+  "bug_summary_placeholder": {
+    "message": "Mô tả ngắn gọn về lỗi"
+  },
+  "bug_url_label": {
+    "message": "URL nơi xảy ra lỗi (tùy chọn)"
+  },
+  "bug_desc_label": {
+    "message": "Các bước tái hiện lỗi"
+  },
+  "bug_expected_label": {
+    "message": "Kỳ vọng vs Thực tế"
+  },
+  "bug_include_debug": {
+    "message": "Đính kèm dữ liệu debug (khuyến nghị)"
+  },
+  "bug_btn_submit": {
+    "message": "Gửi lên GitHub"
+  },
+  "bug_btn_copy": {
+    "message": "Sao chép báo cáo (gửi thủ công)"
+  },
+  "bug_submitting": {
+    "message": "Đang mở GitHub..."
+  },
+  "bug_success": {
+    "message": "✅ Đã mở GitHub! Hãy nhấn 'Submit new issue' để hoàn tất."
+  },
+  "bug_error": {
+    "message": "❌ Đã xảy ra lỗi"
+  },
+  "bug_copied": {
+    "message": "✅ Đã sao chép báo cáo!"
+  },
+  "bug_copied_btn": {
+    "message": "✅ Đã sao chép!"
+  },
+  "bug_footer": {
+    "message": "Báo cáo của bạn sẽ được gửi dưới dạng GitHub Issue."
+  },
+  "bug_privacy_link": {
+    "message": "Xem chính sách quyền riêng tư"
+  }
+}

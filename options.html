@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title data-i18n="opt_title">ATOM Settings</title>
+    <link rel="stylesheet" href="ui_shared.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            padding-top: 50px;
+        }
+
+        .container {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            width: 450px;
+            padding: 30px;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--primary);
+            text-align: center;
+            font-size: 24px;
+            text-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .hero-box {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 5, 5, 0) 100%);
+            border: 1px solid var(--primary);
+            padding: 24px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Light mode toggle for hero box gradient fallback */
+        body.light-mode .hero-box {
+            background: linear-gradient(135deg, rgba(13, 148, 136, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+        }
+
+        /* Glow effect */
+        .hero-box::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+            opacity: 0.1;
+            pointer-events: none;
+        }
+
+        .btn-get-key {
+            background: var(--primary);
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 12px 24px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 16px;
+            box-shadow: 0 0 15px var(--primary-glow);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-get-key:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px var(--primary-glow);
+        }
+
+        .guide-text {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.6;
+            text-align: left;
+        }
+
+        .guide-text ol {
+            padding-left: 20px;
+        }
+
+        .guide-text li {
+            margin-bottom: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 14px;
+            display: block;
+            margin-bottom: 8px;
+            color: var(--foreground);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 14px;
+            box-sizing: border-box;
+            margin-bottom: 5px;
+            background: var(--background);
+            color: var(--foreground);
+            transition: all 0.2s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(16, 185, 129, 0.05);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        #btn-save {
+            width: 100%;
+            padding: 14px;
+            background: var(--foreground);
+            color: var(--background);
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: all 0.2s;
+        }
+
+        #btn-save:hover {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        #status {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+            height: 20px;
+        }
+
+        .success {
+            color: var(--primary);
+        }
+
+        .error {
+            color: var(--danger);
+        }
+
+        /* Bento Grid Style Radio Cards */
+        .sensitivity-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .radio-card {
+            flex: 1;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .radio-card input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .card-content {
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 15px 10px;
+            text-align: center;
+            transition: all 0.2s;
+            background: var(--surface);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .radio-card input:checked+.card-content {
+            border-color: var(--primary);
+            background: rgba(16, 185, 129, 0.1);
+            box-shadow: 0 0 15px var(--primary-glow);
+            transform: translateY(-2px);
+        }
+
+        .card-content .emoji {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+            color: var(--primary);
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
+        }
+
+        .card-content .title {
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--foreground);
+            display: block;
+        }
+
+        .card-content .desc {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 4px;
+            display: block;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 26px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border);
+            transition: 0.3s;
+            border-radius: 26px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--foreground);
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked+.toggle-slider {
+            background-color: var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .toggle-switch input:checked+.toggle-slider:before {
+            transform: translateX(22px);
+            background-color: #fff;
+        }
+
+        #btn-export-debug:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(16, 185, 129, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container" style="position: relative;">
+        <button class="icon-btn" id="btn-theme-toggle" title="Toggle Theme"
+            style="position: absolute; top: 20px; right: 20px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+            </svg>
+        </button>
+        <h2 data-i18n="opt_hero_title">ATOM AI</h2>
+        <p style="text-align:center; font-size: 14px; color: #a3a3a3; margin-bottom: 24px;" data-i18n="opt_hero_desc">
+        </p>
+
+        <div class="hero-box">
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" class="btn-get-key">
+                Google AI Studio ↗
+            </a>
+            <div class="guide-text">
+                <ol>
+                    <li data-i18n="opt_guide_1">Log in to Google AI Studio</li>
+                    <li data-i18n="opt_guide_2">Click "Get API Key"</li>
+                    <li data-i18n="opt_guide_3">Create key in a new project</li>
+                    <li data-i18n="opt_guide_4">Copy and paste below</li>
+                </ol>
+            </div>
+        </div>
+
+        <div>
+            <label for="apiKeyInput">API Key</label>
+            <input type="text" id="apiKeyInput" placeholder="AIzaSy..." autocomplete="off">
+        </div>
+
+        <div style="margin-top: 24px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    style="color: var(--primary);">
+                    <path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" />
+                    <path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
+                    <path d="M12 2v2" />
+                    <path d="M12 22v-2" />
+                    <path d="m17 20.66-1-1.73" />
+                    <path d="M11 10.27 7 3.34" />
+                    <path d="m20.66 17-1.73-1" />
+                    <path d="m3.34 7 1.73 1" />
+                    <path d="M14 12h8" />
+                    <path d="M2 12h2" />
+                    <path d="m20.66 7-1.73 1" />
+                    <path d="m3.34 17 1.73-1" />
+                    <path d="m17 3.34-1 1.73" />
+                    <path d="m11 13.73-4 6.93" />
+                </svg>
+                <label data-i18n="opt_sens_label" style="margin-bottom: 0;">Sensitivity Mode</label>
+            </div>
+
+            <div class="sensitivity-group">
+                <label class="radio-card">
+                    <input type="radio" name="sensitivity" value="gentle">
+                    <div class="card-content">
+                        <span class="emoji">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path
+                                    d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+                                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+                            </svg>
+                        </span>
+                        <span class="title" data-i18n="opt_sens_gentle_title">Gentle</span>
+                        <span class="desc" data-i18n="opt_sens_gentle_desc">Soft nudges</span>
+                    </div>
+                </label>
+
+                <label class="radio-card">
+                    <input type="radio" name="sensitivity" value="balanced" checked>
+                    <div class="card-content">
+                        <span class="emoji">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path
+                                    d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+                            </svg>
+                        </span>
+                        <span class="title" data-i18n="opt_sens_balanced_title">Balanced</span>
+                        <span class="desc" data-i18n="opt_sens_balanced_desc">Standard</span>
+                    </div>
+                </label>
+
+                <label class="radio-card">
+                    <input type="radio" name="sensitivity" value="strict">
+                    <div class="card-content">
+                        <span class="emoji">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
+                                <line x1="13" x2="19" y1="19" y2="13" />
+                                <line x1="16" x2="20" y1="16" y2="20" />
+                                <line x1="19" x2="21" y1="21" y2="19" />
+                                <polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5" />
+                                <line x1="5" x2="9" y1="14" y2="18" />
+                                <line x1="7" x2="4" y1="17" y2="20" />
+                                <line x1="3" x2="5" y1="19" y2="21" />
+                            </svg>
+                        </span>
+                        <span class="title" data-i18n="opt_sens_strict_title">Focus</span>
+                        <span class="desc" data-i18n="opt_sens_strict_desc">High protection</span>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Debug Mode Section -->
+        <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    style="color: var(--primary);">
+                    <path d="m8 2 1.88 1.88" />
+                    <path d="M14.12 3.88 16 2" />
+                    <path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1" />
+                    <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6" />
+                    <path d="M12 20v-9" />
+                    <path d="M6.53 9C4.6 8.8 3 7.1 3 5" />
+                    <path d="M6 13H2" />
+                    <path d="M3 21c0-2.1 1.7-3.9 3.8-4" />
+                    <path d="M20.97 5c0 2.1-1.6 3.8-3.5 4" />
+                    <path d="M22 13h-4" />
+                    <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4" />
+                </svg>
+                <label style="margin-bottom: 0;" data-i18n="opt_debug_title">Debug Mode</label>
+            </div>
+
+            <div
+                style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px;">
+                <div>
+                    <span style="font-size: 14px; font-weight: 500;" data-i18n="opt_debug_enable_title">Enable Debug
+                        Logging</span>
+                    <p style="font-size: 12px; color: var(--muted); margin: 4px 0 0 0;"
+                        data-i18n="opt_debug_enable_desc">Show detailed logs in browser console</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="debugModeToggle">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <button id="btn-export-debug"
+                style="width: 100%; padding: 12px; background: transparent; color: var(--foreground); border: 1px solid var(--border); border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" x2="12" y1="15" y2="3" />
+                </svg>
+                <span data-i18n="opt_debug_export">Export Debug Log</span>
+            </button>
+        </div>
+
+        <button id="btn-save" data-i18n="opt_btn_save">Save Changes</button>
+
+        <div id="status"></div>
+    </div>
+
+    <script src="utils_ui.js"></script>
+    <script src="options.js"></script>
+</body>
+
+</html>

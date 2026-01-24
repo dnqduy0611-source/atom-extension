@@ -1,0 +1,398 @@
+{
+  "appName": {
+    "message": "ATOM - Mindful Browsing"
+  },
+  "appDesc": {
+    "message": "AI-powered attention operating system."
+  },
+  "red_zone_1": {
+    "message": "Shall we pause for a moment?"
+  },
+  "red_zone_2": {
+    "message": "Your eyes seem a bit tired..."
+  },
+  "red_zone_3": {
+    "message": "Can we take a short silence together?"
+  },
+  "red_zone_4": {
+    "message": "You've worked hard, take a deep breath."
+  },
+  "red_zone_5": {
+    "message": "I'm here with you. Let's rest for 10 seconds."
+  },
+  "red_zone_6": {
+    "message": "The world can wait, but you need rest."
+  },
+  "yellow_zone_1": {
+    "message": "I'm still here with you..."
+  },
+  "yellow_zone_2": {
+    "message": "Take it slow."
+  },
+  "micro_copy_1": {
+    "message": "Shall we wrap up here?"
+  },
+  "micro_copy_2": {
+    "message": "Good place to stop?"
+  },
+  "micro_copy_3": {
+    "message": "Enough for now?"
+  },
+  "micro_copy_4": {
+    "message": "A small stopping point."
+  },
+  "btn_stop_session": {
+    "message": "Stop here"
+  },
+  "btn_snooze": {
+    "message": "Not now"
+  },
+  "btn_rest_short": {
+    "message": "Take a break"
+  },
+  "ui_breath_hold_start": {
+    "message": "Hold to start..."
+  },
+  "ui_breath_inhale": {
+    "message": "Inhale... (4s)"
+  },
+  "ui_breath_hold": {
+    "message": "Hold... (7s)"
+  },
+  "ui_breath_exhale": {
+    "message": "Exhale... (8s)"
+  },
+  "ui_breath_success": {
+    "message": "Wonderful."
+  },
+  "ui_breath_fail": {
+    "message": "Please hold the full inhale (4s)..."
+  },
+  "ui_tap_hold": {
+    "message": "Hold for 3 seconds to continue"
+  },
+  "ui_tap_fail": {
+    "message": "Hold longer to confirm"
+  },
+  "ui_stillness_hint": {
+    "message": "Keep mouse still for 7 seconds..."
+  },
+  "ui_stillness_success": {
+    "message": "Mind is now still."
+  },
+  "ui_stillness_warning": {
+    "message": "Don't move..."
+  },
+  "ui_stillness_fail": {
+    "message": "Ignored."
+  },
+  "journal_ask_title": {
+    "message": "Want to log your feelings?"
+  },
+  "journal_btn_skip": {
+    "message": "Skip"
+  },
+  "journal_btn_write": {
+    "message": "Journal"
+  },
+  "journal_form_title": {
+    "message": "How do you feel?"
+  },
+  "journal_btn_expand": {
+    "message": "+ Add note"
+  },
+  "journal_btn_saved": {
+    "message": "SAVED ✓"
+  },
+  "journal_btn_processing": {
+    "message": "Reading..."
+  },
+  "journal_btn_understood": {
+    "message": "Understood, thanks!"
+  },
+  "journal_placeholder": {
+    "message": "Quick note..."
+  },
+  "journal_ai_title": {
+    "message": "Message from ATOM:"
+  },
+  "tag_habit": {
+    "message": "Habit"
+  },
+  "tag_procrastinate": {
+    "message": "Procrastination"
+  },
+  "tag_stress": {
+    "message": "Stress"
+  },
+  "tag_fomo": {
+    "message": "FOMO"
+  },
+  "tag_inspiration": {
+    "message": "Inspiration"
+  },
+  "opt_title": {
+    "message": "ATOM Settings"
+  },
+  "opt_hero_title": {
+    "message": "⚛️ Activate AI Intelligence"
+  },
+  "opt_hero_desc": {
+    "message": "ATOM uses Google Gemini to chat and provide psychological advice. Connect your own Key for free & private use."
+  },
+  "opt_btn_get_key": {
+    "message": "👉 Get Free Key from Google (30s)"
+  },
+  "opt_guide_1": {
+    "message": "Click the green button above to open <b>Google AI Studio</b>."
+  },
+  "opt_guide_2": {
+    "message": "Log in with Gmail, click <b>Get API key</b> (Left menu)."
+  },
+  "opt_guide_3": {
+    "message": "Select <b>Create API key in new project</b>."
+  },
+  "opt_guide_4": {
+    "message": "Copy the code (starts with <code>AIza...</code>) and paste it below."
+  },
+  "opt_input_label": {
+    "message": "Paste your Key here:"
+  },
+  "opt_sens_label": {
+    "message": "Sensitivity Level:"
+  },
+  "opt_sens_gentle_title": {
+    "message": "Gentle"
+  },
+  "opt_sens_gentle_desc": {
+    "message": "Intervene after ~5 mins of scrolling"
+  },
+  "opt_sens_balanced_title": {
+    "message": "Balanced"
+  },
+  "opt_sens_balanced_desc": {
+    "message": "Intervene after ~3 mins"
+  },
+  "opt_sens_strict_title": {
+    "message": "Strict"
+  },
+  "opt_sens_strict_desc": {
+    "message": "Intervene after ~1 min"
+  },
+  "opt_btn_save": {
+    "message": "Save Settings"
+  },
+  "opt_save_success": {
+    "message": "Saved successfully!"
+  },
+  "offline_quote_1": {
+    "message": "Take a deep breath. The world can wait."
+  },
+  "offline_quote_2": {
+    "message": "A small pause will help you go further."
+  },
+  "offline_quote_3": {
+    "message": "Sometimes, doing nothing is the best thing to do right now."
+  },
+  "offline_quote_4": {
+    "message": "You've worked hard, relax your shoulders a bit."
+  },
+  "offline_quote_5": {
+    "message": "Have a sip of water and look into the distance?"
+  },
+  "popup_title": {
+    "message": "ATOM Dashboard"
+  },
+  "popup_status_desc": {
+    "message": "ATOM is protecting your attention."
+  },
+  "popup_btn_export": {
+    "message": "Export Data"
+  },
+  "popup_btn_settings": {
+    "message": "Settings"
+  },
+  "popup_btn_clear": {
+    "message": "Reset"
+  },
+  "popup_btn_journal": {
+    "message": "Journal"
+  },
+  "popup_msg_packing": {
+    "message": "⏳ Packing..."
+  },
+  "popup_msg_downloaded": {
+    "message": "✅ Downloaded!"
+  },
+  "popup_msg_error": {
+    "message": "❌ Error: "
+  },
+  "popup_confirm_reset": {
+    "message": "Are you sure you want to DELETE ALL machine learning data and history? This cannot be undone."
+  },
+  "pop_lbl_current_site": {
+    "message": "Current Site"
+  },
+  "pop_system_page": {
+    "message": "System Page"
+  },
+  "pop_unknown_page": {
+    "message": "Unknown Page"
+  },
+  "pop_btn_safe_add_new": {
+    "message": "Disable ATOM"
+  },
+  "pop_btn_safe_remove_new": {
+    "message": "Enable ATOM"
+  },
+  "pop_status_running": {
+    "message": "ATOM is running"
+  },
+  "pop_status_off": {
+    "message": "ATOM is off"
+  },
+  "pop_loading": {
+    "message": "Loading..."
+  },
+  "jnl_title": {
+    "message": "Mindful Journey"
+  },
+  "jnl_desc": {
+    "message": "Moments you shared with ATOM"
+  },
+  "jnl_empty_title": {
+    "message": "No entries yet"
+  },
+  "jnl_empty_desc": {
+    "message": "Try journaling when ATOM asks you!"
+  },
+  "jnl_label_ai": {
+    "message": "ATOM RESPONSE"
+  },
+  "jnl_no_note": {
+    "message": "No note provided"
+  },
+  "jnl_at": {
+    "message": "At:"
+  },
+  "jnl_unknown_context": {
+    "message": "Unknown"
+  },
+  "ai_thinking_error": {
+    "message": "ATOM is pondering, please try again later!"
+  },
+  "fallback_location": {
+    "message": "this place"
+  },
+  "fallback_activity_work": {
+    "message": "work"
+  },
+  "fallback_activity_general": {
+    "message": "everything"
+  },
+  "opt_debug_title": {
+    "message": "Debug Mode"
+  },
+  "opt_debug_enable_title": {
+    "message": "Enable Debug Logging"
+  },
+  "opt_debug_enable_desc": {
+    "message": "Show detailed logs in browser console"
+  },
+  "opt_debug_export": {
+    "message": "Export Debug Log"
+  },
+  "opt_debug_collecting": {
+    "message": "Collecting..."
+  },
+  "opt_debug_copied": {
+    "message": "✅ Copied to Clipboard!"
+  },
+  "opt_debug_failed": {
+    "message": "❌ Failed - Check Console"
+  },
+  "popup_btn_report_bug": {
+    "message": "Bug"
+  },
+  "bug_title": {
+    "message": "Report a Bug - ATOM"
+  },
+  "bug_header": {
+    "message": "Report a Bug"
+  },
+  "bug_subheader": {
+    "message": "Help us improve ATOM by describing what went wrong"
+  },
+  "bug_auto_collected": {
+    "message": "Auto-collected Information"
+  },
+  "bug_type_label": {
+    "message": "Bug Type"
+  },
+  "bug_type_placeholder": {
+    "message": "-- Select type --"
+  },
+  "bug_type_intervention": {
+    "message": "Intervention not showing"
+  },
+  "bug_type_ui": {
+    "message": "UI/Display issue"
+  },
+  "bug_type_performance": {
+    "message": "Performance/Lag"
+  },
+  "bug_type_crash": {
+    "message": "Extension crash"
+  },
+  "bug_type_ai": {
+    "message": "AI/Gemini issue"
+  },
+  "bug_type_other": {
+    "message": "Other"
+  },
+  "bug_summary_label": {
+    "message": "Summary"
+  },
+  "bug_summary_placeholder": {
+    "message": "Brief description of the issue"
+  },
+  "bug_url_label": {
+    "message": "URL where bug occurred (optional)"
+  },
+  "bug_desc_label": {
+    "message": "Steps to Reproduce"
+  },
+  "bug_expected_label": {
+    "message": "Expected vs Actual Behavior"
+  },
+  "bug_include_debug": {
+    "message": "Include debug data (recommended)"
+  },
+  "bug_btn_submit": {
+    "message": "Submit to GitHub"
+  },
+  "bug_btn_copy": {
+    "message": "Copy Report (for manual submission)"
+  },
+  "bug_submitting": {
+    "message": "Opening GitHub..."
+  },
+  "bug_success": {
+    "message": "✅ GitHub opened! Please click 'Submit new issue' to complete."
+  },
+  "bug_error": {
+    "message": "❌ Error occurred"
+  },
+  "bug_copied": {
+    "message": "✅ Report copied to clipboard!"
+  },
+  "bug_copied_btn": {
+    "message": "✅ Copied!"
+  },
+  "bug_footer": {
+    "message": "Your report will be submitted as a GitHub Issue."
+  },
+  "bug_privacy_link": {
+    "message": "View Privacy Policy"
+  }
+}
