@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title data-i18n="mem_title">ATOM Memory</title>
+    <link rel="stylesheet" href="ui_shared.css">
+    <style>
+        body {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin: 0;
+            font-size: 28px;
+            text-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .header p {
+            color: var(--muted);
+            margin-top: 8px;
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-bar input[type="search"] {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--foreground);
+            font-size: 14px;
+        }
+
+        .filter-bar input[type="search"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .filter-chips {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-chip {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--muted);
+            transition: all 0.2s ease;
+        }
+
+        .filter-chip:hover {
+            border-color: var(--primary);
+            color: var(--foreground);
+        }
+
+        .filter-chip.active {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 24px;
+            padding: 16px 20px;
+            background: var(--surface);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        /* Notes Grid */
+        .notes-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .note-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .note-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .note-card.exported {
+            border-left: 3px solid var(--primary);
+        }
+
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            gap: 12px;
+        }
+
+        .note-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--foreground);
+            flex: 1;
+            line-height: 1.4;
+        }
+
+        .note-title a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .note-title a:hover {
+            color: var(--primary);
+        }
+
+        .note-meta {
+            font-size: 12px;
+            color: var(--muted);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .note-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .note-selection {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 14px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--foreground);
+            border-left: 3px solid var(--muted);
+            margin-bottom: 12px;
+            max-height: 120px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        body.light-mode .note-selection {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .note-selection.expanded {
+            max-height: none;
+        }
+
+        .note-selection-fade {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(transparent, var(--surface));
+            pointer-events: none;
+        }
+
+        .note-selection.expanded .note-selection-fade {
+            display: none;
+        }
+
+        .note-ai-result {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.03) 100%);
+            padding: 14px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 12px;
+            border: 1px solid rgba(16, 185, 129, 0.15);
+        }
+
+        .note-ai-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        /* NLM Export Badge */
+        .nlm-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(124, 58, 237, 0.05) 100%);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 8px;
+            font-size: 12px;
+            color: #a78bfa;
+        }
+
+        .nlm-badge svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Note Actions */
+        .note-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .note-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--foreground);
+            transition: all 0.2s ease;
+        }
+
+        .note-btn:hover {
+            border-color: var(--primary);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .note-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .note-btn.primary {
+            background: linear-gradient(135deg, #7c3aed, #5b21b6);
+            border-color: transparent;
+            color: white;
+        }
+
+        .note-btn.primary:hover {
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+        }
+
+        .note-btn.success {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+        }
+
+        /* Tags */
+        .note-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .note-tag {
+            padding: 4px 10px;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--primary);
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 40px;
+            background: var(--surface);
+            border-radius: 20px;
+            border: 1px dashed var(--border);
+        }
+
+        .empty-state h2 {
+            color: var(--foreground);
+            margin: 0 0 8px 0;
+        }
+
+        .empty-state p {
+            color: var(--muted);
+            margin: 0;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--surface);
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            padding: 12px 24px;
+            color: var(--foreground);
+            font-size: 14px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 24px;
+        }
+
+        .pagination button {
+            padding: 10px 18px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--foreground);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            border-color: var(--primary);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination .page-info {
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <button class="icon-btn" id="btn-theme-toggle" data-i18n-title="opt_theme_toggle_title" title="Toggle Theme">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+        </svg>
+    </button>
+
+    <div class="header">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                style="color: var(--primary);">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                <circle cx="12" cy="10" r="2" />
+                <path d="M12 14v2" />
+            </svg>
+            <h1 data-i18n="mem_title" style="margin: 0;">ATOM Memory</h1>
+        </div>
+        <p data-i18n="mem_desc">Your reading traces and knowledge exports</p>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar" id="stats-bar">
+        <div class="stat-item">
+            <div class="stat-value" id="stat-total">0</div>
+            <div class="stat-label" data-i18n="mem_stat_total">Total Notes</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="stat-exported">0</div>
+            <div class="stat-label" data-i18n="mem_stat_exported">Exported to NLM</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="stat-week">0</div>
+            <div class="stat-label" data-i18n="mem_stat_week">This Week</div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <input type="search" id="search-input" data-i18n-placeholder="mem_search_placeholder"
+            placeholder="Search notes...">
+        <div class="filter-chips">
+            <button class="filter-chip active" data-filter="all" data-i18n="mem_filter_all">All</button>
+            <button class="filter-chip" data-filter="exported" data-i18n="mem_filter_exported">Exported</button>
+            <button class="filter-chip" data-filter="not-exported" data-i18n="mem_filter_not_exported">Not Exported</button>
+        </div>
+    </div>
+
+    <!-- Notes Grid -->
+    <div class="notes-grid" id="notes-container">
+        <!-- Notes will be rendered here -->
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination">
+        <button id="btn-prev" data-i18n="mem_prev">Previous</button>
+        <span class="page-info" id="page-info">1 / 1</span>
+        <button id="btn-next" data-i18n="mem_next">Next</button>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script src="utils_ui.js"></script>
+    <script src="memory.js"></script>
+</body>
+
+</html>

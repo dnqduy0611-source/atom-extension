@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>ATOM Debug Panel</title>
+    <link rel="stylesheet" href="ui_shared.css">
+    <link rel="stylesheet" href="debug.css">
+</head>
+
+<body>
+    <div class="page">
+        <header class="header">
+            <div>
+                <h1>Dev Panel — AI Confidence</h1>
+                <p class="subtitle">Realtime AI decision stream for tuning and debug.</p>
+            </div>
+            <div class="controls">
+                <label class="toggle">
+                    <input type="checkbox" id="toggle-realtime" checked>
+                    <span>Realtime</span>
+                </label>
+                <button id="btn-refresh" class="btn">Refresh</button>
+                <button id="btn-clear" class="btn">Clear</button>
+            </div>
+        </header>
+
+        <section class="grid">
+            <div class="card">
+                <div class="card-title">Latest</div>
+                <pre id="latest" class="mono">No events yet.</pre>
+            </div>
+            <div class="card">
+                <div class="card-title">Tab Filter</div>
+                <div class="tab-filter">
+                    <input id="tab-id" type="number" placeholder="tabId (optional)" />
+                    <button id="btn-load-tab" class="btn">Load Tab</button>
+                </div>
+                <div class="hint" id="tab-hint">Empty = global</div>
+                <div class="status" id="debug-status"></div>
+            </div>
+        </section>
+
+        <section class="history">
+            <div class="history-header">
+                <div class="history-title">History (max 50)</div>
+                <div class="history-count" id="history-count">0 events</div>
+            </div>
+            <ul id="history-list" class="history-list"></ul>
+        </section>
+    </div>
+
+    <script src="debug.js"></script>
+</body>
+
+</html>

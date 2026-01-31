@@ -1,4 +1,14 @@
+const atomMsg = (key, substitutions, fallback) => {
+    if (window.AtomI18n) {
+        return window.AtomI18n.getMessage(key, substitutions, fallback);
+    }
+    return chrome.i18n.getMessage(key, substitutions) || fallback || key;
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
+    if (window.AtomI18n) {
+        await window.AtomI18n.init();
+    }
     const domainLabel = document.getElementById('current-domain');
     const btnToggleSafe = document.getElementById('btn-toggle-safe');
     const btnJournal = document.getElementById('btn-journal');
@@ -7,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnClear = document.getElementById('btn-clear');
     const btnWeb = document.getElementById('btn-website');
     const btnReportBug = document.getElementById('btn-report-bug');
+    const btnDebug = document.getElementById('btn-debug-panel');
     const updateBanner = document.getElementById('update-banner');
 
     // Check for Store update and show banner
@@ -15,12 +26,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Display current sensitivity mode
     displaySensitivityMode();
 
+    // Show debug panel link only when debug_mode is enabled
+    if (btnDebug) {
+        const debugState = await chrome.storage.local.get(['debug_mode']);
+        if (debugState.debug_mode) {
+            btnDebug.style.display = 'inline-flex';
+            btnDebug.addEventListener('click', () => {
+                chrome.tabs.create({ url: chrome.runtime.getURL('debug.html') });
+            });
+        }
+    }
+
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
     if (tab && tab.url) {
         try {
             if (tab.url.startsWith('chrome://') || tab.url.startsWith('edge://') || tab.url.startsWith('about:') || tab.url.startsWith('chrome-extension://')) {
-                domainLabel.innerText = chrome.i18n.getMessage("pop_system_page");
+                domainLabel.innerText = atomMsg("pop_system_page");
                 if (btnToggleSafe) btnToggleSafe.style.display = 'none';
             } else {
                 const urlObj = new URL(tab.url);
@@ -29,11 +51,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 checkSafeZoneStatus(currentDomain);
             }
         } catch (e) {
-            domainLabel.innerText = chrome.i18n.getMessage("pop_unknown_page");
+            domainLabel.innerText = atomMsg("pop_unknown_page");
             if (btnToggleSafe) btnToggleSafe.style.display = 'none';
         }
     } else {
-        domainLabel.innerText = "No Active Tab";
+        domainLabel.innerText = atomMsg("popup_no_active_tab");
         if (btnToggleSafe) btnToggleSafe.style.display = 'none';
     }
 
@@ -78,18 +100,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (isSafe) {
             btnToggleSafe.className = "btn-toggle-status active";
-            btnToggleSafe.innerHTML = iconCompass + chrome.i18n.getMessage("pop_btn_safe_remove_new");
+            btnToggleSafe.innerHTML = iconCompass + atomMsg("pop_btn_safe_remove_new");
             if (statusDot) statusDot.classList.add('active');
             if (statusText) {
-                statusText.innerText = chrome.i18n.getMessage("pop_status_off");
+                statusText.innerText = atomMsg("pop_status_off");
                 statusText.style.color = "var(--muted)";
             }
         } else {
             btnToggleSafe.className = "btn-toggle-status";
-            btnToggleSafe.innerHTML = iconBan + chrome.i18n.getMessage("pop_btn_safe_add_new");
+            btnToggleSafe.innerHTML = iconBan + atomMsg("pop_btn_safe_add_new");
             if (statusDot) statusDot.classList.remove('active');
             if (statusText) {
-                statusText.innerText = chrome.i18n.getMessage("pop_status_running");
+                statusText.innerText = atomMsg("pop_status_running");
                 statusText.style.color = "var(--primary)";
             }
         }
@@ -98,6 +120,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btnJournal) {
         btnJournal.addEventListener('click', () => {
             chrome.tabs.create({ url: 'journal.html' });
+        });
+    }
+
+    const btnMemory = document.getElementById('btn-memory');
+    if (btnMemory) {
+        btnMemory.addEventListener('click', () => {
+            chrome.tabs.create({ url: 'memory.html' });
         });
     }
 
@@ -114,14 +143,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btnExport) {
         btnExport.addEventListener('click', async () => {
             const originalText = btnExport.innerText;
-            btnExport.innerText = chrome.i18n.getMessage("popup_msg_packing");
+            btnExport.innerText = atomMsg("popup_msg_packing");
             try {
                 const data = await chrome.storage.local.get(null);
                 const exportData = {
                     _meta: {
                         exported_at: new Date().toISOString(),
                         user_agent: navigator.userAgent,
-                        version: "1.4.9"
+                        version: chrome.runtime.getManifest().version
                     },
                     ...data
                 };
@@ -136,18 +165,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                btnExport.innerText = chrome.i18n.getMessage("popup_msg_downloaded");
+                btnExport.innerText = atomMsg("popup_msg_downloaded");
                 setTimeout(() => { btnExport.innerText = originalText; }, 2000);
             } catch (err) {
                 console.error(err);
-                btnExport.innerText = chrome.i18n.getMessage("popup_msg_error") + err.message;
+                btnExport.innerText = atomMsg("popup_msg_error") + err.message;
             }
         });
     }
 
     if (btnClear) {
         btnClear.addEventListener('click', async () => {
-            const confirmMsg = chrome.i18n.getMessage("popup_confirm_reset");
+            const confirmMsg = atomMsg("popup_confirm_reset");
             if (confirm(confirmMsg)) {
                 await chrome.storage.local.clear();
                 chrome.runtime.reload();
@@ -207,14 +236,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // Set label text with multiplier info if not 1.0
                 const modeLabels = {
-                    gentle: 'Gentle',
-                    balanced: 'Balanced',
-                    strict: 'Strict'
+                    gentle: atomMsg('opt_sens_gentle_title'),
+                    balanced: atomMsg('opt_sens_balanced_title'),
+                    strict: atomMsg('opt_sens_strict_title')
                 };
 
-                let labelText = modeLabels[sensitivity] || 'Balanced';
+                let labelText = modeLabels[sensitivity] || atomMsg('opt_sens_balanced_title');
                 if (multiplier !== 1.0) {
-                    labelText += ` ×${multiplier.toFixed(1)}`;
+                    labelText += ` x${multiplier.toFixed(1)}`;
                 }
                 label.innerText = labelText;
             }
@@ -223,4 +252,116 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    const elStatus = document.getElementById("focus-status");
+    const btnStart = document.getElementById("focus-start");
+    const btnStop = document.getElementById("focus-stop");
+    const btnReset = document.getElementById("focus-reset");
+    const inWork = document.getElementById("focus-work");
+    const breakPreview = document.getElementById("focus-break-preview");
+
+    // Tự động tính Break = 1/5 Focus time
+    function calcBreak(workMin) {
+        return Math.ceil(workMin / 5);
+    }
+
+    // Cập nhật preview Break khi user nhập Focus time
+    function updateBreakPreview() {
+        const w = Number(inWork?.value || 0);
+        if (w > 0 && breakPreview) {
+            breakPreview.textContent = `${calcBreak(w)}m`;
+        } else if (breakPreview) {
+            breakPreview.textContent = "-";
+        }
+    }
+
+    if (inWork) {
+        inWork.addEventListener("input", updateBreakPreview);
+    }
+
+    function fmt(ms) {
+        const s = Math.max(0, Math.floor(ms / 1000));
+        const mm = String(Math.floor(s / 60)).padStart(2, "0");
+        const ss = String(s % 60).padStart(2, "0");
+        return `${mm}:${ss}`;
+    }
+
+    async function getFocusState() {
+        const resp = await chrome.runtime.sendMessage({ type: "FOCUS_GET_STATE" });
+        return resp?.atom_focus_state || null;
+    }
+
+    function renderFocus(st) {
+        if (!elStatus) return;
+        if (!st?.enabled) {
+            elStatus.textContent = "Focus: OFF";
+            if (btnStart) btnStart.style.display = "inline-flex";
+            if (btnStop) btnStop.style.display = "none";
+            if (btnReset) btnReset.style.display = "none";
+            return;
+        }
+        const now = Date.now();
+        elStatus.textContent = `${st.phase} còn ${fmt(st.phaseEndsAt - now)}`;
+        if (btnStart) btnStart.style.display = "none";
+        if (btnStop) btnStop.style.display = "inline-flex";
+        if (btnReset) btnReset.style.display = "inline-flex";
+    }
+
+    async function startFocus(workMin, breakMin) {
+        await chrome.runtime.sendMessage({ type: "FOCUS_START", payload: { workMin, breakMin } });
+        const st = await getFocusState();
+        renderFocus(st);
+    }
+
+    async function stopFocus() {
+        await chrome.runtime.sendMessage({ type: "FOCUS_STOP" });
+        const st = await getFocusState();
+        renderFocus(st);
+    }
+
+    if (btnStart) btnStart.onclick = async () => {
+        const w = Number(inWork?.value || 25);
+        const b = calcBreak(w); // Tự động tính Break = Focus / 5
+        await startFocus(w, b);
+    };
+
+    if (btnStop) btnStop.onclick = stopFocus;
+
+    if (btnReset) btnReset.onclick = async () => {
+        try {
+            await chrome.runtime.sendMessage({ type: "FOCUS_RESET_PHASE" });
+            const st = await getFocusState();
+            renderFocus(st);
+        } catch (e) {
+            console.warn("[ATOM] Popup reset failed:", e);
+        }
+    };
+
+    // Preset chỉ cần Focus time, Break tự động tính
+    const preset = (id, w) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.onclick = () => {
+            if (inWork) inWork.value = w;
+            updateBreakPreview();
+            startFocus(w, calcBreak(w));
+        };
+    };
+    preset("focus-preset-10", 10);
+    preset("focus-preset-25", 25);
+    preset("focus-preset-30", 30);
+    preset("focus-preset-40", 40);
+    preset("focus-preset-50", 50);
+
+    let focusUiTimer = null;
+    (async () => {
+        const st = await getFocusState();
+        renderFocus(st);
+        clearInterval(focusUiTimer);
+        focusUiTimer = setInterval(async () => {
+            const st2 = await getFocusState();
+            renderFocus(st2);
+        }, 1000);
+    })();
+
 });
+

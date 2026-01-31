@@ -1,3 +1,8 @@
+import { initI18n, getMessage as atomGetMessage } from './i18n_bridge.js';
+
+const i18nReady = initI18n();
+const atomMsg = (key, substitutions, fallback) => atomGetMessage(key, substitutions, fallback);
+
 export class MicroClosureRenderer {
   constructor() {
     this.container = null;
@@ -136,13 +141,13 @@ export class MicroClosureRenderer {
 
     wrapper.innerHTML = `
             ${payload.presence?.show_orb ? '<div class="atom-mini-orb"></div>' : ''}
-            <span class="atom-text">${payload.text || chrome.i18n.getMessage("micro_copy_1")}</span>
+            <span class="atom-text">${payload.text || atomMsg("micro_copy_1")}</span>
             <div class="atom-actions">
                 <button class="btn-secondary" id="atom-btn-snooze">
-                    ${payload.actions?.find(a => a.id === 'snooze_delay')?.label || chrome.i18n.getMessage("btn_snooze")}
+                    ${payload.actions?.find(a => a.id === 'snooze_delay')?.label || atomMsg("btn_snooze")}
                 </button>
                 <button class="btn-primary" id="atom-btn-stop">
-                    ${payload.actions?.find(a => a.id === 'finish_session')?.label || chrome.i18n.getMessage("btn_stop_session")}
+                    ${payload.actions?.find(a => a.id === 'finish_session')?.label || atomMsg("btn_stop_session")}
                 </button>
             </div>
         `;
@@ -349,3 +354,4 @@ export class MicroClosureRenderer {
     window.addEventListener('scroll', this.scrollListener, { passive: true });
   }
 }
+

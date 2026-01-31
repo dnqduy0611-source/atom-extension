@@ -158,6 +158,9 @@
   "opt_input_label": {
     "message": "Paste your Key here:"
   },
+  "opt_api_key_placeholder": {
+    "message": "AIzaSy..."
+  },
   "opt_sens_label": {
     "message": "Sensitivity Level:"
   },
@@ -179,11 +182,170 @@
   "opt_sens_strict_desc": {
     "message": "Intervene after ~1 min"
   },
+  "opt_lang_title": {
+    "message": "Language"
+  },
+  "opt_lang_desc": {
+    "message": "Match browser UI language or override per extension."
+  },
+  "opt_lang_auto": {
+    "message": "Auto (Chrome UI)"
+  },
+  "opt_lang_vi": {
+    "message": "Vietnamese"
+  },
+  "opt_lang_en": {
+    "message": "English"
+  },
   "opt_btn_save": {
     "message": "Save Settings"
   },
+  "opt_btn_saving": {
+    "message": "Saving..."
+  },
+  "opt_btn_saved": {
+    "message": "Saved"
+  },
   "opt_save_success": {
     "message": "Saved successfully!"
+  },
+  "opt_ai_pilot_title": {
+    "message": "AI Pilot"
+  },
+  "opt_ai_pilot_enable_title": {
+    "message": "Enable AI Pilot"
+  },
+  "opt_ai_pilot_enable_desc": {
+    "message": "Shadow/Assist/Primary modes"
+  },
+  "opt_ai_pilot_mode": {
+    "message": "Mode"
+  },
+  "opt_ai_pilot_mode_shadow": {
+    "message": "shadow"
+  },
+  "opt_ai_pilot_mode_assist": {
+    "message": "assist"
+  },
+  "opt_ai_pilot_mode_primary": {
+    "message": "primary"
+  },
+  "opt_ai_pilot_accuracy_level": {
+    "message": "Accuracy Level"
+  },
+  "opt_ai_pilot_accuracy_balanced": {
+    "message": "balanced"
+  },
+  "opt_ai_pilot_accuracy_high": {
+    "message": "high"
+  },
+  "opt_ai_pilot_min_confidence": {
+    "message": "Min Confidence"
+  },
+  "opt_ai_min_confidence_placeholder": {
+    "message": "0.65"
+  },
+  "opt_ai_pilot_timeout_ms": {
+    "message": "Timeout (ms)"
+  },
+  "opt_ai_timeout_placeholder": {
+    "message": "800"
+  },
+  "opt_ai_pilot_budget_per_day": {
+    "message": "Budget / day"
+  },
+  "opt_ai_budget_placeholder": {
+    "message": "200"
+  },
+  "opt_ai_pilot_provider": {
+    "message": "Provider"
+  },
+  "opt_ai_pilot_provider_gemini": {
+    "message": "gemini"
+  },
+  "opt_ai_pilot_provider_proxy": {
+    "message": "proxy"
+  },
+  "opt_ai_pilot_max_viewport_chars": {
+    "message": "Viewport max chars"
+  },
+  "opt_ai_max_viewport_placeholder": {
+    "message": "1200"
+  },
+  "opt_ai_pilot_max_selected_chars": {
+    "message": "Selected max chars"
+  },
+  "opt_ai_max_selected_placeholder": {
+    "message": "400"
+  },
+  "opt_ai_pilot_cache_ttl_ms": {
+    "message": "Cache TTL (ms)"
+  },
+  "opt_ai_cache_ttl_placeholder": {
+    "message": "15000"
+  },
+  "opt_ai_pilot_proxy_url": {
+    "message": "Proxy URL (optional)"
+  },
+  "opt_ai_proxy_placeholder": {
+    "message": "https://your-proxy/decide"
+  },
+  "opt_nlm_title": {
+    "message": "NotebookLM Bridge"
+  },
+  "opt_nlm_enable_title": {
+    "message": "Enable Bridge"
+  },
+  "opt_nlm_enable_desc": {
+    "message": "Copy clip and open NotebookLM for manual paste"
+  },
+  "opt_nlm_mode": {
+    "message": "Bridge Mode"
+  },
+  "opt_nlm_mode_ui_assisted": {
+    "message": "UI-Assisted (Recommended)"
+  },
+  "opt_nlm_mode_enterprise": {
+    "message": "Enterprise API (Coming Soon)"
+  },
+  "opt_nlm_mode_hint": {
+    "message": "UI-Assisted: copies to clipboard + opens NotebookLM for manual paste"
+  },
+  "opt_nlm_default_notebook": {
+    "message": "Default notebook"
+  },
+  "opt_nlm_default_placeholder": {
+    "message": "Inbox"
+  },
+  "opt_nlm_base_url": {
+    "message": "NotebookLM base URL"
+  },
+  "opt_nlm_base_placeholder": {
+    "message": "https://notebooklm.google.com"
+  },
+  "opt_nlm_allow_cloud": {
+    "message": "Allow cloud export"
+  },
+  "opt_nlm_pii_warning": {
+    "message": "PII warning"
+  },
+  "opt_nlm_export_max_chars": {
+    "message": "Max export characters"
+  },
+  "opt_nlm_export_max_chars_hint": {
+    "message": "0 = unlimited"
+  },
+  "opt_nlm_sensitive_domains": {
+    "message": "Sensitive domains (one per line)"
+  },
+  "opt_nlm_sensitive_placeholder": {
+    "message": "*.his.*\\n*.emr.*"
+  },
+  "opt_nlm_rules": {
+    "message": "Mapping rules (JSON)"
+  },
+  "opt_nlm_rules_placeholder": {
+    "message": "{\"byTag\":[{\"tag\":\"research\",\"notebookRef\":\"Research\"}]}"
   },
   "offline_quote_1": {
     "message": "Take a deep breath. The world can wait."
@@ -217,6 +379,9 @@
   },
   "popup_btn_journal": {
     "message": "Journal"
+  },
+  "popup_btn_memory": {
+    "message": "Memory"
   },
   "popup_msg_packing": {
     "message": "⏳ Packing..."
@@ -268,6 +433,9 @@
   },
   "jnl_label_ai": {
     "message": "ATOM RESPONSE"
+  },
+  "jnl_ai_waiting": {
+    "message": "..."
   },
   "jnl_no_note": {
     "message": "No note provided"
@@ -381,7 +549,13 @@
     "message": "✅ GitHub opened! Please click 'Submit new issue' to complete."
   },
   "bug_error": {
-    "message": "❌ Error occurred"
+    "message": "❌ Error: $1"
+  },
+  "bug_copy_error": {
+    "message": "❌ Failed to copy"
+  },
+  "bug_default_title": {
+    "message": "Bug Report"
   },
   "bug_copied": {
     "message": "✅ Report copied to clipboard!"
@@ -430,5 +604,407 @@
   },
   "bug_guide_tip": {
     "message": "Keep \"Include debug data\" checked - it helps us fix bugs faster!"
+  },
+  "bug_guide_tip_label": {
+    "message": "💡 Tip:"
+  },
+  "bug_debug_failed": {
+    "message": "Failed to collect debug data"
+  },
+  "bug_unknown": {
+    "message": "Unknown"
+  },
+  "bug_lang_override": {
+    "message": "$1 (override)"
+  },
+  "ctx_whitelist_domain": {
+    "message": "ATOM: Always ignore this site (Safe Zone)"
+  },
+  "ctx_reading_parent": {
+    "message": "ATOM: Active Reading"
+  },
+  "ctx_reading_summarize": {
+    "message": "Summarize this selection (2 sentences)"
+  },
+  "ctx_reading_critique": {
+    "message": "Critique / weak points"
+  },
+  "ctx_reading_quiz": {
+    "message": "Create 3 recall questions"
+  },
+  "reading_card_title": {
+    "message": "ATOM - Active Reading"
+  },
+  "reading_card_key_points": {
+    "message": "Key points"
+  },
+  "reading_card_questions": {
+    "message": "Questions"
+  },
+  "reading_card_answer_placeholder": {
+    "message": "Type your answer..."
+  },
+  "reading_card_eval_title": {
+    "message": "Evaluation"
+  },
+  "reading_card_eval_action": {
+    "message": "Evaluate answers"
+  },
+  "reading_card_eval_pending": {
+    "message": "Evaluating..."
+  },
+  "reading_card_save": {
+    "message": "Save"
+  },
+  "reading_card_saved": {
+    "message": "Saved"
+  },
+  "reading_card_open_vault": {
+    "message": "Open Vault"
+  },
+  "reading_card_summary_fallback": {
+    "message": "No summary available."
+  },
+  "reading_vault_title": {
+    "message": "ATOM - Reading Vault"
+  },
+  "reading_vault_empty": {
+    "message": "No reading notes yet."
+  },
+  "reading_vault_open_nlm": {
+    "message": "Open NotebookLM"
+  },
+  "reading_vault_retry_nlm": {
+    "message": "Retry export"
+  },
+  "reading_vault_copy_question": {
+    "message": "Copy question"
+  },
+  "reading_vault_generate_question": {
+    "message": "Generate question"
+  },
+  "reading_vault_generating": {
+    "message": "Generating..."
+  },
+  "reading_vault_generate_failed": {
+    "message": "Failed"
+  },
+  "reading_vault_generate_disabled": {
+    "message": "API key required"
+  },
+  "nlm_pii_title": {
+    "message": "Potential sensitive data detected"
+  },
+  "nlm_pii_desc": {
+    "message": "This clip may contain sensitive information. Export anyway?"
+  },
+  "nlm_pii_type_email": {
+    "message": "Email"
+  },
+  "nlm_pii_type_phone": {
+    "message": "Phone"
+  },
+  "nlm_pii_type_id": {
+    "message": "ID"
+  },
+  "nlm_pii_type_unknown": {
+    "message": "Sensitive data"
+  },
+  "nlm_pii_cancel": {
+    "message": "Cancel"
+  },
+  "nlm_pii_proceed": {
+    "message": "Proceed"
+  },
+  "nlm_toast_copied": {
+    "message": "Copied to clipboard"
+  },
+  "nlm_toast_opened": {
+    "message": "Opened NotebookLM"
+  },
+  "nlm_toast_failed": {
+    "message": "Action failed"
+  },
+  "nlm_toast_no_key": {
+    "message": "Missing Gemini API key"
+  },
+  "nlm_toast_generated": {
+    "message": "Question generated"
+  },
+  "nlm_retry_toast": {
+    "message": "Export pending. Click to retry."
+  },
+  "nlm_retry_cta": {
+    "message": "Retry now"
+  },
+  "nlm_idea_title": {
+    "message": "Start a new notebook?"
+  },
+  "nlm_idea_desc": {
+    "message": "You seem to be collecting ideas around this topic."
+  },
+  "nlm_idea_create": {
+    "message": "Create (Pending)"
+  },
+  "nlm_idea_open": {
+    "message": "Open NotebookLM"
+  },
+  "nlm_idea_not_now": {
+    "message": "Not now"
+  },
+  "nlm_idea_dont_ask": {
+    "message": "Don't ask again"
+  },
+  "nlm_idea_vault_title": {
+    "message": "Suggested notebooks"
+  },
+  "reading_mode_summary": {
+    "message": "Summary"
+  },
+  "reading_mode_critique": {
+    "message": "Critique"
+  },
+  "reading_mode_quiz": {
+    "message": "Quiz"
+  },
+  "reading_error_summary": {
+    "message": "ATOM hit an error analyzing this selection. Please try again."
+  },
+  "reading_cooldown_summary": {
+    "message": "Rate limit reached. Active Reading pauses for $1 seconds."
+  },
+  "tag_custom": {
+    "message": "+ Other..."
+  },
+  "tag_custom_placeholder": {
+    "message": "Type feeling..."
+  },
+  "focus_title": {
+    "message": "You are in Focus"
+  },
+  "focus_sub_blocked": {
+    "message": "This page is not in Safe Zone."
+  },
+  "focus_btn_back": {
+    "message": "Go back"
+  },
+  "focus_btn_allow_60": {
+    "message": "Allow 60s"
+  },
+  "focus_btn_allow_120": {
+    "message": "Allow 120s"
+  },
+  "focus_btn_add_safe": {
+    "message": "Add Safe Zone"
+  },
+  "focus_micro_text": {
+    "message": "I see you are trying to come back 🙂 Be gentle: return to Safe Zone, or request 60s with control."
+  },
+  "focus_timer_work": {
+    "message": "WORK left $1"
+  },
+  "focus_phase_work_end_title": {
+    "message": "Time's up!"
+  },
+  "focus_phase_work_end_msg": {
+    "message": "Work session finished. Take a break."
+  },
+  "focus_phase_break_end_title": {
+    "message": "Break's over!"
+  },
+  "focus_phase_break_end_msg": {
+    "message": "Ready to get back to work?"
+  },
+  "emoji_picker_more": {
+    "message": "+ More"
+  },
+  "emoji_cat_happy": {
+    "message": "Happy"
+  },
+  "emoji_cat_sad": {
+    "message": "Sad"
+  },
+  "emoji_cat_anxious": {
+    "message": "Anxious"
+  },
+  "emoji_cat_tired": {
+    "message": "Tired"
+  },
+  "emoji_cat_angry": {
+    "message": "Angry"
+  },
+  "emoji_cat_neutral": {
+    "message": "Neutral"
+  },
+  "opt_notif_title": {
+    "message": "Notifications"
+  },
+  "opt_notif_desc": {
+    "message": "Test and configure system notifications for Focus mode."
+  },
+  "opt_notif_test": {
+    "message": "Test Notification"
+  },
+  "opt_notif_chrome": {
+    "message": "Chrome Settings"
+  },
+  "opt_notif_sent": {
+    "message": "Notification sent! Check your system tray."
+  },
+  "opt_notif_error": {
+    "message": "Error sending notification"
+  },
+  "opt_notif_failed": {
+    "message": "Notification failed. Check settings."
+  },
+  "opt_notif_guide_title": {
+    "message": "📖 Troubleshooting Guide (click to expand)"
+  },
+  "opt_notif_guide_intro": {
+    "message": "If notifications aren't showing:"
+  },
+  "opt_notif_guide_1": {
+    "message": "<b>Windows:</b> Settings → System → Notifications → Chrome → ON"
+  },
+  "opt_notif_guide_2": {
+    "message": "<b>Focus Assist:</b> Turn OFF or set to Priority only"
+  },
+  "opt_notif_guide_3": {
+    "message": "<b>Chrome:</b> Click \"Chrome Settings\" above → Allow notifications"
+  },
+  "opt_notif_guide_4": {
+    "message": "<b>Restart:</b> Close and reopen Chrome after changes"
+  },
+  "opt_notif_test_title": {
+    "message": "ATOM - Test Notification"
+  },
+  "opt_notif_test_msg": {
+    "message": "If you see this, notifications are working normally!"
+  },
+  "opt_theme_toggle_title": {
+    "message": "Toggle Theme"
+  },
+  "popup_visit_website": {
+    "message": "Visit Website"
+  },
+  "popup_subtitle": {
+    "message": "Intelligent Attention Compass"
+  },
+  "popup_loading": {
+    "message": "Loading..."
+  },
+  "popup_checking": {
+    "message": "Checking..."
+  },
+  "popup_no_active_tab": {
+    "message": "No active tab"
+  },
+  "popup_focus_session": {
+    "message": "Focus Session"
+  },
+  "popup_focus_placeholder": {
+    "message": "Focus (min)"
+  },
+  "popup_break_label": {
+    "message": "→ Break:"
+  },
+  "popup_focus_start": {
+    "message": "Start"
+  },
+  "popup_focus_stop": {
+    "message": "Stop"
+  },
+  "popup_export_title": {
+    "message": "Export Data"
+  },
+  "popup_report_bug_title": {
+    "message": "Report Bug"
+  },
+  "popup_reset_title": {
+    "message": "Reset Data"
+  },
+  "bug_info_version": {
+    "message": "Version"
+  },
+  "bug_info_browser": {
+    "message": "Browser"
+  },
+  "bug_info_os": {
+    "message": "OS"
+  },
+  "bug_info_language": {
+    "message": "Language"
+  },
+  "bug_guide_example": {
+    "message": "1. Open YouTube<br>2. Scroll for 5 minutes<br>3. No intervention appeared"
+  },
+  "focus_btn_reset": {
+    "message": "Reset Timer"
+  },
+  "mem_title": {
+    "message": "ATOM Memory"
+  },
+  "mem_desc": {
+    "message": "Your reading traces and knowledge exports"
+  },
+  "mem_stat_total": {
+    "message": "Total Notes"
+  },
+  "mem_stat_exported": {
+    "message": "Exported to NLM"
+  },
+  "mem_stat_week": {
+    "message": "This Week"
+  },
+  "mem_search_placeholder": {
+    "message": "Search notes..."
+  },
+  "mem_filter_all": {
+    "message": "All"
+  },
+  "mem_filter_exported": {
+    "message": "Exported"
+  },
+  "mem_filter_not_exported": {
+    "message": "Not Exported"
+  },
+  "mem_empty_title": {
+    "message": "No notes found"
+  },
+  "mem_empty_desc": {
+    "message": "Start reading and saving highlights to build your memory."
+  },
+  "mem_ai_insight": {
+    "message": "AI Insight"
+  },
+  "mem_exported_to": {
+    "message": "Exported to"
+  },
+  "mem_btn_open_nlm": {
+    "message": "Open in NotebookLM"
+  },
+  "mem_btn_copy_question": {
+    "message": "Copy Question"
+  },
+  "mem_btn_copy": {
+    "message": "Copy"
+  },
+  "mem_btn_source": {
+    "message": "Source"
+  },
+  "mem_prev": {
+    "message": "Previous"
+  },
+  "mem_next": {
+    "message": "Next"
+  },
+  "mem_toast_opened_nlm": {
+    "message": "Opened NotebookLM"
+  },
+  "mem_toast_copied_question": {
+    "message": "Question copied!"
+  },
+  "mem_toast_copied": {
+    "message": "Copied to clipboard!"
   }
 }

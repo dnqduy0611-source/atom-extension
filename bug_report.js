@@ -1,5 +1,12 @@
 // bug_report.js - Bug Report Logic with GitHub Integration
 
+const atomMsg = (key, substitutions, fallback) => {
+    if (window.AtomI18n) {
+        return window.AtomI18n.getMessage(key, substitutions, fallback);
+    }
+    return chrome.i18n.getMessage(key, substitutions) || fallback || key;
+};
+
 // ========================================
 // 🔧 CONFIGURATION - YOUR GITHUB REPO
 // ========================================
@@ -10,6 +17,9 @@ const GITHUB_ISSUES_URL = `https://github.com/${GITHUB_REPO}/issues/new`;
 // INITIALIZATION
 // ========================================
 document.addEventListener('DOMContentLoaded', async () => {
+    if (window.AtomI18n) {
+        await window.AtomI18n.init();
+    }
     // 1. Collect and display system info
     await collectSystemInfo();
 
@@ -33,7 +43,7 @@ async function collectSystemInfo() {
 
     // Browser info
     const ua = navigator.userAgent;
-    let browser = 'Unknown';
+    let browser = atomMsg('bug_unknown');
     if (ua.includes('Chrome/')) {
         const match = ua.match(/Chrome\/(\d+)/);
         browser = match ? `Chrome ${match[1]}` : 'Chrome';
@@ -47,7 +57,7 @@ async function collectSystemInfo() {
     document.getElementById('info-browser').textContent = browser;
 
     // OS info
-    let os = 'Unknown';
+    let os = atomMsg('bug_unknown');
     if (ua.includes('Windows')) os = 'Windows';
     else if (ua.includes('Mac OS')) os = 'macOS';
     else if (ua.includes('Linux')) os = 'Linux';
@@ -56,7 +66,11 @@ async function collectSystemInfo() {
     document.getElementById('info-os').textContent = os;
 
     // Language
-    document.getElementById('info-lang').textContent = chrome.i18n.getUILanguage();
+    const data = await chrome.storage.local.get(['atom_ui_language']);
+    const override = data.atom_ui_language || 'auto';
+    const uiLang = override === 'auto' ? chrome.i18n.getUILanguage() : override;
+    const label = override === 'auto' ? uiLang : atomMsg('bug_lang_override', [uiLang]);
+    document.getElementById('info-lang').textContent = label;
 
     // Try to get current tab URL
     try {
@@ -91,7 +105,7 @@ async function collectDebugData() {
             recent_events: (data.atom_events || []).slice(-15)
         };
     } catch (e) {
-        return { error: 'Failed to collect debug data' };
+        return { error: atomMsg('bug_debug_failed') };
     }
 }
 
@@ -179,7 +193,7 @@ function setupFormHandlers() {
         e.preventDefault();
 
         btnSubmit.disabled = true;
-        btnSubmit.innerHTML = '<span>' + (chrome.i18n.getMessage('bug_submitting') || 'Opening GitHub...') + '</span>';
+        btnSubmit.innerHTML = '<span>' + atomMsg('bug_submitting') + '</span>';
 
         try {
             const title = document.getElementById('bug-title').value.trim();
@@ -211,19 +225,19 @@ function setupFormHandlers() {
 
             // Show success
             statusMsg.className = 'status-msg success';
-            statusMsg.textContent = chrome.i18n.getMessage('bug_success') || '✅ GitHub opened! Please click "Submit new issue" to complete.';
+            statusMsg.textContent = atomMsg('bug_success');
             statusMsg.style.display = 'block';
 
-            btnSubmit.innerHTML = '<span>' + (chrome.i18n.getMessage('bug_btn_submit') || 'Submit to GitHub') + '</span>';
+            btnSubmit.innerHTML = '<span>' + atomMsg('bug_btn_submit') + '</span>';
             btnSubmit.disabled = false;
 
         } catch (err) {
             console.error('Bug report error:', err);
             statusMsg.className = 'status-msg error';
-            statusMsg.textContent = chrome.i18n.getMessage('bug_error') || '❌ Error: ' + err.message;
+            statusMsg.textContent = atomMsg('bug_error', [err.message]);
             statusMsg.style.display = 'block';
 
-            btnSubmit.innerHTML = '<span>' + (chrome.i18n.getMessage('bug_btn_submit') || 'Submit to GitHub') + '</span>';
+            btnSubmit.innerHTML = '<span>' + atomMsg('bug_btn_submit') + '</span>';
             btnSubmit.disabled = false;
         }
     });
@@ -231,25 +245,26 @@ function setupFormHandlers() {
     // Copy to clipboard
     btnCopy.addEventListener('click', async () => {
         try {
-            const title = document.getElementById('bug-title').value.trim() || 'Bug Report';
+            const title = document.getElementById('bug-title').value.trim() || atomMsg('bug_default_title');
             const body = await buildIssueBody();
             const fullReport = `# ${title}\n\n${body}`;
 
             await navigator.clipboard.writeText(fullReport);
 
             statusMsg.className = 'status-msg success';
-            statusMsg.textContent = chrome.i18n.getMessage('bug_copied') || '✅ Report copied to clipboard!';
+            statusMsg.textContent = atomMsg('bug_copied');
             statusMsg.style.display = 'block';
 
-            btnCopy.textContent = chrome.i18n.getMessage('bug_copied_btn') || '✅ Copied!';
+            btnCopy.textContent = atomMsg('bug_copied_btn');
             setTimeout(() => {
-                btnCopy.innerHTML = '<span>' + (chrome.i18n.getMessage('bug_btn_copy') || 'Copy Report (for manual submission)') + '</span>';
+                btnCopy.innerHTML = '<span>' + atomMsg('bug_btn_copy') + '</span>';
             }, 2000);
 
         } catch (err) {
             statusMsg.className = 'status-msg error';
-            statusMsg.textContent = chrome.i18n.getMessage('bug_copy_error') || '❌ Failed to copy';
+            statusMsg.textContent = atomMsg('bug_copy_error');
             statusMsg.style.display = 'block';
         }
     });
 }
+

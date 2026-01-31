@@ -1,0 +1,464 @@
+Dưới đây là **bảng mapping chuẩn hoá** để dev chỉ cần viết 2 hàm:
+
+* `deriveRuleReasonCodes(state)` → trả `RULE_reason_codes[]`
+* `validateAiDecisionOutput(output, frame)` → validate schema + validate `ai_reason_codes` (và optionally “gợi ý” codes hợp lý theo frame)
+
+Mình viết theo kiểu **copy/paste được vào codebase** (background/ai_service).
+
+---
+
+# A) Mapping: rule signals → `RULE_reason_codes`
+
+## A1) “Rule state” tối thiểu nên truyền vào `deriveRuleReasonCodes(state)`
+
+Bạn gom vào một object (đặt tên tùy bạn):
+
+```js
+// ruleState (gợi ý)
+{
+  // URL / domain
+  isSystemUrl: boolean,
+  isWhitelisted: boolean,
+  isPrivacySensitiveDomain: boolean,
+
+  // Global intervention gates
+  snoozeActive: boolean,
+  cooldownAnyActive: boolean,
+  cooldownHardActive: boolean,
+
+  // Focus gates
+  focusEnabled: boolean,
+  focusPhase: "WORK"|"BREAK"|null,
+  focusAllowActive: boolean,
+  focusAllowExpired: boolean,
+  focusHardBlock: boolean, // (WORK + blocked + !allowActive)
+
+  // Zone & behavior metrics (rule-extracted)
+  zone: "green"|"yellow"|"red",
+  continuousScrollSec: number,
+  scrollPxPerSec: number,
+  idleSec: number,
+
+  // thresholds (tùy sensitivity)
+  th: {
+    redContinuousScrollSec: number,
+    redScrollPxPerSec: number,
+    redMaxIdleSec: number,
+    yellowContinuousScrollSec: number
+  },
+
+  // Escalation & resistance
+  resistanceScore: number,
+  ignoredStreak: number,
+  triggeredCount30m: number,
+  attemptCooldownOk: boolean,
+  hardEligibleCooldownOk: boolean,
+
+  // Profile / config
+  userSensitivity: "gentle"|"balanced"|"strict",
+
+  // Page-type heuristic (nếu rule có)
+  pageTypeRule: "feed"|"article"|"forum"|"doc"|"pdf"|"video"|"unknown"
+}
+```
+
+---
+
+## A2) Bảng mapping (ưu tiên từ “hard guardrail” → “soft reasons”)
+
+### Nhóm 1 — Guardrails (có thể “stop early”)
+
+| Điều kiện (rule signal)             | RULE_reason_code                      | Ghi chú                       |
+| ----------------------------------- | ------------------------------------- | ----------------------------- |
+| `focusHardBlock === true`           | `RULE_GUARD_FOCUS_HARD_BLOCK`         | **Hard override**: block ngay |
+| `isSystemUrl === true`              | `RULE_GUARD_SYSTEM_URL_SKIP`          | Không can thiệp               |
+| `isWhitelisted === true`            | `RULE_GUARD_WHITELIST_SKIP`           | Không can thiệp               |
+| `snoozeActive === true`             | `RULE_GUARD_SNOOZE_ACTIVE`            | Không can thiệp               |
+| `cooldownAnyActive === true`        | `RULE_GUARD_COOLDOWN_ACTIVE_ANY`      | Giảm spam                     |
+| `cooldownHardActive === true`       | `RULE_GUARD_COOLDOWN_ACTIVE_HARD`     | Không được hard               |
+| `isPrivacySensitiveDomain === true` | `RULE_GUARD_PRIVACY_SENSITIVE_DOMAIN` | (tuỳ policy)                  |
+
+> Quy tắc: nếu `RULE_GUARD_FOCUS_HARD_BLOCK` xuất hiện → thường **return ngay** (vì quyết định final đã rõ).
+
+---
+
+### Nhóm 2 — Zone classification
+
+| zone   | RULE_reason_code           |
+| ------ | -------------------------- |
+| green  | `RULE_ZONE_GREEN_SAFE`     |
+| yellow | `RULE_ZONE_YELLOW_SUSPECT` |
+| red    | `RULE_ZONE_RED_SCROLL`     |
+
+---
+
+### Nhóm 3 — Red/Yellow subreasons (từ metric vs threshold)
+
+| Điều kiện                                                                | RULE_reason_code                     |
+| ------------------------------------------------------------------------ | ------------------------------------ |
+| `zone==="red" && continuousScrollSec >= th.redContinuousScrollSec`       | `RULE_RED_ZONE_CONTINUOUS_SCROLL`    |
+| `zone==="red" && scrollPxPerSec >= th.redScrollPxPerSec`                 | `RULE_RED_ZONE_HIGH_SCROLL_VELOCITY` |
+| `zone==="red" && idleSec <= th.redMaxIdleSec`                            | `RULE_RED_ZONE_LOW_IDLE`             |
+| `zone==="yellow" && continuousScrollSec >= th.yellowContinuousScrollSec` | `RULE_YELLOW_ZONE_MEDIUM_PATTERN`    |
+
+---
+
+### Nhóm 4 — Escalation / resistance
+
+| Điều kiện                                                 | RULE_reason_code                       |
+| --------------------------------------------------------- | -------------------------------------- |
+| `resistanceScore >= 70` (gợi ý)                           | `RULE_HIGH_RESISTANCE_SCORE`           |
+| `ignoredStreak >= 3` (gợi ý)                              | `RULE_IGNORED_STREAK_HIGH`             |
+| `triggeredCount30m >= 3` (gợi ý)                          | `RULE_TRIGGER_COUNT_HIGH_30M`          |
+| `attemptCooldownOk === true`                              | `RULE_ATTEMPT_COOLDOWN_OK`             |
+| `hardEligibleCooldownOk === true`                         | `RULE_HARD_ELIGIBLE_COOLDOWN_OK`       |
+| `hardEligibleCooldownOk === false` (nhưng rule muốn hard) | `RULE_HARD_BLOCKED_BY_COOLDOWN`        |
+| `userSensitivity === "gentle"` (và rule downgrade)        | `RULE_DOWNGRADE_DUE_TO_GENTLE_PROFILE` |
+
+> Bạn tùy chỉnh ngưỡng (70/3/3) theo logic hiện có của ATOM.
+
+---
+
+### Nhóm 5 — Focus subsystem details (để debug)
+
+| Điều kiện                                       | RULE_reason_code              |
+| ----------------------------------------------- | ----------------------------- |
+| `focusEnabled === true && focusPhase==="WORK"`  | `RULE_FOCUS_PHASE_WORK`       |
+| `focusEnabled === true && focusPhase==="BREAK"` | `RULE_FOCUS_PHASE_BREAK`      |
+| `focusAllowActive === true`                     | `RULE_FOCUS_ALLOW_ACTIVE`     |
+| `focusAllowExpired === true`                    | `RULE_FOCUS_ALLOW_EXPIRED`    |
+| Khi ghi nhận attempt                            | `RULE_FOCUS_ATTEMPT_RECORDED` |
+
+---
+
+### Nhóm 6 — Page-type heuristic (nếu rule có)
+
+| pageTypeRule | RULE_reason_code                                                          |
+| ------------ | ------------------------------------------------------------------------- |
+| feed         | `RULE_PAGE_FEED_LIKELY`                                                   |
+| article      | `RULE_PAGE_ARTICLE_LIKELY`                                                |
+| forum        | `RULE_PAGE_FORUM_LIKELY`                                                  |
+| doc          | `RULE_PAGE_DOC_LIKELY` *(nếu bạn muốn thêm; hoặc dùng RULE_PAGE_UNKNOWN)* |
+| pdf          | `RULE_PAGE_PDF_LIKELY`                                                    |
+| video        | `RULE_PAGE_VIDEO_LIKELY`                                                  |
+| unknown      | `RULE_PAGE_UNKNOWN`                                                       |
+
+---
+
+## A3) Hàm `deriveRuleReasonCodes(state)` (JS skeleton)
+
+```js
+const uniqPush = (arr, code) => { if (!arr.includes(code)) arr.push(code); };
+
+export function deriveRuleReasonCodes(s) {
+  const codes = [];
+
+  // 1) Guardrails
+  if (s.focusHardBlock) {
+    uniqPush(codes, "RULE_GUARD_FOCUS_HARD_BLOCK");
+    // Optional: add focus context too
+    if (s.focusEnabled && s.focusPhase === "WORK") uniqPush(codes, "RULE_FOCUS_PHASE_WORK");
+    if (s.focusAllowExpired) uniqPush(codes, "RULE_FOCUS_ALLOW_EXPIRED");
+    return codes; // hard stop early
+  }
+
+  if (s.isSystemUrl) uniqPush(codes, "RULE_GUARD_SYSTEM_URL_SKIP");
+  if (s.isWhitelisted) uniqPush(codes, "RULE_GUARD_WHITELIST_SKIP");
+  if (s.isPrivacySensitiveDomain) uniqPush(codes, "RULE_GUARD_PRIVACY_SENSITIVE_DOMAIN");
+  if (s.snoozeActive) uniqPush(codes, "RULE_GUARD_SNOOZE_ACTIVE");
+  if (s.cooldownAnyActive) uniqPush(codes, "RULE_GUARD_COOLDOWN_ACTIVE_ANY");
+  if (s.cooldownHardActive) uniqPush(codes, "RULE_GUARD_COOLDOWN_ACTIVE_HARD");
+
+  // 2) Focus details (soft)
+  if (s.focusEnabled && s.focusPhase === "WORK") uniqPush(codes, "RULE_FOCUS_PHASE_WORK");
+  if (s.focusEnabled && s.focusPhase === "BREAK") uniqPush(codes, "RULE_FOCUS_PHASE_BREAK");
+  if (s.focusAllowActive) uniqPush(codes, "RULE_FOCUS_ALLOW_ACTIVE");
+  if (s.focusAllowExpired) uniqPush(codes, "RULE_FOCUS_ALLOW_EXPIRED");
+
+  // 3) Zone
+  if (s.zone === "green") uniqPush(codes, "RULE_ZONE_GREEN_SAFE");
+  if (s.zone === "yellow") uniqPush(codes, "RULE_ZONE_YELLOW_SUSPECT");
+  if (s.zone === "red") uniqPush(codes, "RULE_ZONE_RED_SCROLL");
+
+  // 4) Zone subreasons
+  if (s.zone === "red") {
+    if (s.continuousScrollSec >= s.th.redContinuousScrollSec) uniqPush(codes, "RULE_RED_ZONE_CONTINUOUS_SCROLL");
+    if (s.scrollPxPerSec >= s.th.redScrollPxPerSec) uniqPush(codes, "RULE_RED_ZONE_HIGH_SCROLL_VELOCITY");
+    if (s.idleSec <= s.th.redMaxIdleSec) uniqPush(codes, "RULE_RED_ZONE_LOW_IDLE");
+  } else if (s.zone === "yellow") {
+    if (s.continuousScrollSec >= s.th.yellowContinuousScrollSec) uniqPush(codes, "RULE_YELLOW_ZONE_MEDIUM_PATTERN");
+  }
+
+  // 5) Escalation
+  if (typeof s.resistanceScore === "number" && s.resistanceScore >= 70) uniqPush(codes, "RULE_HIGH_RESISTANCE_SCORE");
+  if (typeof s.ignoredStreak === "number" && s.ignoredStreak >= 3) uniqPush(codes, "RULE_IGNORED_STREAK_HIGH");
+  if (typeof s.triggeredCount30m === "number" && s.triggeredCount30m >= 3) uniqPush(codes, "RULE_TRIGGER_COUNT_HIGH_30M");
+  if (s.attemptCooldownOk) uniqPush(codes, "RULE_ATTEMPT_COOLDOWN_OK");
+  if (s.hardEligibleCooldownOk) uniqPush(codes, "RULE_HARD_ELIGIBLE_COOLDOWN_OK");
+
+  // 6) Sensitivity downgrade (nếu có logic downgrade)
+  if (s.userSensitivity === "gentle" && s.zone !== "green") {
+    // chỉ add khi bạn thật sự có bước downgrade trong selection
+    uniqPush(codes, "RULE_DOWNGRADE_DUE_TO_GENTLE_PROFILE");
+  }
+
+  // 7) Page type
+  switch (s.pageTypeRule) {
+    case "feed": uniqPush(codes, "RULE_PAGE_FEED_LIKELY"); break;
+    case "article": uniqPush(codes, "RULE_PAGE_ARTICLE_LIKELY"); break;
+    case "forum": uniqPush(codes, "RULE_PAGE_FORUM_LIKELY"); break;
+    case "pdf": uniqPush(codes, "RULE_PAGE_PDF_LIKELY"); break;
+    case "video": uniqPush(codes, "RULE_PAGE_VIDEO_LIKELY"); break;
+    case "doc": uniqPush(codes, "RULE_PAGE_DOC_LIKELY"); break; // nếu bạn dùng
+    default: uniqPush(codes, "RULE_PAGE_UNKNOWN");
+  }
+
+  return codes;
+}
+```
+
+---
+
+# B) Mapping: frame features → `AI_reason_codes` (để validate & sanity-check)
+
+Quan trọng: **AI_reason_codes là do LLM tự chọn**. Việc mapping từ frame giúp bạn:
+
+1. Validate: code có nằm trong enum không
+2. Sanity-check: “frame này mà AI nói doomscroll nhưng không nêu AI_BEHAVIOR_CONTINUOUS_SCROLL_HIGH?” → flag để debug prompt/model.
+
+## B1) Enum chuẩn `AI_reason_codes`
+
+```js
+export const AI_REASON_CODES = new Set([
+  "AI_PAGE_FEED_INFINITE",
+  "AI_PAGE_VIDEO_SHORTS",
+  "AI_PAGE_ARTICLE_DENSE",
+  "AI_PAGE_FORUM_THREAD",
+  "AI_TEXT_ANALYTICAL_GUIDE",
+  "AI_TEXT_ENTERTAINMENT_BUT_STRUCTURED",
+  "AI_TEXT_LOW_SIGNAL_NO_CONTEXT",
+  "AI_BEHAVIOR_CONTINUOUS_SCROLL_HIGH",
+  "AI_BEHAVIOR_DWELL_DEEP",
+  "AI_BEHAVIOR_SCROLL_BACK_REREAD",
+  "AI_ACTION_FIND_USED",
+  "AI_ACTION_SELECT_COPY_USED",
+  "AI_ACTION_OPEN_RELATED_LINKS",
+  "AI_ACTION_NAV_BACK_FORWARD",
+  "AI_INTENT_HIGH_TOPIC_COHERENCE",
+  "AI_COMPULSION_HIGH_FAST_REFRESH",
+  "AI_MIXED_ENJOYMENT_WITH_PULL",
+  "AI_LOW_CONFIDENCE_AMBIGUOUS"
+]);
+```
+
+---
+
+## B2) Mapping table: frame → “expected/suggested AI codes”
+
+### Nhóm Page / Content
+
+| Frame feature                                                            | Suggested AI code                      |
+| ------------------------------------------------------------------------ | -------------------------------------- |
+| `page.pageType==="feed"` hoặc `page.isInfiniteScrollLikely===true`       | `AI_PAGE_FEED_INFINITE`                |
+| `page.pageType==="video"` hoặc `page.hasVideoLikely===true`              | `AI_PAGE_VIDEO_SHORTS`                 |
+| `page.pageType==="article"` và `wordCountApprox` cao (vd > 800)          | `AI_PAGE_ARTICLE_DENSE`                |
+| `page.pageType==="forum"`                                                | `AI_PAGE_FORUM_THREAD`                 |
+| snippet/heading có từ khoá kiểu hướng dẫn/phân tích (heuristic optional) | `AI_TEXT_ANALYTICAL_GUIDE`             |
+| snippet có dấu hiệu giải trí có cấu trúc (review dài, longform story)    | `AI_TEXT_ENTERTAINMENT_BUT_STRUCTURED` |
+| `snippet.viewportTextChars < 200` và `selectedTextChars==0`              | `AI_TEXT_LOW_SIGNAL_NO_CONTEXT`        |
+
+> “từ khoá” chỉ là heuristic nhẹ để sanity-check, không bắt buộc.
+
+### Nhóm Behavior
+
+| Frame feature                                    | Suggested AI code                    |
+| ------------------------------------------------ | ------------------------------------ |
+| `behavior_60s.continuousScrollSec` cao (vd > 20) | `AI_BEHAVIOR_CONTINUOUS_SCROLL_HIGH` |
+| `behavior_60s.dwellP90Ms` cao (vd > 4500ms)      | `AI_BEHAVIOR_DWELL_DEEP`             |
+| `behavior_60s.scrollBackEvents >= 1`             | `AI_BEHAVIOR_SCROLL_BACK_REREAD`     |
+
+### Nhóm Actions
+
+| Frame feature                              | Suggested AI code              |
+| ------------------------------------------ | ------------------------------ |
+| `actions_60s.findCount >= 1`               | `AI_ACTION_FIND_USED`          |
+| `actions_60s.selectCount + copyCount >= 1` | `AI_ACTION_SELECT_COPY_USED`   |
+| `actions_60s.openLinkCount >= 1`           | `AI_ACTION_OPEN_RELATED_LINKS` |
+| `actions_60s.backForwardCount >= 1`        | `AI_ACTION_NAV_BACK_FORWARD`   |
+
+### Nhóm Meta inference (sanity-check dựa trên output AI)
+
+| Nếu AI output nói…         | Suggested AI code                                                               |
+| -------------------------- | ------------------------------------------------------------------------------- |
+| `intent_score >= 0.7`      | `AI_INTENT_HIGH_TOPIC_COHERENCE` *(thường nên có 1 code giải thích intent cao)* |
+| `compulsion_score >= 0.75` | `AI_COMPULSION_HIGH_FAST_REFRESH` hoặc `AI_BEHAVIOR_CONTINUOUS_SCROLL_HIGH`     |
+| `mode==="mixed"`           | `AI_MIXED_ENJOYMENT_WITH_PULL`                                                  |
+| `confidence < 0.45`        | `AI_LOW_CONFIDENCE_AMBIGUOUS`                                                   |
+
+---
+
+## B3) Hàm derive “expected AI codes” từ frame (để sanity-check)
+
+```js
+export function deriveExpectedAiReasonCodes(frame, aiOut) {
+  const exp = new Set();
+
+  const page = frame?.page || {};
+  const snip = frame?.snippet || {};
+  const beh = frame?.behavior_60s || {};
+  const act = frame?.actions_60s || {};
+
+  // Page/content
+  if (page.pageType === "feed" || page.isInfiniteScrollLikely) exp.add("AI_PAGE_FEED_INFINITE");
+  if (page.pageType === "video" || page.hasVideoLikely) exp.add("AI_PAGE_VIDEO_SHORTS");
+  if (page.pageType === "article" && (page.wordCountApprox || 0) > 800) exp.add("AI_PAGE_ARTICLE_DENSE");
+  if (page.pageType === "forum") exp.add("AI_PAGE_FORUM_THREAD");
+
+  if ((snip.viewportTextChars || 0) < 200 && (snip.selectedTextChars || 0) === 0) {
+    exp.add("AI_TEXT_LOW_SIGNAL_NO_CONTEXT");
+  }
+
+  // Behavior
+  if ((beh.continuousScrollSec || 0) > 20) exp.add("AI_BEHAVIOR_CONTINUOUS_SCROLL_HIGH");
+  if ((beh.dwellP90Ms || 0) > 4500) exp.add("AI_BEHAVIOR_DWELL_DEEP");
+  if ((beh.scrollBackEvents || 0) >= 1) exp.add("AI_BEHAVIOR_SCROLL_BACK_REREAD");
+
+  // Actions
+  if ((act.findCount || 0) >= 1) exp.add("AI_ACTION_FIND_USED");
+  if (((act.selectCount || 0) + (act.copyCount || 0)) >= 1) exp.add("AI_ACTION_SELECT_COPY_USED");
+  if ((act.openLinkCount || 0) >= 1) exp.add("AI_ACTION_OPEN_RELATED_LINKS");
+  if ((act.backForwardCount || 0) >= 1) exp.add("AI_ACTION_NAV_BACK_FORWARD");
+
+  // Meta from AI output (optional)
+  if (aiOut) {
+    if ((aiOut.intent_score ?? 0) >= 0.7) exp.add("AI_INTENT_HIGH_TOPIC_COHERENCE");
+    if ((aiOut.compulsion_score ?? 0) >= 0.75) exp.add("AI_COMPULSION_HIGH_FAST_REFRESH");
+    if (aiOut.mode === "mixed") exp.add("AI_MIXED_ENJOYMENT_WITH_PULL");
+    if ((aiOut.confidence ?? 1) < 0.45) exp.add("AI_LOW_CONFIDENCE_AMBIGUOUS");
+  }
+
+  return [...exp];
+}
+```
+
+---
+
+# C) Hàm validate: `validateAiDecisionOutput(output, frame)`
+
+Mục tiêu:
+
+1. Validate schema (types/range/enums)
+2. Validate `ai_reason_codes` ∈ allowed set
+3. Trả về `{ ok, sanitized, errors, warnings, expectedCodes }`
+
+```js
+const RECOMMEND = new Set(["none", "presence", "micro", "gentle", "hard"]);
+const MODE = new Set(["intentional", "mixed", "doomscroll"]);
+const HARD_MODE = new Set(["BREATH", "TAP", "STILLNESS"]);
+
+function in01(x) { return typeof x === "number" && x >= 0 && x <= 1; }
+
+export function validateAiDecisionOutput(out, frame) {
+  const errors = [];
+  const warnings = [];
+
+  if (!out || typeof out !== "object") {
+    return { ok: false, sanitized: null, errors: ["AI_OUTPUT_NOT_OBJECT"], warnings };
+  }
+
+  // Required numeric scores
+  if (!in01(out.intent_score)) errors.push("AI_BAD_INTENT_SCORE");
+  if (!in01(out.compulsion_score)) errors.push("AI_BAD_COMPULSION_SCORE");
+  if (!in01(out.confidence)) errors.push("AI_BAD_CONFIDENCE");
+
+  // Enums
+  if (!MODE.has(out.mode)) errors.push("AI_BAD_MODE");
+  if (!RECOMMEND.has(out.recommend)) errors.push("AI_BAD_RECOMMEND");
+
+  // hard_mode
+  if (!(out.hard_mode === null || HARD_MODE.has(out.hard_mode))) errors.push("AI_BAD_HARD_MODE");
+
+  // cooldown_s
+  if (!Number.isInteger(out.cooldown_s) || out.cooldown_s < 0 || out.cooldown_s > 120) {
+    errors.push("AI_BAD_COOLDOWN");
+  }
+
+  // why_short
+  if (typeof out.why_short !== "string") errors.push("AI_BAD_WHY_TYPE");
+  else if (out.why_short.length > 140) errors.push("AI_WHY_TOO_LONG");
+
+  // ai_reason_codes
+  let codes = Array.isArray(out.ai_reason_codes) ? out.ai_reason_codes : null;
+  if (!codes) {
+    warnings.push("AI_MISSING_REASON_CODES");
+    codes = [];
+  }
+
+  const unknown = [];
+  const sanitizedCodes = [];
+  for (const c of codes) {
+    if (typeof c !== "string") continue;
+    if (!AI_REASON_CODES.has(c)) unknown.push(c);
+    else sanitizedCodes.push(c);
+  }
+
+  if (unknown.length) {
+    // tuỳ bạn: coi là error hay warning
+    warnings.push("AI_UNKNOWN_REASON_CODES:" + unknown.join(","));
+  }
+
+  // Optional sanity-check: expected codes from frame
+  const expectedCodes = deriveExpectedAiReasonCodes(frame, out);
+  // Nếu muốn strict hơn: cảnh báo khi thiếu các code “cực kỳ nên có”
+  if (out.mode === "doomscroll" && !sanitizedCodes.includes("AI_BEHAVIOR_CONTINUOUS_SCROLL_HIGH")) {
+    warnings.push("AI_DOOMSCROLL_WITHOUT_CONTINUOUS_SCROLL_CODE");
+  }
+  if (out.mode === "intentional" && out.intent_score >= 0.7 && !sanitizedCodes.includes("AI_BEHAVIOR_DWELL_DEEP")
+      && !sanitizedCodes.includes("AI_ACTION_FIND_USED") && !sanitizedCodes.includes("AI_ACTION_SELECT_COPY_USED")) {
+    warnings.push("AI_INTENT_HIGH_WITHOUT_ACTIVE_SIGNALS");
+  }
+  if (out.confidence < 0.45 && !sanitizedCodes.includes("AI_LOW_CONFIDENCE_AMBIGUOUS")) {
+    warnings.push("AI_LOW_CONFIDENCE_MISSING_AMBIGUOUS_CODE");
+  }
+
+  const sanitized = {
+    intent_score: out.intent_score,
+    compulsion_score: out.compulsion_score,
+    mode: out.mode,
+    confidence: out.confidence,
+    recommend: out.recommend,
+    hard_mode: out.hard_mode ?? null,
+    cooldown_s: out.cooldown_s,
+    why_short: out.why_short ?? "",
+    ai_reason_codes: sanitizedCodes
+  };
+
+  return {
+    ok: errors.length === 0,
+    sanitized,
+    errors,
+    warnings,
+    expectedCodes
+  };
+}
+```
+
+---
+
+# D) Mẹo nhỏ để log disagreement “đẹp”
+
+Trong log entry bạn lưu:
+
+* `rule.reason_codes` = output từ `deriveRuleReasonCodes(state)`
+* `ai.ai_reason_codes` = output đã sanitize từ `validateAiDecisionOutput`
+* `ai.expected_reason_codes` = `expectedCodes` (để audit/debug prompt)
+
+Nhờ vậy bạn sẽ trả lời được câu hỏi cực quan trọng khi distill:
+
+* “Rule hay sai ở loại trang nào?”
+* “AI hay downshift hard→gentle khi có tín hiệu chủ động nào?”
+* “AI confidence thấp thường rơi vào tình huống nào (snippet ngắn, unknown pageType, …)?”
+
+---
+
+Nếu bạn muốn mình có thể viết luôn 1 file `reason_codes.js` tập trung (enum + derive funcs + validation) và chỉ ra chỗ hook tối ưu trong `background.js/ai_service.js` của ATOM V5.7 (đúng luồng tick hiện tại) để dev nhét vào là chạy.

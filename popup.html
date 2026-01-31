@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>ATOM</title>
+    <title data-i18n="popup_title">ATOM</title>
     <link rel="stylesheet" href="ui_shared.css">
     <style>
         body {
@@ -282,13 +282,13 @@
 
 <body>
     <div class="header-controls">
-        <button class="icon-btn" id="btn-theme-toggle" title="Toggle Theme">
+        <button class="icon-btn" id="btn-theme-toggle" data-i18n-title="opt_theme_toggle_title" title="Toggle Theme">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
             </svg>
         </button>
-        <button class="icon-btn" id="btn-website" title="Visit Website">
+        <button class="icon-btn" id="btn-website" data-i18n-title="popup_visit_website" title="Visit Website">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10" />
@@ -305,10 +305,10 @@
 
     <div class="header">
         <h2 data-i18n="popup_title">ATOM</h2>
-        <div class="subtitle">Intelligent Attention Compass</div>
+        <div class="subtitle" data-i18n="popup_subtitle">Intelligent Attention Compass</div>
         <div id="sensitivity-badge" class="sensitivity-badge">
             <span class="dot"></span>
-            <span id="sensitivity-label">Loading...</span>
+            <span id="sensitivity-label" data-i18n="popup_loading">Loading...</span>
         </div>
     </div>
 
@@ -329,13 +329,38 @@
     <!-- Current Site Status (Redesigned) -->
     <div class="safe-zone-card">
         <div class="domain-row">
-            <span class="domain-name" id="current-domain">Checking...</span>
+            <span class="domain-name" id="current-domain" data-i18n="popup_checking">Checking...</span>
             <div class="status-indicator" id="site-status"></div>
         </div>
         <button id="btn-toggle-safe" class="btn-toggle-status" data-i18n="pop_loading">
             Loading...
         </button>
-        <div id="safe-zone-status" class="status-subtext">Checking...</div>
+        <div id="safe-zone-status" class="status-subtext" data-i18n="popup_checking">Checking...</div>
+    </div>
+
+    <div class="safe-zone-card" style="padding-top:14px;">
+        <div style="font-weight:700; margin-bottom:10px;" data-i18n="popup_focus_session">Focus Session</div>
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:10px;">
+            <button class="btn-toggle-status" id="focus-preset-10">10m</button>
+            <button class="btn-toggle-status" id="focus-preset-25">25m</button>
+            <button class="btn-toggle-status" id="focus-preset-30">30m</button>
+            <button class="btn-toggle-status" id="focus-preset-40">40m</button>
+            <button class="btn-toggle-status" id="focus-preset-50">50m</button>
+        </div>
+
+        <div style="display:flex; gap:8px; align-items:center; justify-content:center; margin-bottom:10px;">
+            <input id="focus-work" type="number" min="5" max="120" placeholder="Focus (min)" data-i18n-placeholder="popup_focus_placeholder" style="width:140px; padding:8px 12px; border-radius:12px; border:1px solid var(--border); background:var(--surface); color:var(--foreground); text-align:center;">
+            <span style="color:var(--muted); font-size:12px;" data-i18n="popup_break_label">→ Break: <span id="focus-break-preview">-</span></span>
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button class="btn-toggle-status active" id="focus-start" data-i18n="popup_focus_start">Start</button>
+            <button class="btn-toggle-status" id="focus-stop" style="display:none;" data-i18n="popup_focus_stop">Stop</button>
+            <button class="btn-toggle-status" id="focus-reset" style="display:none;" data-i18n="focus_btn_reset">Reset</button>
+        </div>
+
+        <div class="status-subtext" id="focus-status" style="margin-top:10px;">-</div>
     </div>
 
     <!-- Actions -->
@@ -351,7 +376,20 @@
             <span class="label" data-i18n="popup_btn_journal">Nhật Ký</span>
         </div>
 
-        <div id="btn-open-settings" class="action-card">
+        <div id="btn-memory" class="action-card">
+            <span class="icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                    <circle cx="12" cy="10" r="2" />
+                    <path d="M12 14v2" />
+                </svg>
+            </span>
+            <span class="label" data-i18n="popup_btn_memory">Memory</span>
+        </div>
+
+        <div id="btn-open-settings" class="action-card" style="grid-column: span 2;">
             <span class="icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -365,7 +403,10 @@
     </div>
 
     <div class="footer">
-        <button id="btn-export" class="footer-link" title="Export Data">
+        <button id="btn-debug-panel" class="footer-link" style="display:none;" title="Debug Panel">
+            <span>Debug</span>
+        </button>
+        <button id="btn-export" class="footer-link" data-i18n-title="popup_export_title" title="Export Data">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                 style="margin-right: 6px;">
@@ -375,7 +416,7 @@
             </svg>
             <span data-i18n="popup_btn_export">Export</span>
         </button>
-        <button id="btn-report-bug" class="footer-link" title="Report Bug">
+        <button id="btn-report-bug" class="footer-link" data-i18n-title="popup_report_bug_title" title="Report Bug">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                 style="margin-right: 6px;">
@@ -393,7 +434,7 @@
             </svg>
             <span data-i18n="popup_btn_report_bug">Bug</span>
         </button>
-        <button id="btn-clear" class="footer-link" title="Reset Data">
+        <button id="btn-clear" class="footer-link" data-i18n-title="popup_reset_title" title="Reset Data">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                 style="margin-right: 6px;">

@@ -1,11 +1,16 @@
 // ai_service.js - PRODUCTION GRADE ADAPTER (V3.0 FIXED)
 // Fixed: Cache Value, Schema Types, Retry Logic, Sanitization
 
+import { initI18n, getActiveLocale } from './i18n_bridge.js';
+
+const i18nReady = initI18n();
+const getLanguageName = () => (getActiveLocale().startsWith('vi') ? 'Vietnamese' : 'English');
+
 export class AIService {
     constructor() {
-        this.MODEL_NAME = "gemini-1.5-flash"; 
+        this.MODEL_NAME = "gemini-3-flash-preview";
         this.API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
-        
+
         // Cache In-Memory
         this.cache = new Map();
         this.CACHE_TTL = 30000; // 30s TTL
@@ -14,7 +19,11 @@ export class AIService {
     // =================================================================
     // 1. CRITICAL PATH: RA QUYẾT ĐỊNH
     // =================================================================
-    
+
+    async classify(prompt, responseSchema, timeoutMs = 800, retries = 0) {
+        return this._callCloudGemini(prompt, responseSchema, timeoutMs, retries);
+    }
+
     async generateStrategy(rawContext) {
         // [FIX 4] Sanitize Input (Làm sạch dữ liệu đầu vào)
         const context = this._sanitizeContext(rawContext);
@@ -22,7 +31,7 @@ export class AIService {
         // [FIX 3] Cache Key thông minh hơn (Gồm cả tags)
         const tagsHash = (context.sentiment_tags || []).sort().join("|");
         const cacheKey = `STRAT_${context.resistance}_${context.streak}_${context.depth}_${tagsHash}`;
-        
+
         // [FIX 1] Lấy value chuẩn từ cache
         const cached = this._getCacheValue(cacheKey);
         if (cached) return cached;
@@ -64,7 +73,7 @@ export class AIService {
             return result;
         } catch (error) {
             console.warn("[ATOM AI] Strategy Fallback:", error.message);
-            return null; 
+            return null;
         }
     }
 
@@ -75,7 +84,7 @@ export class AIService {
     async generateCopy(features) {
         const sentiment = (features.sentiment || "neutral").toLowerCase().trim();
         const topic = (features.topic || "general").toLowerCase().trim();
-        
+
         const cacheKey = `COPY_${sentiment}_${topic}`;
         const cached = this._getCacheValue(cacheKey);
         if (cached) return cached;
@@ -89,7 +98,7 @@ export class AIService {
             additionalProperties: false
         };
 
-        const lang = chrome.i18n.getUILanguage().startsWith('vi') ? 'Vietnamese' : 'English';
+        const lang = getLanguageName();
 
         const systemPrompt = `
         Write a short, empathetic notification (under 20 words) for a user.
@@ -109,6 +118,108 @@ export class AIService {
     }
 
     // =================================================================
+    // 3. READING ANSWER EVALUATION
+    // =================================================================
+
+    async evaluateReadingAnswers(payload) {
+        const selection = (payload?.selection || "").trim();
+        const summary = (payload?.summary || "").trim();
+        const questions = Array.isArray(payload?.questions) ? payload.questions : [];
+        const answers = Array.isArray(payload?.answers) ? payload.answers : [];
+        const lang = getLanguageName();
+
+        const pairs = questions.map((q, idx) => {
+            const a = typeof answers[idx] === "string" ? answers[idx].trim() : "";
+            return `Q: ${q}\nA: ${a || "(no answer)"}`;
+        }).join("\n\n");
+
+        const EVAL_SCHEMA = {
+            type: "object",
+            properties: {
+                evaluation: { type: "string" }
+            },
+            required: ["evaluation"],
+            additionalProperties: false
+        };
+
+        const systemPrompt = `
+        You are a supportive study coach.
+        Language: ${lang}.
+        Task: Evaluate the user's answers in 2-3 sentences.
+        Mention correctness, gaps, and one suggestion to improve.
+        Context summary (if any):
+        """${summary || selection}"""
+        Questions and answers:
+        ${pairs}
+        Output JSON only: { "evaluation": "..." }
+        `.trim();
+
+        return this._callCloudGemini(systemPrompt, EVAL_SCHEMA, 8000, 1);
+    }
+
+    // =================================================================
+    // 4. READING QUESTION GENERATION (On-demand)
+    // =================================================================
+
+    async generateReadingQuestion(payload) {
+        const selection = (payload?.selection || "").trim();
+        const summary = (payload?.summary || "").trim();
+        const title = (payload?.title || "").trim();
+        const lang = getLanguageName();
+
+        const QUESTION_SCHEMA = {
+            type: "object",
+            properties: {
+                question: { type: "string" }
+            },
+            required: ["question"],
+            additionalProperties: false
+        };
+
+        const systemPrompt = `
+        You are a study coach.
+        Language: ${lang}.
+        Task: Write exactly ONE concise recall question (max 20 words).
+        Context title: ${title || "N/A"}
+        Context summary/selection:
+        """${summary || selection}"""
+        Output JSON only: { "question": "..." }
+        `.trim();
+
+        const parseQuestion = (text) => {
+            if (!text) return "";
+            const trimmed = String(text).trim();
+            if (!trimmed) return "";
+            if (trimmed.startsWith("{")) {
+                try {
+                    const parsed = JSON.parse(trimmed);
+                    if (parsed && typeof parsed.question === "string") {
+                        return parsed.question.trim();
+                    }
+                } catch {
+                    // fall through
+                }
+            }
+            return trimmed.split("\n")[0].replace(/^["'`]+|["'`]+$/g, "").trim();
+        };
+
+        try {
+            return await this._callCloudGemini(systemPrompt, QUESTION_SCHEMA, 8000, 1);
+        } catch (error) {
+            const msg = String(error?.message || error);
+            if (msg.includes("API Error 400")) {
+                try {
+                    return await this._callCloudGemini(systemPrompt, QUESTION_SCHEMA, 8000, 1, "gemini-1.5-flash");
+                } catch {
+                    const raw = await this._callCloudGemini(systemPrompt, null, 8000, 1, "gemini-1.5-flash");
+                    return { question: parseQuestion(raw) };
+                }
+            }
+            throw error;
+        }
+    }
+
+    // =================================================================
     // 3. CORE ENGINE (Robust API Call)
     // =================================================================
 
@@ -116,19 +227,23 @@ export class AIService {
      * Gọi Gemini với cơ chế Retry & Timeout
      * @param {number} retries - Số lần thử lại nếu gặp lỗi 429/5xx
      */
-    async _callCloudGemini(prompt, responseSchema, timeoutMs = 8000, retries = 1) {
+    async _callCloudGemini(prompt, responseSchema, timeoutMs = 8000, retries = 1, modelOverride = "") {
         const key = await this._getApiKey();
         if (!key) throw new Error("Missing API Key");
 
-        const url = `${this.API_BASE}/${this.MODEL_NAME}:generateContent?key=${key}`;
+        const model = modelOverride || this.MODEL_NAME;
+        const url = `${this.API_BASE}/${model}:generateContent?key=${key}`;
+        const generationConfig = {
+            temperature: 0.5,
+            maxOutputTokens: 1200
+        };
+        if (responseSchema) {
+            generationConfig.responseMimeType = "application/json";
+            generationConfig.responseSchema = responseSchema;
+        }
         const body = {
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-                temperature: 0.5,
-                maxOutputTokens: 100,
-                responseMimeType: "application/json",
-                responseSchema: responseSchema
-            }
+            generationConfig
         };
 
         let lastError;
@@ -152,12 +267,17 @@ export class AIService {
                     const data = await response.json();
                     const rawJSON = data.candidates?.[0]?.content?.parts?.[0]?.text;
                     if (!rawJSON) throw new Error("Empty Response");
+                    if (!responseSchema) {
+                        return rawJSON;
+                    }
                     return JSON.parse(rawJSON);
                 }
 
                 // Nếu lỗi Client (400, 401, 404) -> Không Retry, lỗi luôn
                 if (response.status < 500 && response.status !== 429) {
-                    throw new Error(`API Error ${response.status}`);
+                    const errText = await response.text().catch(() => "");
+                    const detail = errText ? `: ${errText.slice(0, 300)}` : "";
+                    throw new Error(`API Error ${response.status}${detail}`);
                 }
 
                 // Nếu lỗi Server (5xx) hoặc Rate Limit (429) -> Ném lỗi để catch bên dưới xử lý retry
@@ -166,7 +286,7 @@ export class AIService {
             } catch (error) {
                 clearTimeout(timeoutId);
                 lastError = error;
-                
+
                 // Nếu là lần thử cuối cùng thì throw luôn
                 if (attempt === retries) break;
 
@@ -186,7 +306,7 @@ export class AIService {
     _getCacheValue(key) {
         const entry = this.cache.get(key);
         if (!entry) return null;
-        
+
         if (Date.now() > entry.expiry) {
             this.cache.delete(key);
             return null;

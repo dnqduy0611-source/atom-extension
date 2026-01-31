@@ -1,6 +1,11 @@
 // intervention_manager.js
 // Lớp này chịu trách nhiệm: SELECT UI & PICK COPY
 
+import { initI18n, getMessage as atomGetMessage } from './i18n_bridge.js';
+
+const i18nReady = initI18n();
+const atomMsg = (key, substitutions, fallback) => atomGetMessage(key, substitutions, fallback);
+
 export class InterventionManager {
     constructor() {
         // KHO COPY: Nơi chứa lời thoại của ATOM
@@ -8,17 +13,17 @@ export class InterventionManager {
         this.copyLibrary = {
             // Dành cho Intent: ENFORCE_LIMIT (Chặn)
             red_zone: [
-                chrome.i18n.getMessage("red_zone_1"),
-                chrome.i18n.getMessage("red_zone_2"),
-                chrome.i18n.getMessage("red_zone_3"),
-                chrome.i18n.getMessage("red_zone_4"),
-                chrome.i18n.getMessage("red_zone_5"),
-                chrome.i18n.getMessage("red_zone_6")
+                atomMsg("red_zone_1"),
+                atomMsg("red_zone_2"),
+                atomMsg("red_zone_3"),
+                atomMsg("red_zone_4"),
+                atomMsg("red_zone_5"),
+                atomMsg("red_zone_6")
             ],
             // Dành cho Intent: SIGNAL_AWARENESS (Cảnh báo)
             yellow_zone: [
-                chrome.i18n.getMessage("yellow_zone_1"),
-                chrome.i18n.getMessage("yellow_zone_2")
+                atomMsg("yellow_zone_1"),
+                atomMsg("yellow_zone_2")
             ]
         };
     }
@@ -41,8 +46,8 @@ export class InterventionManager {
                     variant: "one_tap",
                     text: await this._pickCopy("yellow_zone"),
                     actions: [
-                        { id: "finish_session", label: chrome.i18n.getMessage("btn_rest_short"), type: "primary", log_result: "completed" },
-                        { id: "snooze_delay", label: chrome.i18n.getMessage("btn_snooze"), type: "secondary", log_result: "snoozed" }
+                        { id: "finish_session", label: atomMsg("btn_rest_short"), type: "primary", log_result: "completed" },
+                        { id: "snooze_delay", label: atomMsg("btn_snooze"), type: "secondary", log_result: "snoozed" }
                     ],
                     presence: { ...presencePayload, level: "low" }
                 }
@@ -63,13 +68,13 @@ export class InterventionManager {
                     actions: [
                         {
                             id: "finish_session",
-                            label: chrome.i18n.getMessage("btn_stop_session"), // Thay cho "Dừng lại ở đây nhé"
+                            label: atomMsg("btn_stop_session"), // Thay cho "Dừng lại ở đây nhé"
                             type: "primary",
                             log_result: "completed"
                         },
                         {
                             id: "snooze_delay",
-                            label: chrome.i18n.getMessage("btn_snooze"), // Thay cho "Lát nữa"
+                            label: atomMsg("btn_snooze"), // Thay cho "Lát nữa"
                             type: "secondary",
                             log_result: "snoozed"
                         }
@@ -184,7 +189,7 @@ export class InterventionManager {
         const keys = ["micro_copy_1", "micro_copy_2", "micro_copy_3", "micro_copy_4"];
         // Chọn ngẫu nhiên key, sau đó lấy text tương ứng
         const randomKey = keys[Math.floor(Math.random() * keys.length)];
-        return chrome.i18n.getMessage(randomKey);
+        return atomMsg(randomKey);
     }
     _determineBestMode(reactions) {
         const modes = ['BREATH', 'TAP', 'STILLNESS'];
@@ -264,3 +269,4 @@ export class InterventionManager {
         return { type: "none" };
     }
 }
+

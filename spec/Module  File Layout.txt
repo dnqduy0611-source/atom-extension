@@ -1,0 +1,128 @@
+ # ✅ Module / File Layout (đề xuất)
+
+  bridge/
+    topic_registry.js        // CRUD registry + pending topic
+    topic_extractor.js       // extract topicKey + keywords
+    topic_scoring.js         // scoring + thresholds
+    topic_router.js          // orchestrate: extract → score → decision
+    ui_prompt.js             // build prompt payload (text + actions)
+
+  Files hiện có sẽ touch:
+
+  - background.js (routing + registry)
+  - content.js (UI prompt + user choice)
+  - styles.css (prompt UI styles)
+  - _locales/en/messages.json + _locales/vi/messages.json (labels)
+
+  ———
+
+  # ✅ Task Breakdown (theo thứ tự)
+
+  ## Phase 1 — Data Layer (Registry + Pending)
+
+  T1. Create storage keys:
+
+  - atom_nlm_topic_registry_v1
+  - atom_nlm_pending_topic_v1
+
+  T2. Implement topic_registry.js:
+
+  - loadRegistry()
+  - saveRegistry(list)
+  - upsertTopic(entry)
+  - recordUsage(topicKey)
+  - getPendingTopic() / setPendingTopic() / clearPendingTopic()
+
+  ———
+
+  ## Phase 2 — Topic Extraction
+
+  T3. Implement topic_extractor.js:
+
+  - Input: title, selection, tags, intent, domain
+  - Output: { topicKey, keywords, displayTitle }
+  - Rule priority: tags → intent → title keywords → domain
+
+  ———
+
+  ## Phase 3 — Scoring
+
+  T4. Implement topic_scoring.js:
+
+  - scoreTopicMatch(extracted, registryItem)
+  - Return { score, reasons }
+  - Thresholds:
+      - ≥0.70 → auto‑suggest
+      - 0.45–0.69 → ask
+      - <0.45 → create
+
+  ———
+
+  ## Phase 4 — Router Orchestration
+
+  T5. Implement topic_router.js:
+
+  - combine extractor + scoring
+  - output decision:
+
+    {
+      decision: "use_existing" | "ask" | "create",
+      bestMatch?: { notebookRef, notebookUrl, score },
+      topicKey, displayTitle, keywords
+    }
+
+  ———
+
+  ## Phase 5 — UI Prompt
+
+  T6. Implement ui_prompt.js:
+
+  - build prompt payload text + actions
+  - actions: Open, Use, Create, Skip
+
+  T7. Update content.js:
+
+  - show modal prompt (reuse existing overlay)
+  - user action → send message back to background
+
+  ———
+
+  ## Phase 6 — Background Wiring
+
+  T8. Update background.js:
+
+  - On export trigger → call topic_router
+  - If match: return decision payload
+  - If create: open create page
+  - If user confirms: save mapping into registry
+
+  ———
+
+  ## Phase 7 — Passive Learning
+
+  T9. Add “Save mapping” prompt:
+
+  - When user manually opens notebook via extension → ask “Lưu notebook này cho chủ đề X?”
+  - If yes → write registry entry
+
+  ———
+
+  ## Phase 8 — Logging
+
+  T10. Add events:
+
+  - nlm_router.suggested
+  - nlm_router.chosen_existing
+  - nlm_router.created_new
+  - nlm_router.skipped
+
+  ———
+
+  # ✅ Deliverable Checkpoints (for review)
+
+  1. Registry + Extractor + Scorer working (console test)
+  2. Prompt UI appears with correct decision
+  3. Registry learns mapping after confirm
+  4. Open-to-recall uses registry consistently
+
+  ———

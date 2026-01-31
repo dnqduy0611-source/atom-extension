@@ -158,6 +158,9 @@
   "opt_input_label": {
     "message": "Dán Key của bạn vào đây:"
   },
+  "opt_api_key_placeholder": {
+    "message": "AIzaSy..."
+  },
   "opt_sens_label": {
     "message": "Mức độ nhạy cảm:"
   },
@@ -179,11 +182,170 @@
   "opt_sens_strict_desc": {
     "message": "Can thiệp sau ~1 phút"
   },
+  "opt_lang_title": {
+    "message": "Ngôn ngữ"
+  },
+  "opt_lang_desc": {
+    "message": "Dùng ngôn ngữ UI của Chrome hoặc chọn riêng cho tiện ích."
+  },
+  "opt_lang_auto": {
+    "message": "Tự động (Chrome UI)"
+  },
+  "opt_lang_vi": {
+    "message": "Tiếng Việt"
+  },
+  "opt_lang_en": {
+    "message": "Tiếng Anh"
+  },
   "opt_btn_save": {
     "message": "Lưu Cài Đặt"
   },
+  "opt_btn_saving": {
+    "message": "Đang lưu..."
+  },
+  "opt_btn_saved": {
+    "message": "Đã lưu"
+  },
   "opt_save_success": {
     "message": "Đã lưu thành công!"
+  },
+  "opt_ai_pilot_title": {
+    "message": "AI Pilot"
+  },
+  "opt_ai_pilot_enable_title": {
+    "message": "Bật AI Pilot"
+  },
+  "opt_ai_pilot_enable_desc": {
+    "message": "Chế độ Shadow/Assist/Primary"
+  },
+  "opt_ai_pilot_mode": {
+    "message": "Chế độ"
+  },
+  "opt_ai_pilot_mode_shadow": {
+    "message": "shadow"
+  },
+  "opt_ai_pilot_mode_assist": {
+    "message": "assist"
+  },
+  "opt_ai_pilot_mode_primary": {
+    "message": "primary"
+  },
+  "opt_ai_pilot_accuracy_level": {
+    "message": "Mức độ chính xác"
+  },
+  "opt_ai_pilot_accuracy_balanced": {
+    "message": "balanced"
+  },
+  "opt_ai_pilot_accuracy_high": {
+    "message": "high"
+  },
+  "opt_ai_pilot_min_confidence": {
+    "message": "Ngưỡng tin cậy tối thiểu"
+  },
+  "opt_ai_min_confidence_placeholder": {
+    "message": "0.65"
+  },
+  "opt_ai_pilot_timeout_ms": {
+    "message": "Timeout (ms)"
+  },
+  "opt_ai_timeout_placeholder": {
+    "message": "800"
+  },
+  "opt_ai_pilot_budget_per_day": {
+    "message": "Ngân sách / ngày"
+  },
+  "opt_ai_budget_placeholder": {
+    "message": "200"
+  },
+  "opt_ai_pilot_provider": {
+    "message": "Nhà cung cấp"
+  },
+  "opt_ai_pilot_provider_gemini": {
+    "message": "gemini"
+  },
+  "opt_ai_pilot_provider_proxy": {
+    "message": "proxy"
+  },
+  "opt_ai_pilot_max_viewport_chars": {
+    "message": "Giới hạn ký tự viewport"
+  },
+  "opt_ai_max_viewport_placeholder": {
+    "message": "1200"
+  },
+  "opt_ai_pilot_max_selected_chars": {
+    "message": "Giới hạn ký tự bôi đen"
+  },
+  "opt_ai_max_selected_placeholder": {
+    "message": "400"
+  },
+  "opt_ai_pilot_cache_ttl_ms": {
+    "message": "Cache TTL (ms)"
+  },
+  "opt_ai_cache_ttl_placeholder": {
+    "message": "15000"
+  },
+  "opt_ai_pilot_proxy_url": {
+    "message": "Proxy URL (tuỳ chọn)"
+  },
+  "opt_ai_proxy_placeholder": {
+    "message": "https://your-proxy/decide"
+  },
+  "opt_nlm_title": {
+    "message": "NotebookLM Bridge"
+  },
+  "opt_nlm_enable_title": {
+    "message": "Bật Bridge"
+  },
+  "opt_nlm_enable_desc": {
+    "message": "Copy clip và mở NotebookLM để dán thủ công"
+  },
+  "opt_nlm_mode": {
+    "message": "Chế độ Bridge"
+  },
+  "opt_nlm_mode_ui_assisted": {
+    "message": "UI-Assisted (Khuyến nghị)"
+  },
+  "opt_nlm_mode_enterprise": {
+    "message": "Enterprise API (Sắp có)"
+  },
+  "opt_nlm_mode_hint": {
+    "message": "UI-Assisted: copy vào clipboard + mở NotebookLM để dán thủ công"
+  },
+  "opt_nlm_default_notebook": {
+    "message": "Notebook mặc định"
+  },
+  "opt_nlm_default_placeholder": {
+    "message": "Inbox"
+  },
+  "opt_nlm_base_url": {
+    "message": "NotebookLM base URL"
+  },
+  "opt_nlm_base_placeholder": {
+    "message": "https://notebooklm.google.com"
+  },
+  "opt_nlm_allow_cloud": {
+    "message": "Cho phép xuất lên cloud"
+  },
+  "opt_nlm_pii_warning": {
+    "message": "Cảnh báo PII"
+  },
+  "opt_nlm_export_max_chars": {
+    "message": "Giới hạn ký tự export"
+  },
+  "opt_nlm_export_max_chars_hint": {
+    "message": "0 = không giới hạn"
+  },
+  "opt_nlm_sensitive_domains": {
+    "message": "Domain nhạy cảm (mỗi dòng một domain)"
+  },
+  "opt_nlm_sensitive_placeholder": {
+    "message": "*.his.*\\n*.emr.*"
+  },
+  "opt_nlm_rules": {
+    "message": "Quy tắc mapping (JSON)"
+  },
+  "opt_nlm_rules_placeholder": {
+    "message": "{\"byTag\":[{\"tag\":\"research\",\"notebookRef\":\"Research\"}]}"
   },
   "offline_quote_1": {
     "message": "Hít thở sâu nào. Thế giới có thể chờ đợi."
@@ -217,6 +379,9 @@
   },
   "popup_btn_journal": {
     "message": "Nhật Ký"
+  },
+  "popup_btn_memory": {
+    "message": "Bộ Nhớ"
   },
   "popup_msg_packing": {
     "message": "⏳ Đang đóng gói..."
@@ -268,6 +433,9 @@
   },
   "jnl_label_ai": {
     "message": "ATOM PHẢN HỒI"
+  },
+  "jnl_ai_waiting": {
+    "message": "..."
   },
   "jnl_no_note": {
     "message": "Không có ghi chú"
@@ -381,7 +549,13 @@
     "message": "✅ Đã mở GitHub! Hãy nhấn 'Submit new issue' để hoàn tất."
   },
   "bug_error": {
-    "message": "❌ Đã xảy ra lỗi"
+    "message": "❌ Lỗi: $1"
+  },
+  "bug_copy_error": {
+    "message": "❌ Không thể sao chép"
+  },
+  "bug_default_title": {
+    "message": "Báo cáo lỗi"
   },
   "bug_copied": {
     "message": "✅ Đã sao chép báo cáo!"
@@ -430,5 +604,407 @@
   },
   "bug_guide_tip": {
     "message": "Giữ tick \"Đính kèm dữ liệu debug\" - giúp chúng tôi sửa lỗi nhanh hơn!"
+  },
+  "bug_guide_tip_label": {
+    "message": "💡 Mẹo:"
+  },
+  "bug_debug_failed": {
+    "message": "Không thể thu thập dữ liệu gỡ lỗi"
+  },
+  "bug_unknown": {
+    "message": "Không rõ"
+  },
+  "bug_lang_override": {
+    "message": "$1 (ưu tiên)"
+  },
+  "ctx_whitelist_domain": {
+    "message": "ATOM: Luôn bỏ qua trang này (Safe Zone)"
+  },
+  "ctx_reading_parent": {
+    "message": "ATOM: Đọc chủ động"
+  },
+  "ctx_reading_summarize": {
+    "message": "Tóm tắt đoạn này (2 câu)"
+  },
+  "ctx_reading_critique": {
+    "message": "Phản biện / điểm yếu lập luận"
+  },
+  "ctx_reading_quiz": {
+    "message": "Tạo 3 câu hỏi để nhớ lâu"
+  },
+  "reading_card_title": {
+    "message": "ATOM - Đọc chủ động"
+  },
+  "reading_card_key_points": {
+    "message": "Ý chính"
+  },
+  "reading_card_questions": {
+    "message": "Câu hỏi"
+  },
+  "reading_card_answer_placeholder": {
+    "message": "Nhập câu trả lời..."
+  },
+  "reading_card_eval_title": {
+    "message": "Đánh giá"
+  },
+  "reading_card_eval_action": {
+    "message": "Đánh giá câu trả lời"
+  },
+  "reading_card_eval_pending": {
+    "message": "Đang đánh giá..."
+  },
+  "reading_card_save": {
+    "message": "Lưu"
+  },
+  "reading_card_saved": {
+    "message": "Đã lưu"
+  },
+  "reading_card_open_vault": {
+    "message": "Mở Vault"
+  },
+  "reading_card_summary_fallback": {
+    "message": "Không có tóm tắt."
+  },
+  "reading_vault_title": {
+    "message": "ATOM - Kho đọc"
+  },
+  "reading_vault_empty": {
+    "message": "Chưa có ghi chú nào."
+  },
+  "reading_vault_open_nlm": {
+    "message": "Mở NotebookLM"
+  },
+  "reading_vault_retry_nlm": {
+    "message": "Thử xuất lại"
+  },
+  "reading_vault_copy_question": {
+    "message": "Copy câu hỏi"
+  },
+  "reading_vault_generate_question": {
+    "message": "Tạo câu hỏi"
+  },
+  "reading_vault_generating": {
+    "message": "Đang tạo..."
+  },
+  "reading_vault_generate_failed": {
+    "message": "Thất bại"
+  },
+  "reading_vault_generate_disabled": {
+    "message": "Cần API key"
+  },
+  "nlm_pii_title": {
+    "message": "Phát hiện dữ liệu nhạy cảm"
+  },
+  "nlm_pii_desc": {
+    "message": "Clip có thể chứa thông tin nhạy cảm. Bạn muốn xuất tiếp không?"
+  },
+  "nlm_pii_type_email": {
+    "message": "Email"
+  },
+  "nlm_pii_type_phone": {
+    "message": "Số điện thoại"
+  },
+  "nlm_pii_type_id": {
+    "message": "Mã định danh"
+  },
+  "nlm_pii_type_unknown": {
+    "message": "Dữ liệu nhạy cảm"
+  },
+  "nlm_pii_cancel": {
+    "message": "Huỷ"
+  },
+  "nlm_pii_proceed": {
+    "message": "Tiếp tục"
+  },
+  "nlm_toast_copied": {
+    "message": "Đã copy"
+  },
+  "nlm_toast_opened": {
+    "message": "Đã mở NotebookLM"
+  },
+  "nlm_toast_failed": {
+    "message": "Thao tác thất bại"
+  },
+  "nlm_toast_no_key": {
+    "message": "Thiếu Gemini API key"
+  },
+  "nlm_toast_generated": {
+    "message": "Đã tạo câu hỏi"
+  },
+  "nlm_retry_toast": {
+    "message": "Xuất đang chờ. Bấm để thử lại."
+  },
+  "nlm_retry_cta": {
+    "message": "Thử lại"
+  },
+  "nlm_idea_title": {
+    "message": "Tạo notebook mới?"
+  },
+  "nlm_idea_desc": {
+    "message": "Có vẻ bạn đang gom ý theo chủ đề này."
+  },
+  "nlm_idea_create": {
+    "message": "Tạo (Pending)"
+  },
+  "nlm_idea_open": {
+    "message": "Mở NotebookLM"
+  },
+  "nlm_idea_not_now": {
+    "message": "Để sau"
+  },
+  "nlm_idea_dont_ask": {
+    "message": "Đừng hỏi lại"
+  },
+  "nlm_idea_vault_title": {
+    "message": "Gợi ý notebook"
+  },
+  "reading_mode_summary": {
+    "message": "Tóm tắt"
+  },
+  "reading_mode_critique": {
+    "message": "Phản biện"
+  },
+  "reading_mode_quiz": {
+    "message": "Câu hỏi"
+  },
+  "reading_error_summary": {
+    "message": "ATOM gặp lỗi khi phân tích đoạn này. Thử lại giúp mình nhé."
+  },
+  "reading_cooldown_summary": {
+    "message": "Đã vượt giới hạn. Active Reading tạm nghỉ $1 giây."
+  },
+  "tag_custom": {
+    "message": "+ Khác..."
+  },
+  "tag_custom_placeholder": {
+    "message": "Nhập cảm xúc..."
+  },
+  "focus_title": {
+    "message": "Bạn đang trong Focus"
+  },
+  "focus_sub_blocked": {
+    "message": "Trang này không nằm trong Safe Zone."
+  },
+  "focus_btn_back": {
+    "message": "Quay lại"
+  },
+  "focus_btn_allow_60": {
+    "message": "Cho phép 60s"
+  },
+  "focus_btn_allow_120": {
+    "message": "Cho phép 120s"
+  },
+  "focus_btn_add_safe": {
+    "message": "Thêm Safe Zone"
+  },
+  "focus_micro_text": {
+    "message": "Mình thấy bạn đang định quay lại? Để Nhắc thôi: quay lại Safe Zone, hoặc xin 60s có kiểm soát."
+  },
+  "focus_timer_work": {
+    "message": "WORK còn"
+  },
+  "focus_phase_work_end_title": {
+    "message": "Hết giờ làm việc!"
+  },
+  "focus_phase_work_end_msg": {
+    "message": "Phiên làm việc đã kết thúc. Hãy nghỉ ngơi chút nhé."
+  },
+  "focus_phase_break_end_title": {
+    "message": "Hết giờ nghỉ!"
+  },
+  "focus_phase_break_end_msg": {
+    "message": "Sẵn sàng quay lại làm việc chưa?"
+  },
+  "emoji_picker_more": {
+    "message": "+ Khác"
+  },
+  "emoji_cat_happy": {
+    "message": "Vui vẻ"
+  },
+  "emoji_cat_sad": {
+    "message": "Buồn"
+  },
+  "emoji_cat_anxious": {
+    "message": "Lo lắng"
+  },
+  "emoji_cat_tired": {
+    "message": "Mệt mỏi"
+  },
+  "emoji_cat_angry": {
+    "message": "Tức giận"
+  },
+  "emoji_cat_neutral": {
+    "message": "Trung tính"
+  },
+  "opt_notif_title": {
+    "message": "Thông báo"
+  },
+  "opt_notif_desc": {
+    "message": "Kiểm tra và cấu hình thông báo hệ thống cho chế độ Focus."
+  },
+  "opt_notif_test": {
+    "message": "Kiểm tra thông báo"
+  },
+  "opt_notif_chrome": {
+    "message": "Cài đặt Chrome"
+  },
+  "opt_notif_sent": {
+    "message": "Đã gửi thông báo! Kiểm tra khay hệ thống."
+  },
+  "opt_notif_error": {
+    "message": "Lỗi gửi thông báo"
+  },
+  "opt_notif_failed": {
+    "message": "Thông báo thất bại. Kiểm tra cài đặt."
+  },
+  "opt_notif_guide_title": {
+    "message": "📖 Hướng dẫn khắc phục (click để mở)"
+  },
+  "opt_notif_guide_intro": {
+    "message": "Nếu thông báo không hiển thị:"
+  },
+  "opt_notif_guide_1": {
+    "message": "<b>Windows:</b> Cài đặt (Settings) → System → Notifications → Google Chrome → BẬT"
+  },
+  "opt_notif_guide_2": {
+    "message": "<b>Focus Assist:</b> TẮT hoặc chọn Priority only"
+  },
+  "opt_notif_guide_3": {
+    "message": "<b>Chrome:</b> Click \"Cài đặt Chrome\" ở trên → Cho phép thông báo"
+  },
+  "opt_notif_guide_4": {
+    "message": "<b>Khởi động lại:</b> Đóng và mở lại Chrome sau khi thay đổi"
+  },
+  "opt_notif_test_title": {
+    "message": "ATOM - Kiểm tra thông báo"
+  },
+  "opt_notif_test_msg": {
+    "message": "Nếu bạn thấy thông báo này, hệ thống đang hoạt động bình thường!"
+  },
+  "opt_theme_toggle_title": {
+    "message": "Đổi giao diện"
+  },
+  "popup_visit_website": {
+    "message": "Mở website"
+  },
+  "popup_subtitle": {
+    "message": "La bàn chú ý thông minh"
+  },
+  "popup_loading": {
+    "message": "Đang tải..."
+  },
+  "popup_checking": {
+    "message": "Đang kiểm tra..."
+  },
+  "popup_no_active_tab": {
+    "message": "Không có tab hoạt động"
+  },
+  "popup_focus_session": {
+    "message": "Phiên tập trung"
+  },
+  "popup_focus_placeholder": {
+    "message": "Tập trung (phút)"
+  },
+  "popup_break_label": {
+    "message": "→ Nghỉ:"
+  },
+  "popup_focus_start": {
+    "message": "Bắt đầu"
+  },
+  "popup_focus_stop": {
+    "message": "Dừng"
+  },
+  "popup_export_title": {
+    "message": "Xuất dữ liệu"
+  },
+  "popup_report_bug_title": {
+    "message": "Báo lỗi"
+  },
+  "popup_reset_title": {
+    "message": "Xoá dữ liệu"
+  },
+  "bug_info_version": {
+    "message": "Phiên bản"
+  },
+  "bug_info_browser": {
+    "message": "Trình duyệt"
+  },
+  "bug_info_os": {
+    "message": "Hệ điều hành"
+  },
+  "bug_info_language": {
+    "message": "Ngôn ngữ"
+  },
+  "bug_guide_example": {
+    "message": "1. Mở YouTube<br>2. Lướt 5 phút<br>3. Không thấy can thiệp"
+  },
+  "focus_btn_reset": {
+    "message": "Đặt lại giờ"
+  },
+  "mem_title": {
+    "message": "Bộ Nhớ ATOM"
+  },
+  "mem_desc": {
+    "message": "Các ghi chú đọc và xuất tri thức của bạn"
+  },
+  "mem_stat_total": {
+    "message": "Tổng ghi chú"
+  },
+  "mem_stat_exported": {
+    "message": "Đã xuất NLM"
+  },
+  "mem_stat_week": {
+    "message": "Tuần này"
+  },
+  "mem_search_placeholder": {
+    "message": "Tìm kiếm ghi chú..."
+  },
+  "mem_filter_all": {
+    "message": "Tất cả"
+  },
+  "mem_filter_exported": {
+    "message": "Đã xuất"
+  },
+  "mem_filter_not_exported": {
+    "message": "Chưa xuất"
+  },
+  "mem_empty_title": {
+    "message": "Không tìm thấy ghi chú"
+  },
+  "mem_empty_desc": {
+    "message": "Bắt đầu đọc và lưu highlight để xây dựng bộ nhớ của bạn."
+  },
+  "mem_ai_insight": {
+    "message": "Phân tích AI"
+  },
+  "mem_exported_to": {
+    "message": "Đã xuất sang"
+  },
+  "mem_btn_open_nlm": {
+    "message": "Mở NotebookLM"
+  },
+  "mem_btn_copy_question": {
+    "message": "Sao chép câu hỏi"
+  },
+  "mem_btn_copy": {
+    "message": "Sao chép"
+  },
+  "mem_btn_source": {
+    "message": "Nguồn"
+  },
+  "mem_prev": {
+    "message": "Trước"
+  },
+  "mem_next": {
+    "message": "Sau"
+  },
+  "mem_toast_opened_nlm": {
+    "message": "Đã mở NotebookLM"
+  },
+  "mem_toast_copied_question": {
+    "message": "Đã sao chép câu hỏi!"
+  },
+  "mem_toast_copied": {
+    "message": "Đã sao chép!"
   }
 }

@@ -1,8 +1,8 @@
 {
   "default_locale": "vi",
   "manifest_version": 3,
-  "name": "ATOM - Mindful Browsing",
-  "version": "1.5.3.1",
+  "name": "Amo",
+  "version": "2.3",
   "description": "AI-powered attention operating system.",
   "permissions": [
     "storage",
@@ -26,11 +26,21 @@
         "<all_urls>"
       ],
       "js": [
-        "content.js"
+        "content.js",
+        "bridge/nlm_floating_button.js"
       ],
       "css": [
         "styles.css"
       ]
+    },
+    {
+      "matches": [
+        "https://notebooklm.google.com/*"
+      ],
+      "js": [
+        "bridge/nlm_passive_learning.js"
+      ],
+      "run_at": "document_idle"
     }
   ],
   "action": {
@@ -51,8 +61,14 @@
     {
       "resources": [
         "styles.css",
+        "i18n_bridge.js",
         "MicroClosureRenderer.js",
-        "styles/micro_closure.css.js"
+        "styles/micro_closure.css.js",
+        "_locales/*/messages.json",
+        "icons/focus_bg.jpg",
+        "icons/rain.mp3",
+        "icons/forest.mp3",
+        "icons/light_rain.mp3"
       ],
       "matches": [
         "<all_urls>"
