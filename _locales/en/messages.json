@@ -252,7 +252,7 @@
     "message": "OpenRouter: Access Llama 3, Mistral, DeepSeek (~50 free requests/day)"
   },
   "opt_gemini_api_key": {
-    "message": "Google Gemini API Key"
+    "message": "AI Access Key"
   },
   "opt_api_guide_toggle": {
     "message": "How to get API Key"
@@ -267,7 +267,7 @@
     "message": "sk-or-v1-..."
   },
   "opt_openrouter_model": {
-    "message": "Model ID"
+    "message": "AI Model"
   },
   "opt_openrouter_model_placeholder": {
     "message": "google/gemini-2.0-flash-exp:free"
@@ -297,19 +297,19 @@
     "message": "Find related highlights by meaning, not just recency."
   },
   "opt_semantic_cost_warning": {
-    "message": "Warning: May increase Gemini API usage and latency."
+    "message": "Enabling this will use more of your AI quota and may slow down responses slightly."
   },
   "opt_semantic_key_required": {
     "message": "Add your API key to enable these toggles."
   },
   "opt_semantic_embeddings_title": {
-    "message": "Semantic Embeddings"
+    "message": "Meaning Analysis"
   },
   "opt_semantic_embeddings_desc": {
     "message": "Creates a semantic fingerprint for each highlight."
   },
   "opt_semantic_search_title": {
-    "message": "Semantic Search"
+    "message": "Find by Meaning"
   },
   "opt_semantic_search_desc": {
     "message": "Uses embeddings to pick top related highlights in the same domain."
@@ -375,19 +375,19 @@
     "message": "High"
   },
   "opt_ai_pilot_min_confidence": {
-    "message": "Min Confidence"
+    "message": "Minimum confidence level"
   },
   "opt_ai_min_confidence_placeholder": {
     "message": "0.65"
   },
   "opt_ai_pilot_timeout_ms": {
-    "message": "Timeout (ms)"
+    "message": "Time limit"
   },
   "opt_ai_timeout_placeholder": {
     "message": "800"
   },
   "opt_ai_pilot_budget_per_day": {
-    "message": "Budget / day"
+    "message": "Daily quota"
   },
   "opt_ai_budget_placeholder": {
     "message": "200"
@@ -414,13 +414,13 @@
     "message": "400"
   },
   "opt_ai_pilot_cache_ttl_ms": {
-    "message": "Cache TTL (ms)"
+    "message": "Temporary storage time"
   },
   "opt_ai_cache_ttl_placeholder": {
     "message": "15000"
   },
   "opt_ai_pilot_proxy_url": {
-    "message": "Proxy URL (optional)"
+    "message": "Proxy address (advanced)"
   },
   "opt_ai_proxy_placeholder": {
     "message": "https://your-proxy/decide"
@@ -585,7 +585,7 @@
     "message": "❌ Error: "
   },
   "popup_confirm_reset": {
-    "message": "Are you sure you want to DELETE ALL machine learning data and history? This cannot be undone."
+    "message": "Delete all saved highlights, reading history, and AI chat logs? This action cannot be undone."
   },
   "pop_lbl_current_site": {
     "message": "Current Site"
@@ -1125,7 +1125,7 @@
     "message": "Show warning when exporting personal data"
   },
   "opt_gemini_api_key": {
-    "message": "Google Gemini API Key"
+    "message": "AI Access Key"
   },
   "popup_visit_website": {
     "message": "Visit Website"
@@ -1902,7 +1902,10 @@
     "message": "Too many requests"
   },
   "sp_error_rate_limit_desc": {
-    "message": "Please wait a moment before trying again."
+    "message": "Please wait $1 seconds before trying again.",
+    "placeholders": {
+      "seconds": { "content": "$1" }
+    }
   },
   "sp_error_server": {
     "message": "Server error"
@@ -1914,7 +1917,7 @@
     "message": "Request timed out"
   },
   "sp_error_timeout_desc": {
-    "message": "The request took too long. Please try again."
+    "message": "The request took too long. Please try again or check your internet connection."
   },
   "sp_error_unknown": {
     "message": "An error occurred"
@@ -2288,5 +2291,48 @@
   "srq_loading": { "message": "Loading..." },
   "srq_empty_state": { "message": "No highlights waiting to save." },
   "srq_error_state": { "message": "Failed to load. Tap 'Try again'." },
-  "srq_retry": { "message": "Try again" }
+  "srq_retry": { "message": "Try again" },
+
+  "opt_ai_pilot_timeout_hint": {
+    "message": "Maximum wait time for AI response (in milliseconds)"
+  },
+  "opt_ai_pilot_budget_hint": {
+    "message": "Number of AI calls allowed per day"
+  },
+  "opt_ai_pilot_cache_ttl_hint": {
+    "message": "How long to remember recent results (in milliseconds)"
+  },
+  "opt_nlm_export_max_chars_hint": {
+    "message": "Maximum text length per export (0 = unlimited)"
+  },
+  "opt_gemini_api_key_tooltip": {
+    "message": "Your personal key to use AI features. Get it free from Google AI Studio."
+  },
+  "opt_semantic_embeddings_tooltip": {
+    "message": "AI analyzes the meaning of each highlight to find related content later."
+  },
+  "opt_semantic_search_tooltip": {
+    "message": "Find highlights by what they mean, not just by keywords."
+  },
+  "opt_ai_pilot_budget_tooltip": {
+    "message": "Limit how many times AI can be called per day to control costs."
+  },
+  "opt_ai_pilot_timeout_tooltip": {
+    "message": "How long to wait for AI before giving up (in milliseconds)."
+  },
+  "opt_advanced_settings_title": {
+    "message": "Advanced Settings"
+  },
+  "opt_advanced_badge": {
+    "message": "(For advanced users)"
+  },
+  "sp_error_cta_retry": {
+    "message": "Try Again"
+  },
+  "sp_error_cta_settings": {
+    "message": "Open Settings"
+  },
+  "popup_connecting": {
+    "message": "Connecting to AI..."
+  }
 }

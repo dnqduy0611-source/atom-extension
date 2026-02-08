@@ -288,7 +288,7 @@
     "message": "OpenRouter: Truy cập Llama 3, Mistral, DeepSeek (~50 yêu cầu miễn phí/ngày)"
   },
   "opt_gemini_api_key": {
-    "message": "Google Gemini API Key"
+    "message": "Khóa truy cập AI"
   },
   "opt_api_guide_toggle": {
     "message": "Hướng dẫn lấy Key"
@@ -303,7 +303,7 @@
     "message": "sk-or-v1-..."
   },
   "opt_openrouter_model": {
-    "message": "Model ID"
+    "message": "Mẫu AI"
   },
   "opt_openrouter_model_placeholder": {
     "message": "google/gemini-2.0-flash-exp:free"
@@ -333,19 +333,19 @@
     "message": "Tìm các highlight liên quan theo ý nghĩa, không chỉ theo thời gian."
   },
   "opt_semantic_cost_warning": {
-    "message": "Cảnh báo: Có thể tăng mức sử dụng API Gemini và độ trễ."
+    "message": "Bật tính năng này sẽ tốn nhiều hạn mức AI hơn và có thể làm chậm phản hồi một chút."
   },
   "opt_semantic_key_required": {
     "message": "Thêm API key để bật các tính năng này."
   },
   "opt_semantic_embeddings_title": {
-    "message": "Nhúng ngữ nghĩa (Embeddings)"
+    "message": "Phân tích ý nghĩa"
   },
   "opt_semantic_embeddings_desc": {
     "message": "Tạo dấu vân tay ngữ nghĩa cho mỗi highlight."
   },
   "opt_semantic_search_title": {
-    "message": "Tìm kiếm ngữ nghĩa"
+    "message": "Tìm theo ý nghĩa"
   },
   "opt_semantic_search_desc": {
     "message": "Sử dụng embeddings để chọn các highlight liên quan nhất."
@@ -411,19 +411,19 @@
     "message": "Cao (High)"
   },
   "opt_ai_pilot_min_confidence": {
-    "message": "Ngưỡng tin cậy tối thiểu"
+    "message": "Độ tin cậy tối thiểu"
   },
   "opt_ai_min_confidence_placeholder": {
     "message": "0.65"
   },
   "opt_ai_pilot_timeout_ms": {
-    "message": "Timeout (ms)"
+    "message": "Giới hạn thời gian"
   },
   "opt_ai_timeout_placeholder": {
     "message": "800"
   },
   "opt_ai_pilot_budget_per_day": {
-    "message": "Ngân sách / ngày"
+    "message": "Hạn mức hàng ngày"
   },
   "opt_ai_budget_placeholder": {
     "message": "200"
@@ -450,13 +450,13 @@
     "message": "400"
   },
   "opt_ai_pilot_cache_ttl_ms": {
-    "message": "Cache TTL (ms)"
+    "message": "Thời gian lưu tạm"
   },
   "opt_ai_cache_ttl_placeholder": {
     "message": "15000"
   },
   "opt_ai_pilot_proxy_url": {
-    "message": "Proxy URL (tuỳ chọn)"
+    "message": "Địa chỉ proxy (nâng cao)"
   },
   "opt_ai_proxy_placeholder": {
     "message": "https://your-proxy/decide"
@@ -570,7 +570,7 @@
     "message": "❌ Lỗi: "
   },
   "popup_confirm_reset": {
-    "message": "Bạn có chắc muốn xóa toàn bộ dữ liệu học máy và lịch sử? Hành động này không thể hoàn tác."
+    "message": "Xóa toàn bộ ghi chú đã lưu, lịch sử đọc và trò chuyện với AI? Hành động này không thể hoàn tác."
   },
   "pop_lbl_current_site": {
     "message": "Trang hiện tại"
@@ -1481,5 +1481,48 @@
   },
   "sp_onboarding_complete": {
     "message": "Ban da hoan thanh thiet lap co ban."
-  }}
+  },
 
+  "opt_ai_pilot_timeout_hint": {
+    "message": "Thời gian tối đa chờ AI phản hồi (đơn vị: mili giây)"
+  },
+  "opt_ai_pilot_budget_hint": {
+    "message": "Số lần gọi AI được phép mỗi ngày"
+  },
+  "opt_ai_pilot_cache_ttl_hint": {
+    "message": "Thời gian nhớ kết quả gần đây (đơn vị: mili giây)"
+  },
+  "opt_nlm_export_max_chars_hint": {
+    "message": "Độ dài văn bản tối đa mỗi lần xuất (0 = không giới hạn)"
+  },
+  "opt_gemini_api_key_tooltip": {
+    "message": "Khóa cá nhân để sử dụng tính năng AI. Lấy miễn phí từ Google AI Studio."
+  },
+  "opt_semantic_embeddings_tooltip": {
+    "message": "AI phân tích ý nghĩa từng đoạn để tìm nội dung liên quan sau này."
+  },
+  "opt_semantic_search_tooltip": {
+    "message": "Tìm ghi chú theo ý nghĩa, không chỉ theo từ khóa."
+  },
+  "opt_ai_pilot_budget_tooltip": {
+    "message": "Giới hạn số lần gọi AI mỗi ngày để kiểm soát chi phí."
+  },
+  "opt_ai_pilot_timeout_tooltip": {
+    "message": "Thời gian chờ AI trước khi bỏ qua (đơn vị: mili giây)."
+  },
+  "opt_advanced_settings_title": {
+    "message": "Cài đặt nâng cao"
+  },
+  "opt_advanced_badge": {
+    "message": "(Dành cho người dùng nâng cao)"
+  },
+  "sp_error_cta_retry": {
+    "message": "Thử lại"
+  },
+  "sp_error_cta_settings": {
+    "message": "Mở Cài đặt"
+  },
+  "popup_connecting": {
+    "message": "Đang kết nối với AI..."
+  }
+}
