@@ -1405,7 +1405,7 @@
     "message": "Mo thanh ben va lam theo 3 buoc ngan."
   },
   "popup_onboarding_desc_no_key": {
-    "message": "Mo Cai dat de them API key, sau do quay lai thanh ben."
+    "message": "Mở Cài đặt để thêm Khóa truy cập AI, sau đó quay lại thanh bên."
   },
   "popup_onboarding_step1": {
     "message": "1) Boi den 1 doan ngan"

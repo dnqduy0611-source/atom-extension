@@ -531,7 +531,7 @@
     "message": "Open the side panel and follow 3 quick steps."
   },
   "popup_onboarding_desc_no_key": {
-    "message": "Open Settings to add your API key, then continue in the side panel."
+    "message": "Open Settings to add your AI Access Key, then continue in the side panel."
   },
   "popup_onboarding_step1": {
     "message": "1) Highlight one short paragraph"

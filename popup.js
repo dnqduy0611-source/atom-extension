@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (onboardingDesc) {
             onboardingDesc.textContent = hasApiKey
                 ? atomMsg('popup_onboarding_desc', null, 'Open the side panel and follow 3 quick steps.')
-                : atomMsg('popup_onboarding_desc_no_key', null, 'Open Settings to add your API key, then continue in the side panel.');
+                : atomMsg('popup_onboarding_desc_no_key', null, 'Open Settings to add your AI Access Key, then continue in the side panel.');
         }
     }
 
