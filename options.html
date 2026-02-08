@@ -1298,7 +1298,11 @@
 
                 <!-- AI Mode -->
                 <div class="setting-section">
-                    <label for="aiPilotMode" data-i18n="opt_ai_pilot_mode">Che do hoat dong</label>
+                    <label for="aiPilotMode">
+                        <span data-i18n="opt_ai_pilot_mode">Che do hoat dong</span>
+                        <span class="info-icon" data-tooltip-i18n="opt_ai_pilot_mode_tooltip"
+                              aria-label="More information">ⓘ</span>
+                    </label>
                     <div class="custom-dropdown" id="aiPilotModeDropdown">
                         <div class="dropdown-selected" tabindex="0">
                             <span class="dropdown-text" data-i18n="opt_ai_pilot_mode_shadow">Che do Bong</span>
@@ -1325,7 +1329,11 @@
 
                 <!-- Accuracy Level -->
                 <div class="setting-section">
-                    <label for="aiAccuracyLevel" data-i18n="opt_ai_pilot_accuracy_level">Do chinh xac</label>
+                    <label for="aiAccuracyLevel">
+                        <span data-i18n="opt_ai_pilot_accuracy_level">Do chinh xac</span>
+                        <span class="info-icon" data-tooltip-i18n="opt_ai_pilot_accuracy_tooltip"
+                              aria-label="More information">ⓘ</span>
+                    </label>
                     <div class="custom-dropdown" id="aiAccuracyLevelDropdown">
                         <div class="dropdown-selected" tabindex="0">
                             <span class="dropdown-text" data-i18n="opt_ai_pilot_accuracy_balanced">Can bang</span>
@@ -1343,6 +1351,7 @@
                         </div>
                     </div>
                     <input type="hidden" id="aiAccuracyLevel" value="balanced">
+                    <p class="hint-text" data-i18n="opt_ai_pilot_accuracy_hint">Cân bằng: nhanh hơn. Cao: chính xác hơn nhưng chậm hơn và tốn thêm chi phí.</p>
                 </div>
 
                 <!-- Advanced AI Settings -->

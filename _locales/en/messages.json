@@ -386,6 +386,15 @@
   "opt_ai_pilot_accuracy_high": {
     "message": "High"
   },
+  "opt_ai_pilot_mode_tooltip": {
+    "message": "Shadow: AI observes but doesn't interrupt. Assist: AI suggests when you might need help. Primary: AI actively guides your reading."
+  },
+  "opt_ai_pilot_accuracy_tooltip": {
+    "message": "Balanced: faster responses. High: more accurate but slower and costs more API credits."
+  },
+  "opt_ai_pilot_accuracy_hint": {
+    "message": "Balanced: faster. High: more accurate but slower and costs more."
+  },
   "opt_ai_pilot_min_confidence": {
     "message": "Minimum confidence level"
   },

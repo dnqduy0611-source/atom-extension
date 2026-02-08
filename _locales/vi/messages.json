@@ -422,6 +422,15 @@
   "opt_ai_pilot_accuracy_high": {
     "message": "Cao (High)"
   },
+  "opt_ai_pilot_mode_tooltip": {
+    "message": "Bóng: AI quan sát nhưng không làm gián đoạn. Trợ lý: AI gợi ý khi bạn cần giúp. Chủ động: AI chủ động hướng dẫn bạn đọc."
+  },
+  "opt_ai_pilot_accuracy_tooltip": {
+    "message": "Cân bằng: phản hồi nhanh hơn. Cao: chính xác hơn nhưng chậm hơn và tốn thêm credit API."
+  },
+  "opt_ai_pilot_accuracy_hint": {
+    "message": "Cân bằng: nhanh hơn. Cao: chính xác hơn nhưng chậm hơn và tốn thêm chi phí."
+  },
   "opt_ai_pilot_min_confidence": {
     "message": "Độ tin cậy tối thiểu"
   },
