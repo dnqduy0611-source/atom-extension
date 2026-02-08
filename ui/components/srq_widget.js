@@ -246,13 +246,16 @@
         header.appendChild(badge);
         header.appendChild(toggleBtn);
 
-        const toggleExpanded = () => {
-            widget.classList.toggle('expanded');
-            const isExpanded = widget.classList.contains('expanded');
+        const setExpandedState = (isExpanded) => {
+            widget.classList.toggle('expanded', !!isExpanded);
             const toggleLabel = isExpanded ? msg('srq_toggle_collapse', 'Show less') : msg('srq_toggle', 'Show more');
             toggleBtn.setAttribute('aria-label', toggleLabel);
             toggleBtn.title = toggleLabel;
             header.setAttribute('aria-expanded', String(isExpanded));
+        };
+
+        const toggleExpanded = () => {
+            setExpandedState(!widget.classList.contains('expanded'));
         };
 
         header.addEventListener('click', toggleExpanded);
@@ -280,6 +283,7 @@
             batchList.appendChild(pagination);
         }
 
+        widget.__setExpandedState = setExpandedState;
         widget.appendChild(batchList);
         return widget;
     }
@@ -330,7 +334,11 @@
         if (!widget) return;
 
         if (keepExpanded || wasExpanded) {
-            widget.classList.add('expanded');
+            if (typeof widget.__setExpandedState === 'function') {
+                widget.__setExpandedState(true);
+            } else {
+                widget.classList.add('expanded');
+            }
         }
         container.appendChild(widget);
     }

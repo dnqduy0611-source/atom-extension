@@ -360,7 +360,7 @@
     "message": "Gọn (hiển thị nhiều mục hơn)"
   },
   "opt_srq_density_hint": {
-    "message": "Chế độ dễ đọc giúp theo dõi thoải mái hơn. Chế độ gọn hiển thị nhiều highlight hơn."
+    "message": "Chế độ dễ đọc giúp theo dõi thoải mái hơn. Chế độ gọn hiển thị nhiều highlight hơn. Hãy tải lại sidebar sau khi đổi cài đặt này."
   },
   "opt_ai_pilot_mode_shadow": {
     "message": "Chế độ Bóng (Shadow)"

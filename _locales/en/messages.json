@@ -324,7 +324,7 @@
     "message": "Compact (more items per screen)"
   },
   "opt_srq_density_hint": {
-    "message": "Comfortable mode is easier to read. Compact mode shows more highlights."
+    "message": "Comfortable mode is easier to read. Compact mode shows more highlights. Reload the sidebar after changing this setting."
   },
   "opt_ai_pilot_mode_shadow": {
     "message": "Shadow Mode"

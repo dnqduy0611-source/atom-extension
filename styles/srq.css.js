@@ -58,7 +58,7 @@
             padding: 0 6px;
             border-radius: 10px;
             background: var(--srq-accent-primary, #10B981);
-            color: #fff;
+            color: var(--srq-text-inverse, #fff);
             font-size: 11px;
             font-weight: 700;
             line-height: 1;
@@ -232,7 +232,7 @@
         }
 
         .srq-btn:hover {
-            background: rgba(255,255,255,0.1);
+            background: var(--srq-surface-hover, rgba(255,255,255,0.1));
         }
 
         .srq-btn-export {
@@ -264,7 +264,7 @@
         .srq-modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.7);
+            background: var(--srq-overlay-bg, rgba(0,0,0,0.7));
             z-index: 10000;
             display: flex;
             align-items: center;
@@ -305,7 +305,7 @@
         }
 
         .srq-modal-header.scrolled {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 8px var(--srq-shadow-strong, rgba(0,0,0,0.3));
         }
 
         .srq-modal-title {
@@ -431,7 +431,7 @@
         .srq-btn-primary {
             background: var(--srq-accent-primary, #10B981);
             border: none;
-            color: #fff;
+            color: var(--srq-text-inverse, #fff);
             font-size: 12px;
             font-weight: 600;
             padding: 6px 14px;
@@ -473,15 +473,15 @@
             left: 0;
             right: 0;
             z-index: 99999;
-            background: linear-gradient(135deg, #065F46 0%, #064E3B 100%);
-            color: #D1FAE5;
+            background: linear-gradient(135deg, var(--srq-banner-grad-start, #065F46) 0%, var(--srq-banner-grad-end, #064E3B) 100%);
+            color: var(--srq-banner-text, #D1FAE5);
             padding: 12px 16px;
             display: flex;
             align-items: center;
             gap: 10px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             font-size: 13px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 20px var(--srq-shadow-strong, rgba(0,0,0,0.3));
             animation: srqBannerSlide 0.3s ease-out;
         }
 
@@ -495,9 +495,9 @@
         }
 
         .atom-srq-nlm-banner button {
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: #fff;
+            background: var(--srq-banner-btn-bg, rgba(255,255,255,0.15));
+            border: 1px solid var(--srq-banner-btn-border, rgba(255,255,255,0.2));
+            color: var(--srq-text-inverse, #fff);
             padding: 6px 12px;
             border-radius: 6px;
             font-size: 12px;
@@ -507,20 +507,20 @@
         }
 
         .atom-srq-nlm-banner button:hover {
-            background: rgba(255,255,255,0.25);
+            background: var(--srq-banner-btn-hover, rgba(255,255,255,0.25));
         }
 
         .atom-srq-nlm-banner .srq-banner-close {
             background: none;
             border: none;
-            color: rgba(255,255,255,0.6);
+            color: var(--srq-banner-close, rgba(255,255,255,0.6));
             font-size: 16px;
             padding: 4px;
             min-width: auto;
         }
 
         .atom-srq-nlm-banner .srq-banner-close:hover {
-            color: #fff;
+            color: var(--srq-text-inverse, #fff);
         }
 
         /* ===========================
@@ -665,7 +665,7 @@
             display: inline-block;
             width: 12px;
             height: 12px;
-            border: 2px solid rgba(255,255,255,0.2);
+            border: 2px solid var(--srq-spinner-track, rgba(255,255,255,0.2));
             border-top-color: var(--srq-accent-primary, #10B981);
             border-radius: 50%;
             animation: srqSpin 0.6s linear infinite;
