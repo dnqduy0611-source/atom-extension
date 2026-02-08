@@ -1041,7 +1041,7 @@
         if (acceptedCostWarning) return true;
         const message = getMessage(
             'sp_semantic_cost_warning',
-            'This may increase Gemini API usage and cost. Do you want to continue?'
+            'Enabling this may increase AI usage and cost. Continue?'
         );
         const accepted = window.confirm(message);
         if (accepted) {
@@ -3119,7 +3119,7 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
 
         const apiKey = await getApiKey();
         if (!apiKey) {
-            showToast(getMessage('sp_error_no_api_key', 'API key not set'), 'error');
+            showToast(getMessage('sp_error_no_api_key', 'AI Access Key not set'), 'error');
             return;
         }
 
@@ -4399,9 +4399,9 @@ Text: "${highlightText.slice(0, 1500)}"`
             if (!apiKey) {
                 hideTypingIndicator();
                 addErrorMessageToDOM(
-                    getMessage('sp_error_no_api_key', 'API key not set'),
-                    getMessage('sp_error_no_api_key_desc', 'Go to Settings to configure your Gemini API key.'),
-                    [{ label: getMessage('sp_open_settings', 'Open Settings'), action: 'openSettings' }]
+                    getMessage('sp_error_no_api_key', 'AI Access Key not set'),
+                    getMessage('sp_error_no_api_key_desc', 'Go to Settings to add your AI Access Key.'),
+                    [{ label: getMessage('sp_error_cta_settings', 'Open Settings'), action: 'openSettings' }]
                 );
                 setLoading(false);
                 return;
@@ -4433,7 +4433,7 @@ Text: "${highlightText.slice(0, 1500)}"`
                 addErrorMessageToDOM(
                     getMessage('sp_error_empty_response', 'No response received'),
                     getMessage('sp_error_empty_response_desc', 'The AI did not return a response. Please try again.'),
-                    [{ label: getMessage('sp_retry', 'Try again'), action: 'retry' }]
+                    [{ label: getMessage('sp_error_cta_retry', 'Try Again'), action: 'retry' }]
                 );
             }
         } catch (error) {
@@ -4482,7 +4482,7 @@ Text: "${highlightText.slice(0, 1500)}"`
             return {
                 title: getMessage('sp_error_network', 'Connection lost'),
                 description: getMessage('sp_error_network_desc', 'Check your internet connection and try again.'),
-                actions: [{ label: getMessage('sp_retry', 'Try again'), action: 'retry' }]
+                actions: [{ label: getMessage('sp_error_cta_retry', 'Try Again'), action: 'retry' }]
             };
         }
 
@@ -4491,15 +4491,15 @@ Text: "${highlightText.slice(0, 1500)}"`
             switch (error.status) {
                 case 401:
                     return {
-                        title: getMessage('sp_error_unauthorized', 'Invalid API key'),
-                        description: getMessage('sp_error_unauthorized_desc', 'Your API key is invalid or expired.'),
-                        actions: [{ label: getMessage('sp_open_settings', 'Open Settings'), action: 'openSettings' }]
+                        title: getMessage('sp_error_unauthorized', 'Invalid AI Access Key'),
+                        description: getMessage('sp_error_unauthorized_desc', 'Your AI Access Key is invalid or expired.'),
+                        actions: [{ label: getMessage('sp_error_cta_settings', 'Open Settings'), action: 'openSettings' }]
                     };
                 case 429:
                     return {
                         title: getMessage('sp_error_rate_limit', 'Too many requests'),
                         description: getMessage('sp_error_rate_limit_desc', 'Please wait a moment before trying again.'),
-                        actions: [{ label: getMessage('sp_retry', 'Try again'), action: 'retry' }]
+                        actions: [{ label: getMessage('sp_error_cta_retry', 'Try Again'), action: 'retry' }]
                     };
                 case 500:
                 case 502:
@@ -4508,7 +4508,7 @@ Text: "${highlightText.slice(0, 1500)}"`
                         title: getMessage('sp_error_server', 'Server error'),
                         description: getMessage('sp_error_server_desc', 'The AI service is experiencing issues.'),
                         actions: [
-                            { label: getMessage('sp_retry', 'Try again'), action: 'retry' },
+                            { label: getMessage('sp_error_cta_retry', 'Try Again'), action: 'retry' },
                             { label: getMessage('sp_report_issue', 'Report issue'), action: 'report' }
                         ]
                     };
@@ -4516,7 +4516,7 @@ Text: "${highlightText.slice(0, 1500)}"`
                     return {
                         title: error.message,
                         description: getMessage('sp_error_generic_desc', 'Something went wrong.'),
-                        actions: [{ label: getMessage('sp_retry', 'Try again'), action: 'retry' }]
+                        actions: [{ label: getMessage('sp_error_cta_retry', 'Try Again'), action: 'retry' }]
                     };
             }
         }
@@ -4526,7 +4526,7 @@ Text: "${highlightText.slice(0, 1500)}"`
             return {
                 title: getMessage('sp_error_timeout', 'Request timed out'),
                 description: getMessage('sp_error_timeout_desc', 'The request took too long. Please try again.'),
-                actions: [{ label: getMessage('sp_retry', 'Try again'), action: 'retry' }]
+                actions: [{ label: getMessage('sp_error_cta_retry', 'Try Again'), action: 'retry' }]
             };
         }
 
@@ -4543,7 +4543,7 @@ Text: "${highlightText.slice(0, 1500)}"`
         return {
             title: getMessage('sp_error_unknown', 'An error occurred'),
             description: error.message || getMessage('sp_error_generic_desc', 'Something went wrong.'),
-            actions: [{ label: getMessage('sp_retry', 'Try again'), action: 'retry' }]
+            actions: [{ label: getMessage('sp_error_cta_retry', 'Try Again'), action: 'retry' }]
         };
     }
 
@@ -6035,7 +6035,7 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
             ? !!llmConfig.openrouterKey
             : !!geminiKey;
         if (!hasProviderKey) {
-            showToast(getMessage('sp_error_no_api_key', 'API key not set'), 'error');
+            showToast(getMessage('sp_error_no_api_key', 'AI Access Key not set'), 'error');
             return;
         }
 
@@ -7017,7 +7017,7 @@ ${aiSummary}
             ? !!llmConfig.openrouterKey
             : !!geminiKey;
         if (!hasProviderKey) {
-            showToast(getMessage('sp_error_no_api_key', 'API key not set'), 'error');
+            showToast(getMessage('sp_error_no_api_key', 'AI Access Key not set'), 'error');
             return;
         }
 

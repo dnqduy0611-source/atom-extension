@@ -1698,7 +1698,7 @@
     "message": "Key"
   },
   "sp_semantic_cost_warning": {
-    "message": "Enabling this may increase Gemini API usage and cost. Continue?"
+    "message": "Enabling this may increase AI usage and cost. Continue?"
   },
   "sp_semantic_key_required": {
     "message": "Add your API key in Settings to enable this."
@@ -1875,10 +1875,10 @@
     "message": "Report issue"
   },
   "sp_error_no_api_key": {
-    "message": "API key not set"
+    "message": "AI Access Key not set"
   },
   "sp_error_no_api_key_desc": {
-    "message": "Go to Settings to configure your Gemini API key."
+    "message": "Go to Settings to add your AI Access Key."
   },
   "sp_error_empty_response": {
     "message": "No response received"
@@ -1893,10 +1893,10 @@
     "message": "Check your internet connection and try again."
   },
   "sp_error_unauthorized": {
-    "message": "Invalid API key"
+    "message": "Invalid AI Access Key"
   },
   "sp_error_unauthorized_desc": {
-    "message": "Your API key is invalid or expired."
+    "message": "Your AI Access Key is invalid or expired."
   },
   "sp_error_rate_limit": {
     "message": "Too many requests"

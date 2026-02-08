@@ -1522,6 +1522,18 @@
   "sp_error_cta_settings": {
     "message": "Mở Cài đặt"
   },
+  "sp_error_no_api_key": {
+    "message": "Chưa có Khóa truy cập AI"
+  },
+  "sp_error_no_api_key_desc": {
+    "message": "Mở Cài đặt để thêm Khóa truy cập AI của bạn."
+  },
+  "sp_error_unauthorized": {
+    "message": "Khóa truy cập AI không hợp lệ"
+  },
+  "sp_error_unauthorized_desc": {
+    "message": "Khóa truy cập AI của bạn không hợp lệ hoặc đã hết hạn."
+  },
   "popup_connecting": {
     "message": "Đang kết nối với AI..."
   }
