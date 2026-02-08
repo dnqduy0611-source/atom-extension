@@ -1832,5 +1832,159 @@
   },
   "reading_card_flashcard_action": {
     "message": "Thẻ ghi nhớ"
+  },
+
+  "sp_primer_title": {
+    "message": "Trước khi đọc..."
+  },
+  "sp_primer_topic_label": {
+    "message": "Chủ đề"
+  },
+  "sp_primer_objectives": {
+    "message": "Mục tiêu"
+  },
+  "sp_primer_start": {
+    "message": "Bắt đầu đọc"
+  },
+  "sp_primer_skip": {
+    "message": "Bỏ qua"
+  },
+  "sp_primer_started": {
+    "message": "Đã bắt đầu đọc"
+  },
+  "sp_primer_skipped": {
+    "message": "Đã bỏ qua"
+  },
+  "sp_mode_label": {
+    "message": "Chế độ đọc"
+  },
+  "sp_mode_skim_label": {
+    "message": "Đọc nhanh"
+  },
+  "sp_mode_skim_desc": {
+    "message": "Tổng quan nhanh"
+  },
+  "sp_mode_deep_label": {
+    "message": "Đọc kỹ"
+  },
+  "sp_mode_deep_desc": {
+    "message": "Phân tích kỹ"
+  },
+  "sp_stats_time": {
+    "message": "Thời gian"
+  },
+  "sp_stats_discussions": {
+    "message": "Thảo luận"
+  },
+  "sp_stats_done": {
+    "message": "Hoàn tất"
+  },
+  "sp_stats_saved": {
+    "message": "Đã lưu"
+  },
+  "sp_connections_title": {
+    "message": "Kết nối"
+  },
+  "sp_connection_contradicts": {
+    "message": "Mâu thuẫn"
+  },
+  "sp_connection_supports": {
+    "message": "Hỗ trợ"
+  },
+  "sp_connection_extends": {
+    "message": "Mở rộng"
+  },
+  "sp_menu_semantic_embeddings": {
+    "message": "Liên kết nội dung thông minh"
+  },
+  "sp_menu_semantic_search": {
+    "message": "Tìm nội dung liên quan"
+  },
+  "sp_toggle_on": {
+    "message": "Bật"
+  },
+  "sp_toggle_off": {
+    "message": "Tắt"
+  },
+  "sp_toggle_locked": {
+    "message": "Khóa"
+  },
+  "sp_semantic_cost_warning": {
+    "message": "Tính năng này dùng thêm credit AI"
+  },
+  "sp_semantic_key_required": {
+    "message": "Cần khóa truy cập AI"
+  },
+  "sp_semantic_needs_embeddings": {
+    "message": "Vui lòng bật liên kết nội dung trước"
+  },
+  "sp_deep_angle": {
+    "message": "Góc nhìn sâu"
+  },
+  "sp_deep_angle_title": {
+    "message": "Góc nhìn khác"
+  },
+  "sp_deep_angle_hint": {
+    "message": "Xem xét các góc nhìn khác nhau"
+  },
+  "sp_deep_angle_analyzing": {
+    "message": "Đang phân tích..."
+  },
+  "sp_deep_angle_loading": {
+    "message": "Đang tải..."
+  },
+  "sp_deep_angle_empty": {
+    "message": "Không tìm thấy góc nhìn khác"
+  },
+  "sp_deep_angle_error": {
+    "message": "Lỗi"
+  },
+  "sp_auto_summary_title": {
+    "message": "Điểm chính"
+  },
+  "sp_auto_summary_takeaways": {
+    "message": "Bạn đã học được"
+  },
+  "sp_auto_summary_suggestions": {
+    "message": "Bước tiếp theo"
+  },
+  "sp_auto_summary_create_insight": {
+    "message": "Tạo insight"
+  },
+  "sp_auto_summary_ask_followup": {
+    "message": "Hỏi thêm"
+  },
+  "sp_auto_summary_dismiss": {
+    "message": "Bỏ qua"
+  },
+  "sp_bloom_level_1": {
+    "message": "Nhớ"
+  },
+  "sp_bloom_level_2": {
+    "message": "Hiểu"
+  },
+  "sp_bloom_level_3": {
+    "message": "Áp dụng"
+  },
+  "sp_bloom_level_4": {
+    "message": "Phân tích"
+  },
+  "sp_bloom_level_5": {
+    "message": "Đánh giá"
+  },
+  "sp_bloom_level_6": {
+    "message": "Sáng tạo"
+  },
+  "sp_quick_note_title": {
+    "message": "Ghi chú nhanh"
+  },
+  "sp_quick_note_placeholder": {
+    "message": "Ghi lại suy nghĩ nhanh..."
+  },
+  "sp_quick_note_add": {
+    "message": "Thêm ghi chú"
+  },
+  "sp_quick_note_empty": {
+    "message": "Chưa có ghi chú"
   }
 }
