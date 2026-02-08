@@ -769,6 +769,93 @@
             color: var(--foreground);
         }
 
+        /* Onboarding Checklist */
+        .onboarding-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, transparent 100%);
+            border: 2px solid var(--primary);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .onboarding-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .onboarding-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: var(--foreground);
+        }
+
+        .onboarding-dismiss {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--muted);
+            cursor: pointer;
+            padding: 0;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .onboarding-dismiss:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: var(--foreground);
+        }
+
+        .onboarding-steps {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 16px 0;
+        }
+
+        .onboarding-steps li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            font-size: 14px;
+            color: var(--foreground);
+        }
+
+        .onboarding-steps .step-icon {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .onboarding-steps li.completed {
+            color: var(--primary);
+        }
+
+        .onboarding-steps li.completed .step-icon {
+            color: var(--primary);
+        }
+
+        .tab-description {
+            font-size: 13px;
+            color: var(--muted);
+            margin: -16px 0 24px 0;
+            line-height: 1.5;
+        }
+
+        body.light-mode .onboarding-card {
+            background: linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, transparent 100%);
+        }
+
+        body.light-mode .onboarding-dismiss:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
         /* Responsive */
         @media (max-width: 700px) {
             .options-container {
@@ -842,7 +929,7 @@
                         <circle cx="12" cy="12" r="3" />
                     </svg>
                 </span>
-                <span class="nav-label" data-i18n="opt_tab_general">Chung</span>
+                <span class="nav-label" data-i18n="opt_tab_general">Getting Started</span>
             </button>
 
             <button class="nav-tab" data-tab="ai">
@@ -859,7 +946,7 @@
                         <path d="M16.24 7.76l2.83-2.83" />
                     </svg>
                 </span>
-                <span class="nav-label" data-i18n="opt_tab_ai">AI Pilot</span>
+                <span class="nav-label" data-i18n="opt_tab_ai">AI Features</span>
             </button>
 
             <button class="nav-tab" data-tab="connections">
@@ -870,7 +957,7 @@
                         <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
                     </svg>
                 </span>
-                <span class="nav-label" data-i18n="opt_tab_connections">Kết nối</span>
+                <span class="nav-label" data-i18n="opt_tab_connections">Integrations</span>
             </button>
 
             <button class="nav-tab" data-tab="advanced">
@@ -882,7 +969,7 @@
                         <circle cx="12" cy="12" r="3" />
                     </svg>
                 </span>
-                <span class="nav-label" data-i18n="opt_tab_advanced">Advanced</span>
+                <span class="nav-label" data-i18n="opt_tab_advanced">Developer Tools</span>
             </button>
 
             <div class="nav-footer">
@@ -907,8 +994,40 @@
                             d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
                         <circle cx="12" cy="12" r="3" />
                     </svg>
-                    <span data-i18n="opt_tab_general_title">Cai dat chung</span>
+                    <span data-i18n="opt_tab_general_title">Getting Started</span>
                 </h2>
+                <p class="tab-description" data-i18n="opt_tab_general_desc">
+                    Set up your AI provider and basic preferences
+                </p>
+
+                <!-- Onboarding Checklist (shown on first visit) -->
+                <div id="onboarding-checklist" class="onboarding-card" style="display: none;">
+                    <div class="onboarding-header">
+                        <h3 data-i18n="opt_onboarding_title">Quick Setup (4 steps)</h3>
+                        <button class="onboarding-dismiss" aria-label="Dismiss">×</button>
+                    </div>
+                    <ul class="onboarding-steps">
+                        <li id="onboarding-step-1" class="completed">
+                            <span class="step-icon">☑</span>
+                            <span data-i18n="opt_onboarding_step1">Choose your AI provider</span>
+                        </li>
+                        <li id="onboarding-step-2">
+                            <span class="step-icon">☐</span>
+                            <span data-i18n="opt_onboarding_step2">Get your free API key (click link below)</span>
+                        </li>
+                        <li id="onboarding-step-3">
+                            <span class="step-icon">☐</span>
+                            <span data-i18n="opt_onboarding_step3">Paste your key and click Save</span>
+                        </li>
+                        <li id="onboarding-step-4">
+                            <span class="step-icon">☐</span>
+                            <span data-i18n="opt_onboarding_step4">Start highlighting text on any webpage</span>
+                        </li>
+                    </ul>
+                    <button id="btn-complete-setup" class="btn-action" style="width: 100%; margin-top: 12px;" data-i18n="opt_onboarding_btn_complete">
+                        Complete Setup
+                    </button>
+                </div>
 
                 <!-- API Key Section with Provider Selector -->
                 <div class="setting-section">
@@ -1059,14 +1178,21 @@
                     </div>
                 </div>
 
-                <!-- User Persona Section -->
-                <div class="setting-section">
-                    <label for="userPersona" data-i18n="opt_user_persona_title">Vai tro su dung</label>
-                    <input type="text" id="userPersona" placeholder="e.g. Bac si, Sinh vien, Kỹ sư..."
-                        data-i18n-placeholder="opt_user_persona_placeholder">
-                    <p class="hint-text" data-i18n="opt_user_persona_desc">AI se dieu chinh cach giai thich phu hop voi
-                        chuyen mon cua ban.</p>
-                </div>
+                <!-- User Persona Section (Advanced) -->
+                <details class="advanced-settings" style="margin-top: 16px;">
+                    <summary>
+                        <span data-i18n="opt_advanced_settings_title">Advanced Settings</span>
+                        <span class="advanced-badge" data-i18n="opt_advanced_badge">(For advanced users)</span>
+                    </summary>
+                    <div class="advanced-content">
+                        <div class="setting-section">
+                            <label for="userPersona" data-i18n="opt_user_persona_title">User Role</label>
+                            <input type="text" id="userPersona" placeholder="e.g. Doctor, Student, Engineer..."
+                                data-i18n-placeholder="opt_user_persona_placeholder">
+                            <p class="hint-text" data-i18n="opt_user_persona_desc">AI will adjust explanations to match your expertise.</p>
+                        </div>
+                    </div>
+                </details>
 
                 <!-- Language Section -->
                 <div class="setting-section">
@@ -1105,8 +1231,11 @@
                         <path d="M4.93 19.07l2.83-2.83" />
                         <path d="M16.24 7.76l2.83-2.83" />
                     </svg>
-                    <span data-i18n="opt_tab_ai_title">AI Pilot</span>
+                    <span data-i18n="opt_tab_ai_title">AI Features</span>
                 </h2>
+                <p class="tab-description" data-i18n="opt_tab_ai_desc">
+                    Enable AI-powered reading assistance
+                </p>
 
                 <!-- AI Pilot Enable Toggle -->
                 <div class="setting-section">
@@ -1307,8 +1436,11 @@
                         <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
                         <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
                     </svg>
-                    <span data-i18n="opt_tab_connections_title">Ket noi</span>
+                    <span data-i18n="opt_tab_connections_title">Integrations</span>
                 </h2>
+                <p class="tab-description" data-i18n="opt_tab_connections_desc">
+                    Connect with NotebookLM and other tools
+                </p>
 
                 <!-- NotebookLM Toggle -->
                 <div class="setting-section">
@@ -1425,8 +1557,11 @@
                             d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
                         <circle cx="12" cy="12" r="3" />
                     </svg>
-                    <span data-i18n="opt_tab_advanced_title">Nang cao</span>
+                    <span data-i18n="opt_tab_advanced_title">Developer Tools</span>
                 </h2>
+                <p class="tab-description" data-i18n="opt_tab_advanced_desc">
+                    Debugging and diagnostic tools
+                </p>
 
                 <!-- Debug Mode Section -->
                 <div id="debug-section">
