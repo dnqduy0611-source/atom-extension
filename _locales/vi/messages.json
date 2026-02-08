@@ -252,28 +252,40 @@
     "message": "Đã lưu thành công!"
   },
   "opt_tab_general": {
-    "message": "Chung"
+    "message": "Bắt đầu"
+  },
+  "opt_tab_general_desc": {
+    "message": "Thiết lập nhà cung cấp AI và tùy chọn cơ bản"
   },
   "opt_tab_ai": {
-    "message": "AI Pilot"
+    "message": "Tính năng AI"
+  },
+  "opt_tab_ai_desc": {
+    "message": "Bật tính năng hỗ trợ đọc bằng AI"
   },
   "opt_tab_connections": {
-    "message": "Kết nối"
+    "message": "Tích hợp"
+  },
+  "opt_tab_connections_desc": {
+    "message": "Kết nối với NotebookLM và công cụ khác"
   },
   "opt_tab_advanced": {
-    "message": "Nâng cao"
+    "message": "Công cụ Dev"
+  },
+  "opt_tab_advanced_desc": {
+    "message": "Công cụ gỡ lỗi và chẩn đoán"
   },
   "opt_tab_general_title": {
-    "message": "Cài đặt Chung"
+    "message": "Bắt đầu"
   },
   "opt_tab_ai_title": {
-    "message": "AI Pilot"
+    "message": "Tính năng AI"
   },
   "opt_tab_connections_title": {
-    "message": "Kết nối"
+    "message": "Tích hợp"
   },
   "opt_tab_advanced_title": {
-    "message": "Nâng cao"
+    "message": "Công cụ Dev"
   },
   "opt_provider_label": {
     "message": "Nhà cung cấp AI"
@@ -1515,6 +1527,30 @@
   },
   "opt_advanced_badge": {
     "message": "(Dành cho người dùng nâng cao)"
+  },
+  "opt_onboarding_title": {
+    "message": "Thiết lập nhanh (4 bước)"
+  },
+  "opt_onboarding_step1": {
+    "message": "Chọn nhà cung cấp AI"
+  },
+  "opt_onboarding_step2": {
+    "message": "Nhận khóa API miễn phí (nhấp vào link bên dưới)"
+  },
+  "opt_onboarding_step3": {
+    "message": "Dán khóa của bạn và nhấp Lưu"
+  },
+  "opt_onboarding_step4": {
+    "message": "Bắt đầu tô sáng văn bản trên bất kỳ trang web nào"
+  },
+  "opt_onboarding_btn_complete": {
+    "message": "Hoàn tất thiết lập"
+  },
+  "opt_onboarding_btn_dismiss": {
+    "message": "Bỏ qua"
+  },
+  "opt_onboarding_completed": {
+    "message": "Thiết lập hoàn tất! Bạn có thể bắt đầu sử dụng ATOM."
   },
   "sp_error_cta_retry": {
     "message": "Thử lại"

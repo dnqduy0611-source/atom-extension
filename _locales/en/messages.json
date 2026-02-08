@@ -216,28 +216,40 @@
     "message": "Saved successfully!"
   },
   "opt_tab_general": {
-    "message": "General"
+    "message": "Getting Started"
+  },
+  "opt_tab_general_desc": {
+    "message": "Set up your AI provider and basic preferences"
   },
   "opt_tab_ai": {
-    "message": "AI Pilot"
+    "message": "AI Features"
+  },
+  "opt_tab_ai_desc": {
+    "message": "Enable AI-powered reading assistance"
   },
   "opt_tab_connections": {
-    "message": "Connections"
+    "message": "Integrations"
+  },
+  "opt_tab_connections_desc": {
+    "message": "Connect with NotebookLM and other tools"
   },
   "opt_tab_advanced": {
-    "message": "Advanced"
+    "message": "Developer Tools"
+  },
+  "opt_tab_advanced_desc": {
+    "message": "Debugging and diagnostic tools"
   },
   "opt_tab_general_title": {
-    "message": "General Settings"
+    "message": "Getting Started"
   },
   "opt_tab_ai_title": {
-    "message": "AI Pilot"
+    "message": "AI Features"
   },
   "opt_tab_connections_title": {
-    "message": "Connections"
+    "message": "Integrations"
   },
   "opt_tab_advanced_title": {
-    "message": "Advanced Settings"
+    "message": "Developer Tools"
   },
   "opt_provider_label": {
     "message": "AI Provider"
@@ -2325,6 +2337,30 @@
   },
   "opt_advanced_badge": {
     "message": "(For advanced users)"
+  },
+  "opt_onboarding_title": {
+    "message": "Quick Setup (4 steps)"
+  },
+  "opt_onboarding_step1": {
+    "message": "Choose your AI provider"
+  },
+  "opt_onboarding_step2": {
+    "message": "Get your free API key (click link below)"
+  },
+  "opt_onboarding_step3": {
+    "message": "Paste your key and click Save"
+  },
+  "opt_onboarding_step4": {
+    "message": "Start highlighting text on any webpage"
+  },
+  "opt_onboarding_btn_complete": {
+    "message": "Complete Setup"
+  },
+  "opt_onboarding_btn_dismiss": {
+    "message": "Dismiss"
+  },
+  "opt_onboarding_completed": {
+    "message": "Setup completed! You can now start using ATOM."
   },
   "sp_error_cta_retry": {
     "message": "Try Again"
