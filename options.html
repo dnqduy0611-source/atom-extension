@@ -3,95 +3,178 @@
 
 <head>
     <meta charset="UTF-8">
-    <title data-i18n="opt_title">ATOM Settings</title>
+    <title data-i18n="opt_title">AmoNexus Settings</title>
     <link rel="stylesheet" href="ui_shared.css">
     <style>
         body {
             display: flex;
             justify-content: center;
-            padding-top: 50px;
+            padding: 40px 20px;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
 
-        .container {
+        /* Main Container - Flex Layout */
+        .options-container {
+            display: flex;
+            max-width: 800px;
+            width: 100%;
             background: var(--surface);
-            backdrop-filter: blur(20px);
-            width: 450px;
-            padding: 30px;
-            border-radius: 24px;
-            border: 1px solid var(--border);
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
-        }
-
-        h2 {
-            margin-top: 0;
-            color: var(--primary);
-            text-align: center;
-            font-size: 24px;
-            text-shadow: 0 0 20px var(--primary-glow);
-        }
-
-        .hero-box {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 5, 5, 0) 100%);
-            border: 1px solid var(--primary);
-            padding: 24px;
-            border-radius: 16px;
-            text-align: center;
-            margin-bottom: 25px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Light mode toggle for hero box gradient fallback */
-        body.light-mode .hero-box {
-            background: linear-gradient(135deg, rgba(13, 148, 136, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
-        }
-
-        /* Glow effect */
-        .hero-box::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
-            opacity: 0.1;
-            pointer-events: none;
-        }
-
-        .btn-get-key {
-            background: var(--primary);
-            color: #fff;
-            text-decoration: none;
-            font-weight: bold;
-            padding: 12px 24px;
             border-radius: 20px;
-            display: inline-block;
-            margin-bottom: 16px;
-            box-shadow: 0 0 15px var(--primary-glow);
-            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid var(--border);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            min-height: 600px;
         }
 
-        .btn-get-key:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 25px var(--primary-glow);
+        /* Sidebar Navigation */
+        .options-nav {
+            width: 180px;
+            min-width: 180px;
+            background: var(--background);
+            border-right: 1px solid var(--border);
+            padding: 24px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
 
-        .guide-text {
-            font-size: 13px;
+        .nav-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 12px;
+        }
+
+        .nav-header h2 {
+            margin: 0;
+            font-size: 18px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-tab {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            border: none;
+            background: transparent;
             color: var(--muted);
-            line-height: 1.6;
+            cursor: pointer;
+            transition: all 0.2s;
             text-align: left;
+            font-size: 14px;
+            border-left: 3px solid transparent;
+            width: 100%;
         }
 
-        .guide-text ol {
-            padding-left: 20px;
+        .nav-tab:hover {
+            background: rgba(16, 185, 129, 0.05);
+            color: var(--foreground);
         }
 
-        .guide-text li {
-            margin-bottom: 8px;
+        .nav-tab.active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--primary);
+            border-left-color: var(--primary);
         }
 
+        .nav-icon {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .nav-footer {
+            margin-top: auto;
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Content Area */
+        .options-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tab-panel {
+            display: none;
+            flex: 1;
+            opacity: 0;
+            transform: translateX(10px);
+        }
+
+        .tab-panel.active {
+            display: block;
+            animation: fadeSlideIn 0.25s ease forwards;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .tab-panel h2 {
+            margin: 0 0 24px 0;
+            color: var(--foreground);
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tab-panel h2 svg {
+            color: var(--primary);
+        }
+
+        /* Settings Sections */
+        .setting-section {
+            margin-bottom: 24px;
+        }
+
+        .setting-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .setting-row-info {
+            flex: 1;
+        }
+
+        .setting-row-info .title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+
+        .setting-row-info .desc {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        /* Form Elements */
         label {
             font-weight: 600;
             font-size: 14px;
@@ -100,148 +183,61 @@
             color: var(--foreground);
         }
 
-        input[type="text"] {
+        input[type="text"],
+        input[type="number"] {
             width: 100%;
-            padding: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
             font-size: 14px;
             box-sizing: border-box;
-            margin-bottom: 5px;
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--background);
             color: var(--foreground);
             transition: all 0.2s;
         }
 
-        input[type="text"]:focus {
+        input[type="text"]:focus,
+        input[type="number"]:focus {
             outline: none;
             border-color: var(--primary);
             background: rgba(16, 185, 129, 0.05);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--background);
+            color: var(--foreground);
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
             box-shadow: 0 0 10px var(--primary-glow);
         }
 
         select {
             width: 100%;
             padding: 12px 14px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
             font-size: 14px;
             box-sizing: border-box;
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--background);
             color: var(--foreground);
-            transition: all 0.2s;
             cursor: pointer;
         }
 
-        /* Fix for white dropdown options in dark mode */
         select option {
-            background-color: #1e1e1e;
-            color: #ffffff;
-            padding: 10px;
-        }
-
-        select:focus {
-            outline: none;
-            border-color: var(--primary);
-            background: rgba(16, 185, 129, 0.05);
-            box-shadow: 0 0 10px var(--primary-glow);
-        }
-
-        #btn-save {
-            width: 100%;
-            padding: 14px;
-            background: var(--foreground);
-            color: var(--background);
-            border: none;
-            border-radius: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            margin-top: 30px;
-            transition: all 0.2s;
-        }
-
-        #btn-save:hover {
-            background: var(--primary);
-            color: #fff;
-            box-shadow: 0 0 20px var(--primary-glow);
-        }
-
-        #status {
-            margin-top: 15px;
-            text-align: center;
-            font-size: 14px;
-            height: 20px;
-        }
-
-        .success {
-            color: var(--primary);
-        }
-
-        .error {
-            color: var(--danger);
-        }
-
-        /* Bento Grid Style Radio Cards */
-        .sensitivity-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .radio-card {
-            flex: 1;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .radio-card input {
-            position: absolute;
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .card-content {
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 15px 10px;
-            text-align: center;
-            transition: all 0.2s;
-            background: var(--surface);
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .radio-card input:checked+.card-content {
-            border-color: var(--primary);
-            background: rgba(16, 185, 129, 0.1);
-            box-shadow: 0 0 15px var(--primary-glow);
-            transform: translateY(-2px);
-        }
-
-        .card-content .emoji {
-            font-size: 24px;
-            margin-bottom: 8px;
-            display: block;
-            color: var(--primary);
-            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
-        }
-
-        .card-content .title {
-            font-weight: 700;
-            font-size: 13px;
+            background-color: var(--background);
             color: var(--foreground);
-            display: block;
-        }
-
-        .card-content .desc {
-            font-size: 11px;
-            color: var(--muted);
-            margin-top: 4px;
-            display: block;
         }
 
         /* Toggle Switch */
@@ -250,6 +246,7 @@
             display: inline-block;
             width: 48px;
             height: 26px;
+            flex-shrink: 0;
         }
 
         .toggle-switch input {
@@ -292,13 +289,68 @@
             background-color: #fff;
         }
 
-        #btn-export-debug:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-            background: rgba(16, 185, 129, 0.05);
+        /* Radio Cards (Sensitivity) */
+        .sensitivity-group {
+            display: flex;
+            gap: 10px;
         }
 
-        /* Custom Neon Dropdown */
+        .radio-card {
+            flex: 1;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .radio-card input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .card-content {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px 12px;
+            text-align: center;
+            transition: all 0.2s;
+            background: var(--background);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .radio-card input:checked+.card-content {
+            border-color: var(--primary);
+            background: rgba(16, 185, 129, 0.1);
+            box-shadow: 0 0 15px var(--primary-glow);
+            transform: translateY(-2px);
+        }
+
+        .card-content .emoji {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+            color: var(--primary);
+        }
+
+        .card-content .title {
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--foreground);
+            display: block;
+        }
+
+        .card-content .desc {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 4px;
+            display: block;
+        }
+
+        /* Custom Dropdown */
         .custom-dropdown {
             position: relative;
             width: 100%;
@@ -308,7 +360,7 @@
             width: 100%;
             padding: 12px 14px;
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 10px;
             font-size: 14px;
             box-sizing: border-box;
             background: var(--background);
@@ -345,14 +397,14 @@
             right: 0;
             background: var(--background);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 10px;
             overflow: hidden;
             opacity: 0;
             visibility: hidden;
             transform: translateY(-8px);
             transition: all 0.2s ease;
             z-index: 100;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
         }
 
         .custom-dropdown.open .dropdown-options {
@@ -384,479 +436,1001 @@
         }
 
         .dropdown-option.selected::after {
-            content: '✓';
+            content: '';
             float: right;
             color: var(--primary);
         }
 
+        /* Collapsible Guide/Advanced */
+        .guide-details,
+        .advanced-settings {
+            margin-top: 12px;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .guide-details summary,
+        .advanced-settings summary {
+            padding: 12px 16px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .guide-details summary:hover,
+        .advanced-settings summary:hover {
+            color: var(--primary);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .guide-details[open] summary,
+        .advanced-settings[open] summary {
+            border-bottom: 1px solid var(--border);
+            color: var(--primary);
+        }
+
+        .guide-content,
+        .advanced-content {
+            padding: 16px;
+        }
+
+        .guide-content ol {
+            padding-left: 20px;
+            margin: 0;
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.8;
+        }
+
+        /* Grid layouts for settings */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .settings-grid.three-col {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        /* Subsection headers */
+        .subsection-header {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--foreground);
+            margin: 24px 0 16px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .subsection-header:first-child {
+            margin-top: 0;
+        }
+
+        .subsection-header svg {
+            color: var(--primary);
+        }
+
+        /* Hero box for API key */
+        .hero-box {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, transparent 100%);
+            border: 1px solid var(--primary);
+            padding: 20px;
+            border-radius: 14px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .btn-get-key {
+            background: var(--primary);
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 12px 24px;
+            border-radius: 20px;
+            display: inline-block;
+            box-shadow: 0 0 15px var(--primary-glow);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-get-key:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px var(--primary-glow);
+        }
+
+        /* Action buttons */
+        .btn-action {
+            padding: 12px 16px;
+            background: transparent;
+            color: var(--foreground);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .btn-action:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        /* Save bar */
+        .save-bar {
+            margin-top: auto;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        #btn-save {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        #btn-save:hover {
+            background: var(--primary-hover, #059669);
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        #btn-save:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #status {
+            margin-top: 12px;
+            text-align: center;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        .success {
+            color: var(--primary);
+        }
+
+        .error {
+            color: var(--danger);
+        }
+
+        /* Hint text */
+        .hint-text {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 6px;
+        }
+
+        .hint-text.warning {
+            color: #F59E0B;
+        }
+
         /* Light mode adjustments */
+        body.light-mode .hero-box {
+            background: linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, transparent 100%);
+        }
+
         body.light-mode .dropdown-options {
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        body.light-mode .options-container {
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        body.light-mode .options-nav {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        body.light-mode .setting-row {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        body.light-mode .guide-details,
+        body.light-mode .advanced-settings {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        body.light-mode .card-content {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        body.light-mode .radio-card input:checked+.card-content {
+            background: rgba(13, 148, 136, 0.1);
+        }
+
+        body.light-mode .nav-tab:hover {
+            background: rgba(13, 148, 136, 0.05);
+        }
+
+        body.light-mode .nav-tab.active {
+            background: rgba(13, 148, 136, 0.1);
+        }
+
+        body.light-mode .tab-panel h2 {
+            color: var(--foreground);
+        }
+
+        /* Responsive */
+        @media (max-width: 700px) {
+            .options-container {
+                flex-direction: column;
+            }
+
+            .options-nav {
+                width: 100%;
+                min-width: auto;
+                flex-direction: row;
+                padding: 12px;
+                overflow-x: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .nav-header {
+                display: none;
+            }
+
+            .nav-tab {
+                padding: 10px 16px;
+                border-left: none;
+                border-bottom: 2px solid transparent;
+                white-space: nowrap;
+            }
+
+            .nav-tab.active {
+                border-left-color: transparent;
+                border-bottom-color: var(--primary);
+            }
+
+            .nav-footer {
+                display: none;
+            }
+
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sensitivity-group {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 
 <body>
-
-    <div class="container" style="position: relative;">
-        <button class="icon-btn" id="btn-theme-toggle" data-i18n-title="opt_theme_toggle_title" title="Toggle Theme"
-            style="position: absolute; top: 20px; right: 20px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-            </svg>
-        </button>
-        <h2 data-i18n="opt_hero_title">ATOM AI</h2>
-        <p style="text-align:center; font-size: 14px; color: #a3a3a3; margin-bottom: 24px;" data-i18n="opt_hero_desc">
-        </p>
-
-        <div class="hero-box">
-            <a href="https://aistudio.google.com/app/apikey" target="_blank" class="btn-get-key" data-i18n="opt_btn_get_key">
-                Google AI Studio ↗
-            </a>
-            <div class="guide-text">
-                <ol>
-                    <li data-i18n="opt_guide_1">Log in to Google AI Studio</li>
-                    <li data-i18n="opt_guide_2">Click "Get API Key"</li>
-                    <li data-i18n="opt_guide_3">Create key in a new project</li>
-                    <li data-i18n="opt_guide_4">Copy and paste below</li>
-                </ol>
-            </div>
-        </div>
-
-        <div>
-            <label for="apiKeyInput" data-i18n="opt_input_label">API Key</label>
-            <input type="text" id="apiKeyInput" placeholder="AIzaSy..." data-i18n-placeholder="opt_api_key_placeholder" autocomplete="off">
-        </div>
-
-        <div style="margin-top: 24px;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    style="color: var(--primary);">
-                    <path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z" />
-                    <path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
-                    <path d="M12 2v2" />
-                    <path d="M12 22v-2" />
-                    <path d="m17 20.66-1-1.73" />
-                    <path d="M11 10.27 7 3.34" />
-                    <path d="m20.66 17-1.73-1" />
-                    <path d="m3.34 7 1.73 1" />
-                    <path d="M14 12h8" />
-                    <path d="M2 12h2" />
-                    <path d="m20.66 7-1.73 1" />
-                    <path d="m3.34 17 1.73-1" />
-                    <path d="m17 3.34-1 1.73" />
-                    <path d="m11 13.73-4 6.93" />
-                </svg>
-                <label data-i18n="opt_sens_label" style="margin-bottom: 0;">Sensitivity Mode</label>
-            </div>
-
-            <div class="sensitivity-group">
-                <label class="radio-card">
-                    <input type="radio" name="sensitivity" value="gentle">
-                    <div class="card-content">
-                        <span class="emoji">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <path
-                                    d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
-                                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
-                            </svg>
-                        </span>
-                        <span class="title" data-i18n="opt_sens_gentle_title">Gentle</span>
-                        <span class="desc" data-i18n="opt_sens_gentle_desc">Soft nudges</span>
-                    </div>
-                </label>
-
-                <label class="radio-card">
-                    <input type="radio" name="sensitivity" value="balanced" checked>
-                    <div class="card-content">
-                        <span class="emoji">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <path
-                                    d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
-                            </svg>
-                        </span>
-                        <span class="title" data-i18n="opt_sens_balanced_title">Balanced</span>
-                        <span class="desc" data-i18n="opt_sens_balanced_desc">Standard</span>
-                    </div>
-                </label>
-
-                <label class="radio-card">
-                    <input type="radio" name="sensitivity" value="strict">
-                    <div class="card-content">
-                        <span class="emoji">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
-                                <line x1="13" x2="19" y1="19" y2="13" />
-                                <line x1="16" x2="20" y1="16" y2="20" />
-                                <line x1="19" x2="21" y1="21" y2="19" />
-                                <polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5" />
-                                <line x1="5" x2="9" y1="14" y2="18" />
-                                <line x1="7" x2="4" y1="17" y2="20" />
-                                <line x1="3" x2="5" y1="19" y2="21" />
-                            </svg>
-                        </span>
-                        <span class="title" data-i18n="opt_sens_strict_title">Focus</span>
-                        <span class="desc" data-i18n="opt_sens_strict_desc">High protection</span>
-                    </div>
-                </label>
-            </div>
-        </div>
-
-        <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    style="color: var(--primary);">
-                    <path d="m5 8 6 6" />
-                    <path d="m4 14 6-6 2-3" />
-                    <path d="M2 5h12" />
-                    <path d="M7 2h1" />
-                    <path d="m22 22-5-10-5 10" />
-                    <path d="M14 18h6" />
-                </svg>
-                <label data-i18n="opt_lang_title" style="margin-bottom: 0;">Language</label>
-            </div>
-            <p style="font-size: 12px; color: var(--muted); margin: 0 0 10px 0;" data-i18n="opt_lang_desc">
-                Match browser UI language or override per extension.
-            </p>
-            <div class="custom-dropdown" id="languageDropdown">
-                <div class="dropdown-selected" tabindex="0">
-                    <span class="dropdown-text" data-i18n="opt_lang_auto">Auto (Chrome UI)</span>
-                    <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path d="m6 9 6 6 6-6" />
-                    </svg>
-                </div>
-                <div class="dropdown-options">
-                    <div class="dropdown-option selected" data-value="auto" data-i18n="opt_lang_auto">Auto (Chrome UI)
-                    </div>
-                    <div class="dropdown-option" data-value="vi" data-i18n="opt_lang_vi">Vietnamese</div>
-                    <div class="dropdown-option" data-value="en" data-i18n="opt_lang_en">English</div>
-                </div>
-            </div>
-            <input type="hidden" id="languageSelect" value="auto">
-        </div>
-
-        <!-- AI Pilot Settings -->
-        <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    style="color: var(--primary);">
-                    <path d="M12 2v4" />
-                    <path d="M12 18v4" />
-                    <path d="M4.93 4.93l2.83 2.83" />
-                    <path d="M16.24 16.24l2.83 2.83" />
-                    <path d="M2 12h4" />
-                    <path d="M18 12h4" />
-                    <path d="M4.93 19.07l2.83-2.83" />
-                    <path d="M16.24 7.76l2.83-2.83" />
-                </svg>
-                <label style="margin-bottom: 0;" data-i18n="opt_ai_pilot_title">AI Pilot</label>
-            </div>
-
-            <div
-                style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px;">
-                <div>
-                    <span style="font-size: 14px; font-weight: 500;" data-i18n="opt_ai_pilot_enable_title">Enable AI Pilot</span>
-                    <p style="font-size: 12px; color: var(--muted); margin: 4px 0 0 0;" data-i18n="opt_ai_pilot_enable_desc">Shadow/Assist/Primary modes</p>
-                </div>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="aiPilotEnabled">
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-
-            <label for="aiPilotMode" data-i18n="opt_ai_pilot_mode">Mode</label>
-            <div class="custom-dropdown" id="aiPilotModeDropdown">
-                <div class="dropdown-selected" tabindex="0">
-                    <span class="dropdown-text" data-i18n="opt_ai_pilot_mode_shadow">shadow</span>
-                    <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="m6 9 6 6 6-6" />
-                    </svg>
-                </div>
-                <div class="dropdown-options">
-                    <div class="dropdown-option selected" data-value="shadow" data-i18n="opt_ai_pilot_mode_shadow">shadow</div>
-                    <div class="dropdown-option" data-value="assist" data-i18n="opt_ai_pilot_mode_assist">assist</div>
-                    <div class="dropdown-option" data-value="primary" data-i18n="opt_ai_pilot_mode_primary">primary</div>
-                </div>
-            </div>
-            <input type="hidden" id="aiPilotMode" value="shadow">
-
-            <label for="aiAccuracyLevel" style="margin-top: 12px;" data-i18n="opt_ai_pilot_accuracy_level">Accuracy Level</label>
-            <div class="custom-dropdown" id="aiAccuracyLevelDropdown">
-                <div class="dropdown-selected" tabindex="0">
-                    <span class="dropdown-text" data-i18n="opt_ai_pilot_accuracy_balanced">balanced</span>
-                    <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="m6 9 6 6 6-6" />
-                    </svg>
-                </div>
-                <div class="dropdown-options">
-                    <div class="dropdown-option selected" data-value="balanced" data-i18n="opt_ai_pilot_accuracy_balanced">balanced</div>
-                    <div class="dropdown-option" data-value="high" data-i18n="opt_ai_pilot_accuracy_high">high</div>
-                </div>
-            </div>
-            <input type="hidden" id="aiAccuracyLevel" value="balanced">
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
-                <div>
-                    <label for="aiMinConfidence" data-i18n="opt_ai_pilot_min_confidence">Min Confidence</label>
-                    <input type="text" id="aiMinConfidence" placeholder="0.65" data-i18n-placeholder="opt_ai_min_confidence_placeholder">
-                </div>
-                <div>
-                    <label for="aiTimeoutMs" data-i18n="opt_ai_pilot_timeout_ms">Timeout (ms)</label>
-                    <input type="text" id="aiTimeoutMs" placeholder="800" data-i18n-placeholder="opt_ai_timeout_placeholder">
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
-                <div>
-                    <label for="aiBudgetPerDay" data-i18n="opt_ai_pilot_budget_per_day">Budget / day</label>
-                    <input type="text" id="aiBudgetPerDay" placeholder="200" data-i18n-placeholder="opt_ai_budget_placeholder">
-                </div>
-                <div>
-                    <label for="aiProvider" data-i18n="opt_ai_pilot_provider">Provider</label>
-                    <div class="custom-dropdown" id="aiProviderDropdown">
-                        <div class="dropdown-selected" tabindex="0">
-                            <span class="dropdown-text" data-i18n="opt_ai_pilot_provider_gemini">gemini</span>
-                            <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="m6 9 6 6 6-6" />
-                            </svg>
-                        </div>
-                        <div class="dropdown-options">
-                            <div class="dropdown-option selected" data-value="gemini" data-i18n="opt_ai_pilot_provider_gemini">gemini</div>
-                            <div class="dropdown-option" data-value="proxy" data-i18n="opt_ai_pilot_provider_proxy">proxy</div>
-                        </div>
-                    </div>
-                    <input type="hidden" id="aiProvider" value="gemini">
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
-                <div>
-                    <label for="aiMaxViewportChars" data-i18n="opt_ai_pilot_max_viewport_chars">Viewport max chars</label>
-                    <input type="text" id="aiMaxViewportChars" placeholder="1200" data-i18n-placeholder="opt_ai_max_viewport_placeholder">
-                </div>
-                <div>
-                    <label for="aiMaxSelectedChars" data-i18n="opt_ai_pilot_max_selected_chars">Selected max chars</label>
-                    <input type="text" id="aiMaxSelectedChars" placeholder="400" data-i18n-placeholder="opt_ai_max_selected_placeholder">
-                </div>
-            </div>
-
-            <div style="margin-top: 12px;">
-                <label for="aiCacheTtlMs" data-i18n="opt_ai_pilot_cache_ttl_ms">Cache TTL (ms)</label>
-                <input type="text" id="aiCacheTtlMs" placeholder="15000" data-i18n-placeholder="opt_ai_cache_ttl_placeholder">
-            </div>
-
-        <div style="margin-top: 12px;">
-            <label for="aiProxyUrl" data-i18n="opt_ai_pilot_proxy_url">Proxy URL (optional)</label>
-            <input type="text" id="aiProxyUrl" placeholder="https://your-proxy/decide" data-i18n-placeholder="opt_ai_proxy_placeholder">
-        </div>
-    </div>
-
-        <!-- NotebookLM Bridge Section -->
-        <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    style="color: var(--primary);">
-                    <path d="M6 2h9l5 5v15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" />
-                    <path d="M14 2v6h6" />
-                    <path d="M8 13h8" />
-                    <path d="M8 17h8" />
-                </svg>
-                <label style="margin-bottom: 0;" data-i18n="opt_nlm_title">NotebookLM Bridge</label>
-            </div>
-
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px;">
-                <div>
-                    <span style="font-size: 14px; font-weight: 500;" data-i18n="opt_nlm_enable_title">Enable Bridge</span>
-                    <p style="font-size: 12px; color: var(--muted); margin: 4px 0 0 0;" data-i18n="opt_nlm_enable_desc">Copy clip + open NotebookLM for manual paste</p>
-                </div>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="nlmEnabled">
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-
-            <div style="margin-bottom: 12px;">
-                <label for="nlmMode" data-i18n="opt_nlm_mode">Bridge Mode</label>
-                <select id="nlmMode" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--foreground); font-size: 14px;">
-                    <option value="ui_assisted" data-i18n="opt_nlm_mode_ui_assisted">UI-Assisted (Recommended)</option>
-                    <option value="enterprise_api" disabled data-i18n="opt_nlm_mode_enterprise">Enterprise API (Coming Soon)</option>
-                </select>
-                <p style="font-size: 11px; color: var(--muted); margin-top: 4px;" data-i18n="opt_nlm_mode_hint">UI-Assisted: copies to clipboard + opens NotebookLM for manual paste</p>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div>
-                    <label for="nlmDefaultNotebook" data-i18n="opt_nlm_default_notebook">Default notebook</label>
-                    <input type="text" id="nlmDefaultNotebook" placeholder="Inbox" data-i18n-placeholder="opt_nlm_default_placeholder">
-                </div>
-                <div>
-                    <label for="nlmBaseUrl" data-i18n="opt_nlm_base_url">NotebookLM base URL</label>
-                    <input type="text" id="nlmBaseUrl" placeholder="https://notebooklm.google.com" data-i18n-placeholder="opt_nlm_base_placeholder">
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
-                <div>
-                    <label for="nlmExportMaxChars" data-i18n="opt_nlm_export_max_chars">Max export characters</label>
-                    <input type="number" id="nlmExportMaxChars" placeholder="5000" min="0" max="50000" step="500" style="width: 100%;">
-                    <p style="font-size: 11px; color: var(--muted); margin-top: 4px;" data-i18n="opt_nlm_export_max_chars_hint">0 = unlimited</p>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
-                <div>
-                    <label for="nlmAllowCloud" data-i18n="opt_nlm_allow_cloud">Allow cloud export</label>
-                    <label class="toggle-switch" style="margin-top: 6px;">
-                        <input type="checkbox" id="nlmAllowCloud">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                <div>
-                    <label for="nlmPiiWarning" data-i18n="opt_nlm_pii_warning">PII warning</label>
-                    <label class="toggle-switch" style="margin-top: 6px;">
-                        <input type="checkbox" id="nlmPiiWarning">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-            </div>
-
-            <div style="margin-top: 12px;">
-                <label for="nlmSensitiveDomains" data-i18n="opt_nlm_sensitive_domains">Sensitive domains (one per line)</label>
-                <textarea id="nlmSensitiveDomains" rows="4" placeholder="*.his.*&#10;*.emr.*" data-i18n-placeholder="opt_nlm_sensitive_placeholder" style="width: 100%; padding: 12px; border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; background: rgba(255,255,255,0.03); color: var(--foreground);"></textarea>
-            </div>
-
-            <div style="margin-top: 12px;">
-                <label for="nlmRulesJson" data-i18n="opt_nlm_rules">Mapping rules (JSON)</label>
-                <textarea id="nlmRulesJson" rows="6" placeholder='{"byTag":[{"tag":"research","notebookRef":"Research"}]}' data-i18n-placeholder="opt_nlm_rules_placeholder" style="width: 100%; padding: 12px; border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; background: rgba(255,255,255,0.03); color: var(--foreground);"></textarea>
-            </div>
-        </div>
-
-        <!-- Debug Mode Section -->
-        <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    style="color: var(--primary);">
-                    <path d="m8 2 1.88 1.88" />
-                    <path d="M14.12 3.88 16 2" />
-                    <path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1" />
-                    <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6" />
-                    <path d="M12 20v-9" />
-                    <path d="M6.53 9C4.6 8.8 3 7.1 3 5" />
-                    <path d="M6 13H2" />
-                    <path d="M3 21c0-2.1 1.7-3.9 3.8-4" />
-                    <path d="M20.97 5c0 2.1-1.6 3.8-3.5 4" />
-                    <path d="M22 13h-4" />
-                    <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4" />
-                </svg>
-                <label style="margin-bottom: 0;" data-i18n="opt_debug_title">Debug Mode</label>
-            </div>
-
-            <div
-                style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px;">
-                <div>
-                    <span style="font-size: 14px; font-weight: 500;" data-i18n="opt_debug_enable_title">Enable Debug
-                        Logging</span>
-                    <p style="font-size: 12px; color: var(--muted); margin: 4px 0 0 0;"
-                        data-i18n="opt_debug_enable_desc">Show detailed logs in browser console</p>
-                </div>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="debugModeToggle">
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
-
-            <button id="btn-export-debug"
-                style="width: 100%; padding: 12px; background: transparent; color: var(--foreground); border: 1px solid var(--border); border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" x2="12" y1="15" y2="3" />
-                </svg>
-                <span data-i18n="opt_debug_export">Export Debug Log</span>
-            </button>
-        </div>
-
-        <!-- Notification Helper Section -->
-        <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    style="color: var(--primary);">
-                    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-                </svg>
-                <label style="margin-bottom: 0;" data-i18n="opt_notif_title">Notifications</label>
-            </div>
-
-            <p style="font-size: 12px; color: var(--muted); margin: 0 0 12px 0;" data-i18n="opt_notif_desc">
-                Test and configure system notifications for Focus mode.
-            </p>
-
-            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
-                <button id="btn-test-notif"
-                    style="flex: 1; padding: 12px; background: transparent; color: var(--foreground); border: 1px solid var(--border); border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+    <div class="options-container">
+        <!-- Sidebar Navigation -->
+        <nav class="options-nav">
+            <div class="nav-header">
+                <h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M12 1v6m0 6v10" />
+                        <path d="m14.5 9.5 4.95-2.86M4.55 16.36l4.95-2.86" />
+                        <path d="m9.5 9.5-4.95-2.86m14.9 9.72-4.95-2.86" />
                     </svg>
-                    <span data-i18n="opt_notif_test">Test Notification</span>
-                </button>
-                <button id="btn-open-chrome-notif"
-                    style="flex: 1; padding: 12px; background: transparent; color: var(--foreground); border: 1px solid var(--border); border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    AmoNexus
+                </h2>
+            </div>
+
+            <button class="nav-tab active" data-tab="general">
+                <span class="nav-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path
                             d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
                         <circle cx="12" cy="12" r="3" />
                     </svg>
-                    <span data-i18n="opt_notif_chrome">Chrome Settings</span>
+                </span>
+                <span class="nav-label" data-i18n="opt_tab_general">Chung</span>
+            </button>
+
+            <button class="nav-tab" data-tab="ai">
+                <span class="nav-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v4" />
+                        <path d="M12 18v4" />
+                        <path d="M4.93 4.93l2.83 2.83" />
+                        <path d="M16.24 16.24l2.83 2.83" />
+                        <path d="M2 12h4" />
+                        <path d="M18 12h4" />
+                        <path d="M4.93 19.07l2.83-2.83" />
+                        <path d="M16.24 7.76l2.83-2.83" />
+                    </svg>
+                </span>
+                <span class="nav-label" data-i18n="opt_tab_ai">AI Pilot</span>
+            </button>
+
+            <button class="nav-tab" data-tab="connections">
+                <span class="nav-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    </svg>
+                </span>
+                <span class="nav-label" data-i18n="opt_tab_connections">Kết nối</span>
+            </button>
+
+            <button class="nav-tab" data-tab="advanced">
+                <span class="nav-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
+                </span>
+                <span class="nav-label" data-i18n="opt_tab_advanced">Advanced</span>
+            </button>
+
+            <div class="nav-footer">
+                <button class="icon-btn" id="btn-theme-toggle" data-i18n-title="opt_theme_toggle_title"
+                    title="Toggle Theme" style="width: 100%; justify-content: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                    </svg>
                 </button>
             </div>
+        </nav>
 
-            <div id="notif-status" style="text-align: center; font-size: 13px; min-height: 20px; margin-bottom: 12px;">
+        <!-- Content Area -->
+        <main class="options-content">
+            <!-- Tab 1: Chung (General) -->
+            <div class="tab-panel active" id="panel-general">
+                <h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    <span data-i18n="opt_tab_general_title">Cai dat chung</span>
+                </h2>
+
+                <!-- API Key Section with Provider Selector -->
+                <div class="setting-section">
+                    <!-- Provider Selector -->
+                    <label data-i18n="opt_provider_label">AI Provider</label>
+                    <div class="custom-dropdown" id="providerDropdown">
+                        <div class="dropdown-selected" tabindex="0">
+                            <span class="dropdown-text" data-i18n="opt_provider_google">Google Gemini</span>
+                            <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
+                        </div>
+                        <div class="dropdown-options">
+                            <div class="dropdown-option selected" data-value="google" data-i18n="opt_provider_google">
+                                Google Gemini</div>
+                            <div class="dropdown-option" data-value="openrouter" data-i18n="opt_provider_openrouter">
+                                OpenRouter</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="providerSelect" value="google">
+                    <p class="hint-text" id="provider-hint" style="display: none;" data-i18n="opt_provider_hint">
+                        OpenRouter: Access Llama 3, Mistral, DeepSeek (~50 free requests/day)</p>
+
+                    <!-- Google Gemini Key (Default) -->
+                    <div id="google-key-section" style="margin-top: 16px;">
+                        <div class="hero-box">
+                            <a href="https://aistudio.google.com/app/apikey" target="_blank" class="btn-get-key"
+                                data-i18n="opt_btn_get_key">
+                                Google AI Studio
+                            </a>
+                        </div>
+
+                        <label for="apiKeyInput" data-i18n="opt_gemini_api_key">Google Gemini API Key</label>
+                        <input type="text" id="apiKeyInput" placeholder="AIzaSy..."
+                            data-i18n-placeholder="opt_api_key_placeholder" autocomplete="off">
+
+                        <details class="guide-details">
+                            <summary data-i18n="opt_api_guide_toggle">Huong dan lay Key</summary>
+                            <div class="guide-content">
+                                <ol>
+                                    <li data-i18n="opt_guide_1">Dang nhap Google AI Studio</li>
+                                    <li data-i18n="opt_guide_2">Nhan "Get API Key"</li>
+                                    <li data-i18n="opt_guide_3">Tao key trong project moi</li>
+                                    <li data-i18n="opt_guide_4">Sao chep va dan vao tren</li>
+                                </ol>
+                            </div>
+                        </details>
+                    </div>
+
+                    <!-- OpenRouter Key (Hidden by default) -->
+                    <div id="openrouter-key-section" style="display: none; margin-top: 16px;">
+                        <div class="hero-box">
+                            <a href="https://openrouter.ai/keys" target="_blank" class="btn-get-key"
+                                data-i18n="opt_btn_get_openrouter_key">
+                                OpenRouter Keys
+                            </a>
+                        </div>
+
+                        <label for="openrouterKeyInput" data-i18n="opt_openrouter_api_key">OpenRouter API Key</label>
+                        <input type="text" id="openrouterKeyInput" placeholder="sk-or-v1-..."
+                            data-i18n-placeholder="opt_openrouter_key_placeholder" autocomplete="off">
+
+                        <label for="openrouterModelInput" style="margin-top: 12px;"
+                            data-i18n="opt_openrouter_model">Model ID</label>
+                        <input type="text" id="openrouterModelInput" placeholder="google/gemini-2.0-flash-exp:free"
+                            data-i18n-placeholder="opt_openrouter_model_placeholder" autocomplete="off">
+                        <p class="hint-text" data-i18n="opt_openrouter_model_hint">Free models:
+                            google/gemini-2.0-flash-exp:free, meta-llama/llama-3.3-70b-instruct:free</p>
+
+                        <details class="guide-details">
+                            <summary data-i18n="opt_openrouter_guide_toggle">How to get OpenRouter Key</summary>
+                            <div class="guide-content">
+                                <ol>
+                                    <li data-i18n="opt_openrouter_guide_1">Go to openrouter.ai/keys</li>
+                                    <li data-i18n="opt_openrouter_guide_2">Sign in with Google/GitHub</li>
+                                    <li data-i18n="opt_openrouter_guide_3">Create a new API key</li>
+                                    <li data-i18n="opt_openrouter_guide_4">Copy and paste above</li>
+                                </ol>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+
+                <!-- Sensitivity Section -->
+                <div class="setting-section">
+                    <label data-i18n="opt_sens_label">Muc bao ve</label>
+                    <div class="sensitivity-group">
+                        <label class="radio-card">
+                            <input type="radio" name="sensitivity" value="gentle">
+                            <div class="card-content">
+                                <span class="emoji">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path
+                                            d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+                                        <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+                                    </svg>
+                                </span>
+                                <span class="title" data-i18n="opt_sens_gentle_title">Nhe nhang</span>
+                                <span class="desc" data-i18n="opt_sens_gentle_desc">Nhac nho nhe</span>
+                            </div>
+                        </label>
+
+                        <label class="radio-card">
+                            <input type="radio" name="sensitivity" value="balanced" checked>
+                            <div class="card-content">
+                                <span class="emoji">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path
+                                            d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+                                    </svg>
+                                </span>
+                                <span class="title" data-i18n="opt_sens_balanced_title">Can bang</span>
+                                <span class="desc" data-i18n="opt_sens_balanced_desc">Tieu chuan</span>
+                            </div>
+                        </label>
+
+                        <label class="radio-card">
+                            <input type="radio" name="sensitivity" value="strict">
+                            <div class="card-content">
+                                <span class="emoji">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
+                                        <line x1="13" x2="19" y1="19" y2="13" />
+                                        <line x1="16" x2="20" y1="16" y2="20" />
+                                        <line x1="19" x2="21" y1="21" y2="19" />
+                                        <polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5" />
+                                        <line x1="5" x2="9" y1="14" y2="18" />
+                                        <line x1="7" x2="4" y1="17" y2="20" />
+                                        <line x1="3" x2="5" y1="19" y2="21" />
+                                    </svg>
+                                </span>
+                                <span class="title" data-i18n="opt_sens_strict_title">Tap trung</span>
+                                <span class="desc" data-i18n="opt_sens_strict_desc">Bao ve cao</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- User Persona Section -->
+                <div class="setting-section">
+                    <label for="userPersona" data-i18n="opt_user_persona_title">Vai tro su dung</label>
+                    <input type="text" id="userPersona" placeholder="e.g. Bac si, Sinh vien, Kỹ sư..."
+                        data-i18n-placeholder="opt_user_persona_placeholder">
+                    <p class="hint-text" data-i18n="opt_user_persona_desc">AI se dieu chinh cach giai thich phu hop voi
+                        chuyen mon cua ban.</p>
+                </div>
+
+                <!-- Language Section -->
+                <div class="setting-section">
+                    <label data-i18n="opt_lang_title">Ngon ngu</label>
+                    <div class="custom-dropdown" id="languageDropdown">
+                        <div class="dropdown-selected" tabindex="0">
+                            <span class="dropdown-text" data-i18n="opt_lang_auto">Tu dong (Chrome UI)</span>
+                            <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
+                        </div>
+                        <div class="dropdown-options">
+                            <div class="dropdown-option selected" data-value="auto" data-i18n="opt_lang_auto">Tu dong
+                                (Chrome UI)</div>
+                            <div class="dropdown-option" data-value="vi" data-i18n="opt_lang_vi">Tieng Viet</div>
+                            <div class="dropdown-option" data-value="en" data-i18n="opt_lang_en">English</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="languageSelect" value="auto">
+                </div>
             </div>
 
-            <details
-                style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px;">
-                <summary style="cursor: pointer; font-weight: 600; font-size: 13px; color: var(--foreground);"
-                    data-i18n="opt_notif_guide_title">
-                    📖 Troubleshooting Guide (click to expand)
-                </summary>
-                <div style="margin-top: 12px; font-size: 12px; color: var(--muted); line-height: 1.6;">
-                    <p style="margin: 0 0 8px 0;" data-i18n="opt_notif_guide_intro">If notifications aren't showing:</p>
-                    <ol style="padding-left: 20px; margin: 0;">
-                        <li data-i18n="opt_notif_guide_1"><b>Windows:</b> Settings → System → Notifications → Chrome →
-                            ON</li>
-                        <li data-i18n="opt_notif_guide_2"><b>Focus Assist:</b> Turn OFF or set to Priority only</li>
-                        <li data-i18n="opt_notif_guide_3"><b>Chrome:</b> Click "Chrome Settings" above → Allow
-                            notifications</li>
-                        <li data-i18n="opt_notif_guide_4"><b>Restart:</b> Close and reopen Chrome after changes</li>
-                    </ol>
+            <!-- Tab 2: AI Pilot -->
+            <div class="tab-panel" id="panel-ai">
+                <h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v4" />
+                        <path d="M12 18v4" />
+                        <path d="M4.93 4.93l2.83 2.83" />
+                        <path d="M16.24 16.24l2.83 2.83" />
+                        <path d="M2 12h4" />
+                        <path d="M18 12h4" />
+                        <path d="M4.93 19.07l2.83-2.83" />
+                        <path d="M16.24 7.76l2.83-2.83" />
+                    </svg>
+                    <span data-i18n="opt_tab_ai_title">AI Pilot</span>
+                </h2>
+
+                <!-- AI Pilot Enable Toggle -->
+                <div class="setting-section">
+                    <div class="setting-row">
+                        <div class="setting-row-info">
+                            <div class="title" data-i18n="opt_ai_pilot_enable_title">Bat AI Pilot</div>
+                            <div class="desc" data-i18n="opt_ai_pilot_enable_desc">Phan tich hanh vi tu dong</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="aiPilotEnabled">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
                 </div>
-            </details>
-        </div>
 
-        <button id="btn-save" data-i18n="opt_btn_save">Save Changes</button>
+                <!-- AI & Semantic Features -->
+                <div class="setting-section">
+                    <label data-i18n="opt_semantic_section_title">AI &amp; Semantic Features</label>
+                    <p class="hint-text" data-i18n="opt_semantic_section_desc">Find related highlights by meaning, not
+                        just
+                        recency.</p>
+                    <p class="hint-text warning" data-i18n="opt_semantic_cost_warning">Warning: May increase Gemini API
+                        usage
+                        and latency.</p>
+                    <p class="hint-text" id="semantic-key-required" data-i18n="opt_semantic_key_required">Add your API
+                        key to
+                        enable these toggles.</p>
+                    <div class="setting-row">
+                        <div class="setting-row-info">
+                            <div class="title" data-i18n="opt_semantic_embeddings_title">Semantic Embeddings</div>
+                            <div class="desc" data-i18n="opt_semantic_embeddings_desc">Creates a semantic fingerprint
+                                for each
+                                highlight.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="semanticEmbeddingsEnabled">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row" style="margin-top: 12px;">
+                        <div class="setting-row-info">
+                            <div class="title" data-i18n="opt_semantic_search_title">Semantic Search</div>
+                            <div class="desc" data-i18n="opt_semantic_search_desc">Uses embeddings to pick top related
+                                highlights in the same domain.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="semanticSearchEnabled">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
 
-        <div id="status"></div>
+                <!-- AI Mode -->
+                <div class="setting-section">
+                    <label for="aiPilotMode" data-i18n="opt_ai_pilot_mode">Che do hoat dong</label>
+                    <div class="custom-dropdown" id="aiPilotModeDropdown">
+                        <div class="dropdown-selected" tabindex="0">
+                            <span class="dropdown-text" data-i18n="opt_ai_pilot_mode_shadow">Che do Bong</span>
+                            <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
+                        </div>
+                        <div class="dropdown-options">
+                            <div class="dropdown-option selected" data-value="shadow"
+                                data-i18n="opt_ai_pilot_mode_shadow">Che
+                                do Bong</div>
+                            <div class="dropdown-option" data-value="assist" data-i18n="opt_ai_pilot_mode_assist">Tro ly
+                            </div>
+                            <div class="dropdown-option" data-value="primary" data-i18n="opt_ai_pilot_mode_primary">Chu
+                                dong</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="aiPilotMode" value="shadow">
+                    <p class="hint-text" data-i18n="opt_ai_pilot_mode_hint">Bong: chi quan sat. Tro ly: goi y. Chu dong:
+                        tu hanh dong.</p>
+                </div>
+
+                <!-- Accuracy Level -->
+                <div class="setting-section">
+                    <label for="aiAccuracyLevel" data-i18n="opt_ai_pilot_accuracy_level">Do chinh xac</label>
+                    <div class="custom-dropdown" id="aiAccuracyLevelDropdown">
+                        <div class="dropdown-selected" tabindex="0">
+                            <span class="dropdown-text" data-i18n="opt_ai_pilot_accuracy_balanced">Can bang</span>
+                            <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
+                        </div>
+                        <div class="dropdown-options">
+                            <div class="dropdown-option selected" data-value="balanced"
+                                data-i18n="opt_ai_pilot_accuracy_balanced">Can bang</div>
+                            <div class="dropdown-option" data-value="high" data-i18n="opt_ai_pilot_accuracy_high">Cao
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="aiAccuracyLevel" value="balanced">
+                </div>
+
+                <!-- Advanced AI Settings -->
+                <details class="advanced-settings">
+                    <summary data-i18n="opt_ai_advanced">Cai dat nang cao</summary>
+                    <div class="advanced-content">
+                        <div class="settings-grid">
+                            <div>
+                                <label for="aiMinConfidence" data-i18n="opt_ai_pilot_min_confidence">Nguong tin cay
+                                    (0-1)</label>
+                                <input type="text" id="aiMinConfidence" placeholder="0.65">
+                            </div>
+                            <div>
+                                <label for="aiTimeoutMs" data-i18n="opt_ai_pilot_timeout_ms">Thoi gian cho (ms)</label>
+                                <input type="text" id="aiTimeoutMs" placeholder="800">
+                            </div>
+                        </div>
+
+                        <div class="settings-grid" style="margin-top: 12px;">
+                            <div>
+                                <label for="aiBudgetPerDay" data-i18n="opt_ai_pilot_budget_per_day">Han muc/ngay</label>
+                                <input type="text" id="aiBudgetPerDay" placeholder="200">
+                            </div>
+                            <div>
+                                <label for="aiCacheTtlMs" data-i18n="opt_ai_pilot_cache_ttl_ms">Cache (ms)</label>
+                                <input type="text" id="aiCacheTtlMs" placeholder="15000">
+                            </div>
+                        </div>
+
+                        <div class="settings-grid" style="margin-top: 12px;">
+                            <div>
+                                <label for="aiMaxViewportChars" data-i18n="opt_ai_pilot_max_viewport_chars">Viewport
+                                    chars</label>
+                                <input type="text" id="aiMaxViewportChars" placeholder="1200">
+                            </div>
+                            <div>
+                                <label for="aiMaxSelectedChars" data-i18n="opt_ai_pilot_max_selected_chars">Selected
+                                    chars</label>
+                                <input type="text" id="aiMaxSelectedChars" placeholder="400">
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 12px;">
+                            <label for="aiProvider" data-i18n="opt_ai_pilot_provider">Nha cung cap</label>
+                            <div class="custom-dropdown" id="aiProviderDropdown">
+                                <div class="dropdown-selected" tabindex="0">
+                                    <span class="dropdown-text" data-i18n="opt_ai_pilot_provider_gemini">Gemini</span>
+                                    <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="16"
+                                        height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="m6 9 6 6 6-6" />
+                                    </svg>
+                                </div>
+                                <div class="dropdown-options">
+                                    <div class="dropdown-option selected" data-value="gemini"
+                                        data-i18n="opt_ai_pilot_provider_gemini">Gemini</div>
+                                    <div class="dropdown-option" data-value="proxy"
+                                        data-i18n="opt_ai_pilot_provider_proxy">
+                                        Proxy</div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="aiProvider" value="gemini">
+                        </div>
+
+                        <div style="margin-top: 12px;">
+                            <label for="aiProxyUrl" data-i18n="opt_ai_pilot_proxy_url">Proxy URL</label>
+                            <input type="text" id="aiProxyUrl" placeholder="https://your-proxy/decide">
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <!-- Tab 3: Connections -->
+            <div class="tab-panel" id="panel-connections">
+                <h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    </svg>
+                    <span data-i18n="opt_tab_connections_title">Ket noi</span>
+                </h2>
+
+                <!-- NotebookLM Toggle -->
+                <div class="setting-section">
+                    <div class="setting-row">
+                        <div class="setting-row-info">
+                            <div class="title" data-i18n="opt_nlm_enable_title">NotebookLM Bridge</div>
+                            <div class="desc" data-i18n="opt_nlm_enable_desc">Luu ghi chu vao NotebookLM</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="nlmEnabled">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Default Notebook -->
+                <div class="setting-section">
+                    <label for="nlmDefaultNotebook" data-i18n="opt_nlm_default_notebook">So tay mac dinh</label>
+                    <input type="text" id="nlmDefaultNotebook" placeholder="Inbox">
+                </div>
+
+                <!-- Bridge Mode -->
+                <div class="setting-section">
+                    <label for="nlmMode" data-i18n="opt_nlm_mode">Che do ket noi</label>
+                    <select id="nlmMode">
+                        <option value="ui_assisted" data-i18n="opt_nlm_mode_ui_assisted">UI-Assisted (Khuyen dung)
+                        </option>
+                        <option value="enterprise_api" disabled data-i18n="opt_nlm_mode_enterprise">Enterprise API (Sap
+                            co)</option>
+                    </select>
+                    <p class="hint-text" data-i18n="opt_nlm_mode_hint">Sao chep vao clipboard + mo NotebookLM de dan thu
+                        cong</p>
+                </div>
+
+                <!-- PII Warning Toggle -->
+                <div class="setting-section">
+                    <div class="setting-row">
+                        <div class="setting-row-info">
+                            <div class="title" data-i18n="opt_nlm_pii_warning">Canh bao du lieu nhay cam</div>
+                            <div class="desc" data-i18n="opt_nlm_pii_warning_desc">Hien canh bao khi export du lieu ca
+                                nhan</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="nlmPiiWarning" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Allow Cloud Export Toggle -->
+                <div class="setting-section">
+                    <div class="setting-row">
+                        <div class="setting-row-info">
+                            <div class="title" data-i18n="opt_nlm_allow_cloud">Cho phep export cloud</div>
+                            <div class="desc" data-i18n="opt_nlm_allow_cloud_desc">Cho phep gui "ATOM Clip" len NotebookLM</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="nlmAllowCloud">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Advanced NLM Settings -->
+                <details class="advanced-settings">
+                    <summary data-i18n="opt_nlm_advanced">Cai dat nang cao</summary>
+                    <div class="advanced-content">
+                        <div class="settings-grid">
+                            <div>
+                                <label for="nlmBaseUrl" data-i18n="opt_nlm_base_url">NotebookLM URL</label>
+                                <input type="text" id="nlmBaseUrl" placeholder="https://notebooklm.google.com">
+                            </div>
+                            <div>
+                                <label for="nlmExportMaxChars" data-i18n="opt_nlm_export_max_chars">Ky tu toi da</label>
+                                <input type="number" id="nlmExportMaxChars" placeholder="5000" min="0" max="50000"
+                                    step="500">
+                                <p class="hint-text">0 = khong gioi han</p>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 12px;">
+                            <label for="nlmSensitiveDomains" data-i18n="opt_nlm_sensitive_domains">Domain nhay cam (moi
+                                dong 1)</label>
+                            <textarea id="nlmSensitiveDomains" rows="3" placeholder="*.his.*&#10;*.emr.*"></textarea>
+                        </div>
+
+                        <div style="margin-top: 12px;">
+                            <label for="nlmRulesJson" data-i18n="opt_nlm_rules">Quy tac mapping (JSON)</label>
+                            <textarea id="nlmRulesJson" rows="4"
+                                placeholder='{"byTag":[{"tag":"research","notebookRef":"Research"}]}'></textarea>
+                        </div>
+                    </div>
+                </details>
+
+                <div class="setting-section" style="margin-top: 16px;">
+                    <label for="srq-density-mode">Smart Research Queue density</label>
+                    <select id="srq-density-mode">
+                        <option value="comfortable">Comfortable (default)</option>
+                        <option value="compact">Compact (more items per screen)</option>
+                    </select>
+                    <p class="hint-text">Comfortable mode is easier to read. Compact mode shows more highlights.</p>
+                </div>
+            </div>
+
+            <!-- Tab 4: Advanced -->
+            <div class="tab-panel" id="panel-advanced">
+                <h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    <span data-i18n="opt_tab_advanced_title">Nang cao</span>
+                </h2>
+
+                <!-- Debug Mode Section -->
+                <div id="debug-section">
+                <div class="subsection-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m8 2 1.88 1.88" />
+                        <path d="M14.12 3.88 16 2" />
+                        <path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1" />
+                        <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6" />
+                        <path d="M12 20v-9" />
+                        <path d="M6.53 9C4.6 8.8 3 7.1 3 5" />
+                        <path d="M6 13H2" />
+                        <path d="M3 21c0-2.1 1.7-3.9 3.8-4" />
+                        <path d="M20.97 5c0 2.1-1.6 3.8-3.5 4" />
+                        <path d="M22 13h-4" />
+                        <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4" />
+                    </svg>
+                    <span data-i18n="opt_debug_title">Go loi</span>
+                </div>
+
+                <div class="setting-section">
+                    <div class="setting-row">
+                        <div class="setting-row-info">
+                            <div class="title" data-i18n="opt_debug_enable_title">Bat che do Go loi</div>
+                            <div class="desc" data-i18n="opt_debug_enable_desc">Hien log chi tiet trong console</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="debugModeToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="setting-section">
+                    <button id="btn-export-debug" class="btn-action" style="width: 100%;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" x2="12" y1="15" y2="3" />
+                        </svg>
+                        <span data-i18n="opt_debug_export">Xuat Debug Log</span>
+                    </button>
+                </div>
+                </div>
+
+                <!-- Notifications Section -->
+                <div class="subsection-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                        <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                    </svg>
+                    <span data-i18n="opt_notif_title">Thong bao</span>
+                </div>
+
+                <div class="setting-section">
+                    <p class="hint-text" style="margin-bottom: 12px;" data-i18n="opt_notif_desc">
+                        Kiem tra va cau hinh thong bao he thong cho che do Tap trung.
+                    </p>
+
+                    <div class="settings-grid">
+                        <button id="btn-test-notif" class="btn-action">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                            </svg>
+                            <span data-i18n="opt_notif_test">Thu thong bao</span>
+                        </button>
+                        <button id="btn-open-chrome-notif" class="btn-action">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path
+                                    d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            <span data-i18n="opt_notif_chrome">Chrome Settings</span>
+                        </button>
+                    </div>
+
+                    <div id="notif-status"
+                        style="text-align: center; font-size: 13px; min-height: 20px; margin-top: 12px;">
+                    </div>
+                </div>
+
+                <details class="guide-details">
+                    <summary data-i18n="opt_notif_guide_title">Huong dan xu ly su co</summary>
+                    <div class="guide-content">
+                        <p style="margin: 0 0 8px 0; color: var(--muted);" data-i18n="opt_notif_guide_intro">Neu thong
+                            bao khong hien:</p>
+                        <ol>
+                            <li data-i18n="opt_notif_guide_1"><b>Windows:</b> Settings > System > Notifications > Chrome
+                                > ON</li>
+                            <li data-i18n="opt_notif_guide_2"><b>Focus Assist:</b> Tat hoac dat Priority only</li>
+                            <li data-i18n="opt_notif_guide_3"><b>Chrome:</b> Nhan "Chrome Settings" > Cho phep thong bao
+                            </li>
+                            <li data-i18n="opt_notif_guide_4"><b>Khoi dong lai:</b> Dong va mo lai Chrome</li>
+                        </ol>
+                    </div>
+                </details>
+            </div>
+
+            <!-- Save Bar -->
+            <div class="save-bar">
+                <button id="btn-save">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                        <polyline points="17 21 17 13 7 13 7 21" />
+                        <polyline points="7 3 7 8 15 8" />
+                    </svg>
+                    <span data-i18n="opt_btn_save">Luu thay doi</span>
+                </button>
+                <div id="status"></div>
+            </div>
+        </main>
     </div>
 
+    <script src="config/build_flags.js"></script>
+    <script src="utils/console_guard.js"></script>
     <script src="utils_ui.js"></script>
     <script src="options.js"></script>
 </body>

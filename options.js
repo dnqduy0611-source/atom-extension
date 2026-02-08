@@ -7,22 +7,73 @@ const atomMsg = (key, substitutions, fallback) => {
     return chrome.i18n.getMessage(key, substitutions) || fallback || key;
 };
 
+const BUILD_FLAGS = window.ATOM_BUILD_FLAGS || { DEBUG: false };
+const BUILD_DEBUG_ENABLED = !!BUILD_FLAGS.DEBUG;
+
+// Helper: Localize placeholders
+function localizePlaceholders() {
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        const msg = atomMsg(key);
+        if (msg && msg !== key) {
+            el.setAttribute('placeholder', msg);
+        }
+    });
+}
+
+function applyDebugVisibility() {
+    const debugSection = document.getElementById('debug-section');
+    const debugToggle = document.getElementById('debugModeToggle');
+    const btnExportDebug = document.getElementById('btn-export-debug');
+
+    if (!BUILD_DEBUG_ENABLED) {
+        if (debugSection) debugSection.style.display = 'none';
+        if (debugToggle) {
+            debugToggle.checked = false;
+            debugToggle.disabled = true;
+        }
+        if (btnExportDebug) btnExportDebug.style.display = 'none';
+    }
+
+    return BUILD_DEBUG_ENABLED;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     if (window.AtomI18n) {
         await window.AtomI18n.init();
     }
+
+    // Explicitly run placeholder localization
+    localizePlaceholders();
+    const debugAvailable = applyDebugVisibility();
+
+    // Initialize Tab Navigation
+    setupTabs();
+    restoreLastTab();
 
     // Initialize Custom Dropdowns
     setupCustomDropdown('languageDropdown', 'languageSelect');
     setupCustomDropdown('aiPilotModeDropdown', 'aiPilotMode');
     setupCustomDropdown('aiAccuracyLevelDropdown', 'aiAccuracyLevel');
     setupCustomDropdown('aiProviderDropdown', 'aiProvider');
+    setupCustomDropdown('providerDropdown', 'providerSelect');
+
+    // Setup Provider Toggle (show/hide appropriate key sections)
+    setupProviderToggle();
 
     restoreOptions();   // Then load saved data
 
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    if (apiKeyInput) {
+        apiKeyInput.addEventListener('input', () => {
+            const hasKey = apiKeyInput.value.trim().length > 0;
+            updateSemanticToggleAvailability(hasKey);
+        });
+    }
+
     // Debug Mode Toggle listener
     const debugToggle = document.getElementById('debugModeToggle');
-    if (debugToggle) {
+    if (debugToggle && debugAvailable) {
         debugToggle.addEventListener('change', (e) => {
             chrome.storage.local.set({ debug_mode: e.target.checked }, () => {
                 console.log("ATOM: Debug Mode =", e.target.checked);
@@ -32,10 +83,52 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Export Debug Log button
     const btnExportDebug = document.getElementById('btn-export-debug');
-    if (btnExportDebug) {
+    if (btnExportDebug && debugAvailable) {
         btnExportDebug.addEventListener('click', exportDebugLog);
     }
 });
+
+// Tab Navigation Logic
+function setupTabs() {
+    const tabs = document.querySelectorAll('.nav-tab');
+    const panels = document.querySelectorAll('.tab-panel');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetId = tab.dataset.tab;
+
+            // Update tabs
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            // Update panels
+            panels.forEach(p => p.classList.remove('active'));
+            const targetPanel = document.getElementById(`panel-${targetId}`);
+            if (targetPanel) {
+                targetPanel.classList.add('active');
+            }
+
+            // Save last tab to storage
+            chrome.storage.local.set({ atom_options_last_tab: targetId });
+        });
+    });
+}
+
+// Restore last active tab on page load
+async function restoreLastTab() {
+    try {
+        const result = await chrome.storage.local.get('atom_options_last_tab');
+        const lastTab = result.atom_options_last_tab;
+        if (lastTab) {
+            const tabButton = document.querySelector(`[data-tab="${lastTab}"]`);
+            if (tabButton) {
+                tabButton.click();
+            }
+        }
+    } catch (error) {
+        console.log("ATOM: Could not restore last tab", error);
+    }
+}
 
 // Custom Dropdown Logic - Generic Setup
 function setupCustomDropdown(dropdownId, hiddenInputId) {
@@ -127,6 +220,54 @@ function updateDropdownUI(dropdownId, value) {
     }
 }
 
+function updateSemanticToggleAvailability(hasKey) {
+    const embeddingsToggle = document.getElementById('semanticEmbeddingsEnabled');
+    const searchToggle = document.getElementById('semanticSearchEnabled');
+    const keyRequiredNote = document.getElementById('semantic-key-required');
+
+    if (embeddingsToggle) {
+        embeddingsToggle.disabled = !hasKey;
+        if (!hasKey) embeddingsToggle.checked = false;
+    }
+    if (searchToggle) {
+        searchToggle.disabled = !hasKey;
+        if (!hasKey) searchToggle.checked = false;
+    }
+    if (keyRequiredNote) {
+        keyRequiredNote.style.display = hasKey ? 'none' : 'block';
+    }
+}
+
+// Provider toggle: show/hide Google vs OpenRouter key sections
+function setupProviderToggle() {
+    const providerDropdown = document.getElementById('providerDropdown');
+    if (!providerDropdown) return;
+
+    const options = providerDropdown.querySelectorAll('.dropdown-option');
+    options.forEach(option => {
+        option.addEventListener('click', () => {
+            const provider = option.dataset.value;
+            toggleProviderSections(provider);
+        });
+    });
+}
+
+function toggleProviderSections(provider) {
+    const googleSection = document.getElementById('google-key-section');
+    const openrouterSection = document.getElementById('openrouter-key-section');
+    const providerHint = document.getElementById('provider-hint');
+
+    if (provider === 'openrouter') {
+        if (googleSection) googleSection.style.display = 'none';
+        if (openrouterSection) openrouterSection.style.display = 'block';
+        if (providerHint) providerHint.style.display = 'block';
+    } else {
+        if (googleSection) googleSection.style.display = 'block';
+        if (openrouterSection) openrouterSection.style.display = 'none';
+        if (providerHint) providerHint.style.display = 'none';
+    }
+}
+
 // Close dropdowns on outside click
 document.addEventListener('click', () => {
     document.querySelectorAll('.custom-dropdown').forEach(d => d.classList.remove('open'));
@@ -143,7 +284,8 @@ function toNumberOr(value, fallback) {
 function saveOptions() {
     const key = document.getElementById('apiKeyInput').value.trim();
     const sensitivity = document.querySelector('input[name="sensitivity"]:checked').value;
-    const debugMode = document.getElementById('debugModeToggle')?.checked || false;
+    const debugMode = BUILD_DEBUG_ENABLED && (document.getElementById('debugModeToggle')?.checked || false);
+    const userPersona = document.getElementById('userPersona')?.value.trim() || '';
     const language = document.getElementById('languageSelect')?.value || 'auto';
     const aiPilotEnabled = document.getElementById('aiPilotEnabled')?.checked || false;
     const aiPilotMode = document.getElementById('aiPilotMode')?.value || 'shadow';
@@ -156,7 +298,15 @@ function saveOptions() {
     const aiCacheTtlMs = toNumberOr(document.getElementById('aiCacheTtlMs')?.value, 15000);
     const aiProvider = document.getElementById('aiProvider')?.value || 'gemini';
     const aiProxyUrl = document.getElementById('aiProxyUrl')?.value.trim() || '';
-    const nlmEnabled = document.getElementById('nlmEnabled')?.checked || false;
+    // LLM Provider config (General tab)
+    const llmProvider = document.getElementById('providerSelect')?.value || 'google';
+    const openrouterKey = document.getElementById('openrouterKeyInput')?.value.trim() || '';
+    const openrouterModel = document.getElementById('openrouterModelInput')?.value.trim() || 'google/gemini-2.0-flash-exp:free';
+    const semanticEmbeddingsEnabled = document.getElementById('semanticEmbeddingsEnabled')?.checked || false;
+    const semanticSearchEnabled = document.getElementById('semanticSearchEnabled')?.checked || false;
+    const nlmEnabledEl = document.getElementById('nlmEnabled');
+    const nlmEnabled = nlmEnabledEl?.checked || false;
+    console.log('[ATOM Options] NLM checkbox element:', nlmEnabledEl, 'checked:', nlmEnabledEl?.checked, 'final value:', nlmEnabled);
     const nlmMode = document.getElementById('nlmMode')?.value || 'ui_assisted';
     const nlmDefaultNotebook = document.getElementById('nlmDefaultNotebook')?.value.trim() || 'Inbox';
     const nlmBaseUrl = document.getElementById('nlmBaseUrl')?.value.trim() || 'https://notebooklm.google.com';
@@ -165,6 +315,7 @@ function saveOptions() {
     const nlmExportMaxChars = toNumberOr(document.getElementById('nlmExportMaxChars')?.value, 5000);
     const nlmSensitiveDomainsRaw = document.getElementById('nlmSensitiveDomains')?.value || '';
     const nlmRulesRaw = document.getElementById('nlmRulesJson')?.value || '';
+    const srqDensityMode = document.getElementById('srq-density-mode')?.value || 'comfortable';
     const status = document.getElementById('status');
     const btn = document.getElementById('btn-save');
 
@@ -172,66 +323,106 @@ function saveOptions() {
     btn.textContent = atomMsg('opt_btn_saving');
     btn.disabled = true;
 
-    chrome.storage.local.set({
-        user_gemini_key: key,
-        user_sensitivity: sensitivity,
-        debug_mode: debugMode,
-        atom_ui_language: language,
-        atom_ai_pilot_enabled: aiPilotEnabled,
-        atom_ai_pilot_mode: aiPilotMode,
-        atom_ai_pilot_accuracy_level: aiAccuracyLevel,
-        atom_ai_confidence_threshold_primary: aiMinConfidence,
-        atom_ai_timeout_ms: aiTimeoutMs,
-        atom_ai_budget_daily_cap: aiBudgetPerDay,
-        atom_ai_cache_ttl_ms: aiCacheTtlMs,
-        atom_ai_max_viewport_chars: aiMaxViewportChars,
-        atom_ai_max_selected_chars: aiMaxSelectedChars,
-        atom_ai_provider: aiProvider,
-        atom_ai_proxy_url: aiProxyUrl,
-        atom_nlm_settings_v1: {
-            enabled: nlmEnabled,
-            mode: nlmMode,
-            defaultNotebookRef: nlmDefaultNotebook,
-            exportFormat: "clip_and_url",
-            baseUrl: nlmBaseUrl,
-            allowCloudExport: nlmAllowCloud,
-            piiWarning: nlmPiiWarning,
-            exportMaxChars: nlmExportMaxChars
-        },
-        atom_nlm_sensitive_domains_v1: nlmSensitiveDomainsRaw
-            .split(/\r?\n/)
-            .map((line) => line.trim())
-            .filter(Boolean),
-        atom_nlm_rules_v1: parseNlmRules(nlmRulesRaw)
-    }, () => {
-        // Feedback UI: Dùng text từ file ngôn ngữ
-        status.textContent = atomMsg("opt_save_success");
-        status.className = 'success';
-
-        btn.textContent = atomMsg('opt_btn_saved');
-        btn.style.backgroundColor = '#059669';
+    if ((semanticEmbeddingsEnabled || semanticSearchEnabled) && !key) {
+        status.textContent = atomMsg('opt_semantic_key_required', null, 'Add your API key to enable these toggles.');
+        status.className = 'error';
+        btn.textContent = atomMsg('opt_btn_save');
         btn.disabled = false;
+        return;
+    }
 
-        // Log kiểm tra
-        console.log("ATOM: Saved Key =", key ? "***" : "Empty");
-        console.log("ATOM: Saved Sensitivity =", sensitivity);
-        console.log("ATOM: Saved Debug Mode =", debugMode);
-        console.log("ATOM: Saved Language =", language);
-        console.log("ATOM: Saved AI Pilot =", aiPilotEnabled, aiPilotMode);
-        console.log("ATOM: Saved NotebookLM Bridge =", nlmEnabled, nlmDefaultNotebook);
+    chrome.storage.local.get(['atom_feature_flags_v1', 'accepted_cost_warning'], (flagResult) => {
+        const currentFlags = flagResult.atom_feature_flags_v1 || {};
+        const nextFlags = {
+            ...currentFlags,
+            EMBEDDINGS_ENABLED: semanticEmbeddingsEnabled,
+            SEMANTIC_SEARCH_ENABLED: semanticSearchEnabled
+        };
+        const nextCostAck = flagResult.accepted_cost_warning || semanticEmbeddingsEnabled || semanticSearchEnabled;
 
-        setTimeout(() => {
-            status.textContent = '';
-            btn.textContent = atomMsg("opt_btn_save");
-            btn.style.backgroundColor = '#374151';
-        }, 2000);
+        chrome.storage.local.set({
+            user_gemini_key: key,
+            user_sensitivity: sensitivity,
+            debug_mode: debugMode,
+            user_persona: userPersona,
+            atom_ui_language: language,
+            atom_ai_pilot_enabled: aiPilotEnabled,
+            atom_ai_pilot_mode: aiPilotMode,
+            atom_ai_pilot_accuracy_level: aiAccuracyLevel,
+            atom_ai_confidence_threshold_primary: aiMinConfidence,
+            atom_ai_timeout_ms: aiTimeoutMs,
+            atom_ai_budget_daily_cap: aiBudgetPerDay,
+            atom_ai_cache_ttl_ms: aiCacheTtlMs,
+            atom_ai_max_viewport_chars: aiMaxViewportChars,
+            atom_ai_max_selected_chars: aiMaxSelectedChars,
+            atom_ai_provider: aiProvider,
+            atom_ai_proxy_url: aiProxyUrl,
+            // OpenRouter Integration
+            atom_llm_provider: llmProvider,
+            atom_openrouter_key: openrouterKey,
+            atom_openrouter_model: openrouterModel,
+            atom_nlm_settings_v1: {
+                enabled: nlmEnabled === true,  // Ensure boolean
+                mode: nlmMode,
+                defaultNotebookRef: nlmDefaultNotebook,
+                exportFormat: "clip_and_url",
+                baseUrl: nlmBaseUrl,
+                allowCloudExport: nlmAllowCloud,
+                piiWarning: nlmPiiWarning,
+                exportMaxChars: nlmExportMaxChars
+            },
+            atom_nlm_sensitive_domains_v1: nlmSensitiveDomainsRaw
+                .split(/\r?\n/)
+                .map((line) => line.trim())
+                .filter(Boolean),
+            atom_nlm_rules_v1: parseNlmRules(nlmRulesRaw),
+            atom_feature_flags_v1: nextFlags,
+            accepted_cost_warning: nextCostAck
+        }, () => {
+            // Feedback UI: Dùng text từ file ngôn ngữ
+            status.textContent = atomMsg("opt_save_success");
+            status.className = 'success';
 
-        if (window.AtomI18n && window.AtomUI) {
-            window.AtomI18n.setOverride(language).then(() => {
-                window.AtomUI.localize();
-                updateDropdownUI('languageDropdown', language);
+            btn.textContent = atomMsg('opt_btn_saved');
+            btn.style.backgroundColor = '#059669';
+            btn.disabled = false;
+
+            // Log kiểm tra
+            console.log("ATOM: Saved Key =", key ? "***" : "Empty");
+            console.log("ATOM: Saved Sensitivity =", sensitivity);
+            console.log("ATOM: Saved Debug Mode =", debugMode);
+            console.log("ATOM: Saved Debug Mode =", debugMode);
+            console.log("ATOM: Saved Persona =", userPersona);
+            console.log("ATOM: Saved Language =", language);
+            console.log("ATOM: Saved AI Pilot =", aiPilotEnabled, aiPilotMode);
+            console.log("ATOM: Saved NotebookLM Bridge =", nlmEnabled, nlmDefaultNotebook);
+
+            // Verify NLM settings were saved correctly
+            chrome.storage.local.get(['atom_nlm_settings_v1'], (r) => {
+                console.log('[ATOM Options] Verified NLM settings in storage:', r.atom_nlm_settings_v1);
             });
-        }
+
+            chrome.storage.sync.set({ srqDensityMode }, () => {
+                chrome.runtime.sendMessage({
+                    type: 'SRQ_SETTINGS_CHANGED',
+                    settings: { srqDensityMode }
+                }).catch(() => { });
+            });
+
+            setTimeout(() => {
+                status.textContent = '';
+                btn.textContent = atomMsg("opt_btn_save");
+                btn.style.backgroundColor = '#374151';
+            }, 2000);
+
+            if (window.AtomI18n && window.AtomUI) {
+                window.AtomI18n.setOverride(language).then(() => {
+                    window.AtomUI.localize();
+                    updateDropdownUI('languageDropdown', language);
+                });
+            }
+            updateSemanticToggleAvailability(!!key);
+        });
     });
 }
 
@@ -239,9 +430,12 @@ function saveOptions() {
 function restoreOptions() {
     chrome.storage.local.get([
         'user_gemini_key',
+        'user_gemini_key',
         'user_sensitivity',
+        'user_persona',
         'debug_mode',
         'atom_ui_language',
+        'atom_feature_flags_v1',
         'ai_pilot_enabled',
         'ai_pilot_mode',
         'ai_pilot_accuracy_level',
@@ -264,6 +458,10 @@ function restoreOptions() {
         'atom_ai_max_selected_chars',
         'atom_ai_provider',
         'atom_ai_proxy_url',
+        // OpenRouter Integration
+        'atom_llm_provider',
+        'atom_openrouter_key',
+        'atom_openrouter_model',
         'atom_nlm_settings_v1',
         'atom_nlm_sensitive_domains_v1',
         'atom_nlm_rules_v1'
@@ -289,12 +487,30 @@ function restoreOptions() {
         // 3. Khôi phục Debug Mode
         const debugToggle = document.getElementById('debugModeToggle');
         if (debugToggle) {
-            debugToggle.checked = result.debug_mode || false;
+            debugToggle.checked = BUILD_DEBUG_ENABLED && (result.debug_mode || false);
+        }
+
+        // 3.1 Khôi phục Persona
+        if (result.user_persona) {
+            const personaInput = document.getElementById('userPersona');
+            if (personaInput) personaInput.value = result.user_persona;
         }
 
         // 4. Khôi phục Language - sử dụng custom dropdown
         const savedLanguage = result.atom_ui_language || 'auto';
         updateDropdownUI('languageDropdown', savedLanguage);
+
+        const featureFlags = result.atom_feature_flags_v1 || {};
+        const semanticEmbeddingsToggle = document.getElementById('semanticEmbeddingsEnabled');
+        const semanticSearchToggle = document.getElementById('semanticSearchEnabled');
+        const hasKey = !!result.user_gemini_key;
+        if (semanticEmbeddingsToggle) {
+            semanticEmbeddingsToggle.checked = hasKey ? !!featureFlags.EMBEDDINGS_ENABLED : false;
+        }
+        if (semanticSearchToggle) {
+            semanticSearchToggle.checked = hasKey ? !!featureFlags.SEMANTIC_SEARCH_ENABLED : false;
+        }
+        updateSemanticToggleAvailability(hasKey);
 
         const aiPilotEnabled = document.getElementById('aiPilotEnabled');
         if (aiPilotEnabled) aiPilotEnabled.checked = result.atom_ai_pilot_enabled ?? result.ai_pilot_enabled ?? false;
@@ -326,7 +542,20 @@ function restoreOptions() {
         const aiProxyUrl = document.getElementById('aiProxyUrl');
         if (aiProxyUrl) aiProxyUrl.value = result.atom_ai_proxy_url || result.ai_proxy_url || '';
 
+        // OpenRouter Integration - restore provider dropdown and keys
+        const savedLlmProvider = result.atom_llm_provider || 'google';
+        updateDropdownUI('providerDropdown', savedLlmProvider);
+        toggleProviderSections(savedLlmProvider);
+
+        const openrouterKeyInput = document.getElementById('openrouterKeyInput');
+        if (openrouterKeyInput) openrouterKeyInput.value = result.atom_openrouter_key || '';
+
+        const openrouterModelInput = document.getElementById('openrouterModelInput');
+        if (openrouterModelInput) openrouterModelInput.value = result.atom_openrouter_model || 'google/gemini-2.0-flash-exp:free';
+
         const nlmSettings = result.atom_nlm_settings_v1 || {};
+
+
         const nlmEnabled = document.getElementById('nlmEnabled');
         if (nlmEnabled) nlmEnabled.checked = !!nlmSettings.enabled;
         const nlmMode = document.getElementById('nlmMode');
@@ -349,6 +578,12 @@ function restoreOptions() {
         const nlmRulesJson = document.getElementById('nlmRulesJson');
         const rules = result.atom_nlm_rules_v1 || {};
         if (nlmRulesJson) nlmRulesJson.value = JSON.stringify(rules, null, 2);
+
+        chrome.storage.sync.get({ srqDensityMode: 'comfortable' }, (syncResult) => {
+            const densitySelect = document.getElementById('srq-density-mode');
+            if (!densitySelect) return;
+            densitySelect.value = syncResult?.srqDensityMode === 'compact' ? 'compact' : 'comfortable';
+        });
     });
 }
 

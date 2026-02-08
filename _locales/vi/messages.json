@@ -1,4 +1,40 @@
 {
+  "mem_stat_top_category": {
+    "message": "Chủ đề nổi bật"
+  },
+  "mem_weekly_title": {
+    "message": "Tóm tắt tuần"
+  },
+  "mem_weekly_desc": {
+    "message": "Phân bổ chủ đề trong 7 ngày qua"
+  },
+  "mem_weekly_empty": {
+    "message": "Tuần này chưa có ghi chú nào."
+  },
+  "mem_weekly_focus": {
+    "message": "Tuần này bạn tập trung $1% vào $2."
+  },
+  "mem_weekly_focus_tags": {
+    "message": "Nổi bật: $1"
+  },
+  "sp_key_insight_empty": {
+    "message": "Chưa có Key Insight"
+  },
+  "sp_key_insight_show": {
+    "message": "Hiện Key Insight"
+  },
+  "sp_key_insight_hide": {
+    "message": "Ẩn Key Insight"
+  },
+  "sp_menu_new_chat": {
+    "message": "Chat mới"
+  },
+  "sp_confirm_new_chat": {
+    "message": "Bắt đầu chat mới? Lịch sử trong domain sẽ được giữ lại và mở một thread mới."
+  },
+  "sp_new_chat_started": {
+    "message": "Đã bắt đầu chat mới"
+  },
   "appName": {
     "message": "ATOM - Mindful Browsing"
   },
@@ -114,7 +150,13 @@
     "message": "Ghi chú nhanh..."
   },
   "journal_ai_title": {
-    "message": "Tin nhắn từ ATOM:"
+    "message": "Tin nhắn từ Amo:"
+  },
+  "journal_ai_disabled": {
+    "message": "Phản hồi AI đang tắt trong Cài đặt."
+  },
+  "journal_ai_error": {
+    "message": "Amo đang suy ngẫm, hãy thử lại sau nhé!"
   },
   "tag_habit": {
     "message": "Thói quen"
@@ -209,6 +251,132 @@
   "opt_save_success": {
     "message": "Đã lưu thành công!"
   },
+  "opt_tab_general": {
+    "message": "Chung"
+  },
+  "opt_tab_ai": {
+    "message": "AI Pilot"
+  },
+  "opt_tab_connections": {
+    "message": "Kết nối"
+  },
+  "opt_tab_advanced": {
+    "message": "Nâng cao"
+  },
+  "opt_tab_general_title": {
+    "message": "Cài đặt Chung"
+  },
+  "opt_tab_ai_title": {
+    "message": "AI Pilot"
+  },
+  "opt_tab_connections_title": {
+    "message": "Kết nối"
+  },
+  "opt_tab_advanced_title": {
+    "message": "Nâng cao"
+  },
+  "opt_provider_label": {
+    "message": "Nhà cung cấp AI"
+  },
+  "opt_provider_google": {
+    "message": "Google Gemini"
+  },
+  "opt_provider_openrouter": {
+    "message": "OpenRouter"
+  },
+  "opt_provider_hint": {
+    "message": "OpenRouter: Truy cập Llama 3, Mistral, DeepSeek (~50 yêu cầu miễn phí/ngày)"
+  },
+  "opt_gemini_api_key": {
+    "message": "Google Gemini API Key"
+  },
+  "opt_api_guide_toggle": {
+    "message": "Hướng dẫn lấy Key"
+  },
+  "opt_btn_get_openrouter_key": {
+    "message": "👉 Lấy Key OpenRouter"
+  },
+  "opt_openrouter_api_key": {
+    "message": "OpenRouter API Key"
+  },
+  "opt_openrouter_key_placeholder": {
+    "message": "sk-or-v1-..."
+  },
+  "opt_openrouter_model": {
+    "message": "Model ID"
+  },
+  "opt_openrouter_model_placeholder": {
+    "message": "google/gemini-2.0-flash-exp:free"
+  },
+  "opt_openrouter_model_hint": {
+    "message": "Model miễn phí: google/gemini-2.0-flash-exp:free, meta-llama/llama-3.3-70b-instruct:free"
+  },
+  "opt_openrouter_guide_toggle": {
+    "message": "Cách lấy Key OpenRouter"
+  },
+  "opt_openrouter_guide_1": {
+    "message": "Truy cập openrouter.ai/keys"
+  },
+  "opt_openrouter_guide_2": {
+    "message": "Đăng nhập với Google/GitHub"
+  },
+  "opt_openrouter_guide_3": {
+    "message": "Tạo API key mới"
+  },
+  "opt_openrouter_guide_4": {
+    "message": "Sao chép và dán vào ô trên"
+  },
+  "opt_semantic_section_title": {
+    "message": "Tính năng AI & Ngữ nghĩa"
+  },
+  "opt_semantic_section_desc": {
+    "message": "Tìm các highlight liên quan theo ý nghĩa, không chỉ theo thời gian."
+  },
+  "opt_semantic_cost_warning": {
+    "message": "Cảnh báo: Có thể tăng mức sử dụng API Gemini và độ trễ."
+  },
+  "opt_semantic_key_required": {
+    "message": "Thêm API key để bật các tính năng này."
+  },
+  "opt_semantic_embeddings_title": {
+    "message": "Nhúng ngữ nghĩa (Embeddings)"
+  },
+  "opt_semantic_embeddings_desc": {
+    "message": "Tạo dấu vân tay ngữ nghĩa cho mỗi highlight."
+  },
+  "opt_semantic_search_title": {
+    "message": "Tìm kiếm ngữ nghĩa"
+  },
+  "opt_semantic_search_desc": {
+    "message": "Sử dụng embeddings để chọn các highlight liên quan nhất."
+  },
+  "opt_ai_pilot_mode_shadow": {
+    "message": "Chế độ Bóng (Shadow)"
+  },
+  "opt_ai_pilot_mode_assist": {
+    "message": "Trợ lý (Assist)"
+  },
+  "opt_ai_pilot_mode_primary": {
+    "message": "Chủ động (Primary)"
+  },
+  "opt_ai_pilot_mode_hint": {
+    "message": "Bóng: chỉ quan sát. Trợ lý: gợi ý. Chủ động: tự hành động."
+  },
+  "opt_ai_advanced": {
+    "message": "Cài đặt nâng cao"
+  },
+  "opt_nlm_advanced": {
+    "message": "Cài đặt nâng cao"
+  },
+  "opt_user_persona_title": {
+    "message": "Công việc của bạn là gì"
+  },
+  "opt_user_persona_placeholder": {
+    "message": "Ví dụ: Bác sĩ, Sinh viên, Kỹ sư..."
+  },
+  "opt_user_persona_desc": {
+    "message": "AI sẽ điều chỉnh cách giải thích phù hợp với chuyên môn của bạn."
+  },
   "opt_ai_pilot_title": {
     "message": "AI Pilot"
   },
@@ -221,23 +389,14 @@
   "opt_ai_pilot_mode": {
     "message": "Chế độ"
   },
-  "opt_ai_pilot_mode_shadow": {
-    "message": "shadow"
-  },
-  "opt_ai_pilot_mode_assist": {
-    "message": "assist"
-  },
-  "opt_ai_pilot_mode_primary": {
-    "message": "primary"
-  },
   "opt_ai_pilot_accuracy_level": {
     "message": "Mức độ chính xác"
   },
   "opt_ai_pilot_accuracy_balanced": {
-    "message": "balanced"
+    "message": "Cân bằng (Balanced)"
   },
   "opt_ai_pilot_accuracy_high": {
-    "message": "high"
+    "message": "Cao (High)"
   },
   "opt_ai_pilot_min_confidence": {
     "message": "Ngưỡng tin cậy tối thiểu"
@@ -261,10 +420,10 @@
     "message": "Nhà cung cấp"
   },
   "opt_ai_pilot_provider_gemini": {
-    "message": "gemini"
+    "message": "Google Gemini"
   },
   "opt_ai_pilot_provider_proxy": {
-    "message": "proxy"
+    "message": "Proxy (Custom)"
   },
   "opt_ai_pilot_max_viewport_chars": {
     "message": "Giới hạn ký tự viewport"
@@ -297,19 +456,19 @@
     "message": "Bật Bridge"
   },
   "opt_nlm_enable_desc": {
-    "message": "Copy clip và mở NotebookLM để dán thủ công"
+    "message": "Lưu clip và mở NotebookLM để dán"
   },
   "opt_nlm_mode": {
     "message": "Chế độ Bridge"
   },
   "opt_nlm_mode_ui_assisted": {
-    "message": "UI-Assisted (Khuyến nghị)"
+    "message": "UI-Assisted (Gợi ý)"
   },
   "opt_nlm_mode_enterprise": {
     "message": "Enterprise API (Sắp có)"
   },
   "opt_nlm_mode_hint": {
-    "message": "UI-Assisted: copy vào clipboard + mở NotebookLM để dán thủ công"
+    "message": "UI-Assisted: Sao chép vào clipboard + mở NotebookLM để dán thủ công"
   },
   "opt_nlm_default_notebook": {
     "message": "Notebook mặc định"
@@ -326,11 +485,14 @@
   "opt_nlm_allow_cloud": {
     "message": "Cho phép xuất lên cloud"
   },
+  "opt_nlm_allow_cloud_desc": {
+    "message": "Cho phép gửi Amo Clip lên NotebookLM"
+  },
   "opt_nlm_pii_warning": {
     "message": "Cảnh báo PII"
   },
   "opt_nlm_export_max_chars": {
-    "message": "Giới hạn ký tự export"
+    "message": "Giới hạn ký tự xuất"
   },
   "opt_nlm_export_max_chars_hint": {
     "message": "0 = không giới hạn"
@@ -363,7 +525,7 @@
     "message": "Uống một ngụm nước và nhìn ra xa xăm?"
   },
   "popup_title": {
-    "message": "Bảng điều khiển ATOM"
+    "message": "AmoNexus"
   },
   "popup_status_desc": {
     "message": "ATOM đang bảo vệ sự chú ý của bạn."
@@ -382,6 +544,9 @@
   },
   "popup_btn_memory": {
     "message": "Bộ Nhớ"
+  },
+  "popup_btn_chat_page": {
+    "message": "Trò chuyện với Amo"
   },
   "popup_msg_packing": {
     "message": "⏳ Đang đóng gói..."
@@ -423,16 +588,16 @@
     "message": "Hành Trình Tĩnh Lặng"
   },
   "jnl_desc": {
-    "message": "Những khoảnh khắc bạn đã chia sẻ cùng ATOM"
+    "message": "Những khoảnh khắc bạn đã chia sẻ cùng Amo"
   },
   "jnl_empty_title": {
     "message": "Chưa có nhật ký nào"
   },
   "jnl_empty_desc": {
-    "message": "Hãy thử viết nhật ký khi ATOM hỏi bạn nhé!"
+    "message": "Hãy thử viết nhật ký khi Amo hỏi bạn nhé!"
   },
   "jnl_label_ai": {
-    "message": "ATOM PHẢN HỒI"
+    "message": "AMO PHẢN HỒI"
   },
   "jnl_ai_waiting": {
     "message": "..."
@@ -888,7 +1053,7 @@
     "message": "Mở website"
   },
   "popup_subtitle": {
-    "message": "La bàn chú ý thông minh"
+    "message": "Giao điểm thần kinh cho bộ não thứ hai"
   },
   "popup_loading": {
     "message": "Đang tải..."
@@ -974,6 +1139,24 @@
   "mem_empty_desc": {
     "message": "Bắt đầu đọc và lưu highlight để xây dựng bộ nhớ của bạn."
   },
+  "popup_retention_title": {
+    "message": "Ghi nhớ"
+  },
+  "popup_retention_due": {
+    "message": "Cần ôn"
+  },
+  "popup_retention_new": {
+    "message": "Mới"
+  },
+  "popup_retention_recommended": {
+    "message": "Hôm nay"
+  },
+  "popup_retention_streak": {
+    "message": "Chuỗi"
+  },
+  "popup_retention_empty": {
+    "message": "Chưa có thẻ cần ôn"
+  },
   "mem_ai_insight": {
     "message": "Phân tích AI"
   },
@@ -1006,5 +1189,166 @@
   },
   "mem_toast_copied": {
     "message": "Đã sao chép!"
-  }
+  },
+  "sp_comparison_generated": {
+    "message": "Đã tạo so sánh!"
+  },
+  "sp_comparison_failed": {
+    "message": "Không thể tạo so sánh"
+  },
+  "sp_loading": {
+    "message": "Đang tải..."
+  },
+  "sp_save_failed": {
+    "message": "Lưu thất bại"
+  },
+  "sp_nlm_save_error": {
+    "message": "Lỗi khi lưu vào NotebookLM"
+  },
+  "nlm_prompt_save_title": {
+    "message": "Lưu vào NotebookLM"
+  },
+  "nlm_chars_selected": {
+    "message": "ký tự đã chọn"
+  },
+  "nlm_notebook_title": {
+    "message": "Tên Notebook"
+  },
+  "nlm_title_placeholder": {
+    "message": "Nhập tên notebook..."
+  },
+  "nlm_title_hint": {
+    "message": "Chỉnh sửa tiêu đề trước khi lưu"
+  },
+  "nlm_ai_suggested": {
+    "message": "Tiêu đề AI đề xuất"
+  },
+  "nlm_suggested_notebook": {
+    "message": "Notebook phù hợp"
+  },
+  "nlm_preview_label": {
+    "message": "Xem trước nội dung"
+  },
+  "nlm_use_notebook": {
+    "message": "Dùng Notebook này"
+  },
+  "nlm_create_new": {
+    "message": "Tạo mới"
+  },
+  "nlm_create_notebook": {
+    "message": "Tạo Notebook"
+  },
+  "nlm_cancel": {
+    "message": "Huỷ"
+  },
+  "nlm_copied_rich": {
+    "message": "Đã copy nội dung!"
+  },
+  "nlm_opening": {
+    "message": "Đang mở notebook..."
+  },
+  "nlm_creating": {
+    "message": "Đang tạo"
+  },
+  "sp_page_read_failed": {
+    "message": "Không thể đọc trang"
+  },
+  "nlm_cancelled": {
+    "message": "Đã huỷ"
+  },
+  "nlm_extension_updated": {
+    "message": "Extension đã cập nhật. Vui lòng tải lại trang."
+  },
+  "nlm_error_prefix": {
+    "message": "Lỗi: "
+  },
+  "nlm_copied": {
+    "message": "Đã sao chép!"
+  },
+  "nlm_copy_again": {
+    "message": "Sao chép lại"
+  },
+  "focus_updating": {
+    "message": "Đang cập nhật..."
+  },
+  "quota_wait_seconds": {
+    "message": "Chờ $1 giây"
+  },
+  "sp_toast_saved_local": {
+    "message": "Đã lưu cục bộ. Xuất lên cloud bị chặn."
+  },
+  "popup_focus_off": {
+    "message": "TẮT"
+  },
+  "sp_page_discussion": {
+    "message": "Thảo luận trang"
+  },
+  "sp_general_chat_title": {
+    "message": "Chat chung"
+  },
+  "sp_chip_summarize": {
+    "message": "Tóm tắt"
+  },
+  "sp_chip_keypoints": {
+    "message": "Ý chính"
+  },
+  "sp_chip_explain": {
+    "message": "Giải thích"
+  },
+  "sp_chip_counter": {
+    "message": "Phản biện"
+  },
+  "sp_chip_connect": {
+    "message": "Liên kết"
+  },
+  "sp_chip_save": {
+    "message": "Lưu"
+  },
+  "sp_empty_title": {
+    "message": "Sẵn sàng"
+  },
+  "sp_empty_desc": {
+    "message": "Bôi đen đoạn văn hoặc chọn Tóm tắt để bắt đầu ngay."
+  },
+
+  "srq_widget_title": { "message": "Ghi chú đã lưu" },
+  "srq_clips_label": { "message": "mục" },
+  "srq_clips_count": { "message": "$1 đoạn", "placeholders": { "count": { "content": "$1" } } },
+  "srq_uncategorized": { "message": "Chung" },
+  "srq_export_all": { "message": "Lưu tất cả" },
+  "srq_export": { "message": "Lưu" },
+  "srq_review": { "message": "Xem lại" },
+  "srq_dismiss": { "message": "Bỏ qua" },
+  "srq_toggle": { "message": "Xem thêm" },
+  "srq_toggle_collapse": { "message": "Thu gọn" },
+  "srq_review_title": { "message": "Xem lại: $1", "placeholders": { "topic": { "content": "$1" } } },
+  "srq_review_subtitle": { "message": "$1 ghi chú chờ lưu", "placeholders": { "count": { "content": "$1" } } },
+  "srq_target_notebook": { "message": "Lưu vào:" },
+  "srq_export_selected": { "message": "Lưu đã chọn ($1)", "placeholders": { "count": { "content": "$1" } } },
+  "srq_cancel": { "message": "Hủy" },
+  "srq_select": { "message": "Chọn" },
+  "srq_selected": { "message": "Đã chọn" },
+  "srq_skip": { "message": "Bỏ qua" },
+  "srq_exporting": { "message": "Đang lưu..." },
+  "srq_exported_success": { "message": "Đã lưu $1 đoạn", "placeholders": { "count": { "content": "$1" } } },
+  "srq_export_error": { "message": "Lưu thất bại. Thử lại." },
+  "srq_in_flight": { "message": "Đang xử lý..." },
+  "srq_related_to": { "message": "Liên quan đến: $1", "placeholders": { "titles": { "content": "$1" } } },
+  "srq_pii_warning": { "message": "Đoạn này có thể chứa thông tin cá nhân. Hãy xem lại trước khi lưu." },
+  "srq_mode_deep": { "message": "Đọc kỹ" },
+  "srq_mode_skim": { "message": "Đọc nhanh" },
+  "srq_mode_reference": { "message": "Tra cứu" },
+  "srq_mode_reread": { "message": "Đọc lại" },
+  "srq_time_now": { "message": "vừa xong" },
+  "srq_time_mins": { "message": "$1 phút trước", "placeholders": { "mins": { "content": "$1" } } },
+  "srq_time_hours": { "message": "$1 giờ trước", "placeholders": { "hours": { "content": "$1" } } },
+  "srq_time_yesterday": { "message": "hôm qua" },
+  "srq_time_days": { "message": "$1 ngày trước", "placeholders": { "days": { "content": "$1" } } },
+  "srq_nlm_banner": { "message": "$1 đoạn ghi chú sẵn sàng lưu", "placeholders": { "count": { "content": "$1" } } },
+  "srq_nlm_export_current": { "message": "Lưu tất cả vào sổ này" },
+  "srq_nlm_open_sidepanel": { "message": "Mở thanh bên" },
+  "srq_loading": { "message": "Đang tải..." },
+  "srq_empty_state": { "message": "Chưa có đoạn trích nào chờ lưu." },
+  "srq_error_state": { "message": "Tải thất bại. Nhấn 'Thử lại'." },
+  "srq_retry": { "message": "Thử lại" }
 }

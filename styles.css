@@ -38,6 +38,26 @@ body.light-mode {
     --border: rgba(255, 255, 255, 0.1);
     --muted: #a3a3a3;
     --danger: #ef4444;
+    --srq-accent-primary: #10B981;
+    --srq-accent-primary-rgb: 16, 185, 129;
+    --srq-accent-success: #34D399;
+    --srq-accent-warning: #FBBF24;
+    --srq-accent-warning-rgb: 251, 191, 36;
+    --srq-accent-error: #EF4444;
+    --srq-accent-error-rgb: 239, 68, 68;
+    --srq-accent-info: #60A5FA;
+    --srq-mode-deep-bg: rgba(59, 130, 246, 0.15);
+    --srq-mode-deep-text: #60A5FA;
+    --srq-mode-skim-bg: rgba(156, 163, 175, 0.15);
+    --srq-mode-skim-text: #9CA3AF;
+    --srq-mode-ref-bg: rgba(245, 158, 11, 0.15);
+    --srq-mode-ref-text: #FBBF24;
+    --srq-mode-reread-bg: rgba(139, 92, 246, 0.15);
+    --srq-mode-reread-text: #A78BFA;
+    --srq-surface-subtle: rgba(255, 255, 255, 0.03);
+    --srq-surface-soft: rgba(255, 255, 255, 0.05);
+    --srq-border-subtle: rgba(255, 255, 255, 0.06);
+    --srq-border-strong: rgba(255, 255, 255, 0.1);
 }
 
 :root.light-mode {
@@ -48,6 +68,12 @@ body.light-mode {
     --surface: #ffffff;
     --border: #CCFBF1;
     --muted: #4B5563;
+    --srq-accent-primary: #0D9488;
+    --srq-accent-primary-rgb: 13, 148, 136;
+    --srq-surface-subtle: rgba(15, 23, 42, 0.03);
+    --srq-surface-soft: rgba(15, 23, 42, 0.05);
+    --srq-border-subtle: rgba(15, 23, 42, 0.08);
+    --srq-border-strong: rgba(15, 23, 42, 0.14);
 }
 
 /* 1. Overlay: Dark Glassmorphism "Linear" Style */
@@ -665,7 +691,7 @@ body.light-mode {
     background-image: url('chrome-extension://__MSG_@@extension_id__/icons/focus_bg.jpg');
     background-size: 100% 100%;
     background-position: center center;
-    filter: blur(5px) brightness(0.8);
+    filter: blur(0.5px) brightness(0.8);
 }
 
 /* [ATOM ATMOSPHERE] Rain Effect Layer */
@@ -883,6 +909,23 @@ body.light-mode {
 .focus-btn.ghost:hover {
     color: white;
     background: rgba(255, 255, 255, 0.1);
+}
+
+.focus-btn.time-add {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    letter-spacing: -0.5px;
+    color: #A7F3D0;
+    /* Emerald-200 */
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    background: rgba(16, 185, 129, 0.05);
+    padding: 4px 10px;
+}
+
+.focus-btn.time-add:hover {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
 }
 
 /* Icon Buttons */
@@ -1341,7 +1384,26 @@ body.light-mode {
 .reading-card-actions {
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
     margin-top: 12px;
+}
+
+/* Sidepanel retrying status */
+.status-retrying {
+    color: #f59e0b;
+    animation: status-pulse 1.5s infinite;
+}
+
+@keyframes status-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
 }
 
 .reading-card-action {
@@ -1353,6 +1415,8 @@ body.light-mode {
     font-size: 12px;
     cursor: pointer;
     transition: background 0.2s ease, color 0.2s ease, border 0.2s ease;
+    flex: 1 1 auto;
+    min-width: 90px;
 }
 
 .reading-card-action:hover {
