@@ -1572,5 +1572,129 @@
   },
   "popup_connecting": {
     "message": "Đang kết nối với AI..."
+  },
+
+  "sp_title": {
+    "message": "Đọc tích cực"
+  },
+  "sp_threads_label": {
+    "message": "Thảo luận"
+  },
+  "sp_highlighted_text": {
+    "message": "Đang thảo luận"
+  },
+  "sp_input_placeholder": {
+    "message": "Đặt câu hỏi..."
+  },
+  "sp_menu_clear": {
+    "message": "Xóa cuộc trò chuyện"
+  },
+  "sp_no_discussions": {
+    "message": "Chưa có thảo luận"
+  },
+  "sp_no_connections": {
+    "message": "Chưa có kết nối"
+  },
+  "sp_no_highlight": {
+    "message": "Chưa chọn đoạn nào"
+  },
+  "sp_no_content": {
+    "message": "Không có nội dung để phân tích"
+  },
+  "sp_from_reading_card": {
+    "message": "Từ thẻ đọc"
+  },
+  "sp_analyzing": {
+    "message": "Đang phân tích kết nối..."
+  },
+  "sp_generating": {
+    "message": "Đang tạo insight..."
+  },
+  "sp_exporting": {
+    "message": "Đang lưu..."
+  },
+  "sp_shortcut_send": {
+    "message": "Gửi (Ctrl+Enter)"
+  },
+  "sp_shortcut_insight": {
+    "message": "Insight chính (Ctrl+D)"
+  },
+  "sp_shortcut_done": {
+    "message": "Xong (Ctrl+Shift+D)"
+  },
+  "sp_shortcut_note": {
+    "message": "Ghi chú mới (Ctrl+N)"
+  },
+  "sp_shortcut_search": {
+    "message": "Tìm kiếm (Ctrl+K)"
+  },
+  "sp_shortcut_undo": {
+    "message": "Hoàn tác"
+  },
+  "sp_btn_mark_done": {
+    "message": "Đánh dấu xong"
+  },
+  "sp_btn_key_insight": {
+    "message": "Insight chính"
+  },
+  "sp_btn_download_notes": {
+    "message": "Tải ghi chú"
+  },
+  "sp_btn_finish_reading": {
+    "message": "Hoàn tất đọc"
+  },
+  "sp_btn_save_to_knowledge": {
+    "message": "Lưu vào kiến thức"
+  },
+  "sp_btn_save_all_knowledge": {
+    "message": "Lưu tất cả vào kiến thức"
+  },
+  "sp_btn_compare": {
+    "message": "So sánh"
+  },
+  "sp_btn_merge": {
+    "message": "Gộp thảo luận"
+  },
+  "sp_btn_quick_save": {
+    "message": "Lưu"
+  },
+  "sp_key_insight_label": {
+    "message": "Insight chính"
+  },
+  "sp_key_insight_copy": {
+    "message": "Sao chép"
+  },
+  "sp_key_insight_save": {
+    "message": "Lưu vào kiến thức"
+  },
+  "sp_chip_analyze": {
+    "message": "Phân tích"
+  },
+  "sp_chip_example": {
+    "message": "Ví dụ"
+  },
+  "sp_action_explain": {
+    "message": "Giải thích"
+  },
+  "sp_action_summarize": {
+    "message": "Tóm tắt"
+  },
+  "sp_action_counter": {
+    "message": "Phản biện"
+  },
+  "sp_action_connect": {
+    "message": "Kết nối"
+  },
+  "sp_toast_saved": {
+    "message": "Đã lưu vào kiến thức!"
+  },
+  "sp_toast_copied": {
+    "message": "Đã sao chép"
+  },
+  "sp_toast_quick_saved": {
+    "message": "Đã lưu đoạn đánh dấu!"
+  },
+  "sp_toast_already_saved": {
+    "message": "Đã lưu hôm nay"
   }
 }
