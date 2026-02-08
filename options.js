@@ -49,6 +49,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize tooltip system (Wave 1 Non-Tech Friendly)
     initTooltips();
 
+    // Initialize onboarding checklist (Wave 2 Settings Simplification)
+    initOnboarding();
+
     const debugAvailable = applyDebugVisibility();
 
     // Initialize Tab Navigation
@@ -406,6 +409,11 @@ function saveOptions() {
                 console.log('[ATOM Options] Verified NLM settings in storage:', r.atom_nlm_settings_v1);
             });
 
+            // Auto-complete onboarding step 3 if key was saved (Wave 2)
+            if (key || openrouterKey) {
+                updateOnboardingStep('onboarding-step-3', true);
+            }
+
             chrome.storage.sync.set({ srqDensityMode }, () => {
                 chrome.runtime.sendMessage({
                     type: 'SRQ_SETTINGS_CHANGED',
@@ -746,6 +754,99 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// ============================================================
+// Onboarding Checklist System (Wave 2 Settings Simplification)
+// ============================================================
+
+async function initOnboarding() {
+    const result = await chrome.storage.local.get(['atom_options_setup_completed', 'user_gemini_key', 'atom_openrouter_key']);
+    const setupCompleted = result.atom_options_setup_completed === true;
+    const hasKey = !!(result.user_gemini_key || result.atom_openrouter_key);
+
+    const checklistEl = document.getElementById('onboarding-checklist');
+    if (!checklistEl) return;
+
+    // Show checklist if setup not completed
+    if (!setupCompleted) {
+        checklistEl.style.display = 'block';
+
+        // Update step states
+        updateOnboardingStep('onboarding-step-1', true); // Provider selection (always completed if page loaded)
+        updateOnboardingStep('onboarding-step-3', hasKey); // API key (completed if key exists)
+    }
+
+    // Dismiss button handler
+    const dismissBtn = checklistEl.querySelector('.onboarding-dismiss');
+    if (dismissBtn) {
+        dismissBtn.addEventListener('click', dismissOnboarding);
+    }
+
+    // Complete setup button handler
+    const completeBtn = document.getElementById('btn-complete-setup');
+    if (completeBtn) {
+        completeBtn.addEventListener('click', completeOnboarding);
+    }
+
+    // Watch for API key changes to update step 3
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    if (apiKeyInput) {
+        apiKeyInput.addEventListener('input', () => {
+            const hasKey = apiKeyInput.value.trim().length > 0;
+            updateOnboardingStep('onboarding-step-3', hasKey);
+        });
+    }
+
+    const openrouterKeyInput = document.getElementById('openrouterKeyInput');
+    if (openrouterKeyInput) {
+        openrouterKeyInput.addEventListener('input', () => {
+            const hasKey = openrouterKeyInput.value.trim().length > 0;
+            updateOnboardingStep('onboarding-step-3', hasKey);
+        });
+    }
+}
+
+function updateOnboardingStep(stepId, completed) {
+    const stepEl = document.getElementById(stepId);
+    if (!stepEl) return;
+
+    if (completed) {
+        stepEl.classList.add('completed');
+        stepEl.querySelector('.step-icon').textContent = '☑';
+    } else {
+        stepEl.classList.remove('completed');
+        stepEl.querySelector('.step-icon').textContent = '☐';
+    }
+}
+
+function dismissOnboarding() {
+    const checklistEl = document.getElementById('onboarding-checklist');
+    if (checklistEl) {
+        checklistEl.style.display = 'none';
+    }
+    // Don't set atom_options_setup_completed to allow checklist to reappear if user reopens settings
+}
+
+async function completeOnboarding() {
+    const checklistEl = document.getElementById('onboarding-checklist');
+    if (checklistEl) {
+        checklistEl.style.display = 'none';
+    }
+
+    // Mark setup as completed
+    await chrome.storage.local.set({ atom_options_setup_completed: true });
+
+    // Show success message
+    const status = document.getElementById('status');
+    if (status) {
+        status.textContent = atomMsg('opt_onboarding_completed', null, 'Setup completed! You can now start using ATOM.');
+        status.className = 'success';
+
+        setTimeout(() => {
+            status.textContent = '';
+        }, 3000);
+    }
+}
 
 // ============================================================
 // Tooltip System (Wave 1 Non-Tech Friendly)
