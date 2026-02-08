@@ -631,6 +631,98 @@
             color: #F59E0B;
         }
 
+        /* Hint (alias for hint-text for Wave 1 compatibility) */
+        .hint {
+            display: block;
+            margin-top: 4px;
+            font-size: 12px;
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        /* Tooltip styles for Wave 1 */
+        .info-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            line-height: 16px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--muted);
+            cursor: help;
+            margin-left: 4px;
+            position: relative;
+            vertical-align: middle;
+        }
+
+        .info-icon:hover {
+            color: var(--primary);
+        }
+
+        .tooltip {
+            position: absolute;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: var(--foreground);
+            max-width: 250px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            pointer-events: none;
+            line-height: 1.4;
+        }
+
+        .tooltip::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 12px;
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 6px solid var(--border);
+        }
+
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: 13px;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 5px solid var(--surface);
+        }
+
+        /* Advanced section enhancements for Wave 1 */
+        .advanced-badge {
+            font-size: 11px;
+            color: var(--muted);
+            font-style: italic;
+            font-weight: 400;
+            margin-left: 4px;
+        }
+
+        .advanced-settings summary {
+            position: relative;
+        }
+
+        .advanced-settings summary::after {
+            content: '▼';
+            position: absolute;
+            right: 16px;
+            transition: transform 0.2s;
+            font-size: 10px;
+        }
+
+        .advanced-settings[open] summary::after {
+            transform: rotate(180deg);
+        }
+
         /* Light mode adjustments */
         body.light-mode .hero-box {
             background: linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, transparent 100%);
@@ -851,7 +943,11 @@
                             </a>
                         </div>
 
-                        <label for="apiKeyInput" data-i18n="opt_gemini_api_key">Google Gemini API Key</label>
+                        <label for="apiKeyInput">
+                            <span data-i18n="opt_gemini_api_key">AI Access Key</span>
+                            <span class="info-icon" data-tooltip-i18n="opt_gemini_api_key_tooltip"
+                                  aria-label="More information">ⓘ</span>
+                        </label>
                         <input type="text" id="apiKeyInput" placeholder="AIzaSy..."
                             data-i18n-placeholder="opt_api_key_placeholder" autocomplete="off">
 
@@ -1040,7 +1136,11 @@
                         enable these toggles.</p>
                     <div class="setting-row">
                         <div class="setting-row-info">
-                            <div class="title" data-i18n="opt_semantic_embeddings_title">Semantic Embeddings</div>
+                            <div class="title">
+                                <span data-i18n="opt_semantic_embeddings_title">Meaning Analysis</span>
+                                <span class="info-icon" data-tooltip-i18n="opt_semantic_embeddings_tooltip"
+                                      aria-label="More information">ⓘ</span>
+                            </div>
                             <div class="desc" data-i18n="opt_semantic_embeddings_desc">Creates a semantic fingerprint
                                 for each
                                 highlight.</div>
@@ -1052,7 +1152,11 @@
                     </div>
                     <div class="setting-row" style="margin-top: 12px;">
                         <div class="setting-row-info">
-                            <div class="title" data-i18n="opt_semantic_search_title">Semantic Search</div>
+                            <div class="title">
+                                <span data-i18n="opt_semantic_search_title">Find by Meaning</span>
+                                <span class="info-icon" data-tooltip-i18n="opt_semantic_search_tooltip"
+                                      aria-label="More information">ⓘ</span>
+                            </div>
                             <div class="desc" data-i18n="opt_semantic_search_desc">Uses embeddings to pick top related
                                 highlights in the same domain.</div>
                         </div>
@@ -1114,28 +1218,41 @@
 
                 <!-- Advanced AI Settings -->
                 <details class="advanced-settings">
-                    <summary data-i18n="opt_ai_advanced">Cai dat nang cao</summary>
+                    <summary>
+                        <span data-i18n="opt_advanced_settings_title">Advanced Settings</span>
+                        <span class="advanced-badge" data-i18n="opt_advanced_badge">(For advanced users)</span>
+                    </summary>
                     <div class="advanced-content">
                         <div class="settings-grid">
                             <div>
-                                <label for="aiMinConfidence" data-i18n="opt_ai_pilot_min_confidence">Nguong tin cay
-                                    (0-1)</label>
+                                <label for="aiMinConfidence" data-i18n="opt_ai_pilot_min_confidence">Minimum confidence level</label>
                                 <input type="text" id="aiMinConfidence" placeholder="0.65">
                             </div>
                             <div>
-                                <label for="aiTimeoutMs" data-i18n="opt_ai_pilot_timeout_ms">Thoi gian cho (ms)</label>
+                                <label for="aiTimeoutMs">
+                                    <span data-i18n="opt_ai_pilot_timeout_ms">Time limit</span>
+                                    <span class="info-icon" data-tooltip-i18n="opt_ai_pilot_timeout_tooltip"
+                                          aria-label="More information">ⓘ</span>
+                                </label>
                                 <input type="text" id="aiTimeoutMs" placeholder="800">
+                                <small class="hint" data-i18n="opt_ai_pilot_timeout_hint">Maximum wait time for AI response (in milliseconds)</small>
                             </div>
                         </div>
 
                         <div class="settings-grid" style="margin-top: 12px;">
                             <div>
-                                <label for="aiBudgetPerDay" data-i18n="opt_ai_pilot_budget_per_day">Han muc/ngay</label>
+                                <label for="aiBudgetPerDay">
+                                    <span data-i18n="opt_ai_pilot_budget_per_day">Daily quota</span>
+                                    <span class="info-icon" data-tooltip-i18n="opt_ai_pilot_budget_tooltip"
+                                          aria-label="More information">ⓘ</span>
+                                </label>
                                 <input type="text" id="aiBudgetPerDay" placeholder="200">
+                                <small class="hint" data-i18n="opt_ai_pilot_budget_hint">Number of AI calls allowed per day</small>
                             </div>
                             <div>
-                                <label for="aiCacheTtlMs" data-i18n="opt_ai_pilot_cache_ttl_ms">Cache (ms)</label>
+                                <label for="aiCacheTtlMs" data-i18n="opt_ai_pilot_cache_ttl_ms">Temporary storage time</label>
                                 <input type="text" id="aiCacheTtlMs" placeholder="15000">
+                                <small class="hint" data-i18n="opt_ai_pilot_cache_ttl_hint">How long to remember recent results (in milliseconds)</small>
                             </div>
                         </div>
 
@@ -1257,7 +1374,10 @@
 
                 <!-- Advanced NLM Settings -->
                 <details class="advanced-settings">
-                    <summary data-i18n="opt_nlm_advanced">Cai dat nang cao</summary>
+                    <summary>
+                        <span data-i18n="opt_advanced_settings_title">Advanced Settings</span>
+                        <span class="advanced-badge" data-i18n="opt_advanced_badge">(For advanced users)</span>
+                    </summary>
                     <div class="advanced-content">
                         <div class="settings-grid">
                             <div>
