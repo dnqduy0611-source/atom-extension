@@ -6919,7 +6919,7 @@ ${aiSummary}
 
     async function mountSRQWidget() {
         const container = document.getElementById('srq-widget-container');
-        if (!container) return;
+        if (!container) return "error";
 
         let srqDensityMode = 'comfortable';
         try {
@@ -6929,59 +6929,54 @@ ${aiSummary}
             srqDensityMode = 'comfortable';
         }
 
-        // Wave 1 P0: Show loading state
-        container.innerHTML = '';
-        const loadingState = window.SRQWidget?.createLoadingState();
-        if (loadingState) {
-            if (srqDensityMode === 'compact') {
-                loadingState.classList.add('srq-density-compact');
+        const applyDensity = (el) => {
+            if (el && srqDensityMode === 'compact') {
+                el.classList.add('srq-density-compact');
             }
-            container.appendChild(loadingState);
-        }
+            return el;
+        };
+
+        const renderIntoContainer = (el) => {
+            container.innerHTML = '';
+            const next = applyDensity(el);
+            if (next) {
+                container.appendChild(next);
+            }
+        };
+
+        // Wave 1 P0: Show loading state
+        renderIntoContainer(window.SRQWidget?.createLoadingState());
 
         try {
             const response = await chrome.runtime.sendMessage({ type: "SRQ_GET_BATCHES" });
 
-            container.innerHTML = '';
-
             // Check for error response
             if (!response?.ok) {
-                const errorState = window.SRQWidget?.createErrorState(() => mountSRQWidget());
-                if (errorState) {
-                    if (srqDensityMode === 'compact') {
-                        errorState.classList.add('srq-density-compact');
-                    }
-                    container.appendChild(errorState);
-                }
-                return;
+                renderIntoContainer(window.SRQWidget?.createErrorState(() => mountSRQWidget()));
+                return "error";
             }
 
             // Check for empty state
-            if (!response.batches || response.batches.length === 0) {
-                const emptyState = window.SRQWidget?.createEmptyState();
-                if (emptyState) {
-                    if (srqDensityMode === 'compact') {
-                        emptyState.classList.add('srq-density-compact');
-                    }
-                    container.appendChild(emptyState);
-                }
-                return;
+            const batches = Array.isArray(response.batches) ? response.batches : [];
+            if (batches.length === 0) {
+                renderIntoContainer(window.SRQWidget?.createEmptyState());
+                return "empty";
             }
 
             // Ready state: show widget with batches
-            const widget = window.SRQWidget?.create(response.batches, srqDensityMode);
-            if (widget) container.appendChild(widget);
+            const widget = window.SRQWidget?.create(batches, srqDensityMode);
+            if (!widget) {
+                renderIntoContainer(window.SRQWidget?.createEmptyState());
+                return "empty";
+            }
+
+            renderIntoContainer(widget);
+            return "ready";
 
         } catch (err) {
             console.warn('[ATOM SRQ] Widget mount failed:', err.message);
-            container.innerHTML = '';
-            const errorState = window.SRQWidget?.createErrorState(() => mountSRQWidget());
-            if (errorState) {
-                if (srqDensityMode === 'compact') {
-                    errorState.classList.add('srq-density-compact');
-                }
-                container.appendChild(errorState);
-            }
+            renderIntoContainer(window.SRQWidget?.createErrorState(() => mountSRQWidget()));
+            return "error";
         }
     }
 
