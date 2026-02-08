@@ -1986,5 +1986,354 @@
   },
   "sp_quick_note_empty": {
     "message": "Chưa có ghi chú"
+  },
+
+  "ctx_chat_with_page": {
+    "message": "Trò chuyện với trang"
+  },
+  "focus_review_title": {
+    "message": "Nhìn lại"
+  },
+  "focus_review_subtitle": {
+    "message": "Bạn đã học được gì?"
+  },
+  "focus_review_read": {
+    "message": "Đã đọc"
+  },
+  "focus_review_stats": {
+    "message": "Thống kê"
+  },
+  "focus_review_stat_highlights": {
+    "message": "Đoạn đánh dấu"
+  },
+  "focus_review_stat_insights": {
+    "message": "Insights"
+  },
+  "focus_review_stat_messages": {
+    "message": "Tin nhắn"
+  },
+  "focus_review_question_label": {
+    "message": "Câu hỏi tự kiểm tra"
+  },
+  "focus_review_hint": {
+    "message": "Gợi ý: Viết 2-3 câu tóm tắt những gì bạn nhớ được"
+  },
+  "focus_review_placeholder": {
+    "message": "Viết suy nghĩ của bạn..."
+  },
+  "focus_review_submit": {
+    "message": "Gửi"
+  },
+  "focus_review_skip": {
+    "message": "Bỏ qua"
+  },
+  "focus_review_feedback_saved": {
+    "message": "Đã lưu phản hồi"
+  },
+  "opt_nlm_pii_warning_desc": {
+    "message": "Không gửi thông tin cá nhân nhạy cảm (số thẻ, mật khẩu) qua NotebookLM"
+  },
+  "popup_focus_custom": {
+    "message": "Tự chọn"
+  },
+  "sidepanel_title": {
+    "message": "Đọc tích cực"
+  },
+  "sidepanel_loading": {
+    "message": "Đang tải..."
+  },
+  "sidepanel_welcome": {
+    "message": "Chào mừng"
+  },
+  "sidepanel_welcome_desc": {
+    "message": "Tô sáng văn bản để bắt đầu"
+  },
+  "sidepanel_input_placeholder": {
+    "message": "Đặt câu hỏi hoặc thảo luận..."
+  },
+  "sidepanel_quick_summarize": {
+    "message": "Tóm tắt"
+  },
+  "sidepanel_quick_keypoints": {
+    "message": "Điểm chính"
+  },
+  "sidepanel_quick_explain": {
+    "message": "Giải thích"
+  },
+  "sp_nudge_fast_scroll_title": {
+    "message": "Đang đọc nhanh?"
+  },
+  "sp_nudge_fast_scroll_msg": {
+    "message": "Bạn có thể tạm dừng và suy ngẫm chút không?"
+  },
+  "sp_nudge_passive_title": {
+    "message": "Còn nhớ không?"
+  },
+  "sp_nudge_passive_msg": {
+    "message": "Thử giải thích lại bằng lời của bạn xem?"
+  },
+  "sp_nudge_section_title": {
+    "message": "Đã xong phần này?"
+  },
+  "sp_nudge_section_msg": {
+    "message": "Hãy ghi lại insight chính trước khi tiếp tục"
+  },
+  "sp_nudge_completion_title": {
+    "message": "Hoàn thành!"
+  },
+  "sp_nudge_completion_msg": {
+    "message": "Bạn muốn tạo tóm tắt không?"
+  },
+  "sp_nudge_action_open_panel": {
+    "message": "Mở panel"
+  },
+  "sp_nudge_action_ask": {
+    "message": "Hỏi"
+  },
+  "sp_nudge_action_self_check": {
+    "message": "Tự kiểm tra"
+  },
+  "sp_nudge_action_insight": {
+    "message": "Ghi insight"
+  },
+  "sp_nudge_action_key_point": {
+    "message": "Điểm chính"
+  },
+  "sp_nudge_action_next_steps": {
+    "message": "Bước tiếp theo"
+  },
+  "sp_undo": {
+    "message": "Hoàn tác"
+  },
+  "sp_action_undone": {
+    "message": "Đã hoàn tác"
+  },
+  "sp_marked_done": {
+    "message": "Đã đánh dấu xong"
+  },
+  "sp_note_deleted": {
+    "message": "Đã xóa ghi chú"
+  },
+  "sp_chat_cleared": {
+    "message": "Đã xóa cuộc trò chuyện"
+  },
+  "sp_nothing_to_undo": {
+    "message": "Không có gì để hoàn tác"
+  },
+  "sp_welcome_guide": {
+    "message": "Hướng dẫn"
+  },
+  "sp_guide_title": {
+    "message": "Cách sử dụng"
+  },
+  "sp_guide_close": {
+    "message": "Đóng"
+  },
+  "sp_guide_highlight_title": {
+    "message": "Tô sáng văn bản"
+  },
+  "sp_guide_highlight_desc": {
+    "message": "Chọn văn bản bạn muốn thảo luận hoặc lưu lại"
+  },
+  "sp_guide_chat_title": {
+    "message": "Hỏi AI"
+  },
+  "sp_guide_chat_desc": {
+    "message": "Đặt câu hỏi về nội dung đã tô sáng"
+  },
+  "sp_guide_insight_title": {
+    "message": "Tạo Insight"
+  },
+  "sp_guide_insight_desc": {
+    "message": "Ghi lại những ý tưởng quan trọng"
+  },
+  "sp_guide_save_title": {
+    "message": "Lưu kiến thức"
+  },
+  "sp_guide_save_desc": {
+    "message": "Xuất ghi chú sang NotebookLM hoặc tải về"
+  },
+  "sp_guide_shortcuts_title": {
+    "message": "Phím tắt"
+  },
+  "sp_tooltip_first_insight": {
+    "message": "Tuyệt! Tiếp tục tạo insight khi đọc."
+  },
+  "sp_search_placeholder": {
+    "message": "Tìm kiếm..."
+  },
+  "sp_search_hint": {
+    "message": "Tìm trong ghi chú và thảo luận"
+  },
+  "sp_search_no_results": {
+    "message": "Không tìm thấy"
+  },
+  "sp_filter_all": {
+    "message": "Tất cả"
+  },
+  "sp_filter_today": {
+    "message": "Hôm nay"
+  },
+  "sp_filter_week": {
+    "message": "Tuần này"
+  },
+  "sp_filter_insights": {
+    "message": "Insights"
+  },
+  "sp_filter_notes": {
+    "message": "Ghi chú"
+  },
+  "sp_time_just_now": {
+    "message": "Vừa xong"
+  },
+  "sp_export_empty": {
+    "message": "Chưa có gì để lưu"
+  },
+  "sp_export_title": {
+    "message": "Lưu ghi chú"
+  },
+  "sp_export_format": {
+    "message": "Định dạng"
+  },
+  "sp_export_content": {
+    "message": "Nội dung"
+  },
+  "sp_export_cancel": {
+    "message": "Hủy"
+  },
+  "sp_export_download": {
+    "message": "Tải về"
+  },
+  "sp_export_opt_insights": {
+    "message": "Insights"
+  },
+  "sp_export_opt_notes": {
+    "message": "Ghi chú"
+  },
+  "sp_export_opt_chat": {
+    "message": "Thảo luận"
+  },
+  "sp_export_opt_source": {
+    "message": "Nguồn"
+  },
+  "sp_export_success": {
+    "message": "Đã lưu thành công"
+  },
+  "sp_multitab_warning": {
+    "message": "ATOM đang mở ở tab khác"
+  },
+  "sp_multitab_continue": {
+    "message": "Tiếp tục ở đây"
+  },
+  "sp_multitab_switch": {
+    "message": "Chuyển sang tab kia"
+  },
+  "sp_data_sync": {
+    "message": "Đồng bộ dữ liệu"
+  },
+  "sp_offline_message": {
+    "message": "Không có kết nối mạng"
+  },
+  "sp_offline_mode": {
+    "message": "Chế độ ngoại tuyến"
+  },
+  "sp_network_restored": {
+    "message": "Đã khôi phục kết nối"
+  },
+  "sp_network_lost": {
+    "message": "Mất kết nối"
+  },
+  "sp_still_offline": {
+    "message": "Vẫn chưa có mạng"
+  },
+  "sp_message_queued": {
+    "message": "Tin nhắn đang chờ"
+  },
+  "sp_sending_pending": {
+    "message": "Đang gửi..."
+  },
+  "sp_pending_partial": {
+    "message": "Gửi một phần"
+  },
+  "sp_waiting_connection": {
+    "message": "Đang chờ kết nối"
+  },
+  "sp_retry": {
+    "message": "Thử lại"
+  },
+  "sp_retrying": {
+    "message": "Đang thử lại..."
+  },
+  "sp_open_settings": {
+    "message": "Mở Cài đặt"
+  },
+  "sp_report_issue": {
+    "message": "Báo lỗi"
+  },
+  "sp_error_empty_response": {
+    "message": "Phản hồi trống"
+  },
+  "sp_error_empty_response_desc": {
+    "message": "AI không trả lời. Vui lòng thử lại."
+  },
+  "sp_error_network": {
+    "message": "Lỗi kết nối"
+  },
+  "sp_error_network_desc": {
+    "message": "Không thể kết nối. Kiểm tra mạng và thử lại."
+  },
+  "sp_error_rate_limit": {
+    "message": "Vượt giới hạn"
+  },
+  "sp_error_rate_limit_desc": {
+    "message": "Vui lòng đợi $1 giây trước khi thử lại.",
+    "placeholders": {
+      "seconds": { "content": "$1" }
+    }
+  },
+  "sp_error_server": {
+    "message": "Lỗi máy chủ"
+  },
+  "sp_error_server_desc": {
+    "message": "Máy chủ gặp sự cố. Vui lòng thử lại sau."
+  },
+  "sp_error_timeout": {
+    "message": "Hết thời gian chờ"
+  },
+  "sp_error_timeout_desc": {
+    "message": "AI phản hồi quá lâu. Thử lại với nội dung ngắn hơn."
+  },
+  "sp_error_unknown": {
+    "message": "Lỗi không xác định"
+  },
+  "sp_error_generic_desc": {
+    "message": "Có lỗi xảy ra. Vui lòng thử lại."
+  },
+  "sp_error_bad_request": {
+    "message": "Yêu cầu không hợp lệ"
+  },
+  "sp_error_forbidden": {
+    "message": "Không có quyền truy cập"
+  },
+  "sp_error_not_found": {
+    "message": "Không tìm thấy"
+  },
+  "sp_error_unavailable": {
+    "message": "Dịch vụ không khả dụng"
+  },
+  "sp_error_save": {
+    "message": "Lỗi khi lưu"
+  },
+  "sp_nlm_disabled": {
+    "message": "NotebookLM chưa được bật"
+  },
+  "sp_nlm_pii_blocked": {
+    "message": "Nội dung bị chặn vì chứa thông tin nhạy cảm"
+  },
+  "sp_confirm_end_session": {
+    "message": "Kết thúc phiên đọc?"
+  },
+  "sp_confirm_export_all": {
+    "message": "Lưu tất cả ghi chú?"
   }
 }
