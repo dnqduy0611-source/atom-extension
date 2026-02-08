@@ -119,6 +119,8 @@
 
         const content = document.createElement('div');
         content.className = 'srq-state-content';
+        content.setAttribute('aria-live', 'polite');
+        content.setAttribute('aria-busy', 'true');
 
         const spinner = document.createElement('span');
         spinner.className = 'srq-loading';
@@ -163,10 +165,13 @@
 
         const content = document.createElement('div');
         content.className = 'srq-state-content';
+        content.setAttribute('role', 'alert');
+        content.setAttribute('aria-live', 'assertive');
 
         const icon = buildTextElement('span', 'srq-state-icon', '\u26A0');
         const text = buildTextElement('span', 'srq-state-text', msg('srq_error_state', "Failed to load. Tap 'Try again'."));
         const retryBtn = buildTextElement('button', 'srq-btn srq-retry-btn', msg('srq_retry', 'Try again'));
+        retryBtn.setAttribute('aria-label', msg('srq_retry', 'Try again'));
 
         content.appendChild(icon);
         content.appendChild(text);
@@ -219,6 +224,10 @@
         // Header
         const header = document.createElement('div');
         header.className = 'srq-header';
+        header.setAttribute('role', 'button');
+        header.setAttribute('tabindex', '0');
+        header.setAttribute('aria-expanded', 'false');
+        header.setAttribute('aria-controls', 'srq-batches');
 
         const icon = buildTextElement('span', 'srq-icon', '\u{1F4D6}');
         icon.setAttribute('aria-hidden', 'true');
@@ -237,17 +246,27 @@
         header.appendChild(badge);
         header.appendChild(toggleBtn);
 
-        header.addEventListener('click', () => {
+        const toggleExpanded = () => {
             widget.classList.toggle('expanded');
             const isExpanded = widget.classList.contains('expanded');
             const toggleLabel = isExpanded ? msg('srq_toggle_collapse', 'Show less') : msg('srq_toggle', 'Show more');
             toggleBtn.setAttribute('aria-label', toggleLabel);
             toggleBtn.title = toggleLabel;
+            header.setAttribute('aria-expanded', String(isExpanded));
+        };
+
+        header.addEventListener('click', toggleExpanded);
+        header.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleExpanded();
+            }
         });
         widget.appendChild(header);
 
         // Batch list
         const batchList = document.createElement('div');
+        batchList.id = 'srq-batches';
         batchList.className = 'srq-batches';
         // Wave 2 P1: ARIA role for list
         batchList.setAttribute('role', 'list');
@@ -536,6 +555,15 @@
         overlay.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeReviewModal();
+                return;
+            }
+            if (e.key === 'Enter') {
+                const activeEl = document.activeElement;
+                const isInteractive = activeEl?.matches?.('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                if (!isInteractive) {
+                    e.preventDefault();
+                    exportBtn.click();
+                }
             }
         });
 
@@ -675,6 +703,7 @@
         const focusableElements = modalElement.querySelectorAll(focusableSelector);
         const firstFocusable = focusableElements[0];
         const lastFocusable = focusableElements[focusableElements.length - 1];
+        if (!firstFocusable || !lastFocusable) return;
 
         modalElement.addEventListener('keydown', (e) => {
             if (e.key !== 'Tab') return;
