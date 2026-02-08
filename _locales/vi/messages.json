@@ -336,7 +336,7 @@
     "message": "Bật tính năng này sẽ tốn nhiều hạn mức AI hơn và có thể làm chậm phản hồi một chút."
   },
   "opt_semantic_key_required": {
-    "message": "Thêm API key để bật các tính năng này."
+    "message": "Thêm Khóa truy cập AI để bật các tính năng này."
   },
   "opt_semantic_embeddings_title": {
     "message": "Phân tích ý nghĩa"

@@ -300,7 +300,7 @@
     "message": "Enabling this will use more of your AI quota and may slow down responses slightly."
   },
   "opt_semantic_key_required": {
-    "message": "Add your API key to enable these toggles."
+    "message": "Add your AI Access Key to enable these toggles."
   },
   "opt_semantic_embeddings_title": {
     "message": "Meaning Analysis"

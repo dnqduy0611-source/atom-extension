@@ -45,6 +45,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Explicitly run placeholder localization
     localizePlaceholders();
+
+    // Initialize tooltip system (Wave 1 Non-Tech Friendly)
+    initTooltips();
+
     const debugAvailable = applyDebugVisibility();
 
     // Initialize Tab Navigation
@@ -324,7 +328,7 @@ function saveOptions() {
     btn.disabled = true;
 
     if ((semanticEmbeddingsEnabled || semanticSearchEnabled) && !key) {
-        status.textContent = atomMsg('opt_semantic_key_required', null, 'Add your API key to enable these toggles.');
+        status.textContent = atomMsg('opt_semantic_key_required', null, 'Add your AI Access Key to enable these toggles.');
         status.className = 'error';
         btn.textContent = atomMsg('opt_btn_save');
         btn.disabled = false;
@@ -742,3 +746,107 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// ============================================================
+// Tooltip System (Wave 1 Non-Tech Friendly)
+// ============================================================
+
+/**
+ * Position tooltip relative to trigger icon
+ * @param {HTMLElement} icon - The info icon element
+ * @param {HTMLElement} tooltip - The tooltip element to position
+ */
+function positionTooltip(icon, tooltip) {
+    const iconRect = icon.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+
+    // Default: position to the right of icon
+    let left = iconRect.right + 8;
+    let top = iconRect.top + (iconRect.height / 2) - (tooltipRect.height / 2);
+
+    // Check if tooltip would overflow viewport on the right
+    if (left + tooltipRect.width > window.innerWidth - 16) {
+        // Position to the left of icon instead
+        left = iconRect.left - tooltipRect.width - 8;
+    }
+
+    // Check if tooltip would overflow viewport on the left
+    if (left < 16) {
+        // Position below icon instead
+        left = iconRect.left;
+        top = iconRect.bottom + 8;
+    }
+
+    // Ensure tooltip doesn't overflow top
+    if (top < 16) {
+        top = 16;
+    }
+
+    // Ensure tooltip doesn't overflow bottom
+    if (top + tooltipRect.height > window.innerHeight - 16) {
+        top = window.innerHeight - tooltipRect.height - 16;
+    }
+
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
+}
+
+/**
+ * Initialize tooltip system for info icons
+ * Tooltips are shown on hover and provide context for settings
+ */
+function initTooltips() {
+    const tooltipIcons = document.querySelectorAll('[data-tooltip-i18n]');
+
+    tooltipIcons.forEach(icon => {
+        const key = icon.getAttribute('data-tooltip-i18n');
+        const tooltipText = chrome.i18n.getMessage(key);
+
+        // Skip if no translation found
+        if (!tooltipText) return;
+
+        // Create tooltip element
+        const tooltip = document.createElement('div');
+        tooltip.className = 'tooltip';
+        tooltip.textContent = tooltipText;
+
+        // Show on hover
+        icon.addEventListener('mouseenter', () => {
+            document.body.appendChild(tooltip);
+            // Position after a brief delay to ensure tooltip is rendered
+            requestAnimationFrame(() => {
+                positionTooltip(icon, tooltip);
+            });
+        });
+
+        // Hide when mouse leaves
+        icon.addEventListener('mouseleave', () => {
+            if (tooltip.parentNode) {
+                tooltip.remove();
+            }
+        });
+
+        // Also hide when scrolling (to prevent misaligned tooltips)
+        const hideOnScroll = () => {
+            if (tooltip.parentNode) {
+                tooltip.remove();
+            }
+        };
+
+        window.addEventListener('scroll', hideOnScroll, { passive: true });
+
+        // Clean up scroll listener when tooltip is removed
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.removedNodes.forEach((node) => {
+                    if (node === tooltip) {
+                        window.removeEventListener('scroll', hideOnScroll);
+                        observer.disconnect();
+                    }
+                });
+            });
+        });
+
+        observer.observe(document.body, { childList: true });
+    });
+}
