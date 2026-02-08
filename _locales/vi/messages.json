@@ -350,6 +350,18 @@
   "opt_semantic_search_desc": {
     "message": "Sử dụng embeddings để chọn các highlight liên quan nhất."
   },
+  "opt_srq_density_label": {
+    "message": "Mật độ Smart Research Queue"
+  },
+  "opt_srq_density_comfortable": {
+    "message": "Dễ đọc (mặc định)"
+  },
+  "opt_srq_density_compact": {
+    "message": "Gọn (hiển thị nhiều mục hơn)"
+  },
+  "opt_srq_density_hint": {
+    "message": "Chế độ dễ đọc giúp theo dõi thoải mái hơn. Chế độ gọn hiển thị nhiều highlight hơn."
+  },
   "opt_ai_pilot_mode_shadow": {
     "message": "Chế độ Bóng (Shadow)"
   },
@@ -1321,6 +1333,41 @@
   "srq_dismiss": { "message": "Bỏ qua" },
   "srq_toggle": { "message": "Xem thêm" },
   "srq_toggle_collapse": { "message": "Thu gọn" },
+  "srq_pagination_prev": { "message": "Trang trước" },
+  "srq_pagination_next": { "message": "Trang sau" },
+  "srq_pagination_info": {
+    "message": "Trang $1 / $2",
+    "placeholders": {
+      "current": { "content": "$1" },
+      "total": { "content": "$2" }
+    }
+  },
+  "srq_batch_export_aria": {
+    "message": "Lưu $1 đoạn tóm tắt từ $2",
+    "placeholders": {
+      "count": { "content": "$1" },
+      "topic": { "content": "$2" }
+    }
+  },
+  "srq_batch_review_aria": {
+    "message": "Xem lại $1 đoạn tóm tắt từ $2",
+    "placeholders": {
+      "count": { "content": "$1" },
+      "topic": { "content": "$2" }
+    }
+  },
+  "srq_batch_dismiss_aria": {
+    "message": "Bỏ qua nhóm $1",
+    "placeholders": {
+      "topic": { "content": "$1" }
+    }
+  },
+  "srq_modal_export_aria": {
+    "message": "Lưu $1 đoạn đã chọn",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
   "srq_review_title": { "message": "Xem lại: $1", "placeholders": { "topic": { "content": "$1" } } },
   "srq_review_subtitle": { "message": "$1 ghi chú chờ lưu", "placeholders": { "count": { "content": "$1" } } },
   "srq_target_notebook": { "message": "Lưu vào:" },
@@ -1352,3 +1399,4 @@
   "srq_error_state": { "message": "Tải thất bại. Nhấn 'Thử lại'." },
   "srq_retry": { "message": "Thử lại" }
 }
+

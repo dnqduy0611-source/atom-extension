@@ -314,6 +314,18 @@
   "opt_semantic_search_desc": {
     "message": "Uses embeddings to pick top related highlights in the same domain."
   },
+  "opt_srq_density_label": {
+    "message": "Smart Research Queue density"
+  },
+  "opt_srq_density_comfortable": {
+    "message": "Comfortable (default)"
+  },
+  "opt_srq_density_compact": {
+    "message": "Compact (more items per screen)"
+  },
+  "opt_srq_density_hint": {
+    "message": "Comfortable mode is easier to read. Compact mode shows more highlights."
+  },
   "opt_ai_pilot_mode_shadow": {
     "message": "Shadow Mode"
   },
@@ -2063,30 +2075,6 @@
   "sp_data_sync": {
     "message": "Data updated in another tab"
   },
-  "opt_semantic_section_title": {
-    "message": "AI & Semantic Features"
-  },
-  "opt_semantic_section_desc": {
-    "message": "Find related highlights by meaning, not just recency."
-  },
-  "opt_semantic_cost_warning": {
-    "message": "Warning: These features may increase Gemini API usage and add a little latency."
-  },
-  "opt_semantic_key_required": {
-    "message": "Add your API key to enable these toggles."
-  },
-  "opt_semantic_embeddings_title": {
-    "message": "Semantic Embeddings"
-  },
-  "opt_semantic_embeddings_desc": {
-    "message": "Creates a semantic fingerprint for each highlight so the app can compare meaning."
-  },
-  "opt_semantic_search_title": {
-    "message": "Semantic Search"
-  },
-  "opt_semantic_search_desc": {
-    "message": "Uses embeddings to pick the top related highlights within the same domain."
-  },
   "sp_comparison_generated": {
     "message": "Comparison generated!"
   },
@@ -2185,6 +2173,41 @@
   "srq_dismiss": { "message": "Dismiss" },
   "srq_toggle": { "message": "Show more" },
   "srq_toggle_collapse": { "message": "Show less" },
+  "srq_pagination_prev": { "message": "Previous page" },
+  "srq_pagination_next": { "message": "Next page" },
+  "srq_pagination_info": {
+    "message": "Page $1 of $2",
+    "placeholders": {
+      "current": { "content": "$1" },
+      "total": { "content": "$2" }
+    }
+  },
+  "srq_batch_export_aria": {
+    "message": "Save $1 highlights from $2",
+    "placeholders": {
+      "count": { "content": "$1" },
+      "topic": { "content": "$2" }
+    }
+  },
+  "srq_batch_review_aria": {
+    "message": "Review $1 highlights from $2",
+    "placeholders": {
+      "count": { "content": "$1" },
+      "topic": { "content": "$2" }
+    }
+  },
+  "srq_batch_dismiss_aria": {
+    "message": "Dismiss $1 batch",
+    "placeholders": {
+      "topic": { "content": "$1" }
+    }
+  },
+  "srq_modal_export_aria": {
+    "message": "Save $1 selected highlights",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
   "srq_review_title": { "message": "Review: $1", "placeholders": { "topic": { "content": "$1" } } },
   "srq_review_subtitle": { "message": "$1 highlights ready to save", "placeholders": { "count": { "content": "$1" } } },
   "srq_target_notebook": { "message": "Save to:" },

@@ -16,10 +16,15 @@
                 if (result) return result;
             }
         } catch { }
-        if (substitutions && fallback.includes('$1')) {
-            return fallback.replace('$1', substitutions[0] || substitutions);
+        if (!substitutions) return fallback;
+
+        const values = Array.isArray(substitutions) ? substitutions : [substitutions];
+        let text = fallback;
+        for (let i = 0; i < values.length; i++) {
+            const token = `$${i + 1}`;
+            text = text.split(token).join(String(values[i] ?? ''));
         }
-        return fallback;
+        return text;
     }
 
     /**
@@ -66,6 +71,40 @@
         return domain.replace(/^www\./, '').split('.')[0];
     }
 
+    function buildTextElement(tagName, className, text) {
+        const el = document.createElement(tagName);
+        if (className) el.className = className;
+        el.textContent = text;
+        return el;
+    }
+
+    function setButtonLoadingState(button, label) {
+        button.textContent = '';
+        const spinner = document.createElement('span');
+        spinner.className = 'srq-loading';
+        spinner.setAttribute('aria-hidden', 'true');
+        button.appendChild(spinner);
+        button.appendChild(document.createTextNode(` ${label}`));
+    }
+
+    function updateModalSelectionState(selectedSet) {
+        const selectedCount = selectedSet.size;
+        const exportBtn = document.getElementById('srq-modal-export-btn');
+        if (exportBtn) {
+            exportBtn.textContent = msg('srq_export_selected', 'Save selected ($1)', [String(selectedCount)]);
+            exportBtn.setAttribute(
+                'aria-label',
+                msg('srq_modal_export_aria', 'Save $1 selected highlights', [String(selectedCount)])
+            );
+            exportBtn.disabled = selectedCount === 0;
+        }
+
+        const subtitle = document.getElementById('srq-modal-subtitle');
+        if (subtitle) {
+            subtitle.textContent = msg('srq_review_subtitle', '$1 highlights ready to save', [String(selectedCount)]);
+        }
+    }
+
     // ===========================
     // State Helpers (Wave 1 P0)
     // ===========================
@@ -77,12 +116,19 @@
     function createLoadingState() {
         const container = document.createElement('div');
         container.className = 'srq-widget srq-state-loading';
-        container.innerHTML = `
-            <div class="srq-state-content">
-                <span class="srq-loading" aria-label="${msg('srq_loading', 'Loading...')}"></span>
-                <span class="srq-state-text">${msg('srq_loading', 'Loading...')}</span>
-            </div>
-        `;
+
+        const content = document.createElement('div');
+        content.className = 'srq-state-content';
+
+        const spinner = document.createElement('span');
+        spinner.className = 'srq-loading';
+        spinner.setAttribute('aria-label', msg('srq_loading', 'Loading...'));
+
+        const text = buildTextElement('span', 'srq-state-text', msg('srq_loading', 'Loading...'));
+
+        content.appendChild(spinner);
+        content.appendChild(text);
+        container.appendChild(content);
         return container;
     }
 
@@ -93,12 +139,16 @@
     function createEmptyState() {
         const container = document.createElement('div');
         container.className = 'srq-widget srq-state-empty';
-        container.innerHTML = `
-            <div class="srq-state-content">
-                <span class="srq-state-icon">&#128214;</span>
-                <span class="srq-state-text">${msg('srq_empty_state', 'No highlights waiting to save.')}</span>
-            </div>
-        `;
+
+        const content = document.createElement('div');
+        content.className = 'srq-state-content';
+
+        const icon = buildTextElement('span', 'srq-state-icon', '\u{1F4D6}');
+        const text = buildTextElement('span', 'srq-state-text', msg('srq_empty_state', 'No highlights waiting to save.'));
+
+        content.appendChild(icon);
+        content.appendChild(text);
+        container.appendChild(content);
         return container;
     }
 
@@ -110,15 +160,19 @@
     function createErrorState(onRetry) {
         const container = document.createElement('div');
         container.className = 'srq-widget srq-state-error';
-        container.innerHTML = `
-            <div class="srq-state-content">
-                <span class="srq-state-icon">&#9888;</span>
-                <span class="srq-state-text">${msg('srq_error_state', "Failed to load. Tap 'Try again'.")}</span>
-                <button class="srq-btn srq-retry-btn">${msg('srq_retry', 'Try again')}</button>
-            </div>
-        `;
 
-        const retryBtn = container.querySelector('.srq-retry-btn');
+        const content = document.createElement('div');
+        content.className = 'srq-state-content';
+
+        const icon = buildTextElement('span', 'srq-state-icon', '\u26A0');
+        const text = buildTextElement('span', 'srq-state-text', msg('srq_error_state', "Failed to load. Tap 'Try again'."));
+        const retryBtn = buildTextElement('button', 'srq-btn srq-retry-btn', msg('srq_retry', 'Try again'));
+
+        content.appendChild(icon);
+        content.appendChild(text);
+        content.appendChild(retryBtn);
+        container.appendChild(content);
+
         if (retryBtn && onRetry) {
             retryBtn.addEventListener('click', onRetry);
         }
@@ -165,17 +219,30 @@
         // Header
         const header = document.createElement('div');
         header.className = 'srq-header';
-        header.innerHTML = `
-            <span class="srq-icon" aria-hidden="true">&#128278;</span>
-            <span class="srq-title">${msg('srq_widget_title', 'Saved highlights')}</span>
-            <span class="srq-badge" aria-label="${totalCards} ${msg('srq_clips_label', 'items')}">${totalCards}</span>
-            <button class="srq-toggle" aria-label="${msg('srq_toggle', 'Show more')}" title="${msg('srq_toggle', 'Show more')}">&#9660;</button>
-        `;
+
+        const icon = buildTextElement('span', 'srq-icon', '\u{1F4D6}');
+        icon.setAttribute('aria-hidden', 'true');
+
+        const title = buildTextElement('span', 'srq-title', msg('srq_widget_title', 'Saved highlights'));
+
+        const badge = buildTextElement('span', 'srq-badge', String(totalCards));
+        badge.setAttribute('aria-label', `${totalCards} ${msg('srq_clips_label', 'items')}`);
+
+        const toggleBtn = buildTextElement('button', 'srq-toggle', '\u25BE');
+        toggleBtn.setAttribute('aria-label', msg('srq_toggle', 'Show more'));
+        toggleBtn.title = msg('srq_toggle', 'Show more');
+
+        header.appendChild(icon);
+        header.appendChild(title);
+        header.appendChild(badge);
+        header.appendChild(toggleBtn);
+
         header.addEventListener('click', () => {
             widget.classList.toggle('expanded');
-            const toggleBtn = header.querySelector('.srq-toggle');
             const isExpanded = widget.classList.contains('expanded');
-            toggleBtn.setAttribute('aria-label', isExpanded ? msg('srq_toggle_collapse', 'Show less') : msg('srq_toggle', 'Show more'));
+            const toggleLabel = isExpanded ? msg('srq_toggle_collapse', 'Show less') : msg('srq_toggle', 'Show more');
+            toggleBtn.setAttribute('aria-label', toggleLabel);
+            toggleBtn.title = toggleLabel;
         });
         widget.appendChild(header);
 
@@ -206,21 +273,21 @@
         prevBtn.className = 'srq-btn srq-pagination-btn';
         prevBtn.textContent = '\u2190';
         prevBtn.disabled = currentPage === 1;
-        prevBtn.setAttribute('aria-label', 'Previous page');
+        prevBtn.setAttribute('aria-label', msg('srq_pagination_prev', 'Previous page'));
         prevBtn.addEventListener('click', () => {
             refreshWidget(allBatches, densityMode, currentPage - 1, true);
         });
 
         const pageInfo = document.createElement('span');
         pageInfo.className = 'srq-pagination-info';
-        pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+        pageInfo.textContent = msg('srq_pagination_info', 'Page $1 of $2', [String(currentPage), String(totalPages)]);
         pageInfo.setAttribute('aria-live', 'polite');
 
         const nextBtn = document.createElement('button');
         nextBtn.className = 'srq-btn srq-pagination-btn';
         nextBtn.textContent = '\u2192';
         nextBtn.disabled = currentPage === totalPages;
-        nextBtn.setAttribute('aria-label', 'Next page');
+        nextBtn.setAttribute('aria-label', msg('srq_pagination_next', 'Next page'));
         nextBtn.addEventListener('click', () => {
             refreshWidget(allBatches, densityMode, currentPage + 1, true);
         });
@@ -257,14 +324,18 @@
         el.setAttribute('role', 'listitem');
 
         const cardCount = batch.cards?.length || 0;
+        const topicLabel = batch.topicLabel || msg('srq_uncategorized', 'General');
+        const topicLabelDisplay = truncate(topicLabel, 30);
+        const topicLabelShort = truncate(topicLabel, 25);
 
         // Header row
         const headerDiv = document.createElement('div');
         headerDiv.className = 'srq-batch-header';
-        headerDiv.innerHTML = `
-            <span class="srq-batch-label" title="${batch.topicLabel || ''}">${truncate(batch.topicLabel || msg('srq_uncategorized', 'General'), 30)}</span>
-            <span class="srq-batch-count">${msg('srq_clips_count', '$1 highlights', [String(cardCount)])}</span>
-        `;
+        const label = buildTextElement('span', 'srq-batch-label', topicLabelDisplay);
+        label.title = String(batch.topicLabel || '');
+        const count = buildTextElement('span', 'srq-batch-count', msg('srq_clips_count', '$1 highlights', [String(cardCount)]));
+        headerDiv.appendChild(label);
+        headerDiv.appendChild(count);
         el.appendChild(headerDiv);
 
         // Mode pills
@@ -287,7 +358,10 @@
         if (batch.suggestedNotebook && batch.suggestedNotebook !== 'Inbox') {
             const meta = document.createElement('div');
             meta.className = 'srq-batch-meta';
-            meta.innerHTML = `<span class="srq-arrow">&#10132;</span> ${truncate(batch.suggestedNotebook, 25)}`;
+            const arrow = buildTextElement('span', 'srq-arrow', '\u27F6');
+            const notebookText = document.createTextNode(` ${truncate(batch.suggestedNotebook, 25)}`);
+            meta.appendChild(arrow);
+            meta.appendChild(notebookText);
             el.appendChild(meta);
         }
 
@@ -301,7 +375,10 @@
             ? msg('srq_export_all', 'Save all')
             : msg('srq_export', 'Save');
         // Wave 2 P1: ARIA label
-        exportBtn.setAttribute('aria-label', `Export ${cardCount} highlights from ${batch.topicLabel}`);
+        exportBtn.setAttribute(
+            'aria-label',
+            msg('srq_batch_export_aria', 'Save $1 highlights from $2', [String(cardCount), topicLabelShort])
+        );
         exportBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             handleBatchExport(batch, exportBtn);
@@ -311,7 +388,10 @@
         reviewBtn.className = 'srq-btn';
         reviewBtn.textContent = msg('srq_review', 'Review');
         // Wave 2 P1: ARIA label
-        reviewBtn.setAttribute('aria-label', `Review ${cardCount} highlights from ${batch.topicLabel}`);
+        reviewBtn.setAttribute(
+            'aria-label',
+            msg('srq_batch_review_aria', 'Review $1 highlights from $2', [String(cardCount), topicLabelShort])
+        );
         reviewBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             openReviewModal(batch);
@@ -330,7 +410,10 @@
         dismissBtn.textContent = '\u2715';
         dismissBtn.title = msg('srq_dismiss', 'Dismiss');
         // Wave 2 P1: ARIA label
-        dismissBtn.setAttribute('aria-label', `Dismiss ${batch.topicLabel} batch`);
+        dismissBtn.setAttribute(
+            'aria-label',
+            msg('srq_batch_dismiss_aria', 'Dismiss $1 batch', [topicLabelShort])
+        );
         dismissBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             handleBatchDismiss(batch, el);
@@ -356,6 +439,7 @@
 
         const cardCount = batch.cards?.length || 0;
         const selected = new Set(batch.cards.map(c => c.cardId));
+        const topicLabel = batch.topicLabel || msg('srq_uncategorized', 'General');
 
         const overlay = document.createElement('div');
         overlay.className = 'srq-modal-overlay';
@@ -377,10 +461,16 @@
         // Header
         const headerEl = document.createElement('div');
         headerEl.className = 'srq-modal-header';
-        headerEl.innerHTML = `
-            <h2 id="srq-modal-title" class="srq-modal-title">${msg('srq_review_title', 'Review: $1', [truncate(batch.topicLabel || '', 25)])}</h2>
-            <p class="srq-modal-subtitle" aria-live="polite">${msg('srq_review_subtitle', '$1 highlights ready to save', [String(cardCount)])}</p>
-        `;
+
+        const title = buildTextElement('h2', 'srq-modal-title', msg('srq_review_title', 'Review: $1', [truncate(topicLabel, 25)]));
+        title.id = 'srq-modal-title';
+
+        const subtitle = buildTextElement('p', 'srq-modal-subtitle', msg('srq_review_subtitle', '$1 highlights ready to save', [String(cardCount)]));
+        subtitle.id = 'srq-modal-subtitle';
+        subtitle.setAttribute('aria-live', 'polite');
+
+        headerEl.appendChild(title);
+        headerEl.appendChild(subtitle);
         modal.appendChild(headerEl);
 
         // Body - card list
@@ -406,9 +496,14 @@
 
         const targetDiv = document.createElement('div');
         targetDiv.className = 'srq-target';
-        targetDiv.innerHTML = `<span>${msg('srq_target_notebook', 'Save to:')}</span>`;
+        const targetLabel = buildTextElement('span', '', msg('srq_target_notebook', 'Save to:'));
+        targetDiv.appendChild(targetLabel);
         const select = document.createElement('select');
-        select.innerHTML = `<option value="${batch.suggestedNotebook || 'Inbox'}">${batch.suggestedNotebook || 'Inbox'}</option>`;
+        const notebookOption = document.createElement('option');
+        const notebookValue = batch.suggestedNotebook || 'Inbox';
+        notebookOption.value = notebookValue;
+        notebookOption.textContent = notebookValue;
+        select.appendChild(notebookOption);
         targetDiv.appendChild(select);
         footer.appendChild(targetDiv);
 
@@ -421,7 +516,11 @@
         exportBtn.className = 'srq-btn-primary';
         exportBtn.id = 'srq-modal-export-btn';
         exportBtn.textContent = msg('srq_export_selected', 'Save selected ($1)', [String(selected.size)]);
-        exportBtn.setAttribute('aria-label', `Save ${selected.size} selected highlights`);
+        exportBtn.setAttribute(
+            'aria-label',
+            msg('srq_modal_export_aria', 'Save $1 selected highlights', [String(selected.size)])
+        );
+        exportBtn.disabled = selected.size === 0;
         exportBtn.addEventListener('click', () => {
             const notebook = select.value || 'Inbox';
             handleModalExport(batch, selected, notebook, exportBtn);
@@ -449,6 +548,7 @@
 
         // Wave 2 P1: Focus trap + auto-focus
         trapFocus(overlay);
+        updateModalSelectionState(selected);
         const firstFocusable = modal.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
         firstFocusable?.focus();
     }
@@ -468,13 +568,19 @@
         const meta = document.createElement('div');
         meta.className = 'srq-review-meta';
         const mode = modeLabelAndClass(card.readingMode);
-        meta.innerHTML = `
-            <span>${friendlyDomain(card.domain)}</span>
-            <span class="srq-dot"></span>
-            <span>${timeAgo(card.createdAt)}</span>
-            <span class="srq-dot"></span>
-            <span class="srq-mode-pill ${mode.cls}" style="margin:0">${mode.label}</span>
-        `;
+        const domainEl = buildTextElement('span', '', friendlyDomain(card.domain));
+        const dot1 = document.createElement('span');
+        dot1.className = 'srq-dot';
+        const timeEl = buildTextElement('span', '', timeAgo(card.createdAt));
+        const dot2 = document.createElement('span');
+        dot2.className = 'srq-dot';
+        const modeEl = buildTextElement('span', `srq-mode-pill ${mode.cls}`, mode.label);
+        modeEl.style.margin = '0';
+        meta.appendChild(domainEl);
+        meta.appendChild(dot1);
+        meta.appendChild(timeEl);
+        meta.appendChild(dot2);
+        meta.appendChild(modeEl);
         el.appendChild(meta);
 
         // Atomic thought (insight)
@@ -524,12 +630,7 @@
                 toggleBtn.classList.add('srq-btn-export');
                 toggleBtn.textContent = msg('srq_selected', 'Selected');
             }
-            // Update footer count
-            const exportBtn = document.getElementById('srq-modal-export-btn');
-            if (exportBtn) {
-                exportBtn.textContent = msg('srq_export_selected', 'Save selected ($1)', [String(selectedSet.size)]);
-                exportBtn.disabled = selectedSet.size === 0;
-            }
+            updateModalSelectionState(selectedSet);
         });
 
         const skipBtn = document.createElement('button');
@@ -544,11 +645,7 @@
                 el.remove();
                 // Dismiss the card
                 chrome.runtime.sendMessage({ type: "SRQ_DISMISS_CARD", cardId: card.cardId }).catch(() => {});
-                // Update count
-                const exportBtn = document.getElementById('srq-modal-export-btn');
-                if (exportBtn) {
-                    exportBtn.textContent = msg('srq_export_selected', 'Save selected ($1)', [String(selectedSet.size)]);
-                }
+                updateModalSelectionState(selectedSet);
             }, 200);
         });
 
@@ -610,7 +707,7 @@
         // Wave 2 P1: Disable button during operation
         btn.disabled = true;
         btn.setAttribute('aria-disabled', 'true');
-        btn.innerHTML = `<span class="srq-loading"></span> ${msg('srq_exporting', 'Saving...')}`;
+        setButtonLoadingState(btn, msg('srq_exporting', 'Saving...'));
 
         try {
             const response = await chrome.runtime.sendMessage({
@@ -669,7 +766,7 @@
         if (selectedSet.size === 0) return;
 
         btn.disabled = true;
-        btn.innerHTML = `<span class="srq-loading"></span> ${msg('srq_exporting', 'Saving...')}`;
+        setButtonLoadingState(btn, msg('srq_exporting', 'Saving...'));
 
         try {
             // Mark unselected cards as dismissed first

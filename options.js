@@ -430,7 +430,6 @@ function saveOptions() {
 function restoreOptions() {
     chrome.storage.local.get([
         'user_gemini_key',
-        'user_gemini_key',
         'user_sensitivity',
         'user_persona',
         'debug_mode',
