@@ -524,6 +524,30 @@
   "popup_btn_chat_page": {
     "message": "Chat with Amo"
   },
+  "popup_onboarding_title": {
+    "message": "Start in 1 minute"
+  },
+  "popup_onboarding_desc": {
+    "message": "Open the side panel and follow 3 quick steps."
+  },
+  "popup_onboarding_desc_no_key": {
+    "message": "Open Settings to add your API key, then continue in the side panel."
+  },
+  "popup_onboarding_step1": {
+    "message": "1) Highlight one short paragraph"
+  },
+  "popup_onboarding_step2": {
+    "message": "2) Press Summarize"
+  },
+  "popup_onboarding_step3": {
+    "message": "3) Press Save"
+  },
+  "popup_onboarding_open_sidepanel": {
+    "message": "Open Side Panel"
+  },
+  "popup_onboarding_open_settings": {
+    "message": "Open Settings"
+  },
   "ctx_chat_with_page": {
     "message": "ATOM: Chat with Amo"
   },
@@ -1929,13 +1953,13 @@
     "message": "Nothing to undo"
   },
   "sp_welcome_title": {
-    "message": "Welcome to Active Reading!"
+    "message": "Start in one minute"
   },
   "sp_welcome_desc": {
-    "message": "A tool to help you read deeply and remember longer."
+    "message": "Follow 3 quick steps to get your first value."
   },
   "sp_welcome_steps": {
-    "message": "3 simple steps:"
+    "message": "3 quick steps"
   },
   "sp_welcome_start": {
     "message": "Start now"
@@ -1944,13 +1968,40 @@
     "message": "See detailed guide"
   },
   "sp_onboard_step1": {
-    "message": "Highlight text you want to explore"
+    "message": "Highlight one short paragraph."
   },
   "sp_onboard_step2": {
-    "message": "Chat with AI to understand deeper"
+    "message": "Press Summarize."
   },
   "sp_onboard_step3": {
-    "message": "Distill key insights for your notes"
+    "message": "Press Save."
+  },
+  "sp_onboarding_progress_title": {
+    "message": "Onboarding progress"
+  },
+  "sp_onboarding_progress_step1": {
+    "message": "Step 1/3"
+  },
+  "sp_onboarding_progress_step2": {
+    "message": "Step 2/3"
+  },
+  "sp_onboarding_progress_step3": {
+    "message": "Step 3/3"
+  },
+  "sp_onboarding_skip": {
+    "message": "Skip guide"
+  },
+  "sp_onboarding_skip_confirm": {
+    "message": "Skip onboarding now? You can open it again from the menu."
+  },
+  "sp_onboarding_skipped": {
+    "message": "Guide skipped. You can reopen it from the menu."
+  },
+  "sp_onboarding_menu_item": {
+    "message": "Open onboarding guide"
+  },
+  "sp_onboarding_reopen_menu": {
+    "message": "Open onboarding again"
   },
   "sp_guide_title": {
     "message": "How to use Active Reading"
@@ -1992,16 +2043,16 @@
     "message": "OK, got it"
   },
   "sp_tooltip_first_highlight": {
-    "message": "Great! Now ask a question about this text."
+    "message": "Great. Next, press Summarize."
   },
   "sp_tooltip_first_chat": {
-    "message": "Click \"Key Insight\" to create a takeaway from this discussion."
+    "message": "Great. Now press Save to keep this highlight."
   },
   "sp_tooltip_first_insight": {
     "message": "Click \"Mark as Done\" to save and move to the next section."
   },
   "sp_onboarding_complete": {
-    "message": "You're all set! Happy reading!"
+    "message": "You completed the basic setup."
   },
   "sp_search_placeholder": {
     "message": "Search in insights and notes..."

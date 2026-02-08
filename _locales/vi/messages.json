@@ -1397,6 +1397,89 @@
   "srq_loading": { "message": "Đang tải..." },
   "srq_empty_state": { "message": "Chưa có đoạn trích nào chờ lưu." },
   "srq_error_state": { "message": "Tải thất bại. Nhấn 'Thử lại'." },
-  "srq_retry": { "message": "Thử lại" }
-}
+  "srq_retry": { "message": "Thử lại" },
+  "popup_onboarding_title": {
+    "message": "Bat dau trong 1 phut"
+  },
+  "popup_onboarding_desc": {
+    "message": "Mo thanh ben va lam theo 3 buoc ngan."
+  },
+  "popup_onboarding_desc_no_key": {
+    "message": "Mo Cai dat de them API key, sau do quay lai thanh ben."
+  },
+  "popup_onboarding_step1": {
+    "message": "1) Boi den 1 doan ngan"
+  },
+  "popup_onboarding_step2": {
+    "message": "2) Nhan Tom tat"
+  },
+  "popup_onboarding_step3": {
+    "message": "3) Nhan Luu"
+  },
+  "popup_onboarding_open_sidepanel": {
+    "message": "Mo thanh ben"
+  },
+  "popup_onboarding_open_settings": {
+    "message": "Mo Cai dat"
+  },
+  "sp_welcome_title": {
+    "message": "Bat dau trong 1 phut"
+  },
+  "sp_welcome_desc": {
+    "message": "Lam theo 3 buoc ngan de co gia tri dau tien."
+  },
+  "sp_welcome_steps": {
+    "message": "3 buoc nhanh"
+  },
+  "sp_welcome_start": {
+    "message": "Bat dau ngay"
+  },
+  "sp_onboard_step1": {
+    "message": "Boi den 1 doan van ngan."
+  },
+  "sp_onboard_step2": {
+    "message": "Nhan Tom tat."
+  },
+  "sp_onboard_step3": {
+    "message": "Nhan Luu."
+  },
+  "sp_onboarding_progress_title": {
+    "message": "Tien do huong dan"
+  },
+  "sp_onboarding_progress_step1": {
+    "message": "Buoc 1/3"
+  },
+  "sp_onboarding_progress_step2": {
+    "message": "Buoc 2/3"
+  },
+  "sp_onboarding_progress_step3": {
+    "message": "Buoc 3/3"
+  },
+  "sp_onboarding_skip": {
+    "message": "Bo qua huong dan"
+  },
+  "sp_onboarding_skip_confirm": {
+    "message": "Bo qua huong dan bay gio? Ban van co the mo lai trong menu."
+  },
+  "sp_onboarding_skipped": {
+    "message": "Da bo qua huong dan. Ban co the mo lai trong menu."
+  },
+  "sp_onboarding_menu_item": {
+    "message": "Mo huong dan"
+  },
+  "sp_onboarding_reopen_menu": {
+    "message": "Mo lai huong dan"
+  },
+  "sp_tooltip_ok": {
+    "message": "Da hieu"
+  },
+  "sp_tooltip_first_highlight": {
+    "message": "Tot. Tiep theo, nhan Tom tat."
+  },
+  "sp_tooltip_first_chat": {
+    "message": "Tot. Bay gio nhan Luu de giu lai doan nay."
+  },
+  "sp_onboarding_complete": {
+    "message": "Ban da hoan thanh thiet lap co ban."
+  }}
 

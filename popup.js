@@ -5,10 +5,26 @@ const atomMsg = (key, substitutions, fallback) => {
     return chrome.i18n.getMessage(key, substitutions) || fallback || key;
 };
 
+const BUILD_FLAGS = window.ATOM_BUILD_FLAGS || { DEBUG: false };
+const BUILD_DEBUG_ENABLED = !!BUILD_FLAGS.DEBUG;
+const ONBOARDING_STORAGE_KEY = 'atom_sidepanel_onboarding';
+const ONBOARDING_ORDER = [
+    'not_started',
+    'started',
+    'first_highlight_done',
+    'first_ai_reply_done',
+    'first_save_done',
+    'completed'
+];
+
 document.addEventListener('DOMContentLoaded', async () => {
     if (window.AtomI18n) {
         await window.AtomI18n.init();
     }
+    let currentTabInfo = null;
+    let lastFocusPhase = null;
+    let focusLinkedSessionId = null;
+    let reviewVisible = false;
     const domainLabel = document.getElementById('current-domain');
     const btnToggleSafe = document.getElementById('btn-toggle-safe');
     const btnJournal = document.getElementById('btn-journal');
@@ -19,21 +35,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnReportBug = document.getElementById('btn-report-bug');
     const btnDebug = document.getElementById('btn-debug-panel');
     const updateBanner = document.getElementById('update-banner');
+    const retentionDue = document.getElementById('retention-due');
+    const retentionNew = document.getElementById('retention-new');
+    const retentionRecommended = document.getElementById('retention-recommended');
+    const retentionStreak = document.getElementById('retention-streak');
+    const retentionStreakLabel = document.getElementById('retention-streak-label');
+    const retentionGrid = document.getElementById('retention-grid');
+    const retentionEmpty = document.getElementById('retention-empty');
+    const onboardingCard = document.getElementById('popup-onboarding-card');
+    const onboardingDesc = document.getElementById('popup-onboarding-desc');
+    const btnOnboardingSidepanel = document.getElementById('btn-onboarding-sidepanel');
+    const btnOnboardingSettings = document.getElementById('btn-onboarding-settings');
 
     // Check for Store update and show banner
     checkAndShowUpdateBanner();
 
     // Display current sensitivity mode
     displaySensitivityMode();
+    updateRetentionStats();
 
-    // Show debug panel link only when debug_mode is enabled
+    // Show debug panel link only when build + debug_mode are enabled
     if (btnDebug) {
-        const debugState = await chrome.storage.local.get(['debug_mode']);
-        if (debugState.debug_mode) {
-            btnDebug.style.display = 'inline-flex';
-            btnDebug.addEventListener('click', () => {
-                chrome.tabs.create({ url: chrome.runtime.getURL('debug.html') });
-            });
+        if (!BUILD_DEBUG_ENABLED) {
+            btnDebug.style.display = 'none';
+        } else {
+            const debugState = await chrome.storage.local.get(['debug_mode']);
+            if (debugState.debug_mode) {
+                btnDebug.style.display = 'inline-flex';
+                btnDebug.addEventListener('click', () => {
+                    chrome.tabs.create({ url: chrome.runtime.getURL('debug.html') });
+                });
+            }
         }
     }
 
@@ -47,6 +79,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 const urlObj = new URL(tab.url);
                 const currentDomain = urlObj.hostname.replace('www.', '').toLowerCase();
+                currentTabInfo = { url: tab.url, title: tab.title || '' };
                 domainLabel.innerText = currentDomain;
                 checkSafeZoneStatus(currentDomain);
             }
@@ -58,6 +91,111 @@ document.addEventListener('DOMContentLoaded', async () => {
         domainLabel.innerText = atomMsg("popup_no_active_tab");
         if (btnToggleSafe) btnToggleSafe.style.display = 'none';
     }
+
+    function getOnboardingIndex(state) {
+        return ONBOARDING_ORDER.indexOf(state);
+    }
+
+    function normalizeOnboardingState(rawState) {
+        if (!rawState || typeof rawState !== 'object') {
+            return { state: 'not_started', onboarding_completed_at: null, updated_at: null };
+        }
+
+        if (typeof rawState.state === 'string' && ONBOARDING_ORDER.includes(rawState.state)) {
+            return rawState;
+        }
+
+        if (rawState.completedAt || rawState.onboarding_completed_at || rawState.tooltipsShown?.done) {
+            return {
+                state: 'completed',
+                onboarding_completed_at: rawState.completedAt || rawState.onboarding_completed_at || Date.now(),
+                updated_at: rawState.updated_at || Date.now()
+            };
+        }
+
+        if (rawState.welcomed || rawState.tooltipsShown?.highlight || rawState.tooltipsShown?.chat) {
+            return {
+                state: 'started',
+                onboarding_completed_at: null,
+                updated_at: rawState.updated_at || Date.now()
+            };
+        }
+
+        return { state: 'not_started', onboarding_completed_at: null, updated_at: rawState.updated_at || null };
+    }
+
+    async function getOnboardingStateSnapshot() {
+        const data = await chrome.storage.local.get([ONBOARDING_STORAGE_KEY]);
+        return normalizeOnboardingState(data[ONBOARDING_STORAGE_KEY]);
+    }
+
+    async function hasAnyApiKeyConfigured() {
+        const data = await chrome.storage.local.get(['user_gemini_key', 'gemini_api_key', 'apiKey', 'atom_openrouter_key']);
+        return Boolean(data.user_gemini_key || data.gemini_api_key || data.apiKey || data.atom_openrouter_key);
+    }
+
+    async function markOnboardingStarted() {
+        const snapshot = await getOnboardingStateSnapshot();
+        const currentIndex = getOnboardingIndex(snapshot.state);
+        const startedIndex = getOnboardingIndex('started');
+        if (currentIndex < startedIndex) {
+            await chrome.storage.local.set({
+                [ONBOARDING_STORAGE_KEY]: {
+                    ...snapshot,
+                    state: 'started',
+                    updated_at: Date.now()
+                }
+            });
+        }
+    }
+
+    function openSettingsPage() {
+        if (chrome.runtime.openOptionsPage) {
+            chrome.runtime.openOptionsPage();
+        } else {
+            window.open(chrome.runtime.getURL('options.html'));
+        }
+    }
+
+    async function openSidePanelForActiveTab(markStarted = false) {
+        try {
+            const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (!activeTab?.id) return;
+            if (markStarted) {
+                await markOnboardingStarted();
+            }
+            await chrome.sidePanel.open({ tabId: activeTab.id });
+            window.close();
+        } catch (e) {
+            console.error("ATOM: Failed to open side panel:", e);
+        }
+    }
+
+    async function refreshPopupOnboardingCard() {
+        if (!onboardingCard) return;
+
+        const [snapshot, hasApiKey] = await Promise.all([
+            getOnboardingStateSnapshot(),
+            hasAnyApiKeyConfigured()
+        ]);
+
+        if (snapshot.state === 'completed') {
+            onboardingCard.classList.add('hidden');
+            return;
+        }
+
+        onboardingCard.classList.remove('hidden');
+        if (btnOnboardingSettings) {
+            btnOnboardingSettings.style.display = hasApiKey ? 'none' : 'inline-flex';
+        }
+        if (onboardingDesc) {
+            onboardingDesc.textContent = hasApiKey
+                ? atomMsg('popup_onboarding_desc', null, 'Open the side panel and follow 3 quick steps.')
+                : atomMsg('popup_onboarding_desc_no_key', null, 'Open Settings to add your API key, then continue in the side panel.');
+        }
+    }
+
+    await refreshPopupOnboardingCard();
 
     async function checkSafeZoneStatus(domain) {
         const data = await chrome.storage.local.get(['atom_whitelist']);
@@ -130,14 +268,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Chat with Amo button - opens Side Panel
+    const btnChatPage = document.getElementById('btn-chat-page');
+    if (btnChatPage) {
+        btnChatPage.addEventListener('click', async () => openSidePanelForActiveTab(true));
+    }
+
+    if (btnOnboardingSidepanel) {
+        btnOnboardingSidepanel.addEventListener('click', async () => openSidePanelForActiveTab(true));
+    }
+
+    if (btnOnboardingSettings) {
+        btnOnboardingSettings.addEventListener('click', openSettingsPage);
+    }
+
+    const shortcutFlag = await chrome.storage.local.get([
+        'atom_open_sidepanel_on_popup',
+        'atom_open_sidepanel_on_popup_ts'
+    ]);
+    if (shortcutFlag.atom_open_sidepanel_on_popup) {
+        await chrome.storage.local.remove([
+            'atom_open_sidepanel_on_popup',
+            'atom_open_sidepanel_on_popup_ts'
+        ]);
+        try {
+            await openSidePanelForActiveTab(true);
+        } catch (e) {
+            console.error("ATOM: Failed to open side panel from shortcut popup:", e);
+        }
+    }
+
     if (btnSettings) {
-        btnSettings.addEventListener('click', () => {
-            if (chrome.runtime.openOptionsPage) {
-                chrome.runtime.openOptionsPage();
-            } else {
-                window.open(chrome.runtime.getURL('options.html'));
-            }
-        });
+        btnSettings.addEventListener('click', openSettingsPage);
     }
 
     if (btnExport) {
@@ -252,12 +414,63 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    const elStatus = document.getElementById("focus-status");
+    async function updateRetentionStats() {
+        if (!window.SpacedRepetitionService || !window.FlashcardDeck) return;
+
+        try {
+            const [stats, cards] = await Promise.all([
+                window.SpacedRepetitionService.getDailyStats(),
+                window.FlashcardDeck.getAllCards()
+            ]);
+
+            if (!cards.length) {
+                if (retentionGrid) retentionGrid.style.display = 'none';
+                if (retentionEmpty) retentionEmpty.style.display = 'block';
+                if (retentionStreakLabel) retentionStreakLabel.textContent = '';
+                return;
+            }
+
+            if (retentionGrid) retentionGrid.style.display = 'grid';
+            if (retentionEmpty) retentionEmpty.style.display = 'none';
+
+            if (retentionDue) retentionDue.textContent = String(stats?.dueNow ?? 0);
+            if (retentionNew) retentionNew.textContent = String(stats?.newAvailable ?? 0);
+            if (retentionRecommended) retentionRecommended.textContent = String(stats?.recommended ?? 0);
+            if (retentionStreak) retentionStreak.textContent = String(stats?.streak ?? 0);
+            if (retentionStreakLabel) {
+                retentionStreakLabel.textContent = stats?.streak ? `🔥 ${stats.streak}` : '';
+            }
+        } catch (e) {
+            console.log("ATOM: Failed to update retention stats", e);
+        }
+    }
+
+    // Focus Section Elements
+    const focusSection = document.getElementById("focus-section");
+    const focusToggle = document.getElementById("focus-toggle");
+    const focusTimerBadge = document.getElementById("focus-timer-badge");
+    const focusReview = document.getElementById("focus-review");
     const btnStart = document.getElementById("focus-start");
     const btnStop = document.getElementById("focus-stop");
     const btnReset = document.getElementById("focus-reset");
     const inWork = document.getElementById("focus-work");
     const breakPreview = document.getElementById("focus-break-preview");
+
+    // Toggle Focus Section collapse/expand
+    if (focusToggle && focusSection) {
+        focusToggle.addEventListener('click', () => {
+            focusSection.classList.toggle('open');
+            // Save state
+            chrome.storage.local.set({ atom_popup_focus_open: focusSection.classList.contains('open') });
+        });
+
+        // Restore collapse state
+        chrome.storage.local.get(['atom_popup_focus_open']).then(data => {
+            if (data.atom_popup_focus_open) {
+                focusSection.classList.add('open');
+            }
+        });
+    }
 
     // Tự động tính Break = 1/5 Focus time
     function calcBreak(workMin) {
@@ -291,36 +504,64 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function renderFocus(st) {
-        if (!elStatus) return;
+        // Update timer badge in header
+        if (focusTimerBadge) {
+            if (!st?.enabled) {
+                focusTimerBadge.textContent = atomMsg("popup_focus_off", null, "OFF");
+                focusTimerBadge.classList.add('off');
+            } else {
+                const now = Date.now();
+                const remaining = fmt(st.phaseEndsAt - now);
+                focusTimerBadge.textContent = `${st.phase} ${remaining}`;
+                focusTimerBadge.classList.remove('off');
+                // Auto-expand when active
+                if (focusSection && !focusSection.classList.contains('open')) {
+                    focusSection.classList.add('open');
+                }
+            }
+        }
+
+        // Update buttons
         if (!st?.enabled) {
-            elStatus.textContent = "Focus: OFF";
             if (btnStart) btnStart.style.display = "inline-flex";
             if (btnStop) btnStop.style.display = "none";
             if (btnReset) btnReset.style.display = "none";
-            return;
+        } else {
+            if (btnStart) btnStart.style.display = "none";
+            if (btnStop) btnStop.style.display = "inline-flex";
+            if (btnReset) btnReset.style.display = "inline-flex";
         }
-        const now = Date.now();
-        elStatus.textContent = `${st.phase} còn ${fmt(st.phaseEndsAt - now)}`;
-        if (btnStart) btnStart.style.display = "none";
-        if (btnStop) btnStop.style.display = "inline-flex";
-        if (btnReset) btnReset.style.display = "inline-flex";
     }
 
     async function startFocus(workMin, breakMin) {
-        await chrome.runtime.sendMessage({ type: "FOCUS_START", payload: { workMin, breakMin } });
-        const st = await getFocusState();
+        const resp = await chrome.runtime.sendMessage({ type: "FOCUS_START", payload: { workMin, breakMin } });
+        const st = resp?.atom_focus_state || await getFocusState();
         renderFocus(st);
+
+        if (st?.sessionId && currentTabInfo && window.TimerIntegration) {
+            const session = await window.TimerIntegration.startFocusTracking({
+                sessionId: st.sessionId,
+                workMin,
+                breakMin
+            }, currentTabInfo);
+            focusLinkedSessionId = session?.id || focusLinkedSessionId;
+        }
     }
 
     async function stopFocus() {
         await chrome.runtime.sendMessage({ type: "FOCUS_STOP" });
         const st = await getFocusState();
         renderFocus(st);
+        if (window.TimerIntegration) {
+            await window.TimerIntegration.clearLinkedSession();
+        }
+        focusLinkedSessionId = null;
+        hideFocusReview();
     }
 
     if (btnStart) btnStart.onclick = async () => {
         const w = Number(inWork?.value || 25);
-        const b = calcBreak(w); // Tự động tính Break = Focus / 5
+        const b = calcBreak(w);
         await startFocus(w, b);
     };
 
@@ -336,7 +577,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // Preset chỉ cần Focus time, Break tự động tính
+    // Preset buttons (25m, 40m, 50m)
     const preset = (id, w) => {
         const el = document.getElementById(id);
         if (!el) return;
@@ -346,9 +587,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             startFocus(w, calcBreak(w));
         };
     };
-    preset("focus-preset-10", 10);
     preset("focus-preset-25", 25);
-    preset("focus-preset-30", 30);
     preset("focus-preset-40", 40);
     preset("focus-preset-50", 50);
 
@@ -356,12 +595,109 @@ document.addEventListener('DOMContentLoaded', async () => {
     (async () => {
         const st = await getFocusState();
         renderFocus(st);
+        lastFocusPhase = st?.phase || null;
+        if (window.TimerIntegration) {
+            const linked = await window.TimerIntegration.getLinkedSession();
+            focusLinkedSessionId = linked?.sessionId || null;
+        }
         clearInterval(focusUiTimer);
         focusUiTimer = setInterval(async () => {
             const st2 = await getFocusState();
             renderFocus(st2);
+            if (st2?.phase && lastFocusPhase && st2.phase !== lastFocusPhase) {
+                if (lastFocusPhase === "WORK" && st2.phase === "BREAK") {
+                    await maybeShowReview();
+                }
+                lastFocusPhase = st2.phase;
+            }
         }, 1000);
     })();
+
+    async function maybeShowReview() {
+        if (reviewVisible || !window.TimerIntegration) return;
+        if (!focusLinkedSessionId) {
+            const linked = await window.TimerIntegration.getLinkedSession();
+            focusLinkedSessionId = linked?.sessionId || null;
+        }
+        if (!focusLinkedSessionId) return;
+        const reviewData = await window.TimerIntegration.onWorkPhaseEnd(focusLinkedSessionId);
+        if (reviewData) {
+            showFocusReview(reviewData);
+        }
+    }
+
+    function showFocusReview(reviewData) {
+        if (!focusReview) return;
+        reviewVisible = true;
+        focusReview.classList.add('active');
+
+        const stats = reviewData.summary?.stats || {};
+        const title = reviewData.summary?.title || '';
+
+        focusReview.innerHTML = `
+            <div class="review-header">
+                <div>
+                    <div>⏱️ ${atomMsg('focus_review_title', null, 'Focus check-in')}</div>
+                    <div class="review-subtitle">${atomMsg('focus_review_subtitle', null, 'Lock in what you just learned')}</div>
+                </div>
+            </div>
+            <div class="review-section">
+                <div class="review-label">${atomMsg('focus_review_read', null, 'You read')}</div>
+                <div class="review-title">${title}</div>
+            </div>
+            <div class="review-section">
+                <div class="review-label">${atomMsg('focus_review_stats', null, 'Session stats')}</div>
+                <div class="review-stats">
+                    <div class="review-stat">
+                        <span class="review-stat-value">${stats.highlights ?? 0}</span>
+                        <span class="review-stat-label">${atomMsg('focus_review_stat_highlights', null, 'highlights')}</span>
+                    </div>
+                    <div class="review-stat">
+                        <span class="review-stat-value">${stats.insights ?? 0}</span>
+                        <span class="review-stat-label">${atomMsg('focus_review_stat_insights', null, 'insights')}</span>
+                    </div>
+                    <div class="review-stat">
+                        <span class="review-stat-value">${stats.messages ?? 0}</span>
+                        <span class="review-stat-label">${atomMsg('focus_review_stat_messages', null, 'messages')}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="review-section">
+                <div class="review-label">${atomMsg('focus_review_question_label', null, 'Quick recall')}</div>
+                <div class="review-question">"${reviewData.recallQuestion || ''}"</div>
+                <div class="review-hint">${atomMsg('focus_review_hint', null, 'Write 1-2 sentences. Don’t check the page.')}</div>
+                <textarea class="review-textarea" id="focus-recall-answer" placeholder="${atomMsg('focus_review_placeholder', null, 'Type your answer...')}"></textarea>
+                <div class="review-feedback" id="focus-recall-feedback"></div>
+            </div>
+            <div class="review-section">
+                <div class="review-actions">
+                    <button class="btn-toggle-status active" id="focus-recall-submit">${atomMsg('focus_review_submit', null, 'Save recall')}</button>
+                    <button class="btn-toggle-status" id="focus-recall-skip">${atomMsg('focus_review_skip', null, 'Skip')}</button>
+                </div>
+            </div>
+        `;
+
+        focusReview.querySelector('#focus-recall-submit')?.addEventListener('click', async () => {
+            const answer = focusReview.querySelector('#focus-recall-answer')?.value || '';
+            if (!answer.trim()) return;
+            const score = await window.TimerIntegration.recordRecallAnswer(reviewData.sessionId, answer.trim());
+            const feedbackEl = focusReview.querySelector('#focus-recall-feedback');
+            if (feedbackEl) {
+                const feedbackText = score?.feedback || atomMsg('focus_review_feedback_saved', null, 'Saved.');
+                const scoreText = Number.isFinite(score?.score) ? ` (${score.score}%)` : '';
+                feedbackEl.textContent = `${feedbackText}${scoreText}`;
+            }
+        });
+
+        focusReview.querySelector('#focus-recall-skip')?.addEventListener('click', hideFocusReview);
+    }
+
+    function hideFocusReview() {
+        if (!focusReview) return;
+        reviewVisible = false;
+        focusReview.classList.remove('active');
+        focusReview.innerHTML = '';
+    }
 
 });
 

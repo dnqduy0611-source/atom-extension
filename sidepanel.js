@@ -204,20 +204,546 @@
     let undoStack = []; // Stack of undoable actions
     let activeUndoToast = null; // Currently displayed undo toast
 
-    // ===========================
-    // Onboarding System
-    // ===========================
     const ONBOARDING_STORAGE_KEY = 'atom_sidepanel_onboarding';
+    const ONBOARDING_MENU_ID = 'menu-onboarding-guide';
+    const ONBOARDING_STATES = Object.freeze({
+        NOT_STARTED: 'not_started',
+        STARTED: 'started',
+        FIRST_HIGHLIGHT_DONE: 'first_highlight_done',
+        FIRST_AI_REPLY_DONE: 'first_ai_reply_done',
+        FIRST_SAVE_DONE: 'first_save_done',
+        COMPLETED: 'completed'
+    });
+    const ONBOARDING_ORDER = [
+        ONBOARDING_STATES.NOT_STARTED,
+        ONBOARDING_STATES.STARTED,
+        ONBOARDING_STATES.FIRST_HIGHLIGHT_DONE,
+        ONBOARDING_STATES.FIRST_AI_REPLY_DONE,
+        ONBOARDING_STATES.FIRST_SAVE_DONE,
+        ONBOARDING_STATES.COMPLETED
+    ];
     let onboardingState = {
-        welcomed: false,
-        tooltipsShown: {
-            highlight: false,
-            chat: false,
-            insight: false,
-            done: false
-        },
-        completedAt: null
+        state: ONBOARDING_STATES.NOT_STARTED,
+        onboarding_completed_at: null,
+        skipped_at: null,
+        updated_at: null
     };
+    let onboardingOverlayEscHandler = null;
+    let onboardingLastFocusedElement = null;
+    let activeTooltipEscHandler = null;
+
+    // ===========================
+    // Onboarding System (Wave 4)
+    // ===========================
+    function getOnboardingStateIndex(state) {
+        return ONBOARDING_ORDER.indexOf(state);
+    }
+
+    function isOnboardingStateAtLeast(state) {
+        return getOnboardingStateIndex(onboardingState.state) >= getOnboardingStateIndex(state);
+    }
+
+    function isOnboardingCompleted() {
+        return onboardingState.state === ONBOARDING_STATES.COMPLETED;
+    }
+
+    function normalizeOnboardingState(rawState) {
+        if (!rawState || typeof rawState !== 'object') {
+            return { ...onboardingState };
+        }
+
+        let normalizedState = ONBOARDING_STATES.NOT_STARTED;
+        let completedAt = null;
+        let skippedAt = null;
+
+        if (typeof rawState.state === 'string' && ONBOARDING_ORDER.includes(rawState.state)) {
+            normalizedState = rawState.state;
+        } else if (rawState.completedAt || rawState.onboarding_completed_at || rawState.tooltipsShown?.done) {
+            normalizedState = ONBOARDING_STATES.COMPLETED;
+        } else if (rawState.tooltipsShown?.chat) {
+            normalizedState = ONBOARDING_STATES.FIRST_AI_REPLY_DONE;
+        } else if (rawState.tooltipsShown?.highlight) {
+            normalizedState = ONBOARDING_STATES.FIRST_HIGHLIGHT_DONE;
+        } else if (rawState.welcomed) {
+            normalizedState = ONBOARDING_STATES.STARTED;
+        }
+
+        completedAt = rawState.onboarding_completed_at || rawState.completedAt || null;
+        skippedAt = rawState.skipped_at || null;
+
+        if (normalizedState === ONBOARDING_STATES.COMPLETED && !completedAt) {
+            completedAt = Date.now();
+        }
+
+        return {
+            state: normalizedState,
+            onboarding_completed_at: completedAt,
+            skipped_at: skippedAt,
+            updated_at: rawState.updated_at || Date.now()
+        };
+    }
+
+    async function loadOnboardingState() {
+        try {
+            const data = await chrome.storage.local.get([ONBOARDING_STORAGE_KEY]);
+            onboardingState = normalizeOnboardingState(data[ONBOARDING_STORAGE_KEY]);
+        } catch (e) {
+            console.error('[Onboarding] Load error:', e);
+        }
+    }
+
+    async function saveOnboardingState() {
+        try {
+            await chrome.storage.local.set({ [ONBOARDING_STORAGE_KEY]: onboardingState });
+        } catch (e) {
+            console.error('[Onboarding] Save error:', e);
+        }
+    }
+
+    async function updateOnboardingState(nextState, options = {}) {
+        if (!ONBOARDING_ORDER.includes(nextState)) return false;
+
+        const currentIndex = getOnboardingStateIndex(onboardingState.state);
+        const nextIndex = getOnboardingStateIndex(nextState);
+        if (nextIndex < currentIndex) return false;
+        if (nextIndex === currentIndex && !options.force) return false;
+
+        onboardingState.state = nextState;
+        onboardingState.updated_at = Date.now();
+
+        if (nextState === ONBOARDING_STATES.COMPLETED && !onboardingState.onboarding_completed_at) {
+            onboardingState.onboarding_completed_at = Date.now();
+        }
+        if (options.skipped) {
+            onboardingState.skipped_at = Date.now();
+        }
+
+        await saveOnboardingState();
+        renderOnboardingProgress();
+        updateOnboardingMenuItemLabel();
+        return true;
+    }
+
+    function getOnboardingStepLabelKey(state) {
+        if (state === ONBOARDING_STATES.FIRST_AI_REPLY_DONE || state === ONBOARDING_STATES.FIRST_SAVE_DONE) {
+            return 'sp_onboarding_progress_step3';
+        }
+        if (state === ONBOARDING_STATES.FIRST_HIGHLIGHT_DONE) {
+            return 'sp_onboarding_progress_step2';
+        }
+        return 'sp_onboarding_progress_step1';
+    }
+
+    function getOnboardingTaskKey(state) {
+        if (state === ONBOARDING_STATES.FIRST_AI_REPLY_DONE || state === ONBOARDING_STATES.FIRST_SAVE_DONE) {
+            return 'sp_onboard_step3';
+        }
+        if (state === ONBOARDING_STATES.FIRST_HIGHLIGHT_DONE) {
+            return 'sp_onboard_step2';
+        }
+        return 'sp_onboard_step1';
+    }
+
+    function ensureOnboardingProgressStyles() {
+        if (document.getElementById('sp-onboarding-progress-style')) return;
+        const style = document.createElement('style');
+        style.id = 'sp-onboarding-progress-style';
+        style.textContent = `
+            .sp-onboarding-progress {
+                display: none;
+                margin: 10px 0 12px;
+                padding: 10px 12px;
+                border: 1px dashed rgba(16, 185, 129, 0.45);
+                border-radius: 10px;
+                background: rgba(16, 185, 129, 0.08);
+            }
+            .sp-onboarding-progress-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                margin-bottom: 6px;
+            }
+            .sp-onboarding-progress-title {
+                font-size: 11px;
+                font-weight: 600;
+                color: var(--foreground);
+            }
+            .sp-onboarding-progress-step {
+                font-size: 11px;
+                color: var(--primary);
+                font-weight: 600;
+                margin-bottom: 4px;
+            }
+            .sp-onboarding-progress-task {
+                font-size: 12px;
+                color: var(--foreground);
+            }
+            .sp-onboarding-skip {
+                background: transparent;
+                border: 1px solid var(--border);
+                color: var(--muted);
+                border-radius: 6px;
+                padding: 3px 8px;
+                font-size: 10px;
+                cursor: pointer;
+            }
+            .sp-onboarding-skip:hover {
+                border-color: var(--primary);
+                color: var(--primary);
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    function ensureOnboardingProgressRegion() {
+        let region = document.getElementById('onboarding-progress');
+        if (region) return region;
+
+        const host = document.querySelector('.sp-main');
+        if (!host) return null;
+
+        ensureOnboardingProgressStyles();
+        region = document.createElement('section');
+        region.id = 'onboarding-progress';
+        region.className = 'sp-onboarding-progress';
+        region.setAttribute('role', 'status');
+        region.setAttribute('aria-live', 'polite');
+        region.innerHTML = `
+            <div class="sp-onboarding-progress-header">
+                <span class="sp-onboarding-progress-title" id="onboarding-progress-title"></span>
+                <button type="button" class="sp-onboarding-skip" id="btn-onboarding-skip-inline"></button>
+            </div>
+            <div class="sp-onboarding-progress-step" id="onboarding-progress-step"></div>
+            <div class="sp-onboarding-progress-task" id="onboarding-progress-task"></div>
+        `;
+
+        const anchor = document.getElementById('srq-widget-container');
+        if (anchor && anchor.parentElement === host) {
+            host.insertBefore(region, anchor.nextSibling);
+        } else {
+            host.insertBefore(region, host.firstChild);
+        }
+
+        region.querySelector('#btn-onboarding-skip-inline')?.addEventListener('click', confirmSkipOnboarding);
+        return region;
+    }
+
+    function renderOnboardingProgress() {
+        const region = ensureOnboardingProgressRegion();
+        if (!region) return;
+
+        if (isOnboardingCompleted()) {
+            region.style.display = 'none';
+            return;
+        }
+
+        region.style.display = 'block';
+        const stepLabel = getMessage(getOnboardingStepLabelKey(onboardingState.state), 'Step 1/3');
+        const taskLabel = getMessage(getOnboardingTaskKey(onboardingState.state), 'Highlight one short paragraph.');
+        const titleLabel = getMessage('sp_onboarding_progress_title', 'Onboarding progress');
+        const skipLabel = getMessage('sp_onboarding_skip', 'Skip guide');
+
+        const titleEl = region.querySelector('#onboarding-progress-title');
+        const stepEl = region.querySelector('#onboarding-progress-step');
+        const taskEl = region.querySelector('#onboarding-progress-task');
+        const skipEl = region.querySelector('#btn-onboarding-skip-inline');
+
+        if (titleEl) titleEl.textContent = titleLabel;
+        if (stepEl) stepEl.textContent = stepLabel;
+        if (taskEl) taskEl.textContent = taskLabel;
+        if (skipEl) skipEl.textContent = skipLabel;
+    }
+
+    function ensureOnboardingMenuItem() {
+        const menu = elements.menuDropdown;
+        if (!menu || document.getElementById(ONBOARDING_MENU_ID)) return;
+
+        const item = document.createElement('div');
+        item.className = 'sp-menu-item';
+        item.id = ONBOARDING_MENU_ID;
+        item.setAttribute('role', 'menuitem');
+        item.setAttribute('tabindex', '0');
+        item.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            </svg>
+            <span class="sp-menu-label"></span>
+        `;
+
+        const divider = menu.querySelector('.sp-menu-divider');
+        if (divider) {
+            menu.insertBefore(item, divider);
+        } else {
+            menu.appendChild(item);
+        }
+
+        item.addEventListener('click', () => {
+            showWelcomeScreen({ force: true });
+            elements.menuDropdown?.classList.remove('show');
+            elements.menuBtn?.setAttribute('aria-expanded', 'false');
+        });
+
+        updateOnboardingMenuItemLabel();
+    }
+
+    function updateOnboardingMenuItemLabel() {
+        const labelEl = document.querySelector(`#${ONBOARDING_MENU_ID} .sp-menu-label`);
+        if (!labelEl) return;
+        const key = isOnboardingCompleted() ? 'sp_onboarding_reopen_menu' : 'sp_onboarding_menu_item';
+        labelEl.textContent = getMessage(key, 'Open onboarding guide');
+    }
+
+    function checkAndShowOnboarding() {
+        ensureOnboardingMenuItem();
+        renderOnboardingProgress();
+        if (onboardingState.state === ONBOARDING_STATES.NOT_STARTED) {
+            showWelcomeScreen();
+        }
+    }
+
+    function showWelcomeScreen({ force = false } = {}) {
+        if (isOnboardingCompleted() && !force) return;
+        if (document.getElementById('welcome-overlay')) return;
+
+        onboardingLastFocusedElement = document.activeElement;
+        const overlay = document.createElement('div');
+        overlay.id = 'welcome-overlay';
+        overlay.className = 'sp-welcome-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', 'onboarding-dialog-title');
+
+        const step1 = getMessage('sp_onboard_step1', 'Highlight one short paragraph.');
+        const step2 = getMessage('sp_onboard_step2', 'Press Summarize.');
+        const step3 = getMessage('sp_onboard_step3', 'Press Save.');
+        const welcomeTitle = getMessage('sp_welcome_title', 'Start in one minute');
+        const welcomeDesc = getMessage('sp_welcome_desc', 'Follow 3 quick steps to get your first value.');
+        const stepsTitle = getMessage('sp_welcome_steps', '3 quick steps');
+        const btnStart = getMessage('sp_welcome_start', 'Start now');
+        const btnSkip = getMessage('sp_onboarding_skip', 'Skip guide');
+
+        overlay.innerHTML = `
+            <div class="sp-welcome-card">
+                <div class="sp-welcome-header">
+                    <span class="sp-welcome-emoji">${getIcon('hand')}</span>
+                    <h2 id="onboarding-dialog-title">${welcomeTitle}</h2>
+                    <p>${welcomeDesc}</p>
+                </div>
+
+                <div class="sp-welcome-divider"></div>
+
+                <div class="sp-welcome-steps">
+                    <h3>${stepsTitle}</h3>
+                    <div class="sp-welcome-step">
+                        <span class="sp-step-number">1</span>
+                        <span class="sp-step-text">${step1}</span>
+                    </div>
+                    <div class="sp-welcome-step">
+                        <span class="sp-step-number">2</span>
+                        <span class="sp-step-text">${step2}</span>
+                    </div>
+                    <div class="sp-welcome-step">
+                        <span class="sp-step-number">3</span>
+                        <span class="sp-step-text">${step3}</span>
+                    </div>
+                </div>
+
+                <div class="sp-welcome-divider"></div>
+
+                <div class="sp-welcome-actions">
+                    <button class="sp-welcome-btn primary" id="btn-welcome-start">${btnStart}</button>
+                    <button class="sp-welcome-btn secondary" id="btn-welcome-skip">${btnSkip}</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        document.getElementById('btn-welcome-start')?.addEventListener('click', () => {
+            closeWelcomeScreen({ markStarted: true });
+        });
+        document.getElementById('btn-welcome-skip')?.addEventListener('click', confirmSkipOnboarding);
+
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                closeWelcomeScreen({ markStarted: true });
+            }
+        });
+
+        onboardingOverlayEscHandler = (e) => {
+            if (e.key === 'Escape') {
+                closeWelcomeScreen({ markStarted: true });
+            }
+        };
+        document.addEventListener('keydown', onboardingOverlayEscHandler);
+
+        document.getElementById('btn-welcome-start')?.focus();
+    }
+
+    async function closeWelcomeScreen({ markStarted = true } = {}) {
+        const overlay = document.getElementById('welcome-overlay');
+        if (overlay) {
+            overlay.classList.add('hiding');
+            setTimeout(() => overlay.remove(), 200);
+        }
+
+        if (onboardingOverlayEscHandler) {
+            document.removeEventListener('keydown', onboardingOverlayEscHandler);
+            onboardingOverlayEscHandler = null;
+        }
+
+        if (markStarted && !isOnboardingCompleted()) {
+            await updateOnboardingState(ONBOARDING_STATES.STARTED);
+        }
+
+        if (onboardingLastFocusedElement && typeof onboardingLastFocusedElement.focus === 'function') {
+            onboardingLastFocusedElement.focus();
+        }
+        onboardingLastFocusedElement = null;
+    }
+
+    function dismissActiveTooltip({ callOnDismiss = false } = {}) {
+        const tooltip = document.querySelector('.sp-tooltip');
+        if (!tooltip) return;
+
+        const dismissCallback = tooltip._onDismiss;
+        tooltip.classList.add('hiding');
+        setTimeout(() => tooltip.remove(), 200);
+
+        if (activeTooltipEscHandler) {
+            document.removeEventListener('keydown', activeTooltipEscHandler);
+            activeTooltipEscHandler = null;
+        }
+
+        if (callOnDismiss && typeof dismissCallback === 'function') {
+            dismissCallback();
+        }
+    }
+
+    // ===========================
+    // Tooltip Coach Marks
+    // ===========================
+    function showTooltip(targetElement, message, position = 'bottom', onDismiss = null) {
+        dismissActiveTooltip();
+        if (!targetElement) return;
+
+        const tooltip = document.createElement('div');
+        tooltip.className = `sp-tooltip sp-tooltip-${position}`;
+        tooltip.setAttribute('role', 'tooltip');
+        tooltip.setAttribute('aria-live', 'polite');
+        tooltip._onDismiss = onDismiss;
+
+        const okBtn = getMessage('sp_tooltip_ok', 'OK, got it');
+        tooltip.innerHTML = `
+            <div class="sp-tooltip-content">
+                <span class="sp-tooltip-icon">${getIcon('insight')}</span>
+                <span class="sp-tooltip-text">${message}</span>
+            </div>
+            <button class="sp-tooltip-btn">${okBtn}</button>
+        `;
+
+        document.body.appendChild(tooltip);
+
+        const rect = targetElement.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+
+        let top = rect.bottom + 10;
+        let left = rect.left + (rect.width - tooltipRect.width) / 2;
+
+        if (position === 'top') {
+            top = rect.top - tooltipRect.height - 10;
+        } else if (position === 'left') {
+            top = rect.top + (rect.height - tooltipRect.height) / 2;
+            left = rect.left - tooltipRect.width - 10;
+        } else if (position === 'right') {
+            top = rect.top + (rect.height - tooltipRect.height) / 2;
+            left = rect.right + 10;
+        }
+
+        left = Math.max(10, Math.min(left, window.innerWidth - tooltipRect.width - 10));
+        top = Math.max(10, Math.min(top, window.innerHeight - tooltipRect.height - 10));
+        tooltip.style.top = `${top}px`;
+        tooltip.style.left = `${left}px`;
+
+        const dismiss = (withCallback = true) => dismissActiveTooltip({ callOnDismiss: withCallback });
+        tooltip.querySelector('.sp-tooltip-btn')?.addEventListener('click', () => dismiss(true));
+        activeTooltipEscHandler = (e) => {
+            if (e.key === 'Escape') dismiss(true);
+        };
+        document.addEventListener('keydown', activeTooltipEscHandler);
+        tooltip.querySelector('.sp-tooltip-btn')?.focus();
+    }
+
+    async function maybeCompleteOnboarding() {
+        if (isOnboardingCompleted()) return;
+        const moved = await updateOnboardingState(ONBOARDING_STATES.COMPLETED);
+        if (moved) {
+            dismissActiveTooltip();
+            showToast(getMessage('sp_onboarding_complete', 'You completed the basic setup.'), 'success');
+        }
+    }
+
+    async function confirmSkipOnboarding() {
+        const confirmText = getMessage(
+            'sp_onboarding_skip_confirm',
+            'Skip onboarding now? You can open it again from the menu.'
+        );
+        if (!window.confirm(confirmText)) return;
+
+        await updateOnboardingState(ONBOARDING_STATES.COMPLETED, { skipped: true });
+        await closeWelcomeScreen({ markStarted: false });
+        dismissActiveTooltip();
+        showToast(
+            getMessage('sp_onboarding_skipped', 'Guide skipped. You can reopen it from the menu.'),
+            'info'
+        );
+    }
+
+    async function checkAndShowContextualTooltip(context) {
+        if (isOnboardingCompleted()) return;
+
+        switch (context) {
+            case 'first_highlight': {
+                const advanced = await updateOnboardingState(ONBOARDING_STATES.FIRST_HIGHLIGHT_DONE);
+                if (advanced) {
+                    setTimeout(() => {
+                        const summarizeBtn = document.querySelector('.sp-quick-chip[data-action="summarize"]');
+                        showTooltip(
+                            summarizeBtn || elements.userInput,
+                            getMessage('sp_tooltip_first_highlight', 'Great. Next, press Summarize.'),
+                            'top'
+                        );
+                    }, 400);
+                }
+                break;
+            }
+            case 'first_chat': {
+                const advanced = await updateOnboardingState(ONBOARDING_STATES.FIRST_AI_REPLY_DONE);
+                if (advanced) {
+                    setTimeout(() => {
+                        const saveBtn = document.getElementById('btn-quick-save') || document.getElementById('btn-save-insight');
+                        showTooltip(
+                            saveBtn,
+                            getMessage('sp_tooltip_first_chat', 'Great. Now press Save to keep this highlight.'),
+                            'top'
+                        );
+                    }, 400);
+                }
+                break;
+            }
+            case 'first_save':
+            case 'first_done': {
+                const moved = await updateOnboardingState(ONBOARDING_STATES.FIRST_SAVE_DONE);
+                if (moved || isOnboardingStateAtLeast(ONBOARDING_STATES.FIRST_SAVE_DONE)) {
+                    await maybeCompleteOnboarding();
+                }
+                break;
+            }
+        }
+    }
 
     // ===========================
     // Search & Filter System
@@ -1394,331 +1920,6 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
     }
 
     // ===========================
-    // Onboarding System
-    // ===========================
-    async function loadOnboardingState() {
-        try {
-            const data = await chrome.storage.local.get([ONBOARDING_STORAGE_KEY]);
-            if (data[ONBOARDING_STORAGE_KEY]) {
-                onboardingState = { ...onboardingState, ...data[ONBOARDING_STORAGE_KEY] };
-            }
-        } catch (e) {
-            console.error('[Onboarding] Load error:', e);
-        }
-    }
-
-    async function saveOnboardingState() {
-        try {
-            await chrome.storage.local.set({ [ONBOARDING_STORAGE_KEY]: onboardingState });
-        } catch (e) {
-            console.error('[Onboarding] Save error:', e);
-        }
-    }
-
-    function checkAndShowOnboarding() {
-        // Show welcome screen for first-time users
-        if (!onboardingState.welcomed) {
-            showWelcomeScreen();
-        }
-    }
-
-    function showWelcomeScreen() {
-        const overlay = document.createElement('div');
-        overlay.id = 'welcome-overlay';
-        overlay.className = 'sp-welcome-overlay';
-
-        const step1 = getMessage('sp_onboard_step1', 'Highlight text you want to explore');
-        const step2 = getMessage('sp_onboard_step2', 'Chat with AI to understand deeper');
-        const step3 = getMessage('sp_onboard_step3', 'Distill key insights for your notes');
-        const welcomeTitle = getMessage('sp_welcome_title', 'Welcome to Active Reading!');
-        const welcomeDesc = getMessage('sp_welcome_desc', 'A tool to help you read deeply and remember longer.');
-        const stepsTitle = getMessage('sp_welcome_steps', '3 simple steps:');
-        const btnStart = getMessage('sp_welcome_start', 'Start now');
-        const btnGuide = getMessage('sp_welcome_guide', 'See detailed guide');
-
-        overlay.innerHTML = `
-            <div class="sp-welcome-card">
-                <div class="sp-welcome-header">
-                    <span class="sp-welcome-emoji">${getIcon('hand')}</span>
-                    <h2>${welcomeTitle}</h2>
-                    <p>${welcomeDesc}</p>
-                </div>
-
-                <div class="sp-welcome-divider"></div>
-
-                <div class="sp-welcome-steps">
-                    <h3>${stepsTitle}</h3>
-                    <div class="sp-welcome-step">
-                        <span class="sp-step-number">1</span>
-                        <span class="sp-step-text">${step1}</span>
-                    </div>
-                    <div class="sp-welcome-step">
-                        <span class="sp-step-number">2</span>
-                        <span class="sp-step-text">${step2}</span>
-                    </div>
-                    <div class="sp-welcome-step">
-                        <span class="sp-step-number">3</span>
-                        <span class="sp-step-text">${step3}</span>
-                    </div>
-                </div>
-
-                <div class="sp-welcome-divider"></div>
-
-                <div class="sp-welcome-actions">
-                    <button class="sp-welcome-btn primary" id="btn-welcome-start">${btnStart}</button>
-                    <button class="sp-welcome-btn secondary" id="btn-welcome-guide">${btnGuide}</button>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(overlay);
-
-        // Button handlers
-        document.getElementById('btn-welcome-start')?.addEventListener('click', () => {
-            closeWelcomeScreen();
-        });
-
-        document.getElementById('btn-welcome-guide')?.addEventListener('click', () => {
-            closeWelcomeScreen();
-            showDetailedGuide();
-        });
-
-        // Close on overlay click
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) {
-                closeWelcomeScreen();
-            }
-        });
-
-        // Close on Escape
-        const escHandler = (e) => {
-            if (e.key === 'Escape') {
-                closeWelcomeScreen();
-                document.removeEventListener('keydown', escHandler);
-            }
-        };
-        document.addEventListener('keydown', escHandler);
-    }
-
-    function closeWelcomeScreen() {
-        const overlay = document.getElementById('welcome-overlay');
-        if (overlay) {
-            overlay.classList.add('hiding');
-            setTimeout(() => overlay.remove(), 200);
-        }
-
-        // Mark as welcomed
-        onboardingState.welcomed = true;
-        saveOnboardingState();
-    }
-
-    function showDetailedGuide() {
-        const overlay = document.createElement('div');
-        overlay.id = 'guide-overlay';
-        overlay.className = 'sp-welcome-overlay';
-
-        const guideTitle = getMessage('sp_guide_title', 'How to use Active Reading');
-        const guideClose = getMessage('sp_guide_close', 'Got it!');
-
-        overlay.innerHTML = `
-            <div class="sp-guide-card">
-                <div class="sp-guide-header">
-                    <h2>${getIcon('book')} ${guideTitle}</h2>
-                    <button class="sp-guide-close" id="btn-guide-close">×</button>
-                </div>
-
-                <div class="sp-guide-content">
-                    <div class="sp-guide-section">
-                        <div class="sp-guide-icon">${getIcon('num1')}</div>
-                        <div class="sp-guide-info">
-                            <h4>${getMessage('sp_guide_highlight_title', 'Highlight Text')}</h4>
-                            <p>${getMessage('sp_guide_highlight_desc', 'Select any text on the webpage. The side panel will automatically detect your selection.')}</p>
-                        </div>
-                    </div>
-
-                    <div class="sp-guide-section">
-                        <div class="sp-guide-icon">${getIcon('num2')}</div>
-                        <div class="sp-guide-info">
-                            <h4>${getMessage('sp_guide_chat_title', 'Ask Questions')}</h4>
-                            <p>${getMessage('sp_guide_chat_desc', 'Type your question about the highlighted text. AI will help you understand it better.')}</p>
-                        </div>
-                    </div>
-
-                    <div class="sp-guide-section">
-                        <div class="sp-guide-icon">${getIcon('num3')}</div>
-                        <div class="sp-guide-info">
-                            <h4>${getMessage('sp_guide_insight_title', 'Create Key Insights')}</h4>
-                            <p>${getMessage('sp_guide_insight_desc', 'Click "Key Insight" to distill the discussion into a memorable takeaway.')}</p>
-                        </div>
-                    </div>
-
-                    <div class="sp-guide-section">
-                        <div class="sp-guide-icon">${getIcon('num4')}</div>
-                        <div class="sp-guide-info">
-                            <h4>${getMessage('sp_guide_save_title', 'Save & Export')}</h4>
-                            <p>${getMessage('sp_guide_save_desc', 'Save insights to your knowledge base or download as markdown notes.')}</p>
-                        </div>
-                    </div>
-
-                    <div class="sp-guide-shortcuts">
-                        <h4>${getIcon('keyboard')} ${getMessage('sp_guide_shortcuts_title', 'Keyboard Shortcuts')}</h4>
-                        <div class="sp-shortcut-list">
-                            <div class="sp-shortcut-item"><kbd>Ctrl+Enter</kbd> ${getMessage('sp_shortcut_send', 'Send message')}</div>
-                            <div class="sp-shortcut-item"><kbd>Ctrl+D</kbd> ${getMessage('sp_shortcut_insight', 'Key Insight')}</div>
-                            <div class="sp-shortcut-item"><kbd>Ctrl+Shift+D</kbd> ${getMessage('sp_shortcut_done', 'Mark as Done')}</div>
-                            <div class="sp-shortcut-item"><kbd>Ctrl+N</kbd> ${getMessage('sp_shortcut_note', 'Quick Note')}</div>
-                            <div class="sp-shortcut-item"><kbd>Ctrl+Z</kbd> ${getMessage('sp_shortcut_undo', 'Undo')}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="sp-guide-footer">
-                    <button class="sp-welcome-btn primary" id="btn-guide-done">${guideClose}</button>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(overlay);
-
-        // Close handlers
-        const closeGuide = () => {
-            overlay.classList.add('hiding');
-            setTimeout(() => overlay.remove(), 200);
-        };
-
-        document.getElementById('btn-guide-close')?.addEventListener('click', closeGuide);
-        document.getElementById('btn-guide-done')?.addEventListener('click', closeGuide);
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) closeGuide();
-        });
-    }
-
-    // ===========================
-    // Tooltip Coach Marks
-    // ===========================
-    function showTooltip(targetElement, message, position = 'bottom', onDismiss = null) {
-        // Remove any existing tooltip
-        document.querySelector('.sp-tooltip')?.remove();
-
-        if (!targetElement) return;
-
-        const tooltip = document.createElement('div');
-        tooltip.className = `sp-tooltip sp-tooltip-${position}`;
-
-        const okBtn = getMessage('sp_tooltip_ok', 'OK, got it');
-
-        tooltip.innerHTML = `
-            <div class="sp-tooltip-content">
-                <span class="sp-tooltip-icon">${getIcon('insight')}</span>
-                <span class="sp-tooltip-text">${message}</span>
-            </div>
-            <button class="sp-tooltip-btn">${okBtn}</button>
-        `;
-
-        document.body.appendChild(tooltip);
-
-        // Position the tooltip
-        const rect = targetElement.getBoundingClientRect();
-        const tooltipRect = tooltip.getBoundingClientRect();
-
-        let top, left;
-
-        switch (position) {
-            case 'top':
-                top = rect.top - tooltipRect.height - 10;
-                left = rect.left + (rect.width - tooltipRect.width) / 2;
-                break;
-            case 'bottom':
-                top = rect.bottom + 10;
-                left = rect.left + (rect.width - tooltipRect.width) / 2;
-                break;
-            case 'left':
-                top = rect.top + (rect.height - tooltipRect.height) / 2;
-                left = rect.left - tooltipRect.width - 10;
-                break;
-            case 'right':
-                top = rect.top + (rect.height - tooltipRect.height) / 2;
-                left = rect.right + 10;
-                break;
-        }
-
-        // Keep tooltip in viewport
-        left = Math.max(10, Math.min(left, window.innerWidth - tooltipRect.width - 10));
-        top = Math.max(10, Math.min(top, window.innerHeight - tooltipRect.height - 10));
-
-        tooltip.style.top = `${top}px`;
-        tooltip.style.left = `${left}px`;
-
-        // Dismiss handler
-        tooltip.querySelector('.sp-tooltip-btn')?.addEventListener('click', () => {
-            tooltip.classList.add('hiding');
-            setTimeout(() => tooltip.remove(), 200);
-            if (onDismiss) onDismiss();
-        });
-    }
-
-    function checkAndShowContextualTooltip(context) {
-        // Only show tooltips if onboarding is active
-        if (!onboardingState.welcomed) return;
-        if (onboardingState.completedAt) return; // Onboarding completed
-
-        switch (context) {
-            case 'first_highlight':
-                if (!onboardingState.tooltipsShown.highlight) {
-                    onboardingState.tooltipsShown.highlight = true;
-                    saveOnboardingState();
-                    setTimeout(() => {
-                        showTooltip(
-                            elements.userInput,
-                            getMessage('sp_tooltip_first_highlight', 'Great! Now ask a question about this text.'),
-                            'top'
-                        );
-                    }, 500);
-                }
-                break;
-
-            case 'first_chat':
-                if (!onboardingState.tooltipsShown.chat) {
-                    onboardingState.tooltipsShown.chat = true;
-                    saveOnboardingState();
-                    setTimeout(() => {
-                        const insightBtn = document.getElementById('btn-key-insight');
-                        showTooltip(
-                            insightBtn,
-                            getMessage('sp_tooltip_first_chat', 'Click "Key Insight" to create a takeaway from this discussion.'),
-                            'top'
-                        );
-                    }, 1000);
-                }
-                break;
-
-            case 'first_insight':
-                if (!onboardingState.tooltipsShown.insight) {
-                    onboardingState.tooltipsShown.insight = true;
-                    saveOnboardingState();
-                    setTimeout(() => {
-                        const doneBtn = document.getElementById('btn-mark-done');
-                        showTooltip(
-                            doneBtn,
-                            getMessage('sp_tooltip_first_insight', 'Click "Mark as Done" to save and move to the next section.'),
-                            'top'
-                        );
-                    }, 500);
-                }
-                break;
-
-            case 'first_done':
-                if (!onboardingState.tooltipsShown.done) {
-                    onboardingState.tooltipsShown.done = true;
-                    onboardingState.completedAt = Date.now();
-                    saveOnboardingState();
-                    showToast(getMessage('sp_onboarding_complete', 'You\'re all set! Happy reading!'), 'success');
-                }
-                break;
-        }
-    }
-
-    // ===========================
     // Search & Filter System
     // ===========================
     function toggleQuickSearch() {
@@ -2276,6 +2477,7 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
                 thread.nlmExportedAt = Date.now();
                 await saveThreadsToStorage();
                 renderThreadList();
+                checkAndShowContextualTooltip('first_save');
 
                 // Show appropriate toast message
                 const msg = thread.refinedInsight
@@ -5784,8 +5986,6 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
             // Commit function
             (data) => {
                 saveThreadsToStorage();
-                // Onboarding: Complete onboarding after first done
-                checkAndShowContextualTooltip('first_done');
             }
         );
     }
@@ -5970,8 +6170,6 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
                     }
                 }
 
-                // Onboarding: Show tooltip after first insight
-                checkAndShowContextualTooltip('first_insight');
             } else {
                 showToast(getMessage('sp_error_empty_response', 'No response received'), 'warning');
             }
@@ -6098,10 +6296,12 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
 
                 await maybeAddInsightReviewCard(thread);
                 showToast(getMessage('sp_toast_saved', 'Saved to Knowledge!'), 'success');
+                checkAndShowContextualTooltip('first_save');
             } else {
                 if (response?.savedToMemory) {
                     await maybeAddInsightReviewCard(thread);
                     showToast(getMessage('sp_toast_saved_local', 'Saved locally. Cloud export blocked.'), 'info');
+                    checkAndShowContextualTooltip('first_save');
                 } else {
                     const failure = getNlmExportFailureToast(response?.reason || response?.error);
                     showToast(failure.message, failure.type);
@@ -6179,6 +6379,9 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
 
         showToast(`Exported: ${successCount} success, ${failCount} failed`,
             failCount === 0 ? 'success' : 'warning');
+        if (successCount > 0) {
+            checkAndShowContextualTooltip('first_save');
+        }
     }
 
     function showExportAllLoading() {
@@ -7015,3 +7218,5 @@ ${aiSummary}
         mountSRQWidget();
     });
 })();
+
+
