@@ -1,25 +1,31 @@
-/* --- ATOM UI SHARED THEME --- */
+/* --- ATOM UI SHARED THEME - NEON MODERN --- */
 :root {
-    --background: #050505;
-    --foreground: #ffffff;
-    --primary: #10B981;
-    --primary-glow: rgba(16, 185, 129, 0.4);
-    --surface: rgba(255, 255, 255, 0.05);
-    --border: rgba(255, 255, 255, 0.1);
-    --muted: #a3a3a3;
-    --danger: #ef4444;
-    --danger-bg: rgba(239, 68, 68, 0.1);
+    --background: #0A0E27;
+    --foreground: #F0F4FF;
+    --primary: #00D9FF;
+    --primary-accent: #B600FF;
+    --accent-pink: #FF006E;
+    --primary-glow: rgba(0, 217, 255, 0.5);
+    --primary-glow-strong: rgba(0, 217, 255, 0.8);
+    --surface: rgba(0, 217, 255, 0.08);
+    --border: rgba(0, 217, 255, 0.2);
+    --muted: #B8C5E8;
+    --danger: #FF4470;
+    --danger-bg: rgba(255, 68, 112, 0.1);
 }
 
 body.light-mode {
-    --background: #F0FDFA;
-    --foreground: #111827;
-    --primary: #0D9488;
-    --primary-glow: rgba(13, 148, 136, 0.3);
-    --surface: #ffffff;
-    --border: #CCFBF1;
-    --muted: #4B5563;
-    --danger-bg: #FEE2E2;
+    --background: #F8FAFF;
+    --foreground: #0A0E27;
+    --primary: #0099CC;
+    --primary-accent: #8B2DAA;
+    --accent-pink: #D40058;
+    --primary-glow: rgba(0, 153, 204, 0.3);
+    --primary-glow-strong: rgba(0, 153, 204, 0.5);
+    --surface: rgba(0, 153, 204, 0.08);
+    --border: rgba(0, 153, 204, 0.15);
+    --muted: #3d4a6f;
+    --danger-bg: rgba(212, 0, 88, 0.1);
 }
 
 body {
@@ -35,13 +41,13 @@ body {
 
 /* Icon Button (Round, transparent) */
 .icon-btn {
-    background: rgba(255, 255, 255, 0.05);
-    border: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
     color: var(--muted);
     cursor: pointer;
     padding: 8px;
     border-radius: 50%;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -49,11 +55,13 @@ body {
 
 .icon-btn:hover {
     color: var(--primary);
-    background: rgba(16, 185, 129, 0.1);
+    background: rgba(0, 217, 255, 0.15);
+    border-color: var(--primary);
+    box-shadow: 0 0 12px var(--primary-glow);
 }
 
 body.light-mode .icon-btn {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(0, 153, 204, 0.08);
 }
 
 /* Standard Header Controls Container */
