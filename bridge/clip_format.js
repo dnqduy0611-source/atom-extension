@@ -71,6 +71,36 @@ export function formatAtomClip(bundle, options = {}) {
         lines.push("");
     }
 
+    // NEW: Refined Insight from Active Reading
+    const refinedInsight = normalizeString(bundle.refinedInsight);
+    if (refinedInsight) {
+        lines.push("## Refined Insight");
+        lines.push("");
+        lines.push(refinedInsight);
+        lines.push("");
+    }
+
+    // NEW: AI Discussion Summary from Side Panel
+    const aiDiscussion = normalizeString(bundle.aiDiscussionSummary);
+    if (aiDiscussion) {
+        lines.push("## Discussion Summary");
+        lines.push("");
+        lines.push(aiDiscussion);
+        lines.push("");
+    }
+
+    // NEW: Thread Connections (Smart Links)
+    if (Array.isArray(bundle.threadConnections) && bundle.threadConnections.length > 0) {
+        lines.push("## Connections");
+        lines.push("");
+        bundle.threadConnections.forEach(conn => {
+            const type = normalizeString(conn.type) || "related";
+            const explanation = normalizeString(conn.explanation) || "";
+            lines.push(`- **${type}**: ${explanation}`);
+        });
+        lines.push("");
+    }
+
     const whySaved = normalizeString(bundle.whySaved);
     if (whySaved) {
         lines.push("## Why Saved");

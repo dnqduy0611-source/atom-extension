@@ -19,6 +19,16 @@
     let checkInterval = null;
     let retryCount = 0;
 
+    // i18n helper
+    function getMessage(key, fallback = '') {
+        try {
+            const msg = chrome.i18n?.getMessage?.(key);
+            return msg || fallback;
+        } catch {
+            return fallback;
+        }
+    }
+
     /**
      * Extract notebook info from current page
      * NotebookLM is a SPA, so we need to look for dynamic elements
@@ -214,15 +224,15 @@
                 bottom: 24px;
                 right: 24px;
                 max-width: 380px;
-                background: linear-gradient(135deg, #1a1a2e 0%, #16162a 100%);
-                border: 1px solid rgba(124, 58, 237, 0.3);
+                background: #050505;
+                border: 1px solid rgba(255, 255, 255, 0.1);
                 border-radius: 16px;
                 padding: 20px;
-                box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(124, 58, 237, 0.1);
+                box-shadow: 0 20px 50px rgba(0,0,0,0.7), 0 0 0 1px rgba(16, 185, 129, 0.1);
                 z-index: 2147483647;
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                color: #e0e0e0;
-                animation: atomSlideIn 0.3s ease-out;
+                color: white;
+                animation: atomSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             }
             @keyframes atomSlideIn {
                 from { transform: translateY(20px) scale(0.95); opacity: 0; }
@@ -240,12 +250,13 @@
             .atom-nlm-icon {
                 width: 40px;
                 height: 40px;
-                background: linear-gradient(135deg, #7c3aed, #5b21b6);
+                background: linear-gradient(135deg, #10B981, #059669);
                 border-radius: 10px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 flex-shrink: 0;
+                box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
             }
             .atom-nlm-icon svg {
                 width: 22px;
@@ -255,16 +266,16 @@
             .atom-nlm-title {
                 font-size: 16px;
                 font-weight: 600;
-                color: #f0f0f0;
+                color: white;
             }
             .atom-nlm-subtitle {
                 font-size: 12px;
-                color: #8a8a9a;
+                color: #a3a3a3;
                 margin-top: 2px;
             }
             .atom-nlm-mapping {
-                background: rgba(124, 58, 237, 0.1);
-                border: 1px solid rgba(124, 58, 237, 0.2);
+                background: rgba(16, 185, 129, 0.05);
+                border: 1px solid rgba(16, 185, 129, 0.2);
                 border-radius: 10px;
                 padding: 14px;
                 margin-bottom: 16px;
@@ -276,20 +287,20 @@
                 font-size: 14px;
             }
             .atom-nlm-mapping-label {
-                color: #8a8a9a;
+                color: #a3a3a3;
                 font-size: 12px;
                 margin-bottom: 4px;
             }
             .atom-nlm-mapping-value {
-                color: #a78bfa;
+                color: #10B981;
                 font-weight: 500;
             }
             .atom-nlm-mapping-arrow {
-                color: #6a6a8a;
+                color: #525252;
                 margin: 8px 0;
             }
             .atom-nlm-mapping-notebook {
-                color: #22c55e;
+                color: white;
                 font-weight: 500;
             }
             .atom-nlm-buttons {
@@ -311,21 +322,21 @@
                 transform: translateY(-1px);
             }
             .atom-nlm-btn-primary {
-                background: linear-gradient(135deg, #7c3aed, #5b21b6);
+                background: linear-gradient(135deg, #10B981, #059669);
                 color: white;
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
             }
             .atom-nlm-btn-primary:hover {
-                background: linear-gradient(135deg, #8b5cf6, #6d28d9);
-                box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+                background: linear-gradient(135deg, #34d399, #10B981);
             }
             .atom-nlm-btn-secondary {
                 background: rgba(255, 255, 255, 0.05);
-                color: #a0a0a0;
+                color: #a3a3a3;
                 border: 1px solid rgba(255, 255, 255, 0.1);
             }
             .atom-nlm-btn-secondary:hover {
                 background: rgba(255, 255, 255, 0.1);
-                color: #c0c0c0;
+                color: white;
             }
             .atom-nlm-close {
                 position: absolute;
@@ -333,7 +344,7 @@
                 right: 12px;
                 background: none;
                 border: none;
-                color: #6a6a8a;
+                color: #525252;
                 cursor: pointer;
                 padding: 4px 8px;
                 font-size: 18px;
@@ -341,12 +352,12 @@
                 border-radius: 4px;
             }
             .atom-nlm-close:hover {
-                color: #a0a0a0;
+                color: white;
                 background: rgba(255,255,255,0.05);
             }
             .atom-nlm-reminder {
                 background: rgba(251, 191, 36, 0.1);
-                border: 1px solid rgba(251, 191, 36, 0.3);
+                border: 1px solid rgba(251, 191, 36, 0.2);
                 border-radius: 8px;
                 padding: 12px;
                 margin-bottom: 16px;
@@ -373,46 +384,23 @@
                 font-size: 12px;
                 line-height: 1.4;
             }
-            .atom-nlm-text-preview {
-                background: rgba(0, 0, 0, 0.2);
-                border-radius: 6px;
-                padding: 10px;
-                margin-top: 10px;
-                max-height: 80px;
-                overflow: hidden;
-                position: relative;
-            }
-            .atom-nlm-text-preview-content {
-                font-size: 12px;
-                color: #a0a0a0;
-                line-height: 1.4;
-                font-style: italic;
-            }
-            .atom-nlm-text-preview-fade {
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                height: 30px;
-                background: linear-gradient(transparent, rgba(0,0,0,0.3));
-            }
             .atom-nlm-copy-btn {
                 display: inline-flex;
                 align-items: center;
                 gap: 6px;
-                background: rgba(124, 58, 237, 0.2);
-                border: 1px solid rgba(124, 58, 237, 0.3);
+                background: rgba(16, 185, 129, 0.1);
+                border: 1px solid rgba(16, 185, 129, 0.2);
                 border-radius: 6px;
                 padding: 8px 12px;
-                color: #a78bfa;
+                color: #10B981;
                 font-size: 13px;
                 cursor: pointer;
                 transition: all 0.2s;
                 margin-top: 10px;
             }
             .atom-nlm-copy-btn:hover {
-                background: rgba(124, 58, 237, 0.3);
-                color: #c4b5fd;
+                background: rgba(16, 185, 129, 0.2);
+                color: #34d399;
             }
             .atom-nlm-copy-btn.copied {
                 background: rgba(34, 197, 94, 0.2);
@@ -422,6 +410,56 @@
             .atom-nlm-copy-btn svg {
                 width: 14px;
                 height: 14px;
+            }
+            
+            /* v2 Styles */
+            .atom-nlm-steps-guide {
+                background: rgba(0, 0, 0, 0.3);
+                border-radius: 8px;
+                padding: 12px;
+                margin-bottom: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+            }
+            .atom-nlm-step-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 8px;
+            }
+            .atom-nlm-step-row:last-child { margin-bottom: 0; }
+            .step-num {
+                width: 20px;
+                height: 20px;
+                background: #10B981;
+                border-radius: 50%;
+                font-size: 11px;
+                font-weight: bold;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: black;
+            }
+            .step-text {
+                font-size: 13px;
+                color: #d0d0d0;
+            }
+            .highlight-text {
+                color: #10B981;
+                font-weight: 600;
+            }
+            .atom-nlm-action-row {
+                display: flex;
+                gap: 8px;
+                margin-top: 8px;
+            }
+            .secondary-btn {
+                background: rgba(255, 255, 255, 0.05);
+                border-color: rgba(255, 255, 255, 0.1);
+                color: #a3a3a3;
+            }
+            .secondary-btn:hover {
+                background: rgba(255, 255, 255, 0.1);
+                color: white;
             }
         `;
         container.appendChild(style);
@@ -448,6 +486,23 @@
             </div>
 
             ${selectedText ? `
+            
+            <!-- v2: 3-Step Guide -->
+            <div class="atom-nlm-steps-guide">
+                <div class="atom-nlm-step-row">
+                    <span class="step-num">1</span>
+                    <span class="step-text">Click <strong class="highlight-text">Add source</strong> on the left</span>
+                </div>
+                <div class="atom-nlm-step-row">
+                    <span class="step-num">2</span>
+                    <span class="step-text">Select <strong class="highlight-text">Copied text</strong> option</span>
+                </div>
+                <div class="atom-nlm-step-row">
+                    <span class="step-num">3</span>
+                    <span class="step-text">Paste (Ctrl+V) into the box</span>
+                </div>
+            </div>
+
             <div class="atom-nlm-reminder">
                 <div class="atom-nlm-reminder-icon">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -457,19 +512,19 @@
                     </svg>
                 </div>
                 <div class="atom-nlm-reminder-content">
-                    <div class="atom-nlm-reminder-title">Don't forget to paste!</div>
-                    <div class="atom-nlm-reminder-text">Your text has been copied to clipboard. Paste it into this notebook (Ctrl+V / Cmd+V).</div>
-                    <div class="atom-nlm-text-preview">
-                        <div class="atom-nlm-text-preview-content">"${escapeHtml(textPreview)}"</div>
-                        <div class="atom-nlm-text-preview-fade"></div>
+                    <div class="atom-nlm-reminder-title">Ready to Paste</div>
+                    <div class="atom-nlm-reminder-text">Content is in your clipboard. Follow the steps above to add it as a source.</div>
+                    
+                    <div class="atom-nlm-action-row">
+                        <button class="atom-nlm-copy-btn" data-action="copy">
+                            <span>📋 Copy Text</span>
+                        </button>
+                        ${topic.context?.url ? `
+                        <button class="atom-nlm-copy-btn secondary-btn" data-action="copy-link">
+                            <span>🔗 Copy Link</span>
+                        </button>
+                        ` : ''}
                     </div>
-                    <button class="atom-nlm-copy-btn" data-action="copy">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                        </svg>
-                        <span>Copy text again</span>
-                    </button>
                 </div>
             </div>
             ` : ''}
@@ -496,7 +551,7 @@
             container.remove();
         };
 
-        // Copy button handler
+        // Copy button handler (Text)
         const copyBtn = container.querySelector('[data-action="copy"]');
         if (copyBtn && selectedText) {
             copyBtn.onclick = async () => {
@@ -506,11 +561,30 @@
                     copyBtn.querySelector('span').textContent = 'Copied!';
                     setTimeout(() => {
                         copyBtn.classList.remove('copied');
-                        copyBtn.querySelector('span').textContent = 'Copy text again';
+                        copyBtn.querySelector('span').textContent = '📋 Copy Text';
                     }, 2000);
                 }
             };
         }
+
+        // Copy button handler (Link)
+        const copyLinkBtn = container.querySelector('[data-action="copy-link"]');
+        if (copyLinkBtn && topic.context?.url) {
+            copyLinkBtn.onclick = async () => {
+                const success = await copyToClipboard(topic.context.url);
+                if (success) {
+                    copyLinkBtn.classList.add('copied');
+                    copyLinkBtn.querySelector('span').textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyLinkBtn.classList.remove('copied');
+                        copyLinkBtn.querySelector('span').textContent = '🔗 Copy Link';
+                    }, 2000);
+                }
+            };
+        }
+
+        // Trigger visual blink on "Add source" button if found
+        highlightAddSourceButton();
 
         container.querySelector('[data-action="save"]').onclick = async () => {
             try {
@@ -726,6 +800,113 @@
         console.log("[ATOM NLM] Passive learning script ready");
     }
 
+    /**
+     * Visual helper to find the "Add Source" button
+     */
+    function highlightAddSourceButton() {
+        const potentialButtons = [
+            'button[aria-label*="Add source"]',
+            'button[aria-label*="Thêm nguồn"]',
+            '.add-source-button',
+            // Generic fallback - look for plus icon near left nav
+            'mat-icon[data-mat-icon-name="add_box"]',
+            'button:has(mat-icon)' // Less specific, be careful
+        ];
+
+        let targetBtn = null;
+        for (const selector of potentialButtons) {
+            try {
+                const els = document.querySelectorAll(selector);
+                for (const el of els) {
+                    // Simple heuristic: likely on the left side
+                    const rect = el.getBoundingClientRect();
+                    if (rect.left < 400 && rect.top > 50) {
+                        targetBtn = el.closest('button') || el;
+                        break;
+                    }
+                }
+                if (targetBtn) break;
+            } catch (e) { }
+        }
+
+        if (targetBtn) {
+            targetBtn.style.transition = 'all 0.5s ease';
+            targetBtn.style.boxShadow = '0 0 0 2px #7c3aed, 0 0 20px rgba(124, 58, 237, 0.5)';
+            targetBtn.style.zIndex = '1000';
+
+            // Remove highlight after 10s
+            setTimeout(() => {
+                targetBtn.style.boxShadow = '';
+                targetBtn.style.zIndex = '';
+            }, 10000);
+        }
+    }
+
+    // SRQ banner on NotebookLM page
+    async function checkAndShowSRQBanner() {
+        try {
+            const response = await chrome.runtime.sendMessage({ type: "SRQ_GET_PENDING_COUNT" });
+            const pending = response?.ok ? Number(response?.stats?.pending || 0) : 0;
+            if (!pending) return;
+
+            const lastDismiss = Number(sessionStorage.getItem("srq_banner_dismiss") || 0);
+            if (lastDismiss && Date.now() - lastDismiss < 30 * 60 * 1000) return;
+            if (document.getElementById("atom-srq-banner")) return;
+
+            const banner = document.createElement("div");
+            banner.id = "atom-srq-banner";
+            banner.className = "atom-srq-nlm-banner";
+            const bannerText = getMessage('srq_nlm_banner', `${pending} highlights ready to save`).replace('$1', pending);
+            const exportText = getMessage('srq_nlm_export_current', 'Save all to this notebook');
+            const sidebarText = getMessage('srq_nlm_open_sidepanel', 'Open in sidebar');
+
+            banner.innerHTML = `
+                <span class="srq-banner-text">📋 ${bannerText}</span>
+                <button id="atom-srq-export-current">${escapeHtml(exportText)}</button>
+                <button id="atom-srq-open-sidepanel">${escapeHtml(sidebarText)}</button>
+                <button id="atom-srq-dismiss-banner" class="srq-banner-close" aria-label="Close">✕</button>
+            `;
+
+            const style = document.createElement("style");
+            style.textContent = `
+                #atom-srq-banner{position:fixed;top:0;left:0;right:0;z-index:2147483646;background:linear-gradient(135deg,#065F46,#064E3B);color:#D1FAE5;padding:10px 14px;display:flex;align-items:center;gap:10px;font:13px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;box-shadow:0 4px 18px rgba(0,0,0,.28)}
+                #atom-srq-banner .srq-banner-text{flex:1}
+                #atom-srq-banner button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;padding:6px 10px;border-radius:6px;cursor:pointer}
+                #atom-srq-banner .srq-banner-close{background:transparent;border:none;color:rgba(255,255,255,.75);font-size:16px;padding:2px 6px}
+            `;
+            banner.appendChild(style);
+            document.body.prepend(banner);
+
+            document.getElementById("atom-srq-export-current")?.addEventListener("click", async () => {
+                try {
+                    const notebook = extractNotebookInfo();
+                    const notebookRef = notebook?.ref || "Inbox";
+                    const batchesRes = await chrome.runtime.sendMessage({ type: "SRQ_GET_BATCHES" });
+                    const batches = Array.isArray(batchesRes?.batches) ? batchesRes.batches : [];
+                    for (const batch of batches) {
+                        await chrome.runtime.sendMessage({
+                            type: "SRQ_EXPORT_BATCH",
+                            topicKey: batch.topicKey,
+                            notebookRef
+                        });
+                    }
+                    banner.remove();
+                } catch {}
+            });
+
+            document.getElementById("atom-srq-open-sidepanel")?.addEventListener("click", () => {
+                chrome.runtime.sendMessage({ type: "ATOM_OPEN_SIDEPANEL" }).catch(() => {});
+            });
+            document.getElementById("atom-srq-dismiss-banner")?.addEventListener("click", () => {
+                banner.remove();
+                sessionStorage.setItem("srq_banner_dismiss", String(Date.now()));
+            });
+        } catch {
+            // Ignore when background is unavailable
+        }
+    }
+
     // Initialize
     init();
+    setTimeout(checkAndShowSRQBanner, CONFIG.INITIAL_DELAY + 1000);
 })();

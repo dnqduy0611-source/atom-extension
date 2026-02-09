@@ -12,6 +12,7 @@ console.log('[ATOM] Loading topic_router.js...');
 
 import { loadRegistry, setPendingTopic } from "./topic_registry.js";
 console.log('[ATOM] Imported topic_registry.js');
+import { AI_SERVICE } from "../ai_service.js";
 import { extractTopic, extractTopicCandidates } from "./topic_extractor.js";
 import {
     findBestMatches,
@@ -127,6 +128,29 @@ export async function routeTopic(context, options = {}) {
     }
 
     // Step 6: Build result
+    let finalDisplayTitle = extracted.displayTitle;
+    let finalTopicKey = extracted.topicKey;
+
+    // v2: Use AI Smart Naming if creating new notebook
+    if (decision === "create" || decision === "ask") {
+        try {
+            console.log('[ATOM Bridge] Generating smart title...');
+            const smartTitle = await AI_SERVICE.generateTitle(context.selection, {
+                domain: context.domain
+            });
+
+            if (smartTitle) {
+                finalDisplayTitle = smartTitle;
+                // CRITICAL FIX: Do NOT change topicKey. Key must remain algorithmic (kw:...)
+                // for consistent re-findability on future visits.
+                // finalTopicKey = ... (REMOVED)
+                console.log('[ATOM Bridge] Smart title generated:', smartTitle);
+            }
+        } catch (err) {
+            console.warn('[ATOM Bridge] Smart naming failed, falling back to regex:', err);
+        }
+    }
+
     const result = {
         decision,
         bestMatch: bestMatch ? {
@@ -146,11 +170,11 @@ export async function routeTopic(context, options = {}) {
             reasons: alt.reasons
         })),
         // v1 spec fields
-        topicKey: extracted.topicKey,
+        topicKey: finalTopicKey,
         topicSource: extracted.topicSource,
         topicLabel: extracted.topicLabel,
         // Legacy fields
-        displayTitle: extracted.displayTitle,
+        displayTitle: finalDisplayTitle,
         keywords: extracted.keywords,
         source: extracted.source,
         confidence: extracted.confidence,

@@ -33,6 +33,13 @@
     };
     let acceptedCostWarning = false;
     let userPersona = ''; // User's role/expertise for adaptive explanations
+    let commandSystemEnabled = false;
+    let commandActionExecutor = null;
+    let commandQuickActionsController = null;
+    let quickDiaryController = null;
+    let tabController = null;
+    let focusWidgetController = null;
+    let activeMainTab = 'chat';
 
     // Session Management
     let sessionStartTime = Date.now();
@@ -151,6 +158,553 @@
         }
     }
 
+    const COMMAND_SYSTEM_PROMPT = [
+        'COMMAND CAPABILITIES:',
+        '- Start focus: [ACTION:FOCUS_START:{"minutes":25}]',
+        '- Stop focus: [ACTION:FOCUS_STOP]',
+        '- Pause focus: [ACTION:FOCUS_PAUSE]',
+        '- Open notes: [ACTION:OPEN_NOTES]',
+        '- Open diary: [ACTION:OPEN_DIARY]',
+        '- Open settings: [ACTION:OPEN_SETTINGS]',
+        '- Add diary entry: [ACTION:DIARY_ADD:{"content":"...","mood":"neutral","tags":["daily"]}]',
+        '- Export saved highlights: [ACTION:EXPORT_SAVED]',
+        '',
+        'RULES:',
+        '1. Use ACTION only when user explicitly asks for an action.',
+        '2. Put ACTION on a separate final line.',
+        '3. If unclear, ask a follow-up question first.',
+        '4. For FOCUS_START, minutes must be between 1 and 180.',
+        '5. For DIARY_ADD, infer mood from user text; handle negation (not happy -> sad; no longer anxious -> happy/relieved). If unsure -> neutral. Include 1-3 tags.'
+    ].join('\n');
+
+    async function isCommandFeatureEnabled() {
+        try {
+            if (window.FeatureFlags?.isEnabled) {
+                const modern = await window.FeatureFlags.isEnabled('AI_COMMANDS_ENABLED');
+                const legacy = await window.FeatureFlags.isEnabled('ENABLE_AI_COMMANDS');
+                if (modern || legacy) return true;
+            }
+        } catch (e) {
+            console.warn('[CommandSystem] Failed to read FeatureFlags API:', e);
+        }
+
+        try {
+            const data = await chrome.storage.local.get([
+                'atom_feature_flags_v1',
+                'ff_ENABLE_AI_COMMANDS',
+                'ff_AI_COMMANDS_ENABLED'
+            ]);
+            const flags = data.atom_feature_flags_v1 || {};
+            return !!(
+                flags.AI_COMMANDS_ENABLED ||
+                flags.ENABLE_AI_COMMANDS ||
+                data.ff_AI_COMMANDS_ENABLED ||
+                data.ff_ENABLE_AI_COMMANDS
+            );
+        } catch (e) {
+            console.warn('[CommandSystem] Fallback flag lookup failed:', e);
+            return false;
+        }
+    }
+
+    function registerFocusHandlers() {
+        if (!window.CommandRouter) return;
+
+        window.CommandRouter.register(
+            'FOCUS_START',
+            async function (params) {
+                const minutes = Number(params?.minutes ?? 25);
+                if (!Number.isFinite(minutes) || minutes < 1) {
+                    return {
+                        success: false,
+                        message: getMessage('cmd_focus_min_too_low', 'Please enter at least 1 minute.')
+                    };
+                }
+                if (minutes > 180) {
+                    return {
+                        success: false,
+                        message: getMessage('cmd_focus_min_too_high', 'Maximum 180 minutes allowed.')
+                    };
+                }
+
+                const breakMin = Math.max(1, Math.ceil(minutes / 5));
+                try {
+                    const result = await chrome.runtime.sendMessage({
+                        type: 'FOCUS_START',
+                        payload: { workMin: minutes, breakMin: breakMin }
+                    });
+                    if (!result?.ok) {
+                        throw new Error('FOCUS_START returned non-ok');
+                    }
+                    return {
+                        success: true,
+                        message: getMessageWithArgs(
+                            'focusStarted',
+                            [String(minutes)],
+                            `Started focus for ${minutes} minutes.`
+                        ),
+                        data: { minutes: minutes, breakMin: breakMin }
+                    };
+                } catch (error) {
+                    return {
+                        success: false,
+                        message: getMessage('cmdError', getMessage('cmd_error', 'Something went wrong...'))
+                    };
+                }
+            },
+            async function () {
+                await chrome.runtime.sendMessage({ type: 'FOCUS_STOP' });
+            }
+        );
+
+        window.CommandRouter.register(
+            'FOCUS_STOP',
+            async function () {
+                try {
+                    const stateRes = await chrome.runtime.sendMessage({ type: 'FOCUS_GET_STATE' });
+                    const state = stateRes?.atom_focus_state;
+                    if (!state?.enabled) {
+                        return {
+                            success: false,
+                            message: getMessage('focusNotRunning', 'No focus session is currently running.')
+                        };
+                    }
+
+                    const res = await chrome.runtime.sendMessage({ type: 'FOCUS_STOP' });
+                    if (!res?.ok) {
+                        throw new Error('FOCUS_STOP returned non-ok');
+                    }
+
+                    return {
+                        success: true,
+                        message: getMessage('focusStopped', 'Focus session stopped.')
+                    };
+                } catch (error) {
+                    return {
+                        success: false,
+                        message: getMessage('cmdError', getMessage('cmd_error', 'Something went wrong...'))
+                    };
+                }
+            }
+        );
+
+        window.CommandRouter.register(
+            'FOCUS_PAUSE',
+            async function () {
+                try {
+                    const pauseRes = await chrome.runtime.sendMessage({ type: 'FOCUS_PAUSE' });
+
+                    if (!pauseRes?.ok) {
+                        const reason = pauseRes?.reason || 'unknown';
+                        if (reason === 'not_running') {
+                            return {
+                                success: false,
+                                message: getMessage('focusNotRunning', 'No focus session is currently running.')
+                            };
+                        }
+                        return {
+                            success: false,
+                            message: getMessage('cmdError', getMessage('cmd_error', 'Something went wrong...'))
+                        };
+                    }
+
+                    return {
+                        success: true,
+                        message: getMessage('focusPaused', 'Focus paused.')
+                    };
+                } catch (error) {
+                    return {
+                        success: false,
+                        message: getMessage('cmdError', getMessage('cmd_error', 'Something went wrong...'))
+                    };
+                }
+            }
+        );
+    }
+
+    function registerNavigationHandlers() {
+        if (!window.CommandRouter) return;
+
+        window.CommandRouter.register('OPEN_NOTES', async function () {
+            try {
+                switchMainTab('notes');
+            } catch (e) {
+                chrome.tabs.create({ url: chrome.runtime.getURL('memory.html') });
+            }
+            return { success: true, message: '' };
+        });
+
+        window.CommandRouter.register('OPEN_SAVED', async function () {
+            switchMainTab('saved');
+            return { success: true, message: '' };
+        });
+
+        window.CommandRouter.register('EXPORT_SAVED', async function () {
+            try {
+                const batchesRes = await chrome.runtime.sendMessage({ type: 'SRQ_GET_BATCHES' });
+                const batches = batchesRes?.batches || [];
+                if (!Array.isArray(batches) || batches.length === 0) {
+                    return {
+                        success: true,
+                        message: getMessage('savedExportEmpty', 'No saved highlights to export.')
+                    };
+                }
+
+                let exportedTotal = 0;
+                let failed = 0;
+                for (const batch of batches) {
+                    if (!batch?.topicKey) continue;
+                    const res = await chrome.runtime.sendMessage({
+                        type: 'SRQ_EXPORT_BATCH',
+                        topicKey: batch.topicKey,
+                        notebookRef: batch.suggestedNotebook || 'Inbox'
+                    });
+                    if (res?.ok) {
+                        exportedTotal += Number(res.exported || res.exportedCount || 0);
+                    } else {
+                        failed += 1;
+                    }
+                }
+
+                if (exportedTotal > 0) {
+                    return {
+                        success: true,
+                        message: getMessageWithArgs(
+                            'savedExported',
+                            [String(exportedTotal)],
+                            `Exported ${exportedTotal} highlights`
+                        )
+                    };
+                }
+
+                return {
+                    success: false,
+                    message: getMessage('savedExportFailed', 'Export failed. Try again.')
+                };
+            } catch (e) {
+                return {
+                    success: false,
+                    message: getMessage('savedExportFailed', 'Export failed. Try again.')
+                };
+            }
+        });
+
+        window.CommandRouter.register('OPEN_DIARY', async function () {
+            chrome.tabs.create({ url: chrome.runtime.getURL('journal.html') });
+            return { success: true, message: '' };
+        });
+
+        window.CommandRouter.register('OPEN_SETTINGS', async function () {
+            chrome.runtime.openOptionsPage();
+            return { success: true, message: '' };
+        });
+    }
+
+    function registerDiaryHandlers() {
+        if (!window.CommandRouter) return;
+
+        window.CommandRouter.register(
+            'DIARY_ADD',
+            async function (params) {
+                const content = String(params?.content ?? '').trim();
+                if (!content) {
+                    return {
+                        success: false,
+                        message: getMessage('diaryNoContent', 'Add a short note before saving.')
+                    };
+                }
+
+                const allowedMoods = new Set([
+                    'happy', 'excited', 'sad', 'anxious', 'tired', 'angry', 'focused', 'grateful', 'neutral'
+                ]);
+                const rawMood = String(params?.mood ?? '').toLowerCase().trim();
+                const mood = allowedMoods.has(rawMood) ? rawMood : 'neutral';
+
+                let tags = [];
+                if (Array.isArray(params?.tags)) {
+                    tags = params.tags
+                        .map(t => String(t || '').trim())
+                        .filter(Boolean)
+                        .slice(0, 3);
+                }
+                if (tags.length === 0) tags = ['daily'];
+
+                const entry = {
+                    id: `journal_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                    timestamp: Date.now(),
+                    input: {
+                        context: String(params?.context || getMessage('jnl_title', 'Journal')),
+                        duration: 0,
+                        user_feeling: mood,
+                        user_tags: tags,
+                        user_note: content
+                    },
+                    source: 'ai_command'
+                };
+
+                const data = await chrome.storage.local.get(['journal_logs']);
+                const logs = data.journal_logs || [];
+                logs.push(entry);
+                await chrome.storage.local.set({ journal_logs: logs });
+
+                return {
+                    success: true,
+                    message: getMessage('diarySaved', 'Saved to Journal'),
+                    data: entry
+                };
+            },
+            async function (data) {
+                const storage = await chrome.storage.local.get(['journal_logs']);
+                const logs = storage.journal_logs || [];
+                const next = logs.filter(l => l.id ? l.id !== data.id : l.timestamp !== data.timestamp);
+                await chrome.storage.local.set({ journal_logs: next });
+            }
+        );
+
+        window.CommandRouter.register(
+            'DIARY_SUMMARY',
+            async function (params) {
+                const period = String(params?.period || 'week').toLowerCase();
+                const data = await chrome.storage.local.get(['journal_logs']);
+                const logs = data.journal_logs || [];
+
+                const periodMs = {
+                    today: 24 * 60 * 60 * 1000,
+                    week: 7 * 24 * 60 * 60 * 1000,
+                    month: 30 * 24 * 60 * 60 * 1000
+                };
+                const cutoff = Date.now() - (periodMs[period] || periodMs.week);
+
+                const filtered = logs.filter(log => {
+                    const ts = Number(log.timestamp || log.ts || 0);
+                    return ts >= cutoff;
+                });
+
+                if (filtered.length === 0) {
+                    return {
+                        success: true,
+                        message: getMessage('diarySummaryEmpty', 'No entries yet for this period.')
+                    };
+                }
+
+                const moodCounts = {};
+                const tagCounts = {};
+                filtered.forEach(log => {
+                    const mood = log.input?.user_feeling || 'neutral';
+                    moodCounts[mood] = (moodCounts[mood] || 0) + 1;
+                    (log.input?.user_tags || []).forEach(tag => {
+                        const key = String(tag || '').trim();
+                        if (!key) return;
+                        tagCounts[key] = (tagCounts[key] || 0) + 1;
+                    });
+                });
+
+                const topMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0];
+                const topTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+
+                const periodLabel = ({
+                    today: getMessage('periodToday', 'today'),
+                    week: getMessage('periodWeek', 'this week'),
+                    month: getMessage('periodMonth', 'this month')
+                })[period] || getMessage('periodWeek', 'this week');
+
+                const moodLabel = topMood?.[0] || 'neutral';
+                const tagLine = topTags.map(([t]) => t).join(', ') || getMessage('diarySummaryTagsEmpty', 'general');
+
+                return {
+                    success: true,
+                    message:
+                        `${getMessage('diarySummaryTitle', 'Journal summary')} (${periodLabel}):\n` +
+                        `• ${filtered.length} ${getMessage('diarySummaryEntries', 'entries')}\n` +
+                        `• ${getMessage('diarySummaryMood', 'Top mood')}: ${moodLabel}\n` +
+                        `• ${getMessage('diarySummaryTags', 'Top tags')}: ${tagLine}`,
+                    data: { period: period, totalEntries: filtered.length, moodCounts, tagCounts }
+                };
+            }
+        );
+
+        window.CommandRouter.register(
+            'SAVE_TO_NOTES',
+            async function (params) {
+                let textToSave = typeof params?.content === 'string' ? params.content : '';
+                if (!textToSave) {
+                    const ctx = await chrome.storage.local.get(['last_highlight', 'current_selection']);
+                    textToSave = String(ctx.current_selection || ctx.last_highlight || '');
+                }
+
+                textToSave = String(textToSave || '').trim();
+                if (!textToSave) {
+                    return {
+                        success: false,
+                        message: getMessage('noteNoContent', 'Select text or provide content first.')
+                    };
+                }
+
+                let url = '';
+                let title = '';
+                try {
+                    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+                    url = tabs?.[0]?.url || '';
+                    title = tabs?.[0]?.title || '';
+                } catch { /* ignore */ }
+
+                let tags = [];
+                if (Array.isArray(params?.tags)) {
+                    tags = params.tags.map(t => String(t || '').trim()).filter(Boolean);
+                }
+
+                const note = {
+                    id: `note_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                    selection: textToSave,
+                    url,
+                    title,
+                    created_at: Date.now(),
+                    category: String(params?.category || 'general'),
+                    tags,
+                    source: 'ai_command'
+                };
+
+                const res = await chrome.runtime.sendMessage({
+                    type: 'ATOM_SAVE_READING_NOTE',
+                    payload: { note: note }
+                });
+
+                if (!res?.ok) {
+                    return {
+                        success: false,
+                        message: getMessage('noteSaveFailed', 'Could not save note.')
+                    };
+                }
+
+                return {
+                    success: true,
+                    message: getMessage('noteSaved', 'Saved to Notes'),
+                    data: note
+                };
+            },
+            async function (data) {
+                const key = 'atom_reading_notes';
+                const storage = await chrome.storage.local.get([key]);
+                const list = Array.isArray(storage[key]) ? storage[key] : [];
+                const next = list.filter(n => n.id !== data.id);
+                await chrome.storage.local.set({ [key]: next });
+            }
+        );
+    }
+
+    async function initCommandSystem() {
+        const router = window.CommandRouter;
+        const parser = window.IntentParser;
+        const executor = window.ActionExecutor;
+        const toast = window.ToastManager;
+
+        if (!router || !parser || !executor || !toast) {
+            commandSystemEnabled = false;
+            commandActionExecutor = null;
+            return;
+        }
+
+        const enabled = await isCommandFeatureEnabled();
+        commandSystemEnabled = enabled;
+        router.setEnabled(enabled);
+
+        const commandContainer = document.getElementById('quick-actions-command');
+        if (!enabled) {
+            commandActionExecutor = null;
+            if (commandContainer) commandContainer.classList.remove('active');
+            return;
+        }
+
+        executor.init(toast);
+        commandActionExecutor = executor;
+
+        registerFocusHandlers();
+        registerNavigationHandlers();
+        registerDiaryHandlers();
+
+        if (window.QuickActionsController && !commandQuickActionsController) {
+            commandQuickActionsController = new window.QuickActionsController(commandActionExecutor, {
+                containerId: 'quick-actions-command'
+            });
+            await commandQuickActionsController.init();
+        }
+
+        if (window.QuickDiaryController && !quickDiaryController) {
+            quickDiaryController = new window.QuickDiaryController(commandActionExecutor, {
+                containerId: 'quick-diary'
+            });
+            if (typeof quickDiaryController.init === 'function') {
+                quickDiaryController.init();
+            }
+        }
+    }
+
+    async function showCommandOnboardingIfNeeded() {
+        if (!commandSystemEnabled) return;
+        try {
+            const existing = await chrome.storage.local.get([COMMAND_ONBOARDING_STORAGE_KEY]);
+            if (existing[COMMAND_ONBOARDING_STORAGE_KEY]) return;
+        } catch (e) {
+            return;
+        }
+
+        if (document.getElementById('sp-command-onboarding')) return;
+
+        const titleText = getMessage('cmd_onboarding_title', 'New: control with chat');
+        const bodyText = getMessage(
+            'cmd_onboarding_body',
+            'Now you can say:<br>- "Focus 25 minutes"<br>- "Write a diary: feeling tired"<br>- "Save to notes"<br><br>Or tap the quick buttons at the top.'
+        );
+        const dismissText = getMessage('cmd_onboarding_dismiss', 'Got it');
+
+        const card = document.createElement('div');
+        card.id = 'sp-command-onboarding';
+        card.className = 'sp-onboarding';
+        card.setAttribute('role', 'dialog');
+        card.setAttribute('aria-live', 'polite');
+
+        const titleEl = document.createElement('div');
+        titleEl.className = 'sp-onboarding__title';
+        titleEl.textContent = titleText;
+
+        const bodyEl = document.createElement('div');
+        bodyEl.className = 'sp-onboarding__body';
+        bodyEl.innerHTML = bodyText;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'sp-onboarding__btn';
+        btn.textContent = dismissText;
+
+        btn.addEventListener('click', async () => {
+            card.classList.add('hide');
+            setTimeout(() => card.remove(), 220);
+            try {
+                await chrome.storage.local.set({ [COMMAND_ONBOARDING_STORAGE_KEY]: true });
+            } catch (e) {
+                // ignore
+            }
+        });
+
+        card.appendChild(titleEl);
+        card.appendChild(bodyEl);
+        card.appendChild(btn);
+        document.body.appendChild(card);
+        requestAnimationFrame(() => card.classList.add('show'));
+    }
+
+    async function tryHandleIntentLocally(text) {
+        if (!commandSystemEnabled || !commandActionExecutor || !window.IntentParser?.parse) {
+            return false;
+        }
+
+        const intent = window.IntentParser.parse(text);
+        if (!intent) return false;
+
+        await commandActionExecutor.handleIntent(intent);
+        return true;
+    }
+
     // ===========================
     // Context Levels for Token Optimization
     // ===========================
@@ -203,8 +757,10 @@
     const UNDO_TIMEOUT_MS = 5000; // 5 seconds
     let undoStack = []; // Stack of undoable actions
     let activeUndoToast = null; // Currently displayed undo toast
+    let toastTimeoutId = null;
 
     const ONBOARDING_STORAGE_KEY = 'atom_sidepanel_onboarding';
+    const COMMAND_ONBOARDING_STORAGE_KEY = 'ai_commands_onboarded';
     const ONBOARDING_MENU_ID = 'menu-onboarding-guide';
     const ONBOARDING_STATES = Object.freeze({
         NOT_STARTED: 'not_started',
@@ -796,6 +1352,15 @@
         }
     }
 
+    function getMessageWithArgs(key, args, fallback = '') {
+        try {
+            const msg = chrome.i18n.getMessage(key, args);
+            return msg || fallback;
+        } catch (e) {
+            return fallback;
+        }
+    }
+
     function applyI18n() {
         // Apply data-i18n to textContent
         document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -828,6 +1393,8 @@
             // Offline banner
             offlineBanner: document.getElementById('offline-banner'),
             retryConnectionBtn: document.getElementById('btn-retry-connection'),
+            mainTabBar: document.getElementById('main-tabbar'),
+            cardsGoChatBtn: document.getElementById('btn-cards-go-chat'),
 
             // Zone 1: Top Bar
             sessionTimerEl: document.getElementById('session-timer'),
@@ -881,27 +1448,21 @@
             bottomTabsContainer: document.querySelector('.sp-bottom-tabs')
         };
 
+        await initCommandSystem();
+        await showCommandOnboardingIfNeeded();
         setupEventListeners();
         setupMenuDropdown();
         updateSemanticMenuUI();
         setupTabs();
+        await setupMainTabs();
         setupNotes();
         setupActionBar();
+        await initFocusWidget();
         await loadPageContext();
         await loadThreadsFromStorage();
         await loadParkingLot();
         listenForHighlights();
         updateAllCounts();
-
-        // Restore collapsed state
-        try {
-            const collapsedState = await chrome.storage.local.get(['sp_tabs_collapsed']);
-            if (collapsedState.sp_tabs_collapsed && elements.bottomTabsContainer) {
-                elements.bottomTabsContainer.classList.add('collapsed');
-            }
-        } catch (e) {
-            console.warn('Failed to restore tabs state', e);
-        }
 
         // Initialize onboarding
         await loadOnboardingState();
@@ -1295,9 +1856,9 @@
             }
         }
 
-        // Switch to Discussions tab
-        const tabBtn = document.querySelector('.sp-tab-btn[data-tab="discussions"]');
-        if (tabBtn) tabBtn.click();
+        // Switch to Chat > Discussions
+        switchMainTab('chat', false);
+        switchToTab('discussions');
 
         // Set active thread
         activeThreadId = targetThread.id;
@@ -2183,10 +2744,12 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
 
         if (type === 'thread') {
             activeThreadId = id;
+            switchMainTab('chat', false);
             switchToTab('discussions');
             renderThreadList();
             renderActiveThread();
         } else if (type === 'note') {
+            switchMainTab('notes', false);
             switchToTab('notes');
             // Highlight the note
             setTimeout(() => {
@@ -2292,20 +2855,33 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
     }
 
     function setupTabs() {
-        document.querySelectorAll('.sp-tab-btn').forEach(btn => {
+        if (window.TabController && elements.bottomTabsContainer) {
+            try {
+                if (tabController?.destroy) tabController.destroy();
+                tabController = new window.TabController({
+                    root: elements.bottomTabsContainer,
+                    toggleButton: elements.toggleTabsBtn,
+                    collapsedStorageKey: 'sp_tabs_collapsed'
+                });
+                const ready = tabController.init();
+                if (ready) return;
+            } catch (e) {
+                console.warn('[Sidepanel] TabController init failed, fallback to legacy tabs:', e);
+            }
+        }
+
+        // Legacy fallback
+        document.querySelectorAll('.sp-tab-btn').forEach((btn) => {
             btn.addEventListener('click', () => {
                 const tabId = btn.dataset.tab;
-
-                // Update active tab button with ARIA
-                document.querySelectorAll('.sp-tab-btn').forEach(b => {
+                document.querySelectorAll('.sp-tab-btn').forEach((b) => {
                     b.classList.remove('active');
                     b.setAttribute('aria-selected', 'false');
                 });
                 btn.classList.add('active');
                 btn.setAttribute('aria-selected', 'true');
 
-                // Update active tab panel with ARIA
-                document.querySelectorAll('.sp-tab-panel').forEach(p => {
+                document.querySelectorAll('.sp-tab-panel').forEach((p) => {
                     p.classList.remove('active');
                     p.setAttribute('hidden', '');
                 });
@@ -2315,27 +2891,169 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
                     panel.removeAttribute('hidden');
                 }
 
-                // If collapsed, expand when clicking a tab
                 if (elements.bottomTabsContainer?.classList.contains('collapsed')) {
-                    toggleBottomTabs();
+                    toggleBottomTabs(false);
+                }
+            });
+        });
+        elements.toggleTabsBtn?.addEventListener('click', () => toggleBottomTabs());
+    }
+
+    async function setupMainTabs() {
+        const tabBar = elements.mainTabBar;
+        if (!tabBar) return;
+
+        const buttons = Array.from(tabBar.querySelectorAll('.sp-main-tab-btn[data-main-tab]'));
+        if (!buttons.length) return;
+
+        buttons.forEach((btn, index) => {
+            btn.addEventListener('click', () => {
+                const tabName = btn.dataset.mainTab;
+                switchMainTab(tabName, true);
+            });
+
+            btn.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    const delta = e.key === 'ArrowRight' ? 1 : -1;
+                    let nextIndex = index + delta;
+                    if (nextIndex < 0) nextIndex = buttons.length - 1;
+                    if (nextIndex >= buttons.length) nextIndex = 0;
+                    buttons[nextIndex]?.focus();
+                    switchMainTab(buttons[nextIndex]?.dataset?.mainTab, true);
+                    return;
+                }
+                if (e.key === 'Home') {
+                    e.preventDefault();
+                    buttons[0]?.focus();
+                    switchMainTab(buttons[0]?.dataset?.mainTab, true);
+                    return;
+                }
+                if (e.key === 'End') {
+                    e.preventDefault();
+                    const last = buttons[buttons.length - 1];
+                    last?.focus();
+                    switchMainTab(last?.dataset?.mainTab, true);
                 }
             });
         });
 
-        // Setup toggle button
-        elements.toggleTabsBtn?.addEventListener('click', toggleBottomTabs);
+        elements.cardsGoChatBtn?.addEventListener('click', () => {
+            switchMainTab('chat', true);
+        });
+
+        let initial = 'chat';
+        try {
+            const data = await chrome.storage.local.get(['sp_active_main_tab']);
+            const candidate = String(data.sp_active_main_tab || '').trim();
+            if (['chat', 'notes', 'cards', 'saved'].includes(candidate)) {
+                initial = candidate;
+            }
+        } catch (e) {
+            // ignore
+        }
+
+        switchMainTab(initial, false);
     }
 
-    function toggleBottomTabs() {
-        if (!elements.bottomTabsContainer) return;
+    function switchMainTab(tabName, persist = true) {
+        const next = ['chat', 'notes', 'cards', 'saved'].includes(tabName) ? tabName : 'chat';
+        activeMainTab = next;
+        document.body.setAttribute('data-main-tab', next);
 
-        const isCollapsed = elements.bottomTabsContainer.classList.toggle('collapsed');
+        const tabBar = elements.mainTabBar;
+        if (tabBar) {
+            tabBar.querySelectorAll('.sp-main-tab-btn[data-main-tab]').forEach((btn) => {
+                const isActive = btn.dataset.mainTab === next;
+                btn.classList.toggle('active', isActive);
+                btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                btn.tabIndex = isActive ? 0 : -1;
+            });
+        }
 
-        // Save state
+        if (next === 'notes') {
+            toggleBottomTabs(false);
+            switchToTab('notes');
+            setTimeout(() => elements.noteInput?.focus(), 100);
+        } else if (next === 'chat') {
+            switchToTab('discussions');
+        } else if (next === 'saved') {
+            mountSRQWidget();
+        }
+
+        animateMainTabSurface(next);
+
+        if (persist) {
+            try {
+                chrome.storage.local.set({ sp_active_main_tab: next });
+            } catch (e) {
+                // ignore
+            }
+        }
+    }
+
+    function animateMainTabSurface(tabName) {
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            return;
+        }
+        const targets = [];
+        if (tabName === 'notes') {
+            if (elements.bottomTabsContainer) targets.push(elements.bottomTabsContainer);
+        } else if (tabName === 'saved') {
+            const saved = document.getElementById('srq-widget-container');
+            if (saved) targets.push(saved);
+        } else if (tabName === 'cards') {
+            const cards = document.getElementById('cards-panel');
+            if (cards) targets.push(cards);
+        } else {
+            if (elements.messages) targets.push(elements.messages);
+            if (elements.bottomTabsContainer) targets.push(elements.bottomTabsContainer);
+        }
+
+        targets.forEach((el) => {
+            el.classList.remove('sp-main-surface-enter');
+            requestAnimationFrame(() => {
+                el.classList.add('sp-main-surface-enter');
+            });
+            setTimeout(() => {
+                el.classList.remove('sp-main-surface-enter');
+            }, 220);
+        });
+    }
+
+    function toggleBottomTabs(forceCollapsed) {
+        if (tabController?.toggleCollapsed) {
+            return tabController.toggleCollapsed(forceCollapsed);
+        }
+
+        if (!elements.bottomTabsContainer) return false;
+
+        let isCollapsed = forceCollapsed;
+        if (typeof isCollapsed !== 'boolean') {
+            isCollapsed = !elements.bottomTabsContainer.classList.contains('collapsed');
+        }
+
+        elements.bottomTabsContainer.classList.toggle('collapsed', isCollapsed);
+
         try {
             chrome.storage.local.set({ 'sp_tabs_collapsed': isCollapsed });
         } catch (e) {
             console.warn('Failed to save tabs state', e);
+        }
+        return isCollapsed;
+    }
+
+    async function initFocusWidget() {
+        if (!window.FocusWidget) return;
+        try {
+            if (focusWidgetController?.destroy) focusWidgetController.destroy();
+            focusWidgetController = new window.FocusWidget({
+                containerId: 'focus-widget',
+                actionExecutor: commandActionExecutor
+            });
+            await focusWidgetController.init();
+        } catch (e) {
+            console.warn('[Sidepanel] FocusWidget init failed:', e);
         }
     }
 
@@ -2531,6 +3249,9 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
         // Setup keyboard shortcuts
         setupKeyboardShortcuts();
 
+        // Capture post button
+        document.getElementById('capture-post-btn')?.addEventListener('click', captureFocusedPost);
+
         // Setup network status listeners
         setupNetworkListeners();
     }
@@ -2643,12 +3364,50 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
     }
 
     // ===========================
+    // Auto-Focus Post Capture
+    // ===========================
+    async function captureFocusedPost() {
+        try {
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (!tab?.id) {
+                showToast(getMessage('sp_no_active_tab', 'No active tab'), 'warning');
+                return;
+            }
+
+            const response = await chrome.tabs.sendMessage(tab.id, {
+                type: 'ATOM_GET_FOCUSED_POST'
+            });
+
+            if (response?.ok && response.post) {
+                const threadId = `auto_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
+                await handleNewHighlight({
+                    ...response.post,
+                    threadId: threadId
+                });
+                showToast(getMessage('sp_post_captured', 'Post captured!'), 'success');
+            } else {
+                showToast(getMessage('sp_no_post_found', 'No focused post found'), 'info');
+            }
+        } catch (err) {
+            console.error('[SidePanel] captureFocusedPost error:', err);
+            showToast(getMessage('sp_capture_error', 'Could not capture post'), 'warning');
+        }
+    }
+
+    // ===========================
     // Keyboard Shortcuts
     // ===========================
     function setupKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
             const isInputFocused = document.activeElement?.tagName === 'TEXTAREA' ||
                 document.activeElement?.tagName === 'INPUT';
+
+            // Alt+C: Capture focused post
+            if (e.altKey && e.key === 'c') {
+                e.preventDefault();
+                captureFocusedPost();
+                return;
+            }
 
             // Ctrl/Cmd + Enter: Send message (works even in input)
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -2678,7 +3437,7 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
             // Ctrl/Cmd + N: New quick note (focus note input)
             if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
                 e.preventDefault();
-                // Switch to notes tab
+                switchMainTab('notes');
                 switchToTab('notes');
                 // Focus the note input
                 setTimeout(() => elements.noteInput?.focus(), 100);
@@ -2734,13 +3493,13 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
                 return;
             }
 
-            // Number keys 1-3: Quick tab switch
-            if (e.key >= '1' && e.key <= '3' && (e.altKey)) {
+            // Alt+1..4: Main tab switch
+            if (e.altKey && e.key >= '1' && e.key <= '4') {
                 e.preventDefault();
-                const tabs = ['discussions', 'notes', 'connections'];
+                const tabs = ['chat', 'notes', 'cards', 'saved'];
                 const tabIndex = parseInt(e.key) - 1;
                 if (tabs[tabIndex]) {
-                    switchToTab(tabs[tabIndex]);
+                    switchMainTab(tabs[tabIndex]);
                 }
                 return;
             }
@@ -2748,6 +3507,10 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
     }
 
     function switchToTab(tabName) {
+        if (tabController?.switchTo) {
+            tabController.switchTo(tabName, { expandIfCollapsed: true });
+            return;
+        }
         const tabBtn = document.querySelector(`.sp-tab-btn[data-tab="${tabName}"]`);
         if (tabBtn) {
             tabBtn.click();
@@ -2755,6 +3518,10 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
     }
 
     function cycleBottomTabs(direction) {
+        if (tabController?.cycle) {
+            tabController.cycle(direction);
+            return;
+        }
         const tabs = ['discussions', 'notes', 'connections'];
         const activeTab = document.querySelector('.sp-tab-btn.active');
         const currentIndex = tabs.indexOf(activeTab?.dataset.tab);
@@ -3071,8 +3838,8 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
         elements.deepAngleBtn.disabled = !hasPageContext;
         if (elements.deepAngleStatus) {
             elements.deepAngleStatus.textContent = hasPageContext
-                ? getMessage('sp_deep_angle_hint', 'Generate a deep angle using your recent reading history.')
-                : getMessage('sp_deep_angle_empty', 'No page context available.');
+                ? getMessage('sp_deep_angle_hint', 'See another perspective from your recent highlights.')
+                : getMessage('sp_deep_angle_empty', 'Select or save more highlights to unlock this.');
             elements.deepAngleStatus.style.display = 'block';
         }
 
@@ -3094,7 +3861,7 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
             elements.deepAngleBtn.disabled = true;
             elements.deepAngleBtn.innerHTML = `<span class="btn-spinner"></span> ${loadingLabel}`;
         } else {
-            const label = getMessage('sp_deep_angle', 'Deep Angle');
+            const label = getMessage('sp_deep_angle', 'New angle');
             elements.deepAngleBtn.classList.remove('sp-action-loading');
             elements.deepAngleBtn.setAttribute('aria-busy', 'false');
             elements.deepAngleBtn.disabled = !pageContext?.url;
@@ -3187,7 +3954,7 @@ Rules:
                 console.log('[DeepAngle] Skipped due to probation mode:', err.message);
             } else {
                 console.error('[DeepAngle] Error:', err);
-                showToast(getMessage('sp_deep_angle_error', 'Failed to generate Deep Angle.'), 'error');
+                showToast(getMessage('sp_deep_angle_error', "Couldn't generate a new angle."), 'error');
             }
         } finally {
             setDeepAngleLoading(false);
@@ -3662,7 +4429,7 @@ Provide a clear analysis of:
 
         // Render thread items in bottom tab
         if (visibleThreads.length === 0) {
-            elements.threadList.innerHTML = `<div class="sp-note-empty">${getMessage('sp_empty_desc', 'No discussions yet')}</div>`;
+            elements.threadList.innerHTML = `<div class="sp-note-empty">${getMessage('sp_no_discussions', 'No chats yet')}</div>`;
         } else {
             elements.threadList.innerHTML = visibleThreads.map(thread => {
                 const isActive = thread.id === activeThreadId;
@@ -3987,7 +4754,7 @@ Provide a clear analysis of:
         });
 
         if (allConnections.length === 0) {
-            elements.connectionsList.innerHTML = `<div class="sp-connection-empty">${getMessage('sp_connections_title', 'No connections found yet')}</div>`;
+            elements.connectionsList.innerHTML = `<div class="sp-connection-empty">${getMessage('sp_no_connections', 'No related ideas yet')}</div>`;
             updateDeepAngleUI();
             return;
         }
@@ -4148,6 +4915,14 @@ Provide a clear analysis of:
     async function handleSend() {
         const message = elements.userInput.value.trim();
         if (!message || isLoading) return;
+
+        if (await tryHandleIntentLocally(message)) {
+            elements.userInput.value = '';
+            elements.userInput.style.height = 'auto';
+            updateSendButton();
+            updateCharCount();
+            return;
+        }
 
         if (!pageContext?.url) {
             showToast(getMessage('sp_page_read_failed', 'Failed to read page'), 'error');
@@ -4420,8 +5195,22 @@ Text: "${highlightText.slice(0, 1500)}"`
             hideTypingIndicator();
 
             if (response) {
-                thread.messages.push({ role: 'assistant', content: response });
-                addMessageToDOM(response, 'assistant');
+                let renderedResponse = response;
+                if (commandSystemEnabled && commandActionExecutor) {
+                    try {
+                        const handled = await commandActionExecutor.handleAIResponse(response);
+                        renderedResponse = handled?.cleanText ?? response;
+                    } catch (commandErr) {
+                        console.warn('[CommandSystem] AI response handling failed:', commandErr);
+                    }
+                }
+
+                if (!String(renderedResponse || '').trim()) {
+                    renderedResponse = getMessage('cmdDone', 'Done!');
+                }
+
+                thread.messages.push({ role: 'assistant', content: renderedResponse });
+                addMessageToDOM(renderedResponse, 'assistant');
 
                 // Onboarding: Show tooltip after first chat exchange
                 if (thread.messages.filter(m => m.role === 'assistant').length === 1) {
@@ -4711,6 +5500,10 @@ RESPONSE REQUIREMENTS:
 FULL PAGE CONTENT FOR REFERENCE:
 ${(pageContext?.content || '').slice(0, 10000)}
 `;
+        }
+
+        if (commandSystemEnabled) {
+            prompt += `\n${COMMAND_SYSTEM_PROMPT}\n`;
         }
 
         // Log context level for monitoring
@@ -5535,12 +6328,13 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
     }
 
     function showUndoToast(action) {
-        // Remove existing undo toast
-        document.getElementById('undo-toast')?.remove();
-
-        const toast = document.createElement('div');
-        toast.id = 'undo-toast';
+        let toast = document.getElementById('undo-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'undo-toast';
+        }
         toast.className = 'sp-undo-toast';
+        toast.removeAttribute('hidden');
 
         const undoLabel = getMessage('sp_undo', 'Undo');
 
@@ -5561,13 +6355,20 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
             </div>
         `;
 
-        document.body.appendChild(toast);
+        if (!toast.parentElement) {
+            document.body.appendChild(toast);
+        }
         activeUndoToast = toast;
 
         // Add undo button handler
         toast.querySelector('#btn-undo')?.addEventListener('click', () => {
             undoAction(action);
         });
+
+        // Restart animation when reusing the toast
+        toast.style.animation = 'none';
+        void toast.offsetHeight;
+        toast.style.animation = '';
 
         // Start countdown animation
         startCountdownAnimation(action);
@@ -5672,7 +6473,10 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
         const toast = document.getElementById('undo-toast');
         if (toast) {
             toast.classList.add('hiding');
-            setTimeout(() => toast.remove(), 200);
+            setTimeout(() => {
+                toast.classList.remove('hiding');
+                toast.setAttribute('hidden', '');
+            }, 200);
         }
         activeUndoToast = null;
     }
@@ -6328,9 +7132,9 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
             return;
         }
 
-        const confirmMsg = getMessage('sp_confirm_export_all', 'Save all discussions to Knowledge?');
+        const confirmMsg = getMessage('sp_confirm_export_all', 'Save all chats to Knowledge?');
         const confirm = window.confirm(
-            `${confirmMsg}\n(${unsavedThreads.length} discussions)`
+            `${confirmMsg}\n(${unsavedThreads.length} chats)`
         );
         if (!confirm) return;
 
@@ -6403,17 +7207,26 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
     }
 
     function showToast(message, type = 'info') {
-        // Remove existing toast
-        document.getElementById('sp-toast')?.remove();
+        let toast = document.getElementById('sp-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'sp-toast';
+            document.body.appendChild(toast);
+        }
 
-        const toast = document.createElement('div');
-        toast.id = 'sp-toast';
         toast.className = `sp-toast ${type}`;
         toast.textContent = message;
-        document.body.appendChild(toast);
+        toast.style.display = 'block';
 
-        // Auto remove after 3s
-        setTimeout(() => toast.remove(), 3000);
+        // Restart animation when reusing the toast
+        toast.style.animation = 'none';
+        void toast.offsetHeight;
+        toast.style.animation = '';
+
+        if (toastTimeoutId) clearTimeout(toastTimeoutId);
+        toastTimeoutId = setTimeout(() => {
+            if (toast) toast.style.display = 'none';
+        }, 3000);
     }
 
     // ===========================
@@ -6904,7 +7717,7 @@ ${aiSummary}
         }
 
         const confirmMsg = getMessage('sp_confirm_end_session', 'Finish this reading session?');
-        const statsDiscussions = getMessage('sp_stats_discussions', 'discussions');
+        const statsDiscussions = getMessage('sp_stats_discussions', 'chats');
         const quickNoteTitle = getMessage('sp_quick_note_title', 'Quick Notes');
         const confirmEnd = window.confirm(
             `${confirmMsg}\n\n` +
@@ -7047,7 +7860,7 @@ ${aiSummary}
             let relatedThreads = [];
             if (candidates.length > 0) {
                 // Determine relevance using AI
-                const analyzing = getMessage('sp_deep_angle_analyzing', 'AI is finding connections...');
+                const analyzing = getMessage('sp_deep_angle_analyzing', 'Looking for a fresh angle...');
                 showToast(analyzing, 'info');
                 if (elements.deepAngleStatus) {
                     elements.deepAngleStatus.style.display = 'block';
@@ -7100,7 +7913,7 @@ ${aiSummary}
 
         } catch (e) {
             console.error('Deep Angle Error:', e);
-            showToast(getMessage('sp_deep_angle_error', 'Failed to generate Deep Angle.'), 'error');
+            showToast(getMessage('sp_deep_angle_error', "Couldn't generate a new angle."), 'error');
         } finally {
             setDeepAngleLoading(false);
             updateDeepAngleUI();
@@ -7211,7 +8024,31 @@ ${aiSummary}
     // ===========================
     // Start
     // ===========================
+
+    // Theme sync - apply saved theme on load
+    function initTheme() {
+        chrome.storage.local.get(['atom_theme'], (data) => {
+            if (data.atom_theme === 'light') {
+                document.body.classList.add('light-mode');
+            } else {
+                document.body.classList.remove('light-mode');
+            }
+        });
+    }
+
+    // Listen for theme changes from other pages (popup, options, etc.)
+    chrome.storage.onChanged.addListener((changes) => {
+        if (changes.atom_theme) {
+            if (changes.atom_theme.newValue === 'light') {
+                document.body.classList.add('light-mode');
+            } else {
+                document.body.classList.remove('light-mode');
+            }
+        }
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
+        initTheme();
         init();
         loadUserPreferences();
         startSessionTimer();

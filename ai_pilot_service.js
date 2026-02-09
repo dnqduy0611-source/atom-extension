@@ -1,6 +1,8 @@
 // ai_pilot_service.js - AI Pilot teacher adapter (build prompt + validate)
 
-const SYSTEM_PROMPT = `You are ATOM AI-Pilot (teacher). Your job is to classify user engagement mode and recommend an intervention.
+import { AI_CONFIG } from './config/ai_config.js';
+
+const SYSTEM_PROMPT = `You are AmoNexus AI-Pilot (teacher). Your job is to classify user engagement mode and recommend an intervention.
 
 Return ONLY valid JSON, no markdown, no extra commentary, no trailing commas.
 Use exactly the keys and types defined in the schema below.
@@ -55,7 +57,7 @@ const DECISION_SCHEMA = {
     mode: { type: "string", enum: ["intentional", "mixed", "doomscroll"] },
     confidence: { type: "number" },
     recommend: { type: "string", enum: ["none", "presence", "micro", "gentle", "hard"] },
-    hard_mode: { type: ["string", "null"], enum: ["BREATH", "TAP", "STILLNESS", null] },
+    hard_mode: { type: "string", enum: ["BREATH", "TAP", "STILLNESS"], nullable: true },
     cooldown_s: { type: "integer" },
     why_short: { type: "string" },
     ai_reason_codes: { type: "array", items: { type: "string" } }
@@ -70,8 +72,7 @@ const DECISION_SCHEMA = {
     "cooldown_s",
     "why_short",
     "ai_reason_codes"
-  ],
-  additionalProperties: false
+  ]
 };
 
 const RECOMMEND = new Set(["none", "presence", "micro", "gentle", "hard"]);
@@ -196,9 +197,9 @@ export function validateAiDecisionOutput(out, frame) {
     warnings.push("AI_DOOMSCROLL_WITHOUT_CONTINUOUS_SCROLL_CODE");
   }
   if (out.mode === "intentional" && out.intent_score >= 0.7
-      && !sanitizedCodes.includes("AI_BEHAVIOR_DWELL_DEEP")
-      && !sanitizedCodes.includes("AI_ACTION_FIND_USED")
-      && !sanitizedCodes.includes("AI_ACTION_SELECT_COPY_USED")) {
+    && !sanitizedCodes.includes("AI_BEHAVIOR_DWELL_DEEP")
+    && !sanitizedCodes.includes("AI_ACTION_FIND_USED")
+    && !sanitizedCodes.includes("AI_ACTION_SELECT_COPY_USED")) {
     warnings.push("AI_INTENT_HIGH_WITHOUT_ACTIVE_SIGNALS");
   }
   if (out.confidence < 0.45 && !sanitizedCodes.includes("AI_LOW_CONFIDENCE_AMBIGUOUS")) {
@@ -233,9 +234,9 @@ export class AIPilotService {
   }
 
   async classify(frame, options = {}) {
-    const timeoutMs = options.timeoutMs ?? 800;
+    const timeoutMs = options.timeoutMs ?? 800;  // Keep 800ms for quick pilot decisions
     const cacheKey = options.cacheKey || null;
-    const cacheTtlMs = options.cacheTtlMs ?? 15000;
+    const cacheTtlMs = options.cacheTtlMs ?? AI_CONFIG.CACHE.PILOT_TTL_MS;
     const prompt = `${SYSTEM_PROMPT}\n\n${buildUserPrompt(frame)}`;
     const now = Date.now();
 

@@ -1,0 +1,4577 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title data-i18n="sp_title">Active Reading</title>
+    <link rel="stylesheet" href="ui_shared.css">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        /* ============================================
+           ACCESSIBILITY UTILITIES
+           ============================================ */
+
+        /* Visually hidden but accessible to screen readers */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Skip link for keyboard users */
+        .sp-skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            font-size: 12px;
+            z-index: 10000;
+            transition: top 0.2s;
+        }
+
+        .sp-skip-link:focus {
+            top: 0;
+        }
+
+        /* Focus visible styles */
+        :focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        /* Remove outline for mouse users */
+        :focus:not(:focus-visible) {
+            outline: none;
+        }
+
+        /* Reduced motion preference */
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        body {
+            width: 100%;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ============================================
+           ZONE 1: TOP BAR (Always visible)
+           ============================================ */
+        .sp-topbar {
+            padding: 10px 12px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .sp-timer {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--muted);
+            background: var(--background);
+            padding: 4px 8px;
+            border-radius: 12px;
+            min-width: 50px;
+        }
+
+        .sp-timer-icon {
+            display: flex;
+            width: 12px;
+            height: 12px;
+        }
+
+        .sp-timer-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .sp-page-info {
+            flex: 1;
+            min-width: 0;
+            text-align: center;
+        }
+
+        .sp-page-title {
+            font-size: 11px;
+            color: var(--foreground);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+
+        .sp-status {
+            font-size: 9px;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #525252;
+        }
+
+        .status-dot.ready {
+            background: var(--primary);
+            box-shadow: 0 0 6px var(--primary);
+        }
+
+        .status-dot.loading {
+            background: #FBBF24;
+            animation: pulse 1s infinite;
+        }
+
+        .status-dot.cooldown {
+            background: #F97316;
+            animation: pulse-cooldown 1.5s infinite;
+        }
+
+        .status-cooldown {
+            color: #F97316 !important;
+            font-weight: 600;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse-cooldown {
+
+            0%,
+            100% {
+                opacity: 0.4;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        .sp-topbar-actions {
+
+            display: flex;
+            gap: 4px;
+        }
+
+        /* Menu Dropdown */
+        .sp-menu-wrapper {
+            position: relative;
+        }
+
+        .sp-menu-btn {
+            background: var(--background);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .sp-menu-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .sp-menu-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            background: var(--background);
+            /* Opaque background for contrast */
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            min-width: 180px;
+            /* Slightly wider */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+            z-index: 999;
+            display: none;
+        }
+
+        .sp-menu-dropdown.show {
+            display: block;
+        }
+
+        .sp-menu-item {
+            padding: 10px 14px;
+            font-size: 11px;
+            color: var(--foreground);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sp-menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .sp-menu-item:hover {
+            background: var(--background);
+        }
+
+        .sp-menu-item.danger {
+            color: var(--danger);
+        }
+
+        .sp-menu-label {
+            flex: 1;
+        }
+
+        .sp-menu-badge {
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.15);
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .sp-menu-badge.on {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10B981;
+        }
+
+        .sp-menu-badge.off {
+            background: rgba(148, 163, 184, 0.2);
+            color: var(--muted);
+        }
+
+        .sp-menu-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 4px 0;
+        }
+
+        /* ============================================
+           MAIN TAB BAR (Wave B)
+           ============================================ */
+        .sp-main-tabbar {
+            display: flex;
+            gap: 4px;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            flex-shrink: 0;
+        }
+
+        .sp-main-tab-btn {
+            flex: 1;
+            border: 1px solid var(--border);
+            background: var(--background);
+            color: var(--muted);
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 8px 6px;
+            min-height: 44px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sp-main-tab-btn.active {
+            color: var(--foreground);
+            border-color: var(--primary);
+            background: rgba(16, 185, 129, 0.12);
+        }
+
+        .sp-main-tab-btn:hover {
+            color: var(--foreground);
+        }
+
+        .sp-main-tab-btn:active {
+            transform: translateY(1px);
+        }
+
+        @media (max-width: 300px) {
+            .sp-main-tab-btn {
+                font-size: 10px;
+                padding: 8px 4px;
+            }
+        }
+
+        /* ============================================
+           ZONE 2: MAIN VIEW (Dynamic content)
+           ============================================ */
+        .sp-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Quick Action Chips */
+        .sp-quick-actions {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sp-quick-actions.hidden {
+            display: none;
+        }
+
+        .sp-actions-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            width: 100%;
+            text-align: left;
+            border-bottom: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .sp-actions-header:hover {
+            background: var(--background);
+        }
+
+        .sp-actions-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sp-chevron-icon {
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+
+        .sp-actions-header[aria-expanded="false"] .sp-chevron-icon {
+            transform: rotate(-90deg);
+        }
+
+        /* Grid Layout */
+        .sp-actions-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 0 12px 10px 12px;
+            opacity: 1;
+            max-height: 200px;
+            /* Adjust based on content */
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .sp-actions-grid.collapsed {
+            opacity: 0;
+            max-height: 0;
+            padding-bottom: 0;
+            pointer-events: none;
+        }
+
+        .sp-quick-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 10px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--muted-foreground);
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .sp-quick-chip:hover {
+            color: var(--foreground);
+            background: var(--accent);
+            border-color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        .sp-quick-chip:active {
+            transform: translateY(0);
+        }
+
+        .sp-quick-chip .chip-icon {
+            width: 14px;
+            height: 14px;
+            display: flex;
+            /* Ensure SVG centering */
+        }
+
+        .sp-quick-chip .chip-icon svg {
+            width: 100%;
+            height: 100%;
+            stroke-width: 2;
+        }
+
+        .sp-quick-chip[data-bloom-label]::after {
+            content: attr(data-bloom-label);
+            margin-left: 6px;
+            padding: 2px 6px;
+            font-size: 9px;
+            border-radius: 10px;
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Auto Summary */
+        .sp-auto-summary {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin: 8px 0;
+            background: var(--surface);
+            overflow: hidden;
+        }
+
+        /* ... (rest of css) ... */
+
+        /* INSTEAD OF REPLACING HUGE CHUNK, I WILL TARGET SMALLER CHUNKS FOR CSS AND HTML */
+
+        .sp-auto-summary-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: rgba(16, 185, 129, 0.12);
+            border-bottom: 1px solid var(--border);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+
+        .sp-auto-summary-dismiss {
+            margin-left: auto;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .sp-auto-summary-body {
+            padding: 10px 12px;
+            font-size: 11px;
+            color: var(--foreground);
+        }
+
+        .sp-auto-summary-section {
+            margin-bottom: 10px;
+        }
+
+        .sp-auto-summary-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .sp-auto-summary-label {
+            font-size: 10px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .sp-auto-summary-body ul {
+            margin: 0;
+            padding-left: 16px;
+        }
+
+        .sp-auto-summary-body li {
+            margin-bottom: 4px;
+        }
+
+        .sp-auto-summary-suggestion {
+            cursor: pointer;
+        }
+
+        .sp-auto-summary-suggestion:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+        .sp-auto-summary-actions {
+            display: flex;
+            gap: 8px;
+            padding: 10px 12px;
+            border-top: 1px solid var(--border);
+            background: var(--background);
+        }
+
+        /* Save chip special styling */
+        .sp-quick-chip.sp-chip-save {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #10B981;
+        }
+
+        .sp-quick-chip.sp-chip-save:hover {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: #10B981;
+            color: #10B981;
+        }
+
+        /* Command quick actions (Phase 1: Focus commands) */
+        .sp-command-actions {
+            display: none;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 8px 12px 0 12px;
+        }
+
+        .sp-command-actions.active {
+            display: flex;
+        }
+
+        .sp-cmd-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--background);
+            color: var(--foreground);
+            font-size: 12px;
+            line-height: 1;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sp-cmd-chip:hover {
+            border-color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        .sp-cmd-chip:active {
+            transform: translateY(0);
+        }
+
+        .sp-cmd-chip__icon {
+            font-size: 13px;
+        }
+
+        @media (max-width: 300px) {
+            .sp-cmd-chip__label {
+                display: none;
+            }
+
+            .sp-cmd-chip {
+                padding: 8px 10px;
+            }
+        }
+
+        /* Focus Widget (Wave A extraction target) */
+        .sp-focus-widget {
+            display: none;
+            margin: 8px 12px 0 12px;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        .sp-focus-widget.active {
+            display: block;
+        }
+
+        .sp-focus-widget__row,
+        .sp-focus-widget__idle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sp-focus-widget__label {
+            font-size: 12px;
+            color: var(--foreground);
+            font-weight: 600;
+        }
+
+        .sp-focus-widget__time {
+            margin-left: auto;
+            font-size: 12px;
+            color: var(--foreground);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .sp-focus-widget__presets {
+            margin-left: auto;
+            display: flex;
+            gap: 6px;
+        }
+
+        .sp-focus-widget__preset,
+        .sp-focus-widget__btn {
+            border: 1px solid var(--border);
+            background: var(--background);
+            color: var(--foreground);
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .sp-focus-widget__progress {
+            margin-top: 8px;
+            width: 100%;
+            height: 4px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+        }
+
+        .sp-focus-widget__bar {
+            height: 100%;
+            width: 0;
+            background: var(--primary);
+            transition: width 0.25s ease;
+        }
+
+        .sp-focus-widget__bar.break {
+            background: #F59E0B;
+        }
+
+        /* Quick Diary (Phase 3) */
+        .qd-widget {
+            display: none;
+            margin: 8px 12px 0 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            overflow: hidden;
+        }
+
+        .qd-widget.active {
+            display: block;
+        }
+
+        .qd-collapsed {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 10px 12px;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            font-size: 12px;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .qd-collapsed:hover {
+            color: var(--foreground);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .qd-widget.expanded .qd-collapsed {
+            display: none;
+        }
+
+        .qd-expanded-content {
+            display: none;
+            padding: 12px;
+        }
+
+        .qd-widget.expanded .qd-expanded-content {
+            display: block;
+            animation: qdSlide 0.2s ease;
+        }
+
+        @keyframes qdSlide {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .qd-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+
+        .qd-close {
+            border: none;
+            background: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .qd-input {
+            width: 100%;
+            resize: none;
+            border: 1px solid var(--border);
+            background: var(--background);
+            color: var(--foreground);
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .qd-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .qd-moods {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .qd-mood {
+            font-size: 18px;
+            line-height: 1;
+            padding: 4px 6px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--background);
+            color: var(--foreground);
+            cursor: pointer;
+        }
+
+        .qd-mood.selected {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .qd-save {
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            border: none;
+            background: var(--primary);
+            color: #000;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .qd-save:hover {
+            filter: brightness(1.05);
+        }
+
+        .shake {
+            animation: qdShake 0.3s ease;
+        }
+
+        @keyframes qdShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        /* Main view modes */
+        .sp-cards-panel {
+            display: none;
+            flex: 1;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            text-align: center;
+        }
+
+        .sp-cards-panel-inner {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface);
+            padding: 16px;
+            max-width: 420px;
+        }
+
+        .sp-cards-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--foreground);
+            margin-bottom: 8px;
+        }
+
+        .sp-cards-desc {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        .sp-main-surface-enter {
+            animation: spMainSurfaceFade 0.18s ease;
+        }
+
+        @keyframes spMainSurfaceFade {
+            from {
+                opacity: 0;
+                transform: translateY(3px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        body[data-main-tab="chat"] #srq-widget-container {
+            display: none;
+        }
+
+        body[data-main-tab="notes"] .sp-main {
+            display: none;
+        }
+
+        body[data-main-tab="notes"] .sp-bottom-tabs {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        body[data-main-tab="notes"] .sp-tab-content {
+            flex: 1;
+            max-height: none;
+        }
+
+        body[data-main-tab="notes"] .sp-tab-btn[data-tab="discussions"],
+        body[data-main-tab="notes"] .sp-tab-btn[data-tab="connections"],
+        body[data-main-tab="notes"] .sp-toggle-tabs-btn {
+            display: none;
+        }
+
+        body[data-main-tab="saved"] .sp-bottom-tabs {
+            display: none;
+        }
+
+        body[data-main-tab="saved"] .sp-main>* {
+            display: none !important;
+        }
+
+        body[data-main-tab="saved"] #srq-widget-container {
+            display: block !important;
+            margin: 12px;
+            padding: 0;
+            animation: spMainSurfaceFade 0.18s ease;
+        }
+
+        body[data-main-tab="cards"] .sp-bottom-tabs {
+            display: none;
+        }
+
+        body[data-main-tab="cards"] .sp-main>* {
+            display: none !important;
+        }
+
+        body[data-main-tab="cards"] #cards-panel {
+            display: flex !important;
+            animation: spMainSurfaceFade 0.18s ease;
+        }
+
+        /* Wave C: touch target polish */
+        .sp-tab-btn {
+            min-height: 44px;
+        }
+
+        .sp-focus-widget__preset,
+        .sp-focus-widget__btn,
+        .sp-cmd-chip {
+            min-height: 36px;
+        }
+
+        .sp-send-btn {
+            width: 40px;
+            height: 40px;
+        }
+
+        /* Wave C: reduced-motion precision */
+        @media (prefers-reduced-motion: reduce) {
+            .sp-main-surface-enter,
+            body[data-main-tab="saved"] #srq-widget-container,
+            body[data-main-tab="cards"] #cards-panel,
+            .sp-tab-panel {
+                animation: none !important;
+            }
+
+            .sp-focus-widget__bar,
+            .sp-main-tab-btn,
+            .sp-tab-btn,
+            .sp-cmd-chip,
+            .sp-send-btn {
+                transition: none !important;
+            }
+        }
+
+        /* Retention Overlay */
+        .sp-retention-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .sp-retention-card {
+            width: min(520px, 92vw);
+            max-height: 85vh;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sp-retention-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+
+        .sp-retention-close {
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .sp-retention-body {
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .sp-retention-loading {
+            text-align: center;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        /* Quiz UI */
+        .sp-quiz-card {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--background);
+            overflow: hidden;
+        }
+
+        .sp-quiz-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sp-quiz-tier {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sp-quiz-tier-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 10px;
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--primary);
+        }
+
+        .sp-quiz-tier-badge.tier-1 {
+            background: rgba(16, 185, 129, 0.2);
+            color: #047857;
+        }
+
+        .sp-quiz-tier-badge.tier-2 {
+            background: rgba(251, 191, 36, 0.2);
+            color: #B45309;
+        }
+
+        .sp-quiz-tier-badge.tier-3 {
+            background: rgba(249, 115, 22, 0.2);
+            color: #C2410C;
+        }
+
+        .sp-quiz-tier-badge.tier-4 {
+            background: rgba(239, 68, 68, 0.2);
+            color: #B91C1C;
+        }
+
+        .sp-quiz-tier-bloom {
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .sp-quiz-skip {
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .sp-quiz-question {
+            padding: 12px;
+        }
+
+        .sp-quiz-scenario {
+            background: rgba(251, 191, 36, 0.15);
+            padding: 8px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            color: #9A6A0A;
+            margin-bottom: 8px;
+        }
+
+        .sp-quiz-question-text {
+            font-size: 13px;
+            color: var(--foreground);
+            line-height: 1.5;
+        }
+
+        .sp-quiz-answer {
+            padding: 0 12px 12px;
+        }
+
+        .sp-quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sp-quiz-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .sp-quiz-option input {
+            display: none;
+        }
+
+        .sp-quiz-option input:checked+.sp-quiz-option-letter {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .sp-quiz-option-letter {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--background);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .sp-quiz-option-text {
+            font-size: 12px;
+            color: var(--foreground);
+        }
+
+        .sp-quiz-textarea {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--surface);
+            padding: 10px;
+            font-size: 12px;
+            color: var(--foreground);
+            resize: vertical;
+        }
+
+        .sp-quiz-actions {
+            padding: 0 12px 12px;
+        }
+
+        .sp-quiz-submit {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .sp-quiz-feedback {
+            padding: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .sp-quiz-feedback.is-correct {
+            background: rgba(16, 185, 129, 0.15);
+        }
+
+        .sp-quiz-feedback.is-wrong {
+            background: rgba(239, 68, 68, 0.12);
+        }
+
+        .sp-quiz-feedback-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .sp-quiz-feedback-text {
+            font-size: 12px;
+            color: var(--foreground);
+            margin-bottom: 8px;
+        }
+
+        .sp-quiz-feedback-block {
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .sp-quiz-feedback-evidence {
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .sp-quiz-continue {
+            margin-top: 8px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--background);
+            cursor: pointer;
+        }
+
+        .sp-quiz-session {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .sp-quiz-progress {
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .sp-quiz-progress-bar {
+            height: 6px;
+            border-radius: 999px;
+            background: var(--border);
+            margin-top: 6px;
+            overflow: hidden;
+        }
+
+        .sp-quiz-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .sp-quiz-summary {
+            text-align: center;
+            padding: 20px 10px;
+        }
+
+        .sp-quiz-summary-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .sp-quiz-summary-score {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .sp-quiz-summary-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .sp-quiz-summary-actions button {
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--background);
+            cursor: pointer;
+        }
+
+        /* Teach-back UI */
+        .sp-teachback-card {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--background);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sp-teachback-header {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+
+        .sp-teachback-prompt {
+            font-size: 12px;
+            color: var(--foreground);
+            line-height: 1.5;
+        }
+
+        .sp-teachback-textarea {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--surface);
+            padding: 10px;
+            font-size: 12px;
+            color: var(--foreground);
+            resize: vertical;
+        }
+
+        .sp-teachback-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .sp-teachback-btn {
+            flex: 1;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--background);
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .sp-teachback-btn.primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .sp-teachback-hint {
+            font-size: 11px;
+            color: var(--muted);
+            background: rgba(16, 185, 129, 0.1);
+            padding: 8px 10px;
+            border-radius: 10px;
+        }
+
+        .sp-teachback-feedback {
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+            font-size: 12px;
+            color: var(--foreground);
+        }
+
+        .sp-teachback-feedback-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        /* Flashcard UI */
+        .sp-flashcard {
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: var(--background);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-height: 260px;
+        }
+
+        .sp-flashcard-text {
+            font-size: 14px;
+            color: var(--foreground);
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .sp-flashcard-flip {
+            width: 100%;
+            padding: 10px;
+            border-radius: 12px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .sp-flashcard-back {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .sp-flashcard-rating {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+
+        .sp-flashcard-rate {
+            padding: 8px 6px;
+            border-radius: 10px;
+            border: none;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .sp-flashcard-rate.again {
+            background: rgba(239, 68, 68, 0.2);
+            color: #B91C1C;
+        }
+
+        .sp-flashcard-rate.hard {
+            background: rgba(251, 191, 36, 0.2);
+            color: #B45309;
+        }
+
+        .sp-flashcard-rate.good {
+            background: rgba(16, 185, 129, 0.2);
+            color: #047857;
+        }
+
+        .sp-flashcard-rate.easy {
+            background: rgba(59, 130, 246, 0.2);
+            color: #1D4ED8;
+        }
+
+        .sp-review-session {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .sp-review-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .sp-review-summary {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .sp-review-summary-score {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .sp-review-summary-sub {
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        .sp-review-summary-done {
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--background);
+            cursor: pointer;
+        }
+
+        .sp-review-empty {
+            text-align: center;
+            color: var(--muted);
+            font-size: 12px;
+            padding: 20px 10px;
+        }
+
+        /* Pre-reading Primer */
+        .sp-primer-root {
+            padding: 10px 12px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: none;
+        }
+
+        .sp-primer-root.active {
+            display: block;
+        }
+
+        /* Related Memory (Phase 3) */
+        .sp-memory-root {
+            display: none;
+        }
+
+        .sp-memory-root.active {
+            display: block;
+        }
+
+        .sp-primer-card {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--background);
+            overflow: hidden;
+        }
+
+        .sp-primer-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+
+        .sp-primer-body {
+            padding: 12px;
+        }
+
+        .sp-primer-topic {
+            margin-bottom: 10px;
+        }
+
+        .sp-primer-label {
+            display: block;
+            font-size: 10px;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .sp-primer-topic-text {
+            font-size: 12px;
+            color: var(--foreground);
+            font-weight: 500;
+        }
+
+        .sp-primer-questions-header {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .sp-primer-questions-list {
+            margin: 0;
+            padding-left: 18px;
+        }
+
+        .sp-primer-question {
+            margin-bottom: 8px;
+            padding-left: 6px;
+            border-left: 2px solid transparent;
+        }
+
+        .sp-primer-question[data-level="understanding"] {
+            border-left-color: #10B981;
+        }
+
+        .sp-primer-question[data-level="application"] {
+            border-left-color: #3B82F6;
+        }
+
+        .sp-primer-question[data-level="evaluation"] {
+            border-left-color: #F59E0B;
+        }
+
+        .sp-primer-question-text {
+            font-size: 12px;
+            color: var(--foreground);
+            line-height: 1.4;
+        }
+
+        .sp-primer-question-hint {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        .sp-primer-actions {
+            display: flex;
+            gap: 8px;
+            padding: 10px 12px;
+            border-top: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        .sp-primer-btn {
+            flex: 1;
+            padding: 8px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--background);
+            color: var(--foreground);
+            transition: all 0.15s;
+        }
+
+        .sp-primer-btn-primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .sp-primer-btn-primary:hover {
+            background: #059669;
+        }
+
+        .sp-primer-btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Learning Mode Selector */
+        .sp-mode-root {
+            padding: 8px 12px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: none;
+        }
+
+        .sp-mode-root.active {
+            display: block;
+        }
+
+        .sp-mode-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sp-mode-label {
+            font-size: 10px;
+            color: var(--muted);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .sp-mode-options {
+            display: flex;
+            gap: 6px;
+            flex: 1;
+        }
+
+        .sp-mode-option {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 8px;
+            font-size: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--background);
+            color: var(--muted-foreground);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .sp-mode-option.active {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(16, 185, 129, 0.12);
+        }
+
+        .sp-mode-icon {
+            font-size: 12px;
+            display: flex;
+            width: 14px;
+            height: 14px;
+        }
+
+        .sp-mode-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .sp-mode-text {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+
+        .sp-mode-title {
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .sp-mode-desc {
+            font-size: 9px;
+            color: var(--muted);
+        }
+
+        /* Chat Area */
+        .sp-chat {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Empty State */
+        .sp-empty {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .sp-empty-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.6;
+        }
+
+        .sp-empty h2 {
+            margin: 0 0 6px 0;
+            font-size: 14px;
+            color: var(--foreground);
+        }
+
+        .sp-empty p {
+            margin: 0;
+            font-size: 11px;
+            color: var(--muted);
+            max-width: 220px;
+        }
+
+        /* Insights List (shown when no active highlight) */
+        .sp-insights {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            display: none;
+        }
+
+        .sp-insights.active {
+            display: block;
+        }
+
+        .sp-insights-header {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sp-insight-item {
+            padding: 8px 10px;
+            background: var(--surface);
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 11px;
+            color: var(--foreground);
+            border-left: 3px solid #FBBF24;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            gap: 6px;
+            align-items: flex-start;
+        }
+
+        .sp-insight-item:hover {
+            background: var(--background);
+        }
+
+        .sp-insight-item-icon {
+            display: inline-flex;
+            flex: 0 0 auto;
+            margin-top: 1px;
+        }
+
+        .sp-insight-item-text {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Messages */
+        .sp-message {
+            max-width: 90%;
+            padding: 10px 12px;
+            border-radius: 14px;
+            font-size: 12px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .sp-message.user {
+            align-self: flex-end;
+            background: var(--primary);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .sp-message.assistant {
+            align-self: flex-start;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+
+        .sp-message.assistant pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 6px 0;
+        }
+
+        .sp-message.assistant code {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 11px;
+        }
+
+        .sp-message.assistant ul {
+            margin: 4px 0;
+            padding-left: 16px;
+        }
+
+        .sp-message.error {
+            background: var(--danger-bg);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            font-size: 11px;
+            max-width: 100%;
+        }
+
+        .sp-error-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .sp-error-icon {
+            font-size: 14px;
+        }
+
+        .sp-error-title {
+            color: #EF4444;
+        }
+
+        .sp-error-description {
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .sp-error-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .sp-error-action {
+            background: transparent;
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .sp-error-action:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Pending message styles (offline mode) */
+        .sp-message.pending {
+            opacity: 0.7;
+            position: relative;
+        }
+
+        .sp-message-pending-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 6px;
+            font-size: 10px;
+            color: #F59E0B;
+        }
+
+        .pending-icon {
+            animation: pendingPulse 1.5s infinite;
+        }
+
+        @keyframes pendingPulse {
+
+            0%,
+            100% {
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        /* Offline banner */
+        .sp-offline-banner {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(251, 191, 36, 0.1) 100%);
+            border-bottom: 1px solid rgba(245, 158, 11, 0.3);
+            padding: 8px 12px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: #F59E0B;
+        }
+
+        .sp-offline-banner.show {
+            display: flex;
+        }
+
+        .sp-offline-banner-icon {
+            font-size: 14px;
+        }
+
+        .sp-offline-banner-text {
+            flex: 1;
+        }
+
+        .sp-offline-banner-action {
+            background: transparent;
+            border: 1px solid #F59E0B;
+            color: #F59E0B;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .sp-offline-banner-action:hover {
+            background: #F59E0B;
+            color: white;
+        }
+
+        /* Undo Toast */
+        .sp-undo-toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            min-width: 260px;
+            max-width: 340px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            z-index: 9999;
+            animation: undo-slide-in 0.3s ease;
+        }
+
+        .sp-undo-toast.hiding {
+            animation: undo-slide-out 0.2s ease forwards;
+        }
+
+        @keyframes undo-slide-in {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        @keyframes undo-slide-out {
+            from {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+
+            to {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+        }
+
+        .sp-undo-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .sp-undo-icon {
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+
+        .sp-undo-message {
+            font-size: 12px;
+            color: var(--foreground);
+            line-height: 1.3;
+        }
+
+        .sp-undo-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .sp-undo-btn {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .sp-undo-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .sp-undo-countdown {
+            position: relative;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sp-countdown-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .sp-countdown-bg {
+            fill: none;
+            stroke: var(--border);
+            stroke-width: 2;
+        }
+
+        .sp-countdown-progress {
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 2;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s linear;
+        }
+
+        .sp-countdown-text {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--muted);
+            z-index: 1;
+        }
+
+        /* ============================================
+           ONBOARDING STYLES
+           ============================================ */
+
+        /* Welcome Overlay */
+        .sp-welcome-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: overlay-fade-in 0.3s ease;
+            padding: 16px;
+        }
+
+        .sp-welcome-overlay.hiding {
+            animation: overlay-fade-out 0.2s ease forwards;
+        }
+
+        @keyframes overlay-fade-in {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes overlay-fade-out {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+            }
+        }
+
+        /* Welcome Card */
+        .sp-welcome-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 320px;
+            width: 100%;
+            animation: card-slide-up 0.3s ease;
+        }
+
+        @keyframes card-slide-up {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .sp-welcome-header {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .sp-welcome-emoji {
+            font-size: 40px;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .sp-welcome-header h2 {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            color: var(--foreground);
+        }
+
+        .sp-welcome-header p {
+            margin: 0;
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .sp-welcome-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 16px 0;
+        }
+
+        .sp-welcome-steps h3 {
+            margin: 0 0 12px 0;
+            font-size: 12px;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .sp-welcome-step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+        }
+
+        .sp-step-number {
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .sp-step-text {
+            font-size: 12px;
+            color: var(--foreground);
+            line-height: 1.4;
+        }
+
+        .sp-welcome-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sp-welcome-btn {
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-align: center;
+        }
+
+        .sp-welcome-btn.primary {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        }
+
+        .sp-welcome-btn.primary:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .sp-welcome-btn.secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+        }
+
+        .sp-welcome-btn.secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Detailed Guide Card */
+        .sp-guide-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            max-width: 360px;
+            width: 100%;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            animation: card-slide-up 0.3s ease;
+        }
+
+        .sp-guide-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sp-guide-header h2 {
+            margin: 0;
+            font-size: 14px;
+            color: var(--foreground);
+        }
+
+        .sp-guide-close {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+        }
+
+        .sp-guide-close:hover {
+            color: var(--foreground);
+        }
+
+        .sp-guide-content {
+            padding: 16px 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .sp-guide-section {
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sp-guide-section:last-of-type {
+            border-bottom: none;
+        }
+
+        .sp-guide-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .sp-guide-info h4 {
+            margin: 0 0 4px 0;
+            font-size: 12px;
+            color: var(--foreground);
+        }
+
+        .sp-guide-info p {
+            margin: 0;
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .sp-guide-shortcuts {
+            margin-top: 16px;
+            padding: 12px;
+            background: var(--background);
+            border-radius: 8px;
+        }
+
+        .sp-guide-shortcuts h4 {
+            margin: 0 0 10px 0;
+            font-size: 12px;
+            color: var(--foreground);
+        }
+
+        .sp-shortcut-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .sp-shortcut-item {
+            font-size: 11px;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sp-shortcut-item kbd {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: monospace;
+            font-size: 10px;
+            color: var(--foreground);
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .sp-guide-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Tooltip Coach Marks */
+        .sp-tooltip {
+            position: fixed;
+            background: var(--surface);
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            padding: 12px 14px;
+            max-width: 240px;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+            z-index: 10001;
+            animation: tooltip-pop 0.2s ease;
+        }
+
+        .sp-tooltip.hiding {
+            animation: tooltip-hide 0.2s ease forwards;
+        }
+
+        @keyframes tooltip-pop {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes tooltip-hide {
+            from {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            to {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+        }
+
+        .sp-tooltip-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .sp-tooltip-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .sp-tooltip-text {
+            font-size: 12px;
+            color: var(--foreground);
+            line-height: 1.5;
+        }
+
+        .sp-tooltip-btn {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .sp-tooltip-btn:hover {
+            background: #059669;
+        }
+
+        /* Tooltip arrow indicators */
+        .sp-tooltip::before {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--surface);
+            border: 1px solid var(--primary);
+            transform: rotate(45deg);
+        }
+
+        .sp-tooltip-bottom::before {
+            top: -6px;
+            left: 50%;
+            margin-left: -5px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .sp-tooltip-top::before {
+            bottom: -6px;
+            left: 50%;
+            margin-left: -5px;
+            border-left: none;
+            border-top: none;
+        }
+
+        .sp-tooltip-left::before {
+            right: -6px;
+            top: 50%;
+            margin-top: -5px;
+            border-left: none;
+            border-bottom: none;
+        }
+
+        .sp-tooltip-right::before {
+            left: -6px;
+            top: 50%;
+            margin-top: -5px;
+            border-right: none;
+            border-top: none;
+        }
+
+        .sp-onboarding {
+            position: fixed;
+            left: 12px;
+            right: 12px;
+            bottom: 16px;
+            padding: 14px;
+            border-radius: 12px;
+            background: var(--surface);
+            border: 1px solid rgba(16, 185, 129, 0.45);
+            box-shadow: 0 12px 30px rgba(16, 185, 129, 0.15);
+            z-index: 10010;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .sp-onboarding.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .sp-onboarding.hide {
+            opacity: 0;
+            transform: translateY(8px);
+            pointer-events: none;
+        }
+
+        .sp-onboarding__title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--foreground);
+            margin-bottom: 6px;
+        }
+
+        .sp-onboarding__body {
+            font-size: 12px;
+            color: var(--foreground);
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .sp-onboarding__btn {
+            width: 100%;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* ============================================
+           SEARCH & FILTER STYLES
+           ============================================ */
+
+        .sp-search-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 60px;
+            z-index: 10000;
+            animation: overlay-fade-in 0.15s ease;
+        }
+
+        .sp-search-modal.hiding {
+            animation: overlay-fade-out 0.15s ease forwards;
+        }
+
+        .sp-search-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 340px;
+            max-height: 400px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            animation: card-slide-up 0.2s ease;
+        }
+
+        .sp-search-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sp-search-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .sp-search-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--foreground);
+            font-size: 14px;
+            outline: none;
+        }
+
+        .sp-search-input::placeholder {
+            color: var(--muted);
+        }
+
+        .sp-search-esc {
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 10px;
+            color: var(--muted);
+            font-family: monospace;
+        }
+
+        .sp-search-filters {
+            display: flex;
+            gap: 6px;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            flex-shrink: 0;
+        }
+
+        .sp-filter-btn {
+            background: var(--background);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 5px 10px;
+            border-radius: 14px;
+            font-size: 10px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s;
+        }
+
+        .sp-filter-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .sp-filter-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .sp-search-results {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .sp-search-empty {
+            text-align: center;
+            padding: 24px 16px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .sp-search-result {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .sp-search-result:hover,
+        .sp-search-result.selected {
+            background: var(--background);
+        }
+
+        .sp-search-result.selected {
+            border-left: 3px solid var(--primary);
+        }
+
+        .sp-result-icon {
+            font-size: 14px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .sp-result-preview {
+            font-size: 12px;
+            color: var(--foreground);
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .sp-result-preview mark {
+            background: rgba(251, 191, 36, 0.3);
+            color: inherit;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+
+        .sp-result-meta {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        /* Highlighted note animation */
+        .sp-note-item.highlighted {
+            animation: highlight-pulse 0.5s ease 2;
+            background: rgba(16, 185, 129, 0.2) !important;
+        }
+
+        @keyframes highlight-pulse {
+
+            0%,
+            100% {
+                background: rgba(16, 185, 129, 0.2);
+            }
+
+            50% {
+                background: rgba(16, 185, 129, 0.4);
+            }
+        }
+
+        /* ============================================
+           EXPORT DIALOG STYLES
+           ============================================ */
+
+        .sp-export-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            max-width: 320px;
+            width: 100%;
+            animation: card-slide-up 0.2s ease;
+        }
+
+        .sp-export-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sp-export-header h3 {
+            margin: 0;
+            font-size: 14px;
+            color: var(--foreground);
+        }
+
+        .sp-export-body {
+            padding: 16px 20px;
+        }
+
+        .sp-export-section {
+            margin-bottom: 16px;
+        }
+
+        .sp-export-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .sp-export-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        .sp-export-formats {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sp-format-option {
+            display: block;
+            cursor: pointer;
+        }
+
+        .sp-format-option input {
+            display: none;
+        }
+
+        .sp-format-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            transition: all 0.15s;
+        }
+
+        .sp-format-option input:checked+.sp-format-label {
+            border-color: var(--primary);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .sp-format-option:hover .sp-format-label {
+            border-color: var(--primary);
+        }
+
+        .sp-format-icon {
+            font-size: 16px;
+        }
+
+        .sp-format-name {
+            flex: 1;
+            font-size: 12px;
+            color: var(--foreground);
+        }
+
+        .sp-format-ext {
+            font-size: 10px;
+            color: var(--muted);
+            font-family: monospace;
+        }
+
+        .sp-export-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sp-checkbox-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            color: var(--foreground);
+            cursor: pointer;
+        }
+
+        .sp-checkbox-option input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+        }
+
+        .sp-export-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* ============================================
+           PROGRESS BAR
+           ============================================ */
+
+        .sp-progress-bar {
+            width: 100%;
+            height: 3px;
+            background: var(--border);
+            border-radius: 2px;
+            margin-top: 6px;
+            overflow: hidden;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .sp-progress-bar.active {
+            opacity: 1;
+        }
+
+        .sp-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, #34D399 100%);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        /* ============================================
+           MICRO-INTERACTIONS
+           ============================================ */
+
+        /* Button press effect */
+        .sp-action-btn:active,
+        .sp-welcome-btn:active,
+        .sp-send-btn:active,
+        .sp-menu-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Ripple effect for buttons */
+        .sp-action-btn,
+        .sp-welcome-btn,
+        .sp-send-btn {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sp-action-btn::after,
+        .sp-welcome-btn::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background-image: radial-gradient(circle, rgba(255, 255, 255, 0.3) 10%, transparent 10%);
+            background-repeat: no-repeat;
+            background-position: 50%;
+            transform: scale(10, 10);
+            opacity: 0;
+            transition: transform 0.4s, opacity 0.8s;
+        }
+
+        .sp-action-btn:active::after,
+        .sp-welcome-btn:active::after {
+            transform: scale(0, 0);
+            opacity: 0.3;
+            transition: 0s;
+        }
+
+        /* New item slide-in animation */
+        .sp-message {
+            animation: message-slide-in 0.3s ease;
+        }
+
+        @keyframes message-slide-in {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Insight highlight animation */
+        .sp-insight-item {
+            transition: all 0.2s ease;
+        }
+
+        .sp-insight-item.new {
+            animation: insight-highlight 2s ease;
+        }
+
+        @keyframes insight-highlight {
+            0% {
+                background: rgba(251, 191, 36, 0.3);
+                transform: translateX(-5px);
+            }
+
+            50% {
+                background: rgba(251, 191, 36, 0.2);
+            }
+
+            100% {
+                background: var(--surface);
+                transform: translateX(0);
+            }
+        }
+
+        /* Thread item hover effect */
+        .sp-thread-item {
+            transition: all 0.15s ease;
+        }
+
+        .sp-thread-item:hover {
+            transform: translateX(3px);
+        }
+
+        /* Delete/remove swipe animation */
+        .sp-note-item.removing {
+            animation: swipe-out 0.3s ease forwards;
+        }
+
+        @keyframes swipe-out {
+            to {
+                opacity: 0;
+                transform: translateX(-100%);
+            }
+        }
+
+        /* Loading shimmer effect */
+        .sp-shimmer {
+            background: linear-gradient(90deg,
+                    var(--surface) 25%,
+                    var(--background) 50%,
+                    var(--surface) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* Success checkmark animation */
+        .sp-success-icon {
+            display: inline-block;
+            animation: success-pop 0.4s ease;
+        }
+
+        @keyframes success-pop {
+            0% {
+                transform: scale(0);
+            }
+
+            50% {
+                transform: scale(1.2);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Tab switch animation */
+        .sp-tab-panel {
+            animation: tab-fade-in 0.2s ease;
+        }
+
+        @keyframes tab-fade-in {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Hover glow effect for primary buttons */
+        .sp-action-btn.primary:hover,
+        .sp-welcome-btn.primary:hover {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Badge pulse for new items */
+        .sp-tab-badge.pulse {
+            animation: badge-pulse 0.5s ease;
+        }
+
+        @keyframes badge-pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.3);
+            }
+        }
+
+        /* ============================================
+           MULTI-TAB WARNING
+           ============================================ */
+
+        .sp-multitab-warning {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.1) 100%);
+            border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            animation: slide-down 0.3s ease;
+        }
+
+        .sp-multitab-warning.hiding {
+            animation: slide-up 0.2s ease forwards;
+        }
+
+        @keyframes slide-down {
+            from {
+                opacity: 0;
+                transform: translateY(-100%);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slide-up {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            to {
+                opacity: 0;
+                transform: translateY(-100%);
+            }
+        }
+
+        .sp-multitab-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .sp-multitab-icon {
+            font-size: 14px;
+        }
+
+        .sp-multitab-text {
+            font-size: 11px;
+            color: #3B82F6;
+        }
+
+        .sp-multitab-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .sp-multitab-btn {
+            background: transparent;
+            border: 1px solid #3B82F6;
+            color: #3B82F6;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .sp-multitab-btn:hover {
+            background: #3B82F6;
+            color: white;
+        }
+
+        /* Typing Indicator */
+        .sp-typing {
+            display: flex;
+            gap: 4px;
+            padding: 10px 12px;
+            align-self: flex-start;
+        }
+
+        .sp-typing span {
+            width: 6px;
+            height: 6px;
+            background: var(--muted);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .sp-typing span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .sp-typing span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+
+            30% {
+                transform: translateY(-3px);
+                opacity: 1;
+            }
+        }
+
+        /* Action Bar (after chat) - Prominent CTA */
+        /* Updated Compact Action Bar */
+        .sp-action-bar {
+            display: flex;
+            /* Always visible but empty if needed */
+            gap: 4px;
+            padding: 0 4px;
+            margin-bottom: 6px;
+        }
+
+        /* Make icons smaller and more button-like */
+        .sp-action-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--muted);
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex: initial;
+            /* Don't stretch */
+        }
+
+        .sp-action-btn:hover {
+            color: var(--foreground);
+            background: var(--surface);
+            border-color: var(--border);
+        }
+
+        .sp-action-btn.primary {
+            color: var(--primary);
+            box-shadow: none;
+            background: transparent;
+        }
+
+        .sp-action-btn.primary:hover {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .sp-action-btn.secondary {
+            color: #FBBF24;
+            background: transparent;
+            border-color: transparent;
+        }
+
+        .sp-action-btn.secondary:hover {
+            background: rgba(251, 191, 36, 0.1);
+            border-color: rgba(251, 191, 36, 0.3);
+        }
+
+        .sp-action-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Keep icon-only buttons stable when showing loading state */
+        .sp-action-btn.sp-action-loading svg {
+            display: none;
+        }
+
+        .sp-action-btn.sp-action-loading::before {
+            content: '';
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            border-top-color: var(--foreground);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* Key Insight Display */
+        .sp-insight-display {
+            padding: 12px;
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+            border-top: 1px solid var(--border);
+            display: none;
+        }
+
+        .sp-insight-display.active {
+            display: block;
+        }
+
+        .sp-insight-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: #FBBF24;
+            margin-bottom: 6px;
+        }
+
+        .sp-insight-text {
+            font-size: 12px;
+            color: var(--foreground);
+            line-height: 1.5;
+            padding: 10px;
+            background: var(--surface);
+            border-radius: 8px;
+            border-left: 3px solid #FBBF24;
+            margin-bottom: 8px;
+        }
+
+        .sp-insight-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .sp-insight-actions .sp-action-btn {
+            width: auto;
+            height: 30px;
+            padding: 0 10px;
+            gap: 6px;
+            font-size: 12px;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .sp-insight-hide-btn {
+            margin-left: auto;
+            /* Push to right */
+            color: var(--muted);
+        }
+
+        .sp-insight-hide-btn:hover {
+            color: var(--foreground);
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .sp-insight-actions .sp-action-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Session Insights (from Reading Card) */
+        .sp-session-insights {
+            display: none;
+            padding: 10px 12px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.04) 100%);
+            border-top: 1px solid var(--border);
+        }
+
+        .sp-session-insights.active {
+            display: block;
+        }
+
+        .sp-session-insights h4 {
+            font-size: 11px;
+            font-weight: 600;
+            color: #8B5CF6;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sp-session-insights ul {
+            margin: 0;
+            padding: 0 0 0 16px;
+            font-size: 11px;
+            color: var(--foreground);
+            line-height: 1.6;
+        }
+
+        .sp-session-insights li {
+            margin-bottom: 4px;
+        }
+
+        .sp-session-insight-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 6px 8px;
+            background: var(--surface);
+            border-radius: 6px;
+            margin-bottom: 6px;
+        }
+
+        .sp-session-insight-badge {
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .sp-session-insight-text {
+            font-size: 11px;
+            color: var(--foreground);
+            line-height: 1.4;
+        }
+
+        /* Input Area */
+        .sp-input-area {
+            padding: 10px 12px;
+            border-top: 1px solid var(--border);
+            background: var(--background);
+            flex-shrink: 0;
+        }
+
+        .sp-char-count {
+            font-size: 9px;
+            color: var(--muted);
+            text-align: right;
+            margin-bottom: 4px;
+        }
+
+        .sp-input-wrapper {
+            display: flex;
+            gap: 6px;
+            align-items: flex-end;
+        }
+
+        .sp-input {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 8px 14px;
+            color: var(--foreground);
+            font-size: 12px;
+            resize: none;
+            max-height: 100px;
+            min-height: 36px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .sp-input:focus {
+            border-color: var(--primary);
+        }
+
+        .sp-input::placeholder {
+            color: var(--muted);
+        }
+
+        .sp-send-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+
+        .sp-send-btn:hover {
+            background: #059669;
+        }
+
+        .sp-send-btn:disabled {
+            background: #525252;
+            cursor: not-allowed;
+        }
+
+        /* ============================================
+           ZONE 3: BOTTOM TABS (Drawer)
+           ============================================ */
+        .sp-bottom-tabs {
+            border-top: 1px solid var(--border);
+            background: var(--surface);
+            flex-shrink: 0;
+        }
+
+        .sp-tabs-header {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sp-tab-btn {
+            flex: 1;
+            padding: 10px 8px;
+            font-size: 10px;
+            color: var(--muted);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.15s;
+        }
+
+        .sp-tab-btn:hover {
+            color: var(--foreground);
+            background: var(--background);
+        }
+
+        .sp-tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .sp-tab-btn svg {
+            width: 14px;
+            height: 14px;
+            stroke-width: 2;
+        }
+
+        .sp-tab-badge {
+            background: var(--primary);
+            color: white;
+            font-size: 9px;
+            padding: 1px 5px;
+            border-radius: 8px;
+            min-width: 16px;
+            text-align: center;
+        }
+
+        .sp-tab-content {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .sp-tab-panel {
+            display: none;
+            padding: 10px 12px;
+        }
+
+        .sp-tab-panel.active {
+            display: block;
+        }
+
+        /* Discussions Tab */
+        .sp-thread-item {
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 4px;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sp-thread-item:hover {
+            background: var(--background);
+        }
+
+        .sp-thread-item.active {
+            background: rgba(16, 185, 129, 0.15);
+            border-left: 3px solid var(--primary);
+        }
+
+        .sp-thread-status {
+            font-size: 12px;
+        }
+
+        .sp-thread-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .sp-thread-preview {
+            font-size: 11px;
+            color: var(--foreground);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sp-thread-meta {
+            font-size: 9px;
+            color: var(--muted);
+        }
+
+        /* Quick Notes Tab */
+        .sp-note-input-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .sp-note-input {
+            flex: 1;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 11px;
+            color: var(--foreground);
+            outline: none;
+        }
+
+        .sp-note-input:focus {
+            border-color: var(--primary);
+        }
+
+        .sp-note-add-btn {
+            background: var(--primary);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 10px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .sp-note-add-btn:hover {
+            background: #059669;
+        }
+
+        .sp-note-empty {
+            font-size: 10px;
+            color: var(--muted);
+            text-align: center;
+            padding: 12px;
+        }
+
+        .sp-note-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 8px;
+            background: var(--background);
+            border-radius: 8px;
+            margin-bottom: 6px;
+        }
+
+        .sp-note-text {
+            font-size: 11px;
+            color: var(--foreground);
+            flex: 1;
+            line-height: 1.4;
+        }
+
+        .sp-note-actions {
+            display: flex;
+            gap: 4px;
+            margin-left: 8px;
+        }
+
+        .sp-note-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 2px;
+            opacity: 0.6;
+            transition: opacity 0.15s;
+        }
+
+        .sp-note-btn:hover {
+            opacity: 1;
+        }
+
+        /* Connections Tab */
+        .sp-connection-item {
+            padding: 10px;
+            background: var(--background);
+            border-radius: 8px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .sp-connection-item:hover {
+            border-left: 3px solid var(--primary);
+        }
+
+        .sp-connection-type {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .sp-connection-item.contradict .sp-connection-type {
+            color: #EF4444;
+        }
+
+        .sp-connection-item.support .sp-connection-type {
+            color: #10B981;
+        }
+
+        .sp-connection-item.extend .sp-connection-type {
+            color: #3B82F6;
+        }
+
+        .sp-connection-preview {
+            font-size: 10px;
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        .sp-connection-empty {
+            font-size: 11px;
+            color: var(--muted);
+            text-align: center;
+            padding: 24px 12px;
+            opacity: 0.7;
+        }
+
+        .sp-connection-item {
+            border: 1px solid var(--border);
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .sp-connection-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--primary);
+            border-left-width: 3px;
+        }
+
+        .sp-connections-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .sp-deep-angle-status {
+            font-size: 10px;
+            color: var(--muted);
+            flex: 1;
+            text-align: right;
+            font-style: italic;
+            opacity: 0.8;
+        }
+
+        .sp-deep-angle {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--primary);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .sp-deep-angle-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sp-deep-angle-text {
+            font-size: 12px;
+            line-height: 1.6;
+            color: var(--foreground);
+        }
+
+        /* Toast Notification */
+        .sp-toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            z-index: 9999;
+            animation: toast-in 0.3s ease;
+        }
+
+        .sp-toast.success {
+            background: #10B981;
+            color: white;
+        }
+
+        .sp-toast.error {
+            background: #EF4444;
+            color: white;
+        }
+
+        .sp-toast.warning {
+            background: #F59E0B;
+            color: white;
+        }
+
+        .sp-toast.info {
+            background: #3B82F6;
+            color: white;
+        }
+
+        @keyframes toast-in {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Keyboard Shortcut Hints */
+        .kbd-hint {
+            display: inline-block;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 2px 5px;
+            font-size: 9px;
+            font-family: monospace;
+            color: var(--muted);
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
+        /* Tooltip enhancement for shortcuts */
+        [title] {
+            position: relative;
+        }
+
+        .sp-action-btn[title]:hover::after,
+        .sp-send-btn[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--foreground);
+            color: var(--background);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-family: monospace;
+            white-space: nowrap;
+            margin-bottom: 6px;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .btn-spinner {
+            width: 10px;
+            height: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* Toggle Tabs Button */
+        .sp-toggle-tabs-btn {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            padding: 8px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .sp-toggle-tabs-btn:hover {
+            color: var(--foreground);
+            background: var(--background);
+        }
+
+        .sp-toggle-tabs-btn svg {
+            transition: transform 0.3s ease;
+        }
+
+        /* Collapsed State */
+        .sp-bottom-tabs.collapsed .sp-tab-content {
+            display: none;
+        }
+
+        .sp-bottom-tabs.collapsed .sp-toggle-tabs-btn svg {
+            transform: rotate(180deg);
+        }
+
+        .sp-bottom-tabs.collapsed {
+            border-top: 1px solid var(--border);
+        }
+
+        /* --- Deep Angle Professional UI --- */
+        #btn-deep-angle {
+            width: auto !important;
+            height: 32px;
+            padding: 0 14px;
+            white-space: nowrap;
+            gap: 8px;
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
+            color: white !important;
+            border: none;
+            font-weight: 600;
+            font-size: 11px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #btn-deep-angle:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+            transform: translateY(-1px);
+        }
+
+        #btn-deep-angle:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Skip link for screen readers -->
+    <a href="#user-input" class="sp-skip-link">Skip to chat input</a>
+
+    <!-- ============================================
+         ZONE 1: TOP BAR
+         ============================================ -->
+    <header class="sp-topbar" role="banner">
+        <!-- Timer -->
+        <div class="sp-timer" role="timer" aria-label="Reading session duration">
+            <span class="sp-timer-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                </svg>
+            </span>
+            <span id="session-timer" aria-live="off">0m</span>
+        </div>
+
+        <!-- Page Info -->
+        <div class="sp-page-info">
+            <div class="sp-page-title" id="page-title">Loading...</div>
+            <div class="sp-status">
+                <span class="status-dot" id="context-status"></span>
+                <span id="context-text">Loading...</span>
+            </div>
+            <!-- Progress Bar -->
+            <div class="sp-progress-bar" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+                aria-valuenow="0" aria-label="Reading progress">
+                <div class="sp-progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <nav class="sp-topbar-actions" aria-label="Main actions">
+            <button class="sp-menu-btn" id="capture-post-btn" data-i18n-title="sp_capture_post_title" title="Capture post (Alt+C)" aria-label="Capture post">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 3h6v6" /><path d="M9 21H3v-6" /><path d="M21 3l-7 7" /><path d="M3 21l7-7" />
+                </svg>
+            </button>
+            <button class="sp-menu-btn" id="btn-new-chat-top" title="New Chat" aria-label="Start new chat">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+            </button>
+            <div class="sp-menu-wrapper">
+                <button class="sp-menu-btn" id="btn-menu" aria-label="Open menu" aria-haspopup="true"
+                    aria-expanded="false">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="4" y1="12" x2="20" y2="12" />
+                        <line x1="4" y1="6" x2="20" y2="6" />
+                        <line x1="4" y1="18" x2="20" y2="18" />
+                    </svg>
+                </button>
+                <div class="sp-menu-dropdown" id="menu-dropdown" role="menu" aria-label="Main menu">
+                    <div class="sp-menu-item" id="menu-download" data-i18n="sp_btn_download_notes" role="menuitem"
+                        tabindex="0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        Download Notes
+                    </div>
+                    <div class="sp-menu-item" id="menu-save-all" data-i18n="sp_btn_save_all_knowledge" role="menuitem"
+                        tabindex="0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                        </svg>
+                        Save All to Knowledge
+                    </div>
+                    <div class="sp-menu-item" id="menu-new-chat" role="menuitem" tabindex="0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                        </svg>
+                        <span data-i18n="sp_menu_new_chat">New Chat</span>
+                    </div>
+                    <div class="sp-menu-divider"></div>
+                    <div class="sp-menu-item" id="menu-semantic-embeddings" role="menuitem" tabindex="0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2a3 3 0 0 1 3 3v2" />
+                            <path d="M12 22a3 3 0 0 0 3-3v-2" />
+                            <path d="M2 12a3 3 0 0 1 3-3h2" />
+                            <path d="M22 12a3 3 0 0 0-3-3h-2" />
+                            <circle cx="12" cy="12" r="4" />
+                        </svg>
+                        <span class="sp-menu-label" data-i18n="sp_menu_semantic_embeddings">Semantic Embeddings</span>
+                        <span class="sp-menu-badge off" id="menu-embeddings-status">OFF</span>
+                    </div>
+                    <div class="sp-menu-item" id="menu-semantic-search" role="menuitem" tabindex="0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="7" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        <span class="sp-menu-label" data-i18n="sp_menu_semantic_search">Semantic Search</span>
+                        <span class="sp-menu-badge off" id="menu-semantic-status">OFF</span>
+                    </div>
+                    <div class="sp-menu-item" id="menu-clear" data-i18n="sp_menu_clear" role="menuitem" tabindex="0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            <line x1="10" y1="11" x2="10" y2="17" />
+                            <line x1="14" y1="11" x2="14" y2="17" />
+                        </svg>
+                        Clear Chat
+                    </div>
+                    <div class="sp-menu-item danger" id="menu-finish" data-i18n="sp_btn_finish_reading" role="menuitem"
+                        tabindex="0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                            <line x1="4" y1="22" x2="4" y2="15" />
+                        </svg>
+                        Finish Reading
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Offline Banner -->
+    <div class="sp-offline-banner" id="offline-banner">
+        <span class="sp-offline-banner-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+        </span>
+        <span class="sp-offline-banner-text" data-i18n="sp_offline_message">No internet connection. Messages will be
+            sent when online.</span>
+        <button class="sp-offline-banner-action" id="btn-retry-connection" data-i18n="sp_retry">Try again</button>
+    </div>
+
+    <nav class="sp-main-tabbar" id="main-tabbar" role="tablist" aria-label="Main tabs">
+        <button class="sp-main-tab-btn active" data-main-tab="chat" role="tab" aria-selected="true" data-i18n="tabChat">Chat</button>
+        <button class="sp-main-tab-btn" data-main-tab="notes" role="tab" aria-selected="false" data-i18n="tabNotes">Notes</button>
+        <button class="sp-main-tab-btn" data-main-tab="cards" role="tab" aria-selected="false" data-i18n="tabCards">Review</button>
+        <button class="sp-main-tab-btn" data-main-tab="saved" role="tab" aria-selected="false" data-i18n="tabSaved">Saved</button>
+    </nav>
+
+    <!-- ============================================
+         ZONE 2: MAIN VIEW
+         ============================================ -->
+    <main class="sp-main" role="main" aria-label="Chat area">
+        <!-- Pre-reading Primer -->
+        <div class="sp-primer-root" id="primer-root"></div>
+
+        <!-- Learning Mode Selector -->
+        <div class="sp-mode-root" id="mode-selector-root"></div>
+
+        <!-- Related Memory (Phase 3: Semantic Brain) -->
+        <div class="sp-memory-root" id="memory-root"></div>
+
+        <!-- Smart Research Queue -->
+        <div id="srq-widget-container" role="region" aria-label="Saved items"></div>
+
+        <!-- Cards Placeholder Panel -->
+        <section class="sp-cards-panel" id="cards-panel" aria-label="Practice cards">
+            <div class="sp-cards-panel-inner">
+                <div class="sp-cards-title" data-i18n="sp_cards_title">Practice</div>
+                <div class="sp-cards-desc" data-i18n="sp_cards_desc">Practice cards will appear here as you save more highlights.</div>
+                <button class="sp-action-btn primary" type="button" id="btn-cards-go-chat" data-i18n="sp_cards_back_chat">Back to chat</button>
+            </div>
+        </section>
+
+        <!-- Quick Action Chips -->
+        <div class="sp-quick-actions hidden" id="quick-actions" role="toolbar" aria-label="Quick actions">
+            <button class="sp-actions-header" id="btn-toggle-actions" aria-expanded="true"
+                aria-controls="quick-actions-grid">
+                <span data-i18n="sp_quick_actions_title" class="sp-actions-title">Quick Actions</span>
+                <span class="sp-chevron-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </span>
+            </button>
+            <div class="sp-actions-grid" id="quick-actions-grid">
+                <button class="sp-quick-chip" data-action="summarize" title="Tóm tắt nội dung">
+                    <span class="chip-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                            <line x1="10" y1="9" x2="8" y2="9" />
+                        </svg>
+                    </span>
+                    <span data-i18n="sp_chip_summarize">Summarize</span>
+                </button>
+                <button class="sp-quick-chip" data-action="keypoints" title="Trích xuất ý chính">
+                    <span class="chip-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="7.5" cy="15.5" r="5.5" />
+                            <path d="m21 2-9.6 9.6" />
+                            <path d="m15.5 7.5 3 3L22 7l-3-3" />
+                        </svg>
+                    </span>
+                    <span data-i18n="sp_chip_keypoints">Key Points</span>
+                </button>
+                <button class="sp-quick-chip" data-action="explain" title="Giải thích đơn giản">
+                    <span class="chip-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+                            <path d="M9 18h6" />
+                            <path d="M10 22h4" />
+                        </svg>
+                    </span>
+                    <span data-i18n="sp_chip_explain">Explain</span>
+                </button>
+                <button class="sp-quick-chip" data-action="counter" title="Phân tích phản biện">
+                    <span class="chip-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                    </span>
+                    <span data-i18n="sp_chip_counter">Critique</span>
+                </button>
+                <button class="sp-quick-chip" data-action="connect" title="Liên kết ngữ cảnh">
+                    <span class="chip-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                        </svg>
+                    </span>
+                    <span data-i18n="sp_chip_connect">Connect</span>
+                </button>
+                <button class="sp-quick-chip sp-chip-save" data-action="save" title="Lưu vào NotebookLM">
+                    <span class="chip-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                            <polyline points="17 21 17 13 7 13 7 21" />
+                            <polyline points="7 3 7 8 15 8" />
+                        </svg>
+                    </span>
+                    <span data-i18n="sp_chip_save">Save</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Insights Summary (shown when no active chat) -->
+        <div class="sp-insights" id="insights-summary">
+            <div class="sp-insights-header">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+                    <path d="M9 18h6" />
+                    <path d="M10 22h4" />
+                </svg>
+                <span data-i18n="sp_key_insight_label">Key Insights</span>
+                <span id="insights-count">(0)</span>
+            </div>
+            <div id="insights-list">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Chat Messages -->
+        <div class="sp-chat" id="messages" role="log" aria-live="polite" aria-label="Chat messages">
+            <div class="sp-empty" id="empty-state" role="status">
+                <div class="sp-empty-icon" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                    </svg>
+                </div>
+                <h2 data-i18n="sp_empty_title">Ready</h2>
+                <p data-i18n="sp_empty_desc">Highlight text on the page to start a discussion</p>
+            </div>
+        </div>
+
+        <!-- Key Insight Display -->
+        <div class="sp-insight-display" id="insight-display">
+            <div class="sp-insight-label">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+                    <path d="M9 18h6" />
+                    <path d="M10 22h4" />
+                </svg>
+                <span data-i18n="sp_key_insight_label">Key Insight</span>
+            </div>
+            <div class="sp-insight-text" id="insight-text"></div>
+            <div class="sp-insight-actions">
+                <button class="sp-action-btn primary" id="btn-copy-insight">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    Copy
+                </button>
+                <button class="sp-action-btn sp-insight-hide-btn" id="btn-insight-hide" title="Hide Insight">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+                <button class="sp-action-btn primary" id="btn-save-insight">
+                    <span data-i18n="sp_btn_save_to_knowledge">Save to Knowledge</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Session Insights (from Reading Card) -->
+        <div class="sp-session-insights" id="session-insights"></div>
+
+        <!-- Quick Diary (Phase 3) -->
+        <div class="qd-widget" id="quick-diary" aria-label="Quick diary">
+            <button class="qd-collapsed" type="button">
+                <span class="qd-hint" data-i18n="quickDiaryHint">Quick diary...</span>
+            </button>
+            <div class="qd-expanded-content">
+                <div class="qd-header">
+                    <span class="qd-title" data-i18n="quickDiaryTitle">Quick diary</span>
+                    <button class="qd-close" type="button" aria-label="Close">x</button>
+                </div>
+                <textarea class="qd-input" rows="2" data-i18n-placeholder="quickDiaryPlaceholder"
+                    placeholder="What's on your mind?"></textarea>
+                <div class="qd-moods" role="group" aria-label="Mood">
+                    <button class="qd-mood" type="button" data-mood="happy" aria-label="Happy">😊</button>
+                    <button class="qd-mood" type="button" data-mood="sad" aria-label="Sad">😢</button>
+                    <button class="qd-mood" type="button" data-mood="anxious" aria-label="Anxious">😰</button>
+                    <button class="qd-mood" type="button" data-mood="tired" aria-label="Tired">😴</button>
+                    <button class="qd-mood" type="button" data-mood="angry" aria-label="Angry">😤</button>
+                    <button class="qd-mood" type="button" data-mood="neutral" aria-label="Neutral">😐</button>
+                    <button class="qd-mood" type="button" data-mood="focused" aria-label="Focused">🎯</button>
+                    <button class="qd-mood" type="button" data-mood="grateful" aria-label="Grateful">🙏</button>
+                </div>
+                <button class="qd-save" type="button" data-i18n="diaryBtnSave">Save to journal</button>
+            </div>
+        </div>
+
+        <!-- Focus Widget -->
+        <div class="sp-focus-widget" id="focus-widget" role="region" aria-label="Focus timer"></div>
+
+        <!-- Command Quick Actions (Phase 1: Focus commands) -->
+        <div class="sp-command-actions" id="quick-actions-command" role="toolbar" aria-label="Focus quick actions"></div>
+
+        <!-- Input Area -->
+        <div class="sp-input-area" role="form" aria-label="Message input">
+            <div class="sp-action-bar" id="action-bar" role="toolbar" aria-label="Discussion actions">
+                <button class="sp-action-btn" id="btn-quick-save" title="Lưu nhanh vào NotebookLM">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                        <polyline points="17 21 17 13 7 13 7 21" />
+                        <polyline points="7 3 7 8 15 8" />
+                    </svg>
+                </button>
+                <button class="sp-action-btn secondary" id="btn-key-insight" title="Create Key Insight (Ctrl+D)"
+                    aria-keyshortcuts="Control+d">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+                        <path d="M9 18h6" />
+                        <path d="M10 22h4" />
+                    </svg>
+                </button>
+                <button class="sp-action-btn" id="btn-toggle-insight" title="Hide Key Insight" aria-label="Toggle Key Insight" aria-pressed="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.77 21.77 0 0 1 5.06-6.94"></path>
+                        <path d="M1 1l22 22"></path>
+                        <path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.77 21.77 0 0 1-4.23 5.94"></path>
+                        <path d="M14.12 14.12a3 3 0 0 1-4.24-4.24"></path>
+                        <path d="M9.88 9.88a3 3 0 0 1 4.24 4.24"></path>
+                    </svg>
+                </button>
+                <button class="sp-action-btn primary" id="btn-mark-done" title="Mark as Done (Ctrl+Shift+D)"
+                    aria-keyshortcuts="Control+Shift+d">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                        <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                </button>
+                <div style="flex:1"></div>
+                <div class="sp-char-count" aria-live="off"><span id="char-count">0</span>/500</div>
+            </div>
+            <div class="sp-input-wrapper">
+                <label for="user-input" class="visually-hidden">Type your message</label>
+                <textarea class="sp-input" id="user-input" rows="1" data-i18n-placeholder="sp_input_placeholder"
+                    placeholder="Ask a question..." maxlength="500" aria-describedby="char-count"></textarea>
+                <button class="sp-send-btn" id="btn-send" disabled title="Ctrl+Enter" aria-label="Send message"
+                    aria-keyshortcuts="Control+Enter">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        aria-hidden="true">
+                        <path d="m22 2-7 20-4-9-9-4Z" />
+                        <path d="M22 2 11 13" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- ============================================
+         ZONE 3: BOTTOM TABS
+         ============================================ -->
+    <aside class="sp-bottom-tabs" role="complementary" aria-label="Additional panels">
+        <div class="sp-tabs-header" role="tablist" aria-label="Content tabs">
+            <button class="sp-tab-btn active" data-tab="discussions" role="tab" aria-selected="true"
+                aria-controls="tab-discussions" id="tab-btn-discussions">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                <span data-i18n="sp_threads_label">Chats</span>
+                <span class="sp-tab-badge" id="discussions-count" aria-label="chat count">0</span>
+            </button>
+            <button class="sp-tab-btn" data-tab="notes" role="tab" aria-selected="false" aria-controls="tab-notes"
+                id="tab-btn-notes">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                </svg>
+                <span data-i18n="sp_quick_note_title">Notes</span>
+                <span class="sp-tab-badge" id="notes-count" aria-label="notes count">0</span>
+            </button>
+            <button class="sp-tab-btn" data-tab="connections" role="tab" aria-selected="false"
+                aria-controls="tab-connections" id="tab-btn-connections">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                </svg>
+                <span data-i18n="sp_connections_title">Related</span>
+                <span class="sp-tab-badge" id="connections-count" aria-label="connections count">0</span>
+            </button>
+            <button class="sp-toggle-tabs-btn" id="btn-toggle-tabs" aria-label="Toggle panel" title="Collapse/Expand">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </button>
+        </div>
+
+        <div class="sp-tab-content">
+            <!-- Discussions Tab -->
+            <div class="sp-tab-panel active" id="tab-discussions" role="tabpanel" aria-labelledby="tab-btn-discussions"
+                tabindex="0">
+                <div id="thread-list" role="list" aria-label="Discussion threads">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Quick Notes Tab -->
+            <div class="sp-tab-panel" id="tab-notes" role="tabpanel" aria-labelledby="tab-btn-notes" tabindex="0"
+                hidden>
+                <div class="sp-note-input-row">
+                    <label for="note-input" class="visually-hidden">Quick note input</label>
+                    <input type="text" class="sp-note-input" id="note-input"
+                        data-i18n-placeholder="sp_quick_note_placeholder" placeholder="Jot down your idea...">
+                    <button class="sp-note-add-btn" id="btn-add-note" data-i18n="sp_quick_note_add" title="Ctrl+N"
+                        aria-keyshortcuts="Control+n">+ Add</button>
+                </div>
+                <div id="notes-list" role="list" aria-label="Quick notes">
+                    <div class="sp-note-empty" data-i18n="sp_quick_note_empty" role="status">No notes yet</div>
+                </div>
+            </div>
+
+            <!-- Connections Tab -->
+            <div class="sp-tab-panel" id="tab-connections" role="tabpanel" aria-labelledby="tab-btn-connections"
+                tabindex="0" hidden>
+                <div class="sp-connections-actions">
+                    <button class="sp-action-btn" id="btn-deep-angle" data-i18n="sp_deep_angle">🧠 New angle</button>
+                    <div class="sp-deep-angle-status" id="deep-angle-status" data-i18n="sp_deep_angle_hint">
+                        See another perspective from your recent highlights.
+                    </div>
+                </div>
+                <div class="sp-deep-angle" id="deep-angle-output" hidden>
+                    <div class="sp-deep-angle-title" data-i18n="sp_deep_angle_title">A new angle</div>
+                    <div class="sp-deep-angle-text" id="deep-angle-text"></div>
+                </div>
+                <div id="connections-list" role="list" aria-label="Related ideas">
+                    <div class="sp-connection-empty" role="status">No related ideas yet</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <script src="config/build_flags.js"></script>
+    <script src="utils/console_guard.js"></script>
+    <script src="storage/reading_session.js"></script>
+    <script src="config/feature_flags.js"></script>
+    <script src="services/rate_limit_manager.js"></script>
+    <script src="services/learning_objective.js"></script>
+    <script src="services/primer_service.js"></script>
+    <script src="services/quiz_generator.js"></script>
+    <script src="services/teachback_service.js"></script>
+    <script src="services/flashcard_deck.js"></script>
+    <script src="services/spaced_repetition.js"></script>
+    <script src="services/comprehension_scoring.js"></script>
+    <!-- Phase 3: Semantic Brain -->
+    <script src="storage/vector_store.js"></script>
+    <script src="services/embedding_service.js"></script>
+    <script src="services/semantic_search.js"></script>
+    <script src="services/related_memory.js"></script>
+    <script src="services/connection_detector.js"></script>
+    <script src="services/cross_domain_alerts.js"></script>
+    <script src="ui/components/mode_selector.js"></script>
+    <script src="ui/components/primer.js"></script>
+    <script src="ui/components/quiz.js"></script>
+    <script src="ui/components/teachback.js"></script>
+    <script src="ui/components/flashcard.js"></script>
+    <script src="ui/components/related_memory.js"></script>
+    <script src="ui/components/knowledge_graph.js"></script>
+    <script src="styles/srq.css.js"></script>
+    <script src="ui/components/srq_widget.js"></script>
+    <script src="services/command_router.js"></script>
+    <script src="services/intent_parser.js"></script>
+    <script src="services/action_executor.js"></script>
+    <script src="ui/controllers/toast_manager.js"></script>
+    <script src="ui/controllers/tab_controller.js"></script>
+    <script src="ui/controllers/focus_widget.js"></script>
+    <script src="ui/controllers/quick_actions.js"></script>
+    <script src="ui/controllers/quick_diary.js"></script>
+    <script src="utils/i18n_classic.js"></script>
+    <script src="sidepanel.js"></script>
+
+    <!-- Rate Limit Debug Panel (Ctrl+Shift+R to toggle) -->
+    <style>
+        .rl-debug-panel {
+            position: fixed;
+            top: 50px;
+            right: 10px;
+            width: 280px;
+            max-height: 400px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid #F97316;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 10px;
+            color: #E5E5E5;
+            z-index: 10000;
+            display: none;
+            overflow: hidden;
+        }
+
+        .rl-debug-panel.show {
+            display: block;
+        }
+
+        .rl-debug-header {
+            padding: 8px 10px;
+            background: #F97316;
+            color: black;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .rl-debug-close {
+            background: none;
+            border: none;
+            color: black;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .rl-debug-content {
+            padding: 10px;
+            max-height: 340px;
+            overflow-y: auto;
+        }
+
+        .rl-debug-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .rl-debug-label {
+            color: #A3A3A3;
+        }
+
+        .rl-debug-value {
+            color: #10B981;
+            font-weight: bold;
+        }
+
+        .rl-debug-value.warn {
+            color: #F97316;
+        }
+
+        .rl-debug-value.error {
+            color: #EF4444;
+        }
+
+        .rl-debug-section {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #555;
+        }
+
+        .rl-debug-section-title {
+            color: #F97316;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .rl-debug-btn {
+            width: 100%;
+            padding: 6px;
+            margin-top: 8px;
+            background: #DC2626;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10px;
+        }
+
+        .rl-debug-btn:hover {
+            background: #B91C1C;
+        }
+    </style>
+    <div class="rl-debug-panel" id="rl-debug-panel">
+        <div class="rl-debug-header">
+            <span>🔧 Rate Limit Debug</span>
+            <button class="rl-debug-close" id="rl-debug-close">×</button>
+        </div>
+        <div class="rl-debug-content" id="rl-debug-content">
+            <!-- Content populated by JS -->
+        </div>
+    </div>
+    <script src="ui/rate_limit_debug.js"></script>
+    <script src="ui/quota_indicator.js"></script>
+</body>
+
+</html>

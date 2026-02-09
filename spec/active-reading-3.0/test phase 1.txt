@@ -1,0 +1,88 @@
+Dưới đây là checklist test   
+  Phase 1 (1.1–1.6) theo spec, 
+  đủ để smoke + edge:          
+                               
+  1) Pre‑reading Primer (1.1)  
+                               
+  - Trang article dài → primer 
+    xuất hiện lần đầu, không   
+    xuất hiện lại trong 24h.   
+  - Domain bị exclude (google/ 
+    facebook/youtube/github/…) 
+    → không hiện primer.       
+  - Không có API key → primer  
+    không hiện (không crash).  
+  - Click Start reading →      
+    primer biến mất + lưu      
+    objectives (kiểm tra       
+    session data).             
+  - Click Skip → primer biến   
+    mất + không tự hiện lại    
+    trong 24h.                 
+                               
+  2) Learning Mode Selector    
+  (1.2)                        
+                               
+  - Toggle Skim/Deep → chip    
+    list đổi ngay.             
+  - Refresh sidepanel → mode   
+    giữ đúng (persist).        
+  - Mode Skim → prompt style   
+    ngắn; Deep → chi tiết hơn. 
+                               
+  3) Smart Nudges (1.3)        
+                               
+  - Fast scroll nhiều lần,     
+    không highlight → nudge    
+    xuất hiện.                 
+  - Đọc lâu không highlight (~5    phút) → nudge passive xuất 
+    hiện.                      
+  - Qua H2/H3 → nudge section  
+    end xuất hiện.             
+  - Cuộn đến gần cuối (>=95%) →    nudge completion xuất hiện.  - Cooldown + max nudges/     
+    session → không spam (test 
+    liên tục).                 
+                               
+  4) Timer Integration + Review  (1.4)                        
+                               
+  - Start focus với tab hợp lệ 
+    → linked session được tạo. 
+  - Work → Break → review UI   
+    xuất hiện.                 
+  - Submit recall → feedback/  
+    score hiển thị + lưu vào   
+    tiếp tục bình thường.      
+  - Stop focus → review bị ẩn +
+    link session clear.        
+
+  5) Bloom Chips (1.5)
+
+  - Chip có badge Bloom đúng   
+    level.
+  - Click chip → prompt có     
+    “COGNITIVE LEVEL”.
+  - i18n chip/badge đúng ngôn  
+    ngữ.
+
+  6) Auto‑Summarize Thread     
+  (1.6)
+
+  - Sau 3 assistant replies →  
+    summary card xuất hiện.    
+  - Click suggestion → điền vào
+    input và gửi.
+  - Create Insight → insight   
+    hiển thị + lưu session.    
+  - Dismiss → không tự xuất    
+    hiện lại trong thread.     
+
+  Edge/Regression
+
+  - Không active tab / system  
+    page → không crash.        
+  - Offline mode → chat queued,
+    không làm hỏng summary/    
+    nudge.
+  - Tạo nhiều thread → auto    
+    summary chỉ chạy theo từng 
+    thread.

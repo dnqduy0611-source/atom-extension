@@ -1,0 +1,126 @@
+Batch 1 Keys (40 total):
+========================
+
+"sp_title": {
+  "message": "Active Reading"
+},
+"sp_threads_label": {
+  "message": "Discussions"
+},
+"sp_highlighted_text": {
+  "message": "Discussing"
+},
+"sp_input_placeholder": {
+  "message": "Ask a question..."
+},
+"sp_menu_clear": {
+  "message": "Clear chat"
+},
+"sp_no_discussions": {
+  "message": "No discussions yet"
+},
+"sp_no_connections": {
+  "message": "No connections found yet"
+},
+"sp_no_highlight": {
+  "message": "No highlight selected"
+},
+"sp_no_content": {
+  "message": "No content to distill."
+},
+"sp_from_reading_card": {
+  "message": "From Reading Card"
+},
+"sp_analyzing": {
+  "message": "Analyzing connections..."
+},
+"sp_generating": {
+  "message": "Generating insight..."
+},
+"sp_exporting": {
+  "message": "Exporting..."
+},
+"sp_shortcut_send": {
+  "message": "Send (Ctrl+Enter)"
+},
+"sp_shortcut_insight": {
+  "message": "Key Insight (Ctrl+D)"
+},
+"sp_shortcut_done": {
+  "message": "Done (Ctrl+Shift+D)"
+},
+"sp_shortcut_note": {
+  "message": "New note (Ctrl+N)"
+},
+"sp_shortcut_search": {
+  "message": "Search (Ctrl+K)"
+},
+"sp_shortcut_undo": {
+  "message": "Undo"
+},
+"sp_btn_mark_done": {
+  "message": "Mark as Done"
+},
+"sp_btn_key_insight": {
+  "message": "Key Insight"
+},
+"sp_btn_download_notes": {
+  "message": "Download Notes"
+},
+"sp_btn_finish_reading": {
+  "message": "Finish Reading"
+},
+"sp_btn_save_to_knowledge": {
+  "message": "Save to Knowledge"
+},
+"sp_btn_save_all_knowledge": {
+  "message": "Save All to Knowledge"
+},
+"sp_btn_compare": {
+  "message": "Compare"
+},
+"sp_btn_merge": {
+  "message": "Merge discussions"
+},
+"sp_btn_quick_save": {
+  "message": "Save"
+},
+"sp_key_insight_label": {
+  "message": "Key Insight"
+},
+"sp_key_insight_copy": {
+  "message": "Copy"
+},
+"sp_key_insight_save": {
+  "message": "Save to Knowledge"
+},
+"sp_chip_analyze": {
+  "message": "Analyze"
+},
+"sp_chip_example": {
+  "message": "Example"
+},
+"sp_action_explain": {
+  "message": "Explain"
+},
+"sp_action_summarize": {
+  "message": "Summarize"
+},
+"sp_action_counter": {
+  "message": "Counter-argue"
+},
+"sp_action_connect": {
+  "message": "Connect"
+},
+"sp_toast_saved": {
+  "message": "Saved to Knowledge!"
+},
+"sp_toast_copied": {
+  "message": "Copied"
+},
+"sp_toast_quick_saved": {
+  "message": "Highlight saved!"
+},
+"sp_toast_already_saved": {
+  "message": "Already saved today"
+},

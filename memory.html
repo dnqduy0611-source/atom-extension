@@ -111,11 +111,113 @@
             margin-top: 4px;
         }
 
+        /* Weekly Insight */
+        .weekly-insight {
+            margin-bottom: 18px;
+            padding: 16px 18px;
+            background: var(--surface);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .weekly-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--foreground);
+            margin-bottom: 4px;
+        }
+
+        .weekly-desc {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        .weekly-summary {
+            font-size: 13px;
+            color: var(--foreground);
+            margin-bottom: 12px;
+        }
+
+        .weekly-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .weekly-bar {
+            display: grid;
+            grid-template-columns: 110px 1fr 44px;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .weekly-bar-label {
+            font-size: 12px;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .weekly-bar-track {
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(16, 185, 129, 0.10);
+            border: 1px solid rgba(16, 185, 129, 0.18);
+            overflow: hidden;
+        }
+
+        .weekly-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.85), rgba(16, 185, 129, 0.55));
+        }
+
+        .weekly-bar-pct {
+            font-size: 12px;
+            color: var(--muted);
+            text-align: right;
+        }
+
         /* Notes Grid */
         .notes-grid {
             display: flex;
             flex-direction: column;
             gap: 16px;
+        }
+
+        .notes-scroll {
+            max-height: calc(100vh - 360px);
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .notes-scroll.virtual {
+            overflow-y: auto;
+        }
+
+        .notes-grid.is-virtual {
+            position: relative;
+            gap: 0;
+        }
+
+        .notes-virtual-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+        }
+
+        .notes-virtual-spacer {
+            width: 100%;
+        }
+
+        .note-virtual-item {
+            position: absolute;
+            left: 0;
+            right: 0;
+            padding-bottom: 16px;
         }
 
         .note-card {
@@ -142,6 +244,25 @@
             align-items: flex-start;
             margin-bottom: 12px;
             gap: 12px;
+        }
+
+        .note-title-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .note-category-badge {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(16, 185, 129, 1);
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.20);
+            white-space: nowrap;
         }
 
         .note-title {
@@ -229,6 +350,68 @@
             color: var(--primary);
             font-weight: 700;
             margin-bottom: 6px;
+        }
+
+        .note-ai-result.expandable {
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .note-ai-result.expandable:hover {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+        }
+
+        .note-ai-expand {
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--primary);
+            font-weight: 600;
+            text-align: center;
+            opacity: 0.8;
+        }
+
+        .note-ai-result.expanded .note-ai-expand {
+            opacity: 1;
+        }
+
+        .note-related {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.18);
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+        }
+
+        .note-related-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .note-related-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .note-related-item {
+            width: 100%;
+            text-align: left;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--foreground);
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .note-related-item:hover {
+            border-color: var(--primary);
+            background: rgba(16, 185, 129, 0.1);
         }
 
         /* NLM Export Badge */
@@ -422,6 +605,14 @@
         <p data-i18n="mem_desc">Your reading traces and knowledge exports</p>
     </div>
 
+    <!-- Weekly Insight -->
+    <div class="weekly-insight" id="weekly-insight">
+        <div class="weekly-title" data-i18n="mem_weekly_title">Weekly Insight</div>
+        <div class="weekly-desc" data-i18n="mem_weekly_desc">Your topic distribution in the last 7 days</div>
+        <div class="weekly-summary" id="weekly-summary"></div>
+        <div class="weekly-bars" id="weekly-bars"></div>
+    </div>
+
     <!-- Stats Bar -->
     <div class="stats-bar" id="stats-bar">
         <div class="stat-item">
@@ -435,6 +626,10 @@
         <div class="stat-item">
             <div class="stat-value" id="stat-week">0</div>
             <div class="stat-label" data-i18n="mem_stat_week">This Week</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="stat-top-category">N/A</div>
+            <div class="stat-label" data-i18n="mem_stat_top_category">Top Category</div>
         </div>
     </div>
 
@@ -450,8 +645,10 @@
     </div>
 
     <!-- Notes Grid -->
-    <div class="notes-grid" id="notes-container">
-        <!-- Notes will be rendered here -->
+    <div class="notes-scroll" id="notes-scroll">
+        <div class="notes-grid" id="notes-container">
+            <!-- Notes will be rendered here -->
+        </div>
     </div>
 
     <!-- Pagination -->
@@ -464,6 +661,8 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
+    <script src="config/build_flags.js"></script>
+    <script src="utils/console_guard.js"></script>
     <script src="utils_ui.js"></script>
     <script src="memory.js"></script>
 </body>

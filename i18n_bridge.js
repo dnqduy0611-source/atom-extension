@@ -57,8 +57,12 @@ export function getMessage(key, substitutions, fallback = "") {
     if (messages && messages[key] && typeof messages[key].message === "string") {
         return applySubstitutions(messages[key].message, substitutions);
     }
-    const msg = chrome.i18n.getMessage(key, substitutions);
-    return msg || fallback;
+    try {
+        const msg = chrome.i18n.getMessage(key, substitutions);
+        return msg || fallback;
+    } catch {
+        return fallback;
+    }
 }
 
 export function getActiveLocale() {

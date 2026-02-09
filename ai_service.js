@@ -2,18 +2,25 @@
 // Fixed: Cache Value, Schema Types, Retry Logic, Sanitization
 
 import { initI18n, getActiveLocale } from './i18n_bridge.js';
+import { AI_CONFIG, getModel } from './config/ai_config.js';
+import { RateLimitManager, parseRetryAfterSeconds } from './services/rate_limit_manager.module.js';
 
 const i18nReady = initI18n();
 const getLanguageName = () => (getActiveLocale().startsWith('vi') ? 'Vietnamese' : 'English');
 
 export class AIService {
     constructor() {
-        this.MODEL_NAME = "gemini-3-flash-preview";
-        this.API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
+        // Use centralized config
+        this.API_BASE = AI_CONFIG.API.BASE_URL;
 
         // Cache In-Memory
         this.cache = new Map();
-        this.CACHE_TTL = 30000; // 30s TTL
+        this.CACHE_TTL = AI_CONFIG.CACHE.STRATEGY_TTL_MS;
+        this.rateManager = new RateLimitManager({
+            rpmTotal: 15,
+            rpmBackground: 8,
+            cacheTtlMs: AI_CONFIG.CACHE.DEFAULT_BACKGROUND_TTL_MS || 5 * 60 * 1000
+        });
     }
 
     // =================================================================
@@ -53,8 +60,7 @@ export class AIService {
                     enum: ["conservative", "balanced", "aggressive"]
                 }
             },
-            required: ["intent", "intensity", "risk_tolerance"],
-            additionalProperties: false // [FIX 2] Khóa chặt output
+            required: ["intent", "intensity", "risk_tolerance"]
         };
 
         const systemPrompt = `
@@ -94,8 +100,7 @@ export class AIService {
             properties: {
                 template: { type: "string" }
             },
-            required: ["template"],
-            additionalProperties: false
+            required: ["template"]
         };
 
         const lang = getLanguageName();
@@ -138,8 +143,7 @@ export class AIService {
             properties: {
                 evaluation: { type: "string" }
             },
-            required: ["evaluation"],
-            additionalProperties: false
+            required: ["evaluation"]
         };
 
         const systemPrompt = `
@@ -172,8 +176,7 @@ export class AIService {
             properties: {
                 question: { type: "string" }
             },
-            required: ["question"],
-            additionalProperties: false
+            required: ["question"]
         };
 
         const systemPrompt = `
@@ -208,15 +211,117 @@ export class AIService {
         } catch (error) {
             const msg = String(error?.message || error);
             if (msg.includes("API Error 400")) {
+                // Use fallback model from config
+                const fallbackModel = getModel('USER', true);
                 try {
-                    return await this._callCloudGemini(systemPrompt, QUESTION_SCHEMA, 8000, 1, "gemini-1.5-flash");
+                    return await this._callCloudGemini(systemPrompt, QUESTION_SCHEMA, 8000, 1, fallbackModel);
                 } catch {
-                    const raw = await this._callCloudGemini(systemPrompt, null, 8000, 1, "gemini-1.5-flash");
+                    const raw = await this._callCloudGemini(systemPrompt, null, 8000, 1, fallbackModel);
                     return { question: parseQuestion(raw) };
                 }
             }
             throw error;
         }
+    }
+
+    // =================================================================
+    // 5. NOTEBOOK TITLING (Smart Naming)
+    // =================================================================
+
+    async generateTitle(text, context = {}) {
+        const lang = getLanguageName();
+        const selection = (text || "").substring(0, 1000); // Limit context
+        const domain = context.domain || "";
+
+        const TITLE_SCHEMA = {
+            type: "object",
+            properties: {
+                title: { type: "string" }
+            },
+            required: ["title"]
+        };
+
+        const systemPrompt = `
+        You are a research assistant.
+        Language: ${lang}.
+        Task: specific title for a research notebook (concise, max 10-12 words).
+        Domain: ${domain}
+        Content:
+        """${selection}"""
+        Output JSON only: { "title": "..." }
+        NO generic names like "Research Note". Be specific to the content.
+        `.trim();
+
+        try {
+            const result = await this._callCloudGemini(systemPrompt, TITLE_SCHEMA, 5000, 1);
+            return result.title;
+        } catch (error) {
+            console.warn("[ATOM AI] Title Generation Failed:", error);
+            return null; // Fallback to keyword extractor
+        }
+    }
+
+    // =================================================================
+    // 6. MEMORY NOTE CATEGORIZATION (Auto Labeling)
+    // =================================================================
+
+    async categorizeMemoryNote(note) {
+        const title = String(note?.title || "").trim().slice(0, 180);
+        const url = String(note?.url || "").trim().slice(0, 500);
+        const selection = String(note?.selection || "").trim().slice(0, 900);
+        const insight = String(note?.refinedInsight || note?.atomicThought || note?.aiDiscussionSummary || "").trim().slice(0, 500);
+
+        const CATEGORIES = [
+            "Tech",
+            "Business",
+            "Health",
+            "Science",
+            "Society",
+            "Politics",
+            "Finance",
+            "Education",
+            "Culture",
+            "Other"
+        ];
+
+        const SCHEMA = {
+            type: "object",
+            properties: {
+                category: { type: "string", enum: CATEGORIES },
+                tags: {
+                    type: "array",
+                    items: { type: "string" },
+                    maxItems: 5
+                }
+            },
+            required: ["category", "tags"]
+        };
+
+        const systemPrompt = `
+You are a memory note classifier. Output JSON only.
+
+Category must be one of: ${CATEGORIES.join(", ")}.
+
+Dynamic tags:
+- Return 2-5 short tags that help grouping (e.g., "AI Agents", "Mental Models").
+- No leading "#".
+- Avoid duplicates.
+
+Note:
+Title: ${title || "(none)"}
+URL: ${url || "(none)"}
+Selection:
+"""${selection || "(none)"}"""
+Key insight (if any):
+"""${insight || "(none)"}"""
+
+Output JSON only: { "category": "...", "tags": ["...", "..."] }
+        `.trim();
+
+        return this._callCloudGemini(systemPrompt, SCHEMA, 8000, 1, {
+            priority: "background",
+            allowFallback: true
+        });
     }
 
     // =================================================================
@@ -227,15 +332,54 @@ export class AIService {
      * Gọi Gemini với cơ chế Retry & Timeout
      * @param {number} retries - Số lần thử lại nếu gặp lỗi 429/5xx
      */
-    async _callCloudGemini(prompt, responseSchema, timeoutMs = 8000, retries = 1, modelOverride = "") {
+    async _callCloudGemini(prompt, responseSchema, timeoutMs = 8000, retries = 1, options = {}) {
         const key = await this._getApiKey();
         if (!key) throw new Error("Missing API Key");
 
-        const model = modelOverride || this.MODEL_NAME;
+        let modelOverride = "";
+        let allowFallback = true;
+        let priority = 'background';
+        let safeOptions = options;
+        let fallbackChain = [];
+
+        if (typeof options === 'string') {
+            modelOverride = options;
+            safeOptions = {};
+        } else if (!options || typeof options !== 'object') {
+            safeOptions = {};
+        }
+
+        if (safeOptions) {
+            if (typeof safeOptions.modelOverride === 'string') {
+                modelOverride = safeOptions.modelOverride;
+            }
+            if (safeOptions.priority === 'vip') {
+                priority = 'vip';
+            }
+            if (typeof safeOptions.allowFallback === 'boolean') {
+                allowFallback = safeOptions.allowFallback;
+            } else {
+                allowFallback = priority === 'background';
+            }
+            if (Array.isArray(safeOptions.fallbackChain)) {
+                fallbackChain = safeOptions.fallbackChain;
+            }
+        }
+
+        if (!modelOverride && fallbackChain.length === 0) {
+            const configuredChain = AI_CONFIG.MODELS?.USER?.fallback_chain;
+            if (Array.isArray(configuredChain) && configuredChain.length > 0) {
+                fallbackChain = [...configuredChain];
+            } else if (AI_CONFIG.MODELS?.USER?.fallback) {
+                fallbackChain = [AI_CONFIG.MODELS.USER.fallback];
+            }
+        }
+
+        const model = modelOverride || getModel('USER');
         const url = `${this.API_BASE}/${model}:generateContent?key=${key}`;
         const generationConfig = {
             temperature: 0.5,
-            maxOutputTokens: 1200
+            maxOutputTokens: 8192
         };
         if (responseSchema) {
             generationConfig.responseMimeType = "application/json";
@@ -254,11 +398,16 @@ export class AIService {
             const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
             try {
-                const response = await fetch(url, {
+                const runRequest = async () => fetch(url, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(body),
                     signal: controller.signal
+                });
+                const response = await this.rateManager.enqueue(runRequest, {
+                    priority,
+                    allowDuringCooldown: priority === 'vip',
+                    skipDuringCooldown: priority !== 'vip'  // Skip background tasks during cooldown
                 });
 
                 // Nếu thành công -> Thoát vòng lặp
@@ -281,6 +430,33 @@ export class AIService {
                 }
 
                 // Nếu lỗi Server (5xx) hoặc Rate Limit (429) -> Ném lỗi để catch bên dưới xử lý retry
+                if (response.status === 429) {
+                    this.rateManager.record429Error('ai-service');
+                    const retryHeader = response.headers.get("Retry-After");
+                    const retryHeaderSeconds = retryHeader ? Number(retryHeader) : null;
+                    const errText = await response.text().catch(() => "");
+                    const retrySeconds = Number.isFinite(retryHeaderSeconds)
+                        ? retryHeaderSeconds
+                        : parseRetryAfterSeconds(errText);
+                    if (Number.isFinite(retrySeconds)) {
+                        this.rateManager.setCooldown((retrySeconds + 1) * 1000, 'ai-service-429');
+                    }
+                    if (priority === 'background' && allowFallback && fallbackChain.length > 0) {
+                        const nextModel = fallbackChain[0];
+                        const remainingChain = fallbackChain.slice(1);
+                        console.log('[ATOM AI] 429 received, trying fallback model:', nextModel);
+                        this.rateManager.recordFallback();
+                        return this._callCloudGemini(prompt, responseSchema, timeoutMs, 0, {
+                            ...(safeOptions || {}),
+                            modelOverride: nextModel,
+                            fallbackChain: remainingChain,
+                            allowFallback: true,
+                            priority
+                        });
+                    }
+                } else if (response.status >= 500) {
+                    this.rateManager.recordServerError();
+                }
                 throw new Error(`Retryable Error ${response.status}`);
 
             } catch (error) {
@@ -293,6 +469,7 @@ export class AIService {
                 // Backoff: Đợi 1s * 2^attempt (1s, 2s, 4s...)
                 const delay = 1000 * Math.pow(2, attempt);
                 // console.log(`ATOM Retry ${attempt + 1}/${retries} after ${delay}ms`);
+                this.rateManager.recordRetry();
                 await new Promise(r => setTimeout(r, delay));
             }
         }
@@ -337,3 +514,6 @@ export class AIService {
         return data.user_gemini_key || null;
     }
 }
+
+// Export singleton instance for shared use
+export const AI_SERVICE = new AIService();

@@ -1,20 +1,23 @@
 {
   "default_locale": "vi",
   "manifest_version": 3,
-  "name": "Amo",
-  "version": "2.3",
-  "description": "AI-powered attention operating system.",
+  "name": "AmoNexus",
+  "version": "2.8",
+  "description": "The Neural Nexus for Your Second Brain.",
   "permissions": [
     "storage",
     "tabs",
     "scripting",
     "alarms",
     "contextMenus",
-    "notifications"
+    "notifications",
+    "sidePanel",
+    "identity"
   ],
   "host_permissions": [
     "<all_urls>",
-    "https://generativelanguage.googleapis.com/*"
+    "https://generativelanguage.googleapis.com/*",
+    "https://*.supabase.co/*"
   ],
   "background": {
     "service_worker": "background.js",
@@ -26,6 +29,10 @@
         "<all_urls>"
       ],
       "js": [
+        "config/build_flags.js",
+        "utils/console_guard.js",
+        "services/nudge_engine.js",
+        "ui/components/nudge.js",
         "content.js",
         "bridge/nlm_floating_button.js"
       ],
@@ -38,6 +45,8 @@
         "https://notebooklm.google.com/*"
       ],
       "js": [
+        "config/build_flags.js",
+        "utils/console_guard.js",
         "bridge/nlm_passive_learning.js"
       ],
       "run_at": "document_idle"
@@ -57,6 +66,18 @@
     "128": "icons/icon128.png"
   },
   "options_page": "options.html",
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "commands": {
+    "open-sidepanel": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Open ATOM Active Reading sidepanel"
+    }
+  },
   "web_accessible_resources": [
     {
       "resources": [
@@ -64,6 +85,9 @@
         "i18n_bridge.js",
         "MicroClosureRenderer.js",
         "styles/micro_closure.css.js",
+        "styles/srq.css.js",
+        "ui/components/srq_widget.js",
+        "storage/reading_session.js",
         "_locales/*/messages.json",
         "icons/focus_bg.jpg",
         "icons/rain.mp3",

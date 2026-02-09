@@ -22,7 +22,25 @@ const state = {
     filter: "all", // "all" | "exported" | "not-exported"
     searchQuery: "",
     page: 1,
-    pageSize: 10
+    pageSize: 10,
+    virtualEnabled: false,
+    diaryLogs: [],
+    diaryIndex: {}
+};
+
+const VIRTUAL_SCROLL_THRESHOLD = 200;
+const VIRTUAL_OVERSCAN = 6;
+const VIRTUAL_MIN_ITEM_HEIGHT = 220;
+const VIRTUAL_ITEM_GAP = 16;
+
+const virtualScroll = {
+    enabled: false,
+    itemHeight: VIRTUAL_MIN_ITEM_HEIGHT,
+    scrollEl: null,
+    spacerEl: null,
+    layerEl: null,
+    pending: false,
+    lastRange: { start: -1, end: -1 }
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -30,13 +48,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         await window.AtomI18n.init();
     }
 
-    // Load notes
+    // Load notes + diary index
     await loadNotes();
+    await loadDiaryLogs();
 
     // Setup event listeners
     setupFilterChips();
     setupSearch();
     setupPagination();
+    setupLiveUpdates();
 
     // Initial render
     applyFilters();
@@ -59,6 +79,70 @@ async function loadNotes() {
         state.notes = [];
         state.filteredNotes = [];
     }
+}
+
+/**
+ * Load diary logs and build a fast lookup index
+ */
+async function loadDiaryLogs() {
+    try {
+        const data = await chrome.storage.local.get(["journal_logs"]);
+        const logs = Array.isArray(data.journal_logs) ? data.journal_logs : [];
+        state.diaryLogs = logs;
+        state.diaryIndex = buildDiaryIndex(logs);
+    } catch (error) {
+        console.error("[ATOM Memory] Failed to load diary logs:", error);
+        state.diaryLogs = [];
+        state.diaryIndex = {};
+    }
+}
+
+function buildDiaryIndex(logs) {
+    const index = {};
+    logs.forEach(log => {
+        const ts = Number(log.timestamp || log.ts || 0);
+        if (!ts) return;
+        const dayKey = new Date(ts).toDateString();
+        const noteText = String(log.input?.user_note || "");
+        const tokens = tokenize(noteText);
+        const entry = {
+            id: log.id || "",
+            ts: ts,
+            note: noteText,
+            tokens: tokens
+        };
+        if (!index[dayKey]) index[dayKey] = [];
+        index[dayKey].push(entry);
+    });
+    return index;
+}
+
+function tokenize(text) {
+    const raw = String(text || "").toLowerCase();
+    if (!raw) return [];
+    return raw.split(/\s+/).map(t => t.trim()).filter(t => t.length > 3);
+}
+
+function findRelatedDiary(note) {
+    const ts = Number(note.created_at || note.updated_at || 0);
+    if (!ts) return [];
+    const dayKey = new Date(ts).toDateString();
+    const candidates = state.diaryIndex[dayKey] || [];
+    if (candidates.length === 0) return [];
+
+    const noteText = String(note.selection || note.title || "");
+    const noteTokens = new Set(tokenize(noteText));
+    if (noteTokens.size === 0) return [];
+
+    const related = [];
+    for (const log of candidates) {
+        const overlap = log.tokens.filter(t => noteTokens.has(t));
+        if (overlap.length >= 2) {
+            related.push({ log: log, score: overlap.length });
+        }
+    }
+    related.sort((a, b) => b.score - a.score);
+    return related.slice(0, 3).map(r => r.log);
 }
 
 /**
@@ -92,7 +176,7 @@ function setupSearch() {
             state.page = 1;
             applyFilters();
             renderNotes();
-        }, 300);
+        }, 200);
     });
 }
 
@@ -158,6 +242,7 @@ function applyFilters() {
 function renderNotes() {
     const container = document.getElementById("notes-container");
     const pagination = document.getElementById("pagination");
+    const scrollWrap = document.getElementById("notes-scroll");
 
     if (state.filteredNotes.length === 0) {
         container.innerHTML = `
@@ -167,8 +252,21 @@ function renderNotes() {
             </div>
         `;
         pagination.style.display = "none";
+        if (scrollWrap) scrollWrap.classList.remove("virtual");
+        container.classList.remove("is-virtual");
+        virtualScroll.enabled = false;
+        state.virtualEnabled = false;
         return;
     }
+
+    if (state.filteredNotes.length > VIRTUAL_SCROLL_THRESHOLD) {
+        enableVirtualScroll(container);
+        pagination.style.display = "none";
+        renderVirtualNotes();
+        return;
+    }
+
+    disableVirtualScroll(container);
 
     // Pagination
     const totalPages = Math.ceil(state.filteredNotes.length / state.pageSize);
@@ -186,6 +284,133 @@ function renderNotes() {
     document.getElementById("btn-next").disabled = state.page >= totalPages;
 
     // Attach event listeners to action buttons
+    attachNoteActions();
+}
+
+function enableVirtualScroll(container) {
+    if (!container) return;
+    const scrollWrap = document.getElementById("notes-scroll");
+    if (scrollWrap) {
+        scrollWrap.classList.add("virtual");
+        updateVirtualViewport(scrollWrap);
+    }
+
+    container.classList.add("is-virtual");
+    state.virtualEnabled = true;
+    virtualScroll.enabled = true;
+
+    if (!virtualScroll.scrollEl) {
+        virtualScroll.scrollEl = scrollWrap || container.parentElement;
+    }
+
+    if (!virtualScroll.spacerEl || !virtualScroll.layerEl) {
+        container.innerHTML = "";
+        const spacer = document.createElement("div");
+        spacer.className = "notes-virtual-spacer";
+        const layer = document.createElement("div");
+        layer.className = "notes-virtual-layer";
+        container.appendChild(spacer);
+        container.appendChild(layer);
+        virtualScroll.spacerEl = spacer;
+        virtualScroll.layerEl = layer;
+    }
+
+    if (!virtualScroll.itemHeight || virtualScroll.itemHeight < VIRTUAL_MIN_ITEM_HEIGHT) {
+        virtualScroll.itemHeight = measureVirtualItemHeight(container);
+    }
+
+    attachVirtualScrollHandlers();
+}
+
+function disableVirtualScroll(container) {
+    const scrollWrap = document.getElementById("notes-scroll");
+    if (scrollWrap) scrollWrap.classList.remove("virtual");
+    if (container) container.classList.remove("is-virtual");
+    state.virtualEnabled = false;
+    virtualScroll.enabled = false;
+    virtualScroll.lastRange = { start: -1, end: -1 };
+}
+
+function updateVirtualViewport(scrollWrap) {
+    if (!scrollWrap) return;
+    const top = scrollWrap.getBoundingClientRect().top;
+    const height = Math.max(240, window.innerHeight - top - 24);
+    scrollWrap.style.maxHeight = `${Math.floor(height)}px`;
+}
+
+function attachVirtualScrollHandlers() {
+    if (!virtualScroll.scrollEl || virtualScroll.scrollEl.dataset.bound === "1") return;
+    virtualScroll.scrollEl.dataset.bound = "1";
+
+    virtualScroll.scrollEl.addEventListener("scroll", () => {
+        if (!virtualScroll.enabled || virtualScroll.pending) return;
+        virtualScroll.pending = true;
+        requestAnimationFrame(() => {
+            virtualScroll.pending = false;
+            renderVirtualNotes();
+        });
+    });
+
+    window.addEventListener("resize", () => {
+        if (!virtualScroll.enabled) return;
+        updateVirtualViewport(virtualScroll.scrollEl);
+        renderVirtualNotes(true);
+    });
+}
+
+function measureVirtualItemHeight(container) {
+    const sample = state.filteredNotes.slice(0, 3);
+    if (sample.length === 0) return VIRTUAL_MIN_ITEM_HEIGHT;
+
+    const measure = document.createElement("div");
+    measure.style.position = "absolute";
+    measure.style.visibility = "hidden";
+    measure.style.pointerEvents = "none";
+    measure.style.left = "-9999px";
+    measure.style.top = "0";
+    measure.style.width = `${container?.clientWidth || 600}px`;
+    measure.innerHTML = sample.map(note => renderNoteCard(note)).join("");
+    document.body.appendChild(measure);
+
+    let maxHeight = VIRTUAL_MIN_ITEM_HEIGHT;
+    measure.querySelectorAll(".note-card").forEach(card => {
+        maxHeight = Math.max(maxHeight, card.offsetHeight);
+    });
+
+    document.body.removeChild(measure);
+    return Math.max(VIRTUAL_MIN_ITEM_HEIGHT, maxHeight + VIRTUAL_ITEM_GAP);
+}
+
+function renderVirtualNotes(force) {
+    if (!virtualScroll.enabled || !virtualScroll.layerEl || !virtualScroll.spacerEl) return;
+    const scrollEl = virtualScroll.scrollEl;
+    if (!scrollEl) return;
+
+    const total = state.filteredNotes.length;
+    const itemHeight = virtualScroll.itemHeight || VIRTUAL_MIN_ITEM_HEIGHT;
+    const totalHeight = total * itemHeight;
+    virtualScroll.spacerEl.style.height = `${totalHeight}px`;
+
+    const viewHeight = scrollEl.clientHeight;
+    const scrollTop = scrollEl.scrollTop;
+    const start = Math.max(0, Math.floor(scrollTop / itemHeight) - VIRTUAL_OVERSCAN);
+    const end = Math.min(total, Math.ceil((scrollTop + viewHeight) / itemHeight) + VIRTUAL_OVERSCAN);
+
+    if (!force && start === virtualScroll.lastRange.start && end === virtualScroll.lastRange.end) {
+        return;
+    }
+
+    virtualScroll.lastRange = { start, end };
+    const slice = state.filteredNotes.slice(start, end);
+    virtualScroll.layerEl.innerHTML = slice.map((note, idx) => {
+        const top = (start + idx) * itemHeight;
+        return `
+            <div class="note-virtual-item" style="top:${top}px;">
+                ${renderNoteCard(note)}
+            </div>
+        `;
+    }).join("");
+
     attachNoteActions();
 }
 
@@ -213,16 +438,48 @@ function renderNoteCard(note) {
 
     // Selection preview (truncated)
     const selection = note.selection || "";
-    const selectionPreview = selection.length > 300
-        ? selection.substring(0, 300) + "..."
+    const maxPreview = state.virtualEnabled ? 180 : 300;
+    const selectionPreview = selection.length > maxPreview
+        ? selection.substring(0, maxPreview) + "..."
         : selection;
 
-    // AI Result
+    const keyInsightRaw = (note.refinedInsight || note.atomicThought || "").trim();
+    const keyInsight = extractInsightTextFromMaybeJson(keyInsightRaw);
     const aiResult = note.result?.summary || note.result?.critique || note.result?.quiz || "";
-    const aiHtml = aiResult ? `
-        <div class="note-ai-result">
+    const aiPreviewLimit = state.virtualEnabled ? 140 : 200;
+
+    const insightHtml = keyInsight ? `
+        <div class="note-ai-result expandable" data-full="${escapeHtml(keyInsight)}">
             <div class="note-ai-label">${atomMsg("mem_ai_insight", null, "AI Insight")}</div>
-            <div>${escapeHtml(aiResult.substring(0, 200))}${aiResult.length > 200 ? "..." : ""}</div>
+            <div class="note-ai-text">${escapeHtml(keyInsight.substring(0, aiPreviewLimit))}${keyInsight.length > aiPreviewLimit ? "..." : ""}</div>
+            ${keyInsight.length > aiPreviewLimit ? '<div class="note-ai-expand">▼ Xem thêm</div>' : ""}
+        </div>
+    ` : "";
+
+    const aiHtml = aiResult ? `
+        <div class="note-ai-result expandable" data-full="${escapeHtml(aiResult)}">
+            <div class="note-ai-label">${atomMsg("mem_ai_insight", null, "AI Insight")}</div>
+            <div class="note-ai-text">${escapeHtml(aiResult.substring(0, aiPreviewLimit))}${aiResult.length > aiPreviewLimit ? "..." : ""}</div>
+            ${aiResult.length > aiPreviewLimit ? '<div class="note-ai-expand">▼ Xem thêm</div>' : ""}
+        </div>
+    ` : "";
+
+    const combinedAiHtml = `${insightHtml}${aiHtml}`;
+
+    const related = findRelatedDiary(note);
+    const relatedHtml = related.length > 0 ? `
+        <div class="note-related">
+            <div class="note-related-title">${atomMsg("mem_related_diary_title", null, "Related journal")}</div>
+            <div class="note-related-list">
+                ${related.map(log => `
+                    <button class="note-related-item" data-action="open-diary"
+                        data-log-id="${escapeHtml(log.id || "")}"
+                        data-log-ts="${escapeHtml(String(log.ts || ""))}"
+                        aria-label="${atomMsg("mem_related_diary_open", null, "Open journal entry")}">
+                        "${escapeHtml(String(log.note || "").substring(0, 120))}${String(log.note || "").length > 120 ? "..." : ""}"
+                    </button>
+                `).join("")}
+            </div>
         </div>
     ` : "";
 
@@ -283,8 +540,11 @@ function renderNoteCard(note) {
     return `
         <div class="note-card ${exportedClass}" data-note-id="${note.id}">
             <div class="note-header">
-                <div class="note-title">
-                    ${note.url ? `<a href="${escapeHtml(note.url)}" target="_blank" rel="noopener">${escapeHtml(note.title || "Untitled")}</a>` : escapeHtml(note.title || "Untitled")}
+                <div class="note-title-row">
+                    ${note.category ? `<span class="note-category-badge">${escapeHtml(note.category)}</span>` : ""}
+                    <div class="note-title">
+                        ${note.url ? `<a href="${escapeHtml(note.url)}" target="_blank" rel="noopener">${escapeHtml(note.title || "Untitled")}</a>` : escapeHtml(note.title || "Untitled")}
+                    </div>
                 </div>
                 ${nlmBadgeHtml}
             </div>
@@ -326,7 +586,8 @@ function renderNoteCard(note) {
             </div>
             ` : ""}
 
-            ${aiHtml}
+            ${combinedAiHtml}
+            ${relatedHtml}
 
             <div class="note-actions">
                 ${openNlmBtn}
@@ -401,10 +662,47 @@ function attachNoteActions() {
         });
     });
 
+    // Open related journal entry
+    document.querySelectorAll('[data-action="open-diary"]').forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const logId = btn.dataset.logId || "";
+            const logTs = btn.dataset.logTs || "";
+            try {
+                await chrome.storage.local.set({
+                    journal_focus_id: logId,
+                    journal_focus_ts: logTs
+                });
+            } catch { /* ignore */ }
+            chrome.tabs.create({ url: chrome.runtime.getURL("journal.html") });
+        });
+    });
+
     // Expand selection on click
     document.querySelectorAll(".note-selection").forEach(el => {
         el.addEventListener("click", () => {
             el.classList.toggle("expanded");
+        });
+    });
+
+    // Expand AI insight on click
+    document.querySelectorAll(".note-ai-result.expandable").forEach(el => {
+        el.addEventListener("click", () => {
+            const isExpanded = el.classList.toggle("expanded");
+            const textEl = el.querySelector(".note-ai-text");
+            const expandBtn = el.querySelector(".note-ai-expand");
+            const fullText = el.dataset.full || "";
+
+            if (textEl) {
+                if (isExpanded) {
+                    textEl.textContent = fullText;
+                } else {
+                    textEl.textContent = fullText.substring(0, 200) + (fullText.length > 200 ? "..." : "");
+                }
+            }
+
+            if (expandBtn) {
+                expandBtn.textContent = isExpanded ? "▲ Thu gọn" : "▼ Xem thêm";
+            }
         });
     });
 }
@@ -419,10 +717,116 @@ function updateStats() {
     // Count notes from this week
     const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const thisWeek = state.notes.filter(n => (n.created_at || 0) >= weekAgo).length;
+    const weekNotes = state.notes.filter(n => (n.created_at || 0) >= weekAgo);
 
     document.getElementById("stat-total").textContent = total;
     document.getElementById("stat-exported").textContent = exported;
     document.getElementById("stat-week").textContent = thisWeek;
+
+    // Calculate Top Category (Weekly)
+    const categoryCounts = {};
+    weekNotes.forEach(n => {
+        const cat = n.category || "Other";
+        categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+    });
+
+    let topCat = "N/A";
+    let maxCount = 0;
+    for (const [cat, count] of Object.entries(categoryCounts)) {
+        if (count > maxCount) {
+            maxCount = count;
+            topCat = cat;
+        }
+    }
+
+    const topCatEl = document.getElementById("stat-top-category");
+    if (topCatEl) {
+        topCatEl.textContent = topCat;
+        if (maxCount > 0) {
+            topCatEl.title = `${maxCount} notes`;
+        }
+    }
+
+    renderWeeklyInsight(weekNotes, categoryCounts);
+}
+
+function renderWeeklyInsight(weekNotes, categoryCounts) {
+    const summaryEl = document.getElementById("weekly-summary");
+    const barsEl = document.getElementById("weekly-bars");
+    if (!summaryEl || !barsEl) return;
+
+    if (!Array.isArray(weekNotes) || weekNotes.length === 0) {
+        summaryEl.textContent = atomMsg("mem_weekly_empty", null, "No notes this week yet.");
+        barsEl.innerHTML = "";
+        return;
+    }
+
+    const total = weekNotes.length;
+    const entries = Object.entries(categoryCounts || {}).filter(([_, c]) => Number(c) > 0);
+    entries.sort((a, b) => b[1] - a[1]);
+
+    const [topCat, topCount] = entries[0] || ["Other", 0];
+    const topPct = Math.round((topCount / total) * 100);
+
+    const focusLine = atomMsg(
+        "mem_weekly_focus",
+        [String(topPct), String(topCat)],
+        `This week you focused ${topPct}% on ${topCat}.`
+    );
+
+    const tagCounts = {};
+    weekNotes
+        .filter(n => (n.category || "Other") === topCat)
+        .forEach(n => {
+            const tags = Array.isArray(n.tags) ? n.tags : [];
+            tags.forEach(t => {
+                const key = String(t || "").trim();
+                if (!key) return;
+                tagCounts[key] = (tagCounts[key] || 0) + 1;
+            });
+        });
+
+    const topTags = Object.entries(tagCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 2)
+        .map(([t]) => `#${t}`);
+
+    summaryEl.textContent = topTags.length > 0
+        ? `${focusLine} ${atomMsg("mem_weekly_focus_tags", [topTags.join(", ")], `Especially: ${topTags.join(", ")}`)}`
+        : focusLine;
+
+    const maxBars = 8;
+    barsEl.innerHTML = entries.slice(0, maxBars).map(([cat, count]) => {
+        const pct = Math.round((count / total) * 100);
+        const safePct = Math.max(0, Math.min(100, pct));
+        return `
+            <div class="weekly-bar" role="listitem" aria-label="${escapeHtml(cat)} ${safePct}%">
+                <div class="weekly-bar-label">${escapeHtml(cat)}</div>
+                <div class="weekly-bar-track" aria-hidden="true">
+                    <div class="weekly-bar-fill" style="width:${safePct}%"></div>
+                </div>
+                <div class="weekly-bar-pct">${safePct}%</div>
+            </div>
+        `;
+    }).join("");
+}
+
+function setupLiveUpdates() {
+    let debounceTimer;
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+        if (namespace !== "local") return;
+        const notesChanged = !!changes.atom_reading_notes;
+        const diaryChanged = !!changes.journal_logs;
+        if (!notesChanged && !diaryChanged) return;
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async () => {
+            await loadNotes();
+            await loadDiaryLogs();
+            applyFilters();
+            renderNotes();
+            updateStats();
+        }, 250);
+    });
 }
 
 /**
@@ -446,6 +850,52 @@ function formatCommand(command) {
         .replace(/^atom-reading-/, "")
         .replace(/-/g, " ")
         .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function extractInsightTextFromMaybeJson(rawText) {
+    const s = String(rawText || "").trim();
+    if (!s) return "";
+
+    // Remove markdown code block wrapper if present (handles ```json, ```JSON, ``` etc.)
+    let stripped = s
+        .replace(/^```(?:json)?\s*/i, "")  // Remove opening ```json or ```
+        .replace(/```$/g, "")               // Remove closing ```
+        .trim();
+
+    // If no JSON-like structure, return as-is
+    if (!stripped.startsWith("{")) return stripped || s;
+
+    // Try to extract JSON object
+    const match = stripped.match(/\{[\s\S]*\}/);
+    if (!match) return stripped || s;
+
+    const candidate = match[0];
+
+    // Attempt 1: Direct parse
+    try {
+        const parsed = JSON.parse(candidate);
+        if (parsed && typeof parsed.insight === "string" && parsed.insight.trim()) {
+            return parsed.insight.trim();
+        }
+        // Also check for 'category' field in case it's a different structure
+        if (parsed && typeof parsed.text === "string" && parsed.text.trim()) {
+            return parsed.text.trim();
+        }
+    } catch {
+        // Attempt 2: Fix trailing comma issue
+        try {
+            const fixed = candidate.replace(/,\s*([}\]])/g, "$1");
+            const parsed = JSON.parse(fixed);
+            if (parsed && typeof parsed.insight === "string" && parsed.insight.trim()) {
+                return parsed.insight.trim();
+            }
+        } catch {
+            // fall through
+        }
+    }
+
+    // Fallback: return stripped text (without markdown wrapper)
+    return stripped || s;
 }
 
 /**

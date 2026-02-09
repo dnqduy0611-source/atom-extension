@@ -6,6 +6,9 @@ let realtimeEnabled = true;
 let debugEnabled = false;
 let port = null;
 
+const BUILD_FLAGS = window.ATOM_BUILD_FLAGS || { DEBUG: false };
+const BUILD_DEBUG_ENABLED = !!BUILD_FLAGS.DEBUG;
+
 const elLatest = document.getElementById("latest");
 const elHistory = document.getElementById("history-list");
 const elHistoryCount = document.getElementById("history-count");
@@ -19,6 +22,14 @@ const elStatus = document.getElementById("debug-status");
 function setStatus(text) {
     if (!elStatus) return;
     elStatus.textContent = text || "";
+}
+
+function setControlsDisabled(disabled) {
+    const controls = [elToggle, elRefresh, elClear, elTabInput, elLoadTab];
+    controls.forEach((el) => {
+        if (!el) return;
+        el.disabled = !!disabled;
+    });
 }
 
 function formatTime(ts) {
@@ -125,6 +136,7 @@ function disconnectPort() {
 }
 
 function connectPort() {
+    if (!BUILD_DEBUG_ENABLED) return;
     if (!realtimeEnabled) return;
     if (port) return;
     try {
@@ -151,6 +163,10 @@ function connectPort() {
 }
 
 async function fetchState() {
+    if (!BUILD_DEBUG_ENABLED) {
+        setStatus("Dev panel disabled in public builds.");
+        return;
+    }
     const resp = await chrome.runtime.sendMessage({
         type: "ATOM_DEBUG_GET_STATE",
         tabId: tabFilter
@@ -205,6 +221,17 @@ if (elLoadTab) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+    if (!BUILD_DEBUG_ENABLED) {
+        setControlsDisabled(true);
+        setStatus("Dev panel disabled in public builds.");
+        return;
+    }
+    const debugState = await chrome.storage.local.get(['debug_mode']);
+    if (!debugState.debug_mode) {
+        setStatus("Debug mode is OFF. Enable it in Settings.");
+    }
     await fetchState();
-    connectPort();
+    if (debugState.debug_mode) {
+        connectPort();
+    }
 });

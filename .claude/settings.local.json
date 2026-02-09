@@ -3,7 +3,26 @@
     "allow": [
       "Bash(node --check:*)",
       "Bash(node -e:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(ls:*)",
+      "Bash(dir:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(CRITICAL_KEYS=\"opt_gemini_api_key opt_semantic_embeddings_title opt_semantic_search_title opt_ai_pilot_timeout_ms opt_ai_pilot_budget_per_day sp_error_cta_retry sp_error_cta_settings sp_error_no_api_key sp_error_unauthorized popup_confirm_reset\")",
+      "Bash(for key in $CRITICAL_KEYS)",
+      "Bash(do if grep -q \"\"\"$key\"\"\" _locales/vi/messages.json)",
+      "Bash(then echo \"✅ $key\")",
+      "Bash(else echo \"❌ $key MISSING\")",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(if grep -q '<details class=\"\"advanced-settings\"\" open' options.html)",
+      "Bash(then echo \"  ❌ Has ''open'' - should be collapsed by default\")",
+      "Bash(else echo \"  ✅ No ''open'' - collapsed by default\")",
+      "Bash(when you might need help. Primary: AI actively guides your reading.\"\n- Accuracy: \"Balanced: faster responses. High: more accurate but slower)",
+      "Bash(and costs more API credits.\"\n\nVI Tooltips:\n- Mode: \"Bóng: AI quan sát nhưng không làm gián đoạn. Trợ lý: AI gợi ý)",
+      "Bash(khi bạn cần giúp. Chủ động: AI chủ động hướng dẫn bạn đọc.\"\n- Accuracy: \"Cân bằng: phản hồi nhanh hơn. Cao: chính xác hơn nhưng)",
+      "Bash(chậm hơn và tốn thêm credit API.\"\n\nImpact:\n- Non-tech users can now understand what each setting does\n- Hover over ⓘ icon to see detailed explanation\n- Hint text provides quick reference below dropdown\n- Helps users make informed choices about AI behavior\n\nStats:\n- EN/VI keys: 797 → 800 \\(+3 keys each\\)\n- Parity check: PASSED ✅\n- JSON validation: PASSED ✅\n\nAddresses user feedback from Wave 3 testing.\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(grep:*)"
     ]
   }
 }

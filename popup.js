@@ -349,7 +349,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (btnWeb) {
         btnWeb.addEventListener('click', () => {
-            chrome.tabs.create({ url: 'https://atom-web-gamma.vercel.app/' });
+            chrome.tabs.create({ url: 'https://www.amonexus.com/' });
         });
     }
 
@@ -592,6 +592,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     preset("focus-preset-50", 50);
 
     let focusUiTimer = null;
+
+    // Check for pending review that was triggered while popup was closed
+    async function checkPendingReview() {
+        try {
+            const data = await chrome.storage.local.get(['atom_focus_pending_review']);
+            const pending = data.atom_focus_pending_review;
+            if (!pending?.readingSessionId) return;
+
+            // Only show review if triggered within last 5 minutes
+            const age = Date.now() - pending.triggeredAt;
+            if (age > 5 * 60 * 1000) {
+                await chrome.storage.local.remove(['atom_focus_pending_review']);
+                return;
+            }
+
+            focusLinkedSessionId = pending.readingSessionId;
+            console.log("[Focus] Found pending review for session:", pending.readingSessionId);
+
+            // Trigger maybeShowReview
+            await maybeShowReview();
+
+            // Clear pending after showing
+            await chrome.storage.local.remove(['atom_focus_pending_review']);
+        } catch (e) {
+            console.warn("[Focus] checkPendingReview error:", e.message);
+        }
+    }
+
     (async () => {
         const st = await getFocusState();
         renderFocus(st);
@@ -600,6 +628,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             const linked = await window.TimerIntegration.getLinkedSession();
             focusLinkedSessionId = linked?.sessionId || null;
         }
+
+        // Check for pending review from when popup was closed
+        await checkPendingReview();
+
         clearInterval(focusUiTimer);
         focusUiTimer = setInterval(async () => {
             const st2 = await getFocusState();

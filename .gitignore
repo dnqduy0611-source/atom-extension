@@ -1,0 +1,30 @@
+# AmoNexus Extension - Git Ignore
+
+# Credentials (NEVER commit these)
+config/supabase_config.js
+
+# Build outputs
+dist/
+build/
+*.zip
+
+# Dependencies
+node_modules/
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp

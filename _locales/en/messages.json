@@ -569,6 +569,30 @@
   "popup_onboarding_open_settings": {
     "message": "Open Settings"
   },
+  "popup_no_focus": {
+    "message": "No focus session yet"
+  },
+  "popup_open_panel": {
+    "message": "Open control panel"
+  },
+  "popup_action_settings": {
+    "message": "Settings"
+  },
+  "popup_action_website": {
+    "message": "Website"
+  },
+  "popup_action_feedback": {
+    "message": "Feedback"
+  },
+  "cmd_onboarding_title": {
+    "message": "New: control with chat"
+  },
+  "cmd_onboarding_body": {
+    "message": "Now you can say:<br>- \"Focus 25 minutes\"<br>- \"Write a diary: feeling tired\"<br>- \"Save to notes\"<br><br>Or tap the quick buttons at the top."
+  },
+  "cmd_onboarding_dismiss": {
+    "message": "Got it"
+  },
   "ctx_chat_with_page": {
     "message": "ATOM: Chat with Amo"
   },
@@ -1026,10 +1050,10 @@
     "message": "WORK left $1"
   },
   "focus_phase_work_end_title": {
-    "message": "Time's up!"
+    "message": "🎯 Focus session complete!"
   },
   "focus_phase_work_end_msg": {
-    "message": "Work session finished. Take a break."
+    "message": "Open AmoNexus to review what you just learned."
   },
   "focus_phase_break_end_title": {
     "message": "Break's over!"
@@ -1320,7 +1344,7 @@
     "message": "General Chat"
   },
   "sp_threads_label": {
-    "message": "Discussions"
+    "message": "Chats"
   },
   "sp_highlighted_text": {
     "message": "Discussing"
@@ -1683,7 +1707,7 @@
     "message": "min"
   },
   "sp_stats_discussions": {
-    "message": "discussions"
+    "message": "chats"
   },
   "sp_stats_done": {
     "message": "done"
@@ -1692,7 +1716,7 @@
     "message": "saved"
   },
   "sp_connections_title": {
-    "message": "Connections Found"
+    "message": "Related ideas"
   },
   "sp_connection_contradicts": {
     "message": "Contradicts"
@@ -1728,25 +1752,25 @@
     "message": "Semantic Search works best with Embeddings on."
   },
   "sp_deep_angle": {
-    "message": "Deep Angle"
+    "message": "New angle"
   },
   "sp_deep_angle_title": {
-    "message": "Deep Angle"
+    "message": "A new angle"
   },
   "sp_deep_angle_hint": {
-    "message": "Generate a deep angle using your recent reading history."
+    "message": "See another perspective from your recent highlights."
   },
   "sp_deep_angle_analyzing": {
-    "message": "AI is finding connections..."
+    "message": "Looking for a fresh angle..."
   },
   "sp_deep_angle_loading": {
     "message": "Generating..."
   },
   "sp_deep_angle_empty": {
-    "message": "No page context available."
+    "message": "Select or save more highlights to unlock this."
   },
   "sp_deep_angle_error": {
-    "message": "Failed to generate Deep Angle."
+    "message": "Couldn't generate a new angle."
   },
   "sp_btn_compare": {
     "message": "Compare"
@@ -1836,10 +1860,10 @@
     "message": "New chat started"
   },
   "sp_no_discussions": {
-    "message": "No discussions yet"
+    "message": "No chats yet"
   },
   "sp_no_connections": {
-    "message": "No connections found yet"
+    "message": "No related ideas yet"
   },
   "sp_shortcut_send": {
     "message": "Send (Ctrl+Enter)"
@@ -1879,6 +1903,24 @@
   },
   "sp_pending_partial": {
     "message": "Some messages failed to send"
+  },
+  "sp_no_active_tab": {
+    "message": "No active tab"
+  },
+  "sp_post_captured": {
+    "message": "Post captured!"
+  },
+  "sp_no_post_found": {
+    "message": "No focused post found"
+  },
+  "sp_capture_error": {
+    "message": "Could not capture post"
+  },
+  "sp_capture_post_title": {
+    "message": "Capture post (Alt+C)"
+  },
+  "sp_shortcut_capture": {
+    "message": "Capture post (Alt+C)"
   },
   "sp_waiting_connection": {
     "message": "Waiting for connection..."
@@ -1925,7 +1967,9 @@
   "sp_error_rate_limit_desc": {
     "message": "Please wait $1 seconds before trying again.",
     "placeholders": {
-      "seconds": { "content": "$1" }
+      "seconds": {
+        "content": "$1"
+      }
     }
   },
   "sp_error_server": {
@@ -2237,83 +2281,231 @@
   "popup_focus_off": {
     "message": "OFF"
   },
-
-  "srq_widget_title": { "message": "Saved highlights" },
-  "srq_clips_label": { "message": "items" },
-  "srq_clips_count": { "message": "$1 highlights", "placeholders": { "count": { "content": "$1" } } },
-  "srq_uncategorized": { "message": "General" },
-  "srq_export_all": { "message": "Save all" },
-  "srq_export": { "message": "Save" },
-  "srq_review": { "message": "Review" },
-  "srq_dismiss": { "message": "Dismiss" },
-  "srq_toggle": { "message": "Show more" },
-  "srq_toggle_collapse": { "message": "Show less" },
-  "srq_pagination_prev": { "message": "Previous page" },
-  "srq_pagination_next": { "message": "Next page" },
+  "srq_widget_title": {
+    "message": "Saved highlights"
+  },
+  "srq_clips_label": {
+    "message": "items"
+  },
+  "srq_clips_count": {
+    "message": "$1 highlights",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_uncategorized": {
+    "message": "General"
+  },
+  "srq_export_all": {
+    "message": "Save all"
+  },
+  "srq_export": {
+    "message": "Save"
+  },
+  "srq_review": {
+    "message": "Review"
+  },
+  "srq_dismiss": {
+    "message": "Dismiss"
+  },
+  "srq_toggle": {
+    "message": "Show more"
+  },
+  "srq_toggle_collapse": {
+    "message": "Show less"
+  },
+  "srq_pagination_prev": {
+    "message": "Previous page"
+  },
+  "srq_pagination_next": {
+    "message": "Next page"
+  },
   "srq_pagination_info": {
     "message": "Page $1 of $2",
     "placeholders": {
-      "current": { "content": "$1" },
-      "total": { "content": "$2" }
+      "current": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
     }
   },
   "srq_batch_export_aria": {
     "message": "Save $1 highlights from $2",
     "placeholders": {
-      "count": { "content": "$1" },
-      "topic": { "content": "$2" }
+      "count": {
+        "content": "$1"
+      },
+      "topic": {
+        "content": "$2"
+      }
     }
   },
   "srq_batch_review_aria": {
     "message": "Review $1 highlights from $2",
     "placeholders": {
-      "count": { "content": "$1" },
-      "topic": { "content": "$2" }
+      "count": {
+        "content": "$1"
+      },
+      "topic": {
+        "content": "$2"
+      }
     }
   },
   "srq_batch_dismiss_aria": {
     "message": "Dismiss $1 batch",
     "placeholders": {
-      "topic": { "content": "$1" }
+      "topic": {
+        "content": "$1"
+      }
     }
   },
   "srq_modal_export_aria": {
     "message": "Save $1 selected highlights",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
-  "srq_review_title": { "message": "Review: $1", "placeholders": { "topic": { "content": "$1" } } },
-  "srq_review_subtitle": { "message": "$1 highlights ready to save", "placeholders": { "count": { "content": "$1" } } },
-  "srq_target_notebook": { "message": "Save to:" },
-  "srq_export_selected": { "message": "Save selected ($1)", "placeholders": { "count": { "content": "$1" } } },
-  "srq_cancel": { "message": "Cancel" },
-  "srq_select": { "message": "Select" },
-  "srq_selected": { "message": "Selected" },
-  "srq_skip": { "message": "Skip" },
-  "srq_exporting": { "message": "Saving..." },
-  "srq_exported_success": { "message": "Saved $1 highlights", "placeholders": { "count": { "content": "$1" } } },
-  "srq_export_error": { "message": "Save failed. Try again." },
-  "srq_in_flight": { "message": "Already processing..." },
-  "srq_related_to": { "message": "Related to: $1", "placeholders": { "titles": { "content": "$1" } } },
-  "srq_pii_warning": { "message": "This highlight may contain personal information. Please review before saving." },
-  "srq_mode_deep": { "message": "Focused" },
-  "srq_mode_skim": { "message": "Quick read" },
-  "srq_mode_reference": { "message": "For reference" },
-  "srq_mode_reread": { "message": "Revisited" },
-  "srq_time_now": { "message": "just now" },
-  "srq_time_mins": { "message": "$1 min ago", "placeholders": { "mins": { "content": "$1" } } },
-  "srq_time_hours": { "message": "$1h ago", "placeholders": { "hours": { "content": "$1" } } },
-  "srq_time_yesterday": { "message": "yesterday" },
-  "srq_time_days": { "message": "$1 days ago", "placeholders": { "days": { "content": "$1" } } },
-  "srq_nlm_banner": { "message": "$1 highlights ready to save", "placeholders": { "count": { "content": "$1" } } },
-  "srq_nlm_export_current": { "message": "Save all to this notebook" },
-  "srq_nlm_open_sidepanel": { "message": "Open in sidebar" },
-  "srq_loading": { "message": "Loading..." },
-  "srq_empty_state": { "message": "No highlights waiting to save." },
-  "srq_error_state": { "message": "Failed to load. Tap 'Try again'." },
-  "srq_retry": { "message": "Try again" },
-
+  "srq_review_title": {
+    "message": "Review: $1",
+    "placeholders": {
+      "topic": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_review_subtitle": {
+    "message": "$1 highlights ready to save",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_target_notebook": {
+    "message": "Save to:"
+  },
+  "srq_export_selected": {
+    "message": "Save selected ($1)",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_cancel": {
+    "message": "Cancel"
+  },
+  "srq_select": {
+    "message": "Select"
+  },
+  "srq_selected": {
+    "message": "Selected"
+  },
+  "srq_skip": {
+    "message": "Skip"
+  },
+  "srq_exporting": {
+    "message": "Saving..."
+  },
+  "srq_exported_success": {
+    "message": "Saved $1 highlights",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_export_error": {
+    "message": "Save failed. Try again."
+  },
+  "srq_in_flight": {
+    "message": "Already processing..."
+  },
+  "srq_related_to": {
+    "message": "Related to: $1",
+    "placeholders": {
+      "titles": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_pii_warning": {
+    "message": "This highlight may contain personal information. Please review before saving."
+  },
+  "srq_mode_deep": {
+    "message": "Focused"
+  },
+  "srq_mode_skim": {
+    "message": "Quick read"
+  },
+  "srq_mode_reference": {
+    "message": "For reference"
+  },
+  "srq_mode_reread": {
+    "message": "Revisited"
+  },
+  "srq_time_now": {
+    "message": "just now"
+  },
+  "srq_time_mins": {
+    "message": "$1 min ago",
+    "placeholders": {
+      "mins": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_time_hours": {
+    "message": "$1h ago",
+    "placeholders": {
+      "hours": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_time_yesterday": {
+    "message": "yesterday"
+  },
+  "srq_time_days": {
+    "message": "$1 days ago",
+    "placeholders": {
+      "days": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_nlm_banner": {
+    "message": "$1 highlights ready to save",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_nlm_export_current": {
+    "message": "Save all to this notebook"
+  },
+  "srq_nlm_open_sidepanel": {
+    "message": "Open in sidebar"
+  },
+  "srq_loading": {
+    "message": "Loading..."
+  },
+  "srq_empty_state": {
+    "message": "No highlights waiting to save."
+  },
+  "srq_error_state": {
+    "message": "Failed to load. Tap 'Try again'."
+  },
+  "srq_retry": {
+    "message": "Try again"
+  },
   "opt_ai_pilot_timeout_hint": {
     "message": "Maximum wait time for AI response (in milliseconds)"
   },
@@ -2379,5 +2571,250 @@
   },
   "popup_connecting": {
     "message": "Connecting to AI..."
+  },
+  "tabChat": {
+    "message": "Chat"
+  },
+  "tabNotes": {
+    "message": "Notes"
+  },
+  "tabCards": {
+    "message": "Review"
+  },
+  "tabSaved": {
+    "message": "Saved"
+  },
+  "sp_cards_title": {
+    "message": "Practice"
+  },
+  "sp_cards_desc": {
+    "message": "Practice cards will appear here as you save more highlights."
+  },
+  "sp_cards_back_chat": {
+    "message": "Back to Chat"
+  },
+  "focusWorking": {
+    "message": "In focus"
+  },
+  "focusBreak": {
+    "message": "Break time"
+  },
+  "focusIdle": {
+    "message": "Ready to focus"
+  },
+  "btnUndo": {
+    "message": "Undo"
+  },
+  "btnStart": {
+    "message": "Start"
+  },
+  "btnStop": {
+    "message": "Stop"
+  },
+  "btnCancel": {
+    "message": "Cancel"
+  },
+  "btnContinue": {
+    "message": "Continue"
+  },
+  "cmdUnknown": {
+    "message": "I didn't catch that..."
+  },
+  "cmdError": {
+    "message": "Something went wrong..."
+  },
+  "cmdUndone": {
+    "message": "Undone!"
+  },
+  "cmdDone": {
+    "message": "Done!"
+  },
+  "cmd_confirm_action": {
+    "message": "Continue?"
+  },
+  "cmd_focus_confirm_sub": {
+    "message": "Start a {min}-min focus session?"
+  },
+  "cmd_focus_stop_confirm": {
+    "message": "Stop your current session?"
+  },
+  "cmd_focus_min_too_low": {
+    "message": "Please enter at least 1 minute."
+  },
+  "cmd_focus_min_too_high": {
+    "message": "Maximum 180 minutes allowed."
+  },
+  "confirmFocusStart": {
+    "message": "Start focusing for $1 minutes?"
+  },
+  "confirmFocusStop": {
+    "message": "Stop focus session?"
+  },
+  "confirmFocusStopHint": {
+    "message": "Your progress will be saved."
+  },
+  "confirmGeneric": {
+    "message": "Proceed?"
+  },
+  "btnPause": {
+    "message": "Pause"
+  },
+  "focusStarted": {
+    "message": "Started focus for $1 minutes."
+  },
+  "focusStopped": {
+    "message": "Focus session stopped."
+  },
+  "focusPaused": {
+    "message": "Focus paused."
+  },
+  "focusNotRunning": {
+    "message": "No focus session is currently running."
+  },
+  "diaryNoContent": {
+    "message": "Add a short note before saving."
+  },
+  "diarySaved": {
+    "message": "Saved to Journal"
+  },
+  "quickDiaryHint": {
+    "message": "Quick diary..."
+  },
+  "quickDiaryTitle": {
+    "message": "Quick diary"
+  },
+  "quickDiaryPlaceholder": {
+    "message": "What's on your mind?"
+  },
+  "diaryBtnSave": {
+    "message": "Save to journal"
+  },
+  "diarySummaryEmpty": {
+    "message": "No entries yet for this period."
+  },
+  "diarySummaryTitle": {
+    "message": "Journal summary"
+  },
+  "diarySummaryEntries": {
+    "message": "entries"
+  },
+  "diarySummaryMood": {
+    "message": "Top mood"
+  },
+  "diarySummaryTags": {
+    "message": "Top tags"
+  },
+  "diarySummaryTagsEmpty": {
+    "message": "general"
+  },
+  "periodToday": {
+    "message": "today"
+  },
+  "periodWeek": {
+    "message": "this week"
+  },
+  "periodMonth": {
+    "message": "this month"
+  },
+  "noteNoContent": {
+    "message": "Select text or provide content first."
+  },
+  "noteSaved": {
+    "message": "Saved to Notes"
+  },
+  "noteSaveFailed": {
+    "message": "Could not save note."
+  },
+  "savedExported": {
+    "message": "Exported $1 highlights",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "savedExportEmpty": {
+    "message": "No saved highlights to export."
+  },
+  "savedExportFailed": {
+    "message": "Export failed. Try again."
+  },
+  "mem_related_diary_title": {
+    "message": "Related journal"
+  },
+  "mem_related_diary_open": {
+    "message": "Open journal entry"
+  },
+  "chipFocus25": {
+    "message": "Focus 25m"
+  },
+  "chipQuickDiary": {
+    "message": "Quick note"
+  },
+  "chipReview": {
+    "message": "Saved items"
+  },
+  "cmd_unknown": {
+    "message": "I did not catch that."
+  },
+  "cmd_error": {
+    "message": "Something went wrong. Please try again."
+  },
+  "cmd_done": {
+    "message": "Done!"
+  },
+  "cmd_undo": {
+    "message": "Undo"
+  },
+  "cmd_confirm_yes": {
+    "message": "OK"
+  },
+  "cmd_confirm_no": {
+    "message": "Cancel"
+  },
+  "opt_tab_account": {
+    "message": "Account"
+  },
+  "opt_account_title": {
+    "message": "Account"
+  },
+  "opt_account_loading": {
+    "message": "Loading account info..."
+  },
+  "opt_account_signin_title": {
+    "message": "Sign in to AmoNexus"
+  },
+  "opt_account_signin_desc": {
+    "message": "Sync your settings, manage your subscription, and access premium features across devices."
+  },
+  "opt_account_signin_google": {
+    "message": "Sign in with Google"
+  },
+  "opt_account_remember_me": {
+    "message": "Remember me for 7 days"
+  },
+  "opt_account_privacy_note": {
+    "message": "We only use your email to verify your subscription status. Your reading data remains private on your device."
+  },
+  "opt_account_upgrade": {
+    "message": "Upgrade to Pro"
+  },
+  "opt_account_manage": {
+    "message": "Manage Subscription"
+  },
+  "opt_account_signout": {
+    "message": "Sign Out"
+  },
+  "opt_account_sync_info": {
+    "message": "Account status syncs automatically."
+  },
+  "opt_account_error_title": {
+    "message": "Something went wrong"
+  },
+  "opt_account_error_desc": {
+    "message": "Failed to load account information."
+  },
+  "opt_account_retry": {
+    "message": "Try Again"
   }
 }

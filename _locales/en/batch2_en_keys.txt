@@ -1,0 +1,138 @@
+Batch 2 Keys (45 total):
+========================
+
+"sp_retention_quiz_title": {
+    "message": "Quiz"
+  },
+"sp_retention_teachback_title": {
+    "message": "Teach-back"
+  },
+"sp_retention_flashcard_title": {
+    "message": "Flashcards"
+  },
+"sp_retention_close": {
+    "message": "Close"
+  },
+"sp_retention_no_highlight": {
+    "message": "Please select a section you care about."
+  },
+"sp_retention_loading": {
+    "message": "Preparing..."
+  },
+"sp_retention_unavailable": {
+    "message": "Retention tools unavailable."
+  },
+"sp_retention_missing_key": {
+    "message": "Missing API key."
+  },
+"sp_retention_empty_quiz": {
+    "message": "Could not generate quiz."
+  },
+"sp_quiz_skip": {
+    "message": "Skip"
+  },
+"sp_quiz_submit": {
+    "message": "Submit Answer"
+  },
+"sp_quiz_evaluating": {
+    "message": "Evaluating..."
+  },
+"sp_quiz_continue": {
+    "message": "Continue"
+  },
+"sp_quiz_placeholder": {
+    "message": "Type your answer here..."
+  },
+"sp_quiz_question": {
+    "message": "Question"
+  },
+"sp_quiz_of": {
+    "message": "of"
+  },
+"sp_quiz_summary_title": {
+    "message": "Quiz complete"
+  },
+"sp_quiz_add_review": {
+    "message": "Add to Review Deck"
+  },
+"sp_quiz_done": {
+    "message": "Done"
+  },
+"sp_quiz_correct_label": {
+    "message": "What you got right"
+  },
+"sp_quiz_missing_label": {
+    "message": "What you missed"
+  },
+"sp_quiz_evidence_label": {
+    "message": "From the text"
+  },
+"sp_quiz_added_review": {
+    "message": "Added to review deck."
+  },
+"sp_teachback_title": {
+    "message": "Teach-back"
+  },
+"sp_teachback_prompt_label": {
+    "message": "Explain it in your own words"
+  },
+"sp_teachback_hint": {
+    "message": "Hint"
+  },
+"sp_teachback_submit": {
+    "message": "Evaluate"
+  },
+"sp_teachback_retry": {
+    "message": "Try again"
+  },
+"sp_teachback_add_review": {
+    "message": "Add to Review Deck"
+  },
+"sp_teachback_placeholder": {
+    "message": "Type your explanation..."
+  },
+"sp_teachback_feedback_title": {
+    "message": "Feedback"
+  },
+"sp_teachback_suggestions_title": {
+    "message": "Suggestions"
+  },
+"sp_teachback_misconceptions_title": {
+    "message": "Misconceptions"
+  },
+"sp_teachback_added_review": {
+    "message": "Added to review deck."
+  },
+"sp_flashcard_show_answer": {
+    "message": "Show Answer"
+  },
+"sp_flashcard_rate_again": {
+    "message": "Again"
+  },
+"sp_flashcard_rate_hard": {
+    "message": "Hard"
+  },
+"sp_flashcard_rate_good": {
+    "message": "Good"
+  },
+"sp_flashcard_rate_easy": {
+    "message": "Easy"
+  },
+"sp_flashcard_review_title": {
+    "message": "Review session"
+  },
+"sp_flashcard_review_done": {
+    "message": "Done"
+  },
+"sp_flashcard_review_empty": {
+    "message": "No cards ready for review."
+  },
+"reading_card_quiz_action": {
+    "message": "Quiz"
+  },
+"reading_card_teachback_action": {
+    "message": "Teach-back"
+  },
+"reading_card_flashcard_action": {
+    "message": "Flashcards"
+  },

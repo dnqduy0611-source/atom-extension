@@ -1,0 +1,567 @@
+Kế hoạch triển khai Smart Research Queue - Phase 1
+Tôi chia thành 4 sprint, mỗi sprint có dependency rõ ràng. Mỗi task chỉ bắt đầu khi prerequisite đã xong.
+
+
+Sprint 1: Nền móng (Storage + Enricher)
+  Không phụ thuộc gì → có thể bắt đầu ngay
+     │
+     ▼
+Sprint 2: Logic (Grouper + Export Pipeline + Wire vào floating button)  
+  Phụ thuộc Sprint 1
+     │
+     ▼
+Sprint 3: UI (Widget + Review Modal + Sidepanel mount)
+  Phụ thuộc Sprint 2
+     │
+     ▼
+Sprint 4: NLM Banner + Cleanup + Polish
+  Phụ thuộc Sprint 3
+Sprint 1: Nền móng
+Mục tiêu: Card tạo được và lưu được vào storage. Chưa có UI, chưa có export.
+
+Task 1.1: Thêm storage key + settings vào bridge/types.js
+
+File:    bridge/types.js
+Dòng:    Sau dòng 9 (NLM_IDEA_COOLDOWN_KEY)
+Thay đổi: Thêm constant + mở rộng DEFAULT_NLM_SETTINGS
+Cụ thể thêm:
+
+
+export const SRQ_CARDS_KEY = "atom_srq_cards_v1";
+export const SRQ_MAX_CARDS = 200;
+Và thêm vào DEFAULT_NLM_SETTINGS (dòng 15-24):
+
+
+srqEnabled: true,
+srqAutoEnrich: true,
+srqShowSidepanelWidget: true,
+srqShowNlmBanner: true,
+srqMaxCardsPerBatch: 20,
+srqStaleCardDays: 14,
+srqNotifyThreshold: 3
+Kiểm tra: Import SRQ_CARDS_KEY từ types.js không lỗi.
+
+Task 1.2: Tạo storage/srq_store.js - Card CRUD
+
+File mới: storage/srq_store.js
+Phụ thuộc: Task 1.1 (cần SRQ_CARDS_KEY, SRQ_MAX_CARDS)
+~150 dòng code
+Module này cần export:
+
+Function	Input	Output	Ghi chú
+loadCards()	-	ResearchCard[]	Đọc từ chrome.storage.local
+saveCards(cards)	ResearchCard[]	void	Ghi vào storage
+addCard(card)	ResearchCard	ResearchCard	Append + FIFO evict nếu >= 200
+updateCard(cardId, patch)	string, Object	ResearchCard	Merge patch vào card
+updateCardStatus(cardId, status)	string, string	ResearchCard	Shortcut cho status update
+getCardsByStatus(status)	string	ResearchCard[]	Filter theo status
+getCardsByTopicKey(topicKey)	string	ResearchCard[]	Filter theo topicKey
+getPendingCards()	-	ResearchCard[]	status = "pending_review"
+dismissCard(cardId)	string	void	status → "dismissed"
+cleanupStaleCards(maxAgeDays)	number	number	Xóa cards cũ, return count
+getCardStats()	-	{pending, approved, exported, dismissed, total}	Đếm theo status
+FIFO logic quan trọng:
+
+
+Khi cards.length >= 200:
+  1. Tìm cards có status "exported" hoặc "dismissed"
+  2. Sắp xếp theo createdAt tăng dần (cũ nhất trước)
+  3. Xóa card cũ nhất cho đến khi < 200
+  4. KHÔNG BAO GIỜ xóa cards "pending_review" hoặc "approved"
+Kiểm tra: Viết test thủ công trong DevTools console:
+
+
+// Tạo 1 card, load lại, kiểm tra còn card
+await srqStore.addCard({cardId: "test_1", status: "pending_review", ...});
+const cards = await srqStore.loadCards();
+console.assert(cards.length === 1);
+Task 1.3: Tạo services/srq_enricher.js - Tạo card + làm giàu
+
+File mới: services/srq_enricher.js
+Phụ thuộc: Task 1.2 (cần srq_store), topic_extractor (có sẵn), privacy_guard (có sẵn)
+~120 dòng code
+Cần xử lý 1 vấn đề: deriveReadingMode() trong bridge_service.js:37-60 là unexported function bên trong ES module. Hai cách:
+
+Cách A (khuyến nghị): Replicate logic trong srq_enricher (chỉ ~15 dòng):
+
+
+function deriveReadingMode(captureData) {
+    const command = (captureData.command || "").toLowerCase();
+    if (command.includes("critique") || command.includes("quiz") || command.includes("analyze")) return "deep";
+    if (command.includes("reference") || command.includes("cite")) return "reference";
+    if ((captureData.selectedText || "").length > 500) return "deep";
+    return "skim";
+}
+Cách B: Export deriveReadingMode từ bridge_service.js → nhưng phải sửa module đang chạy, rủi ro regression.
+
+Flow createResearchCard(captureData):
+
+
+captureData vào
+  │
+  ├─ Step 1: Kiểm tra sensitive domain
+  │   isSensitiveUrl(url, sensitiveDomains) → nếu true: return null
+  │
+  ├─ Step 2: Extract topic
+  │   extractTopic({title, selection, tags, domain, tagsSource})
+  │   → topicKey, topicLabel, topicSource, confidence, keywords
+  │
+  ├─ Step 3: Derive reading mode
+  │   deriveReadingMode(captureData) → "skim"|"deep"|"reference"|"reread"
+  │
+  ├─ Step 4: Check PII
+  │   containsPii(selectedText) → nếu true: flag card.piiWarning = true
+  │
+  ├─ Step 5: Build card object (29 fields)
+  │
+  ├─ Step 6: Save → srq_store.addCard(card)
+  │
+  ├─ Step 7: Trigger enrichCardAsync(cardId) (non-blocking)
+  │
+  └─ Return card
+Flow enrichCardAsync(cardId) (chạy sau, không block UI):
+
+
+Load card từ store
+  │
+  ├─ Gọi routeTopic() → tìm suggestedNotebook
+  │   Nếu decision === "use_existing" → card.suggestedNotebook = bestMatch.notebookRef
+  │
+  ├─ Gửi message "srq_find_related" → background → related_memory
+  │   Nhận relatedSessions[{sessionId, title, similarity}]
+  │   Filter: similarity >= 0.7, max 3
+  │
+  └─ updateCard(cardId, { suggestedNotebook, relatedSessions })
+Kiểm tra: Gọi createResearchCard({url, title, domain, selectedText}) → card được tạo với topicKey, readingMode đúng.
+
+Task 1.4: Thêm SRQ message handlers vào background.js
+
+File:    background.js
+Dòng:    Sau block message handler cuối cùng (khoảng dòng 5007+)
+Thay đổi: Thêm import + message handlers
+Import thêm ở đầu file (sau dòng 24):
+
+
+import { addCard, getCardStats, getCardsByTopicKey, updateCard, 
+         updateCardStatus, dismissCard, getPendingCards, 
+         cleanupStaleCards } from './storage/srq_store.js';
+import { createResearchCard, enrichCardAsync } from './services/srq_enricher.js';
+Thêm handlers theo pattern hiện tại (if (request?.type === "...")):
+
+
+// SRQ handlers
+if (request?.type === "SRQ_CREATE_CARD") {
+    createResearchCard(request.payload)
+        .then(card => sendResponse({ ok: true, card }))
+        .catch(err => sendResponse({ ok: false, error: err.message }));
+    return true;
+}
+
+if (request?.type === "SRQ_GET_PENDING_COUNT") {
+    getCardStats()
+        .then(stats => sendResponse({ ok: true, stats }))
+        .catch(err => sendResponse({ ok: false, error: err.message }));
+    return true;
+}
+
+if (request?.type === "SRQ_GET_CARDS") {
+    getPendingCards()
+        .then(cards => sendResponse({ ok: true, cards }))
+        .catch(err => sendResponse({ ok: false, error: err.message }));
+    return true;
+}
+
+if (request?.type === "SRQ_UPDATE_CARD") {
+    updateCard(request.cardId, request.patch)
+        .then(card => sendResponse({ ok: true, card }))
+        .catch(err => sendResponse({ ok: false, error: err.message }));
+    return true;
+}
+
+if (request?.type === "SRQ_DISMISS_CARD") {
+    dismissCard(request.cardId)
+        .then(() => sendResponse({ ok: true }))
+        .catch(err => sendResponse({ ok: false, error: err.message }));
+    return true;
+}
+Pattern quan trọng: background.js dùng request?.type === "..." (KHÔNG PHẢI request.action). Tất cả SRQ messages đều prefix SRQ_ để dễ phân biệt.
+
+Kiểm tra: Từ DevTools console của bất kỳ tab nào:
+
+
+chrome.runtime.sendMessage({type: "SRQ_GET_PENDING_COUNT"}, r => console.log(r));
+// → { ok: true, stats: { pending: 0, approved: 0, ... } }
+Sprint 1 Done Checkpoint
+Sau Sprint 1, bạn có thể test toàn bộ data layer mà chưa cần UI:
+
+
+// Test từ DevTools console:
+
+// 1. Tạo card
+chrome.runtime.sendMessage({
+    type: "SRQ_CREATE_CARD",
+    payload: {
+        url: "https://arxiv.org/abs/2301.00001",
+        title: "Sparse Attention Mechanisms",
+        domain: "arxiv.org",
+        selectedText: "Sparse attention reduces quadratic complexity...",
+        tags: ["ai", "attention"],
+        tagsSource: "user"
+    }
+}, r => console.log("Card created:", r));
+
+// 2. Kiểm tra count
+chrome.runtime.sendMessage({type: "SRQ_GET_PENDING_COUNT"}, r => console.log(r));
+
+// 3. Load cards
+chrome.runtime.sendMessage({type: "SRQ_GET_CARDS"}, r => console.log(r));
+Sprint 2: Logic
+Mục tiêu: Cards tự gom batch, export pipeline hoạt động, floating button tạo card.
+
+Task 2.1: Tạo services/srq_grouper.js
+
+File mới: services/srq_grouper.js
+Phụ thuộc: Task 1.2 (srq_store)
+~100 dòng code
+Export:
+
+Function	Mô tả
+computeBatches(cards)	Group cards by topicKey → ResearchBatch[]
+computeBatchPriority(batch)	Score 0-100 dựa trên readingMode + size + age
+getBatchesForExport()	Load pending cards → computeBatches → sort by priority
+Priority formula (đã có trong spec):
+
+
+Priority = (modeWeight × 40) + (sizeWeight × 30) + (ageWeight × 30)
+Kiểm tra: Tạo 5 cards với 2 topicKey khác nhau → getBatchesForExport() trả 2 batches, sorted by priority.
+
+Task 2.2: Thêm batch export + grouper handlers vào background.js
+
+File:    background.js
+Thay đổi: Thêm import srq_grouper + handlers mới
+Thêm handlers:
+
+
+if (request?.type === "SRQ_GET_BATCHES") {
+    getBatchesForExport()
+        .then(batches => sendResponse({ ok: true, batches }))
+        .catch(err => sendResponse({ ok: false, error: err.message }));
+    return true;
+}
+
+if (request?.type === "SRQ_DISMISS_BATCH") {
+    // Dismiss tất cả cards cùng topicKey
+    const cards = await getCardsByTopicKey(request.topicKey);
+    for (const card of cards) {
+        await updateCardStatus(card.cardId, "dismissed");
+    }
+    sendResponse({ ok: true, dismissed: cards.length });
+    return true;
+}
+
+if (request?.type === "SRQ_EXPORT_BATCH") {
+    handleBatchExport(request.topicKey, request.notebookRef)
+        .then(result => sendResponse({ ok: true, ...result }))
+        .catch(err => sendResponse({ ok: false, error: err.message }));
+    return true;
+}
+handleBatchExport flow (function mới trong background.js):
+
+
+async function handleBatchExport(topicKey, notebookRef) {
+    1. Load cards theo topicKey, filter status "pending_review" | "approved"
+    2. Cho mỗi card:
+       a. formatAtomClip() → text (dùng clip_format.js CÓ SẴN)
+       b. buildDedupeKey() → check isDedupeHit() (dùng export_queue.js CÓ SẴN)
+       c. Nếu không trùng: createExportJob() → enqueueExportJob()
+       d. updateCardStatus(cardId, "exported")
+    3. Return { exported: count, skipped: dedupeHits }
+}
+Đây là phần nối SRQ vào existing export pipeline - không viết export logic mới, chỉ feed data vào export_queue.js và clip_format.js đã có.
+
+Kiểm tra: Gọi SRQ_EXPORT_BATCH → kiểm tra export_queue có job mới, card status chuyển "exported".
+
+Task 2.3: Wire nlm_floating_button.js → SRQ
+
+File:    bridge/nlm_floating_button.js
+Thay đổi: ~10 dòng, thêm vào cuối export handler
+Tìm chỗ sau khi bundle được tạo và export đã trigger (search "sendMessage" trong file này), thêm:
+
+
+// SRQ: Create research card (fire-and-forget, parallel with existing export)
+try {
+    chrome.runtime.sendMessage({
+        type: "SRQ_CREATE_CARD",
+        payload: {
+            url: window.location.href,
+            title: document.title,
+            domain: window.location.hostname,
+            selectedText: selection,
+            viewportExcerpt: viewportExcerpt || "",
+            tags: tags || [],
+            tagsSource: tagsSource || "ai",
+            command: command || "",
+            atomicThought: atomicThought || "",
+            refinedInsight: refinedInsight || ""
+        }
+    });
+} catch (e) {
+    // Silent fail - SRQ is supplementary
+}
+Quan trọng: fire-and-forget - không await, không callback. Existing export flow không bị ảnh hưởng. SRQ chạy song song.
+
+Kiểm tra: Highlight text trên bất kỳ trang → click floating button → kiểm tra SRQ_GET_PENDING_COUNT tăng lên 1.
+
+Task 2.4: Test end-to-end data flow
+
+Test thủ công:
+  1. Mở 3 trang khác nhau:
+     - arxiv.org (paper AI)
+     - arxiv.org (paper AI khác)
+     - seriouseats.com (recipe)
+  2. Highlight + click floating button trên mỗi trang
+  3. Gọi SRQ_GET_BATCHES → expect 2 batches (arxiv batch + cooking batch)
+  4. Gọi SRQ_EXPORT_BATCH cho arxiv batch → expect 2 cards exported
+  5. Kiểm tra export_queue có 2 jobs mới
+  6. Gọi SRQ_GET_PENDING_COUNT → pending giảm còn 1 (cooking card)
+Sprint 2 Done Checkpoint
+Sau Sprint 2, toàn bộ pipeline data hoạt động end-to-end nhưng chưa có UI. Mọi thứ test được qua DevTools console.
+
+Sprint 3: UI
+Mục tiêu: Sidepanel widget hiển thị batches, review modal hoạt động.
+
+Task 3.1: Tạo styles/srq.css.js
+
+File mới: styles/srq.css.js
+~120 dòng
+Pattern: Giống styles/micro_closure.css.js (inject CSS via JS)
+CSS-in-JS pattern đã dùng trong project:
+
+
+(function() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .srq-widget { ... }
+        .srq-batch { ... }
+        .srq-review-modal { ... }
+    `;
+    document.head.appendChild(style);
+})();
+Dùng design tokens đã có: --atom-green-primary, --atom-bg-surface, etc.
+Thêm 4 mode colors mới: --srq-mode-deep, --srq-mode-skim, --srq-mode-reference, --srq-mode-reread.
+
+Task 3.2: Tạo ui/components/srq_widget.js - Widget + Review Modal
+
+File mới: ui/components/srq_widget.js
+Phụ thuộc: Task 3.1 (CSS), Task 2.1-2.2 (grouper + handlers)
+~250 dòng - file lớn nhất của SRQ
+Pattern: IIFE giống ui/components/mode_selector.js, primer.js, etc.
+Chia thành 3 phần trong file:
+
+Phần A: Widget render (~80 dòng)
+
+
+SRQWidget.create(batches) → DOM element
+
+  Nếu batches.length === 0 → return null (không hiện gì)
+  
+  Nếu batches.length > 0:
+    Render collapsed state:
+      [📋 Research Queue] [badge: 4] [▼]
+    
+    Click ▼ → expand:
+      Cho mỗi batch → render batch card:
+        [topicLabel] [count] [mode pills]
+        [→ suggestedNotebook] [confidence%]
+        [Export All] [Review] [✕]
+Phần B: Review Modal (~120 dòng)
+
+
+SRQWidget.openReview(batch) → Modal overlay
+
+  Header: "Review: {topicLabel} ({count} clips)"
+  
+  Cho mỗi card trong batch:
+    ┌──────────────────────────────────┐
+    │ selectedText (truncated 100 char) │
+    │ domain · timeago                  │
+    │ 💡 atomicThought (nếu có)        │
+    │ 🔗 relatedSessions (nếu có)      │
+    │ ⚠️ PII warning (nếu có)          │
+    │ [✓ Export] [✕ Skip] [✏ Edit]     │
+    └──────────────────────────────────┘
+  
+  Footer:
+    Target notebook: [dropdown]
+    [Export Selected (n)] [Cancel]
+Phần C: Event handlers (~50 dòng)
+
+
+Export All → sendMessage(SRQ_EXPORT_BATCH)
+Dismiss batch → sendMessage(SRQ_DISMISS_BATCH)  
+Skip card → sendMessage(SRQ_DISMISS_CARD)
+Edit card → show inline editor for userNote + userTags
+Change notebook → update suggestedNotebook cho tất cả cards
+Task 3.3: Mount vào sidepanel.html + sidepanel.js
+sidepanel.html - thêm 2 thứ:
+
+Container div (sau dòng 3574, trước quick-actions):
+
+<div id="srq-widget-container" role="region" aria-label="Research Queue"></div>
+Script tag (sau dòng 3894, trước sidepanel.js):
+
+<script src="styles/srq.css.js"></script>
+<script src="ui/components/srq_widget.js"></script>
+sidepanel.js - thêm mount logic (~20 dòng):
+
+Tìm nơi initialization xảy ra (sau DOM ready), thêm:
+
+
+async function mountSRQWidget() {
+    const container = document.getElementById('srq-widget-container');
+    if (!container) return;
+    
+    const response = await chrome.runtime.sendMessage({ type: "SRQ_GET_BATCHES" });
+    if (!response?.ok || !response.batches?.length) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    container.innerHTML = '';
+    const widget = window.SRQWidget?.create(response.batches);
+    if (widget) container.appendChild(widget);
+}
+
+// Mount on load
+mountSRQWidget();
+
+// Refresh when cards change
+chrome.runtime.onMessage.addListener((msg) => {
+    if (msg?.type === "SRQ_CARDS_UPDATED") {
+        mountSRQWidget();
+    }
+});
+Task 3.4: i18n strings
+
+File: _locales/en/messages.json  (~15 keys mới)
+File: _locales/vi/messages.json  (~15 keys mới)
+Keys đã liệt kê trong spec Section 10. Thêm vào cuối mỗi file.
+
+Task 3.5: Broadcast notification khi card thay đổi
+Trong background.js, sau mỗi SRQ handler thành công, broadcast cho sidepanel:
+
+
+// Sau createResearchCard thành công:
+chrome.runtime.sendMessage({ type: "SRQ_CARDS_UPDATED" }).catch(() => {});
+
+// Sau dismiss/export thành công:
+chrome.runtime.sendMessage({ type: "SRQ_CARDS_UPDATED" }).catch(() => {});
+Sidepanel listener (Task 3.3) sẽ bắt message này và refresh widget.
+
+Sprint 3 Done Checkpoint
+Sau Sprint 3:
+
+Sidepanel hiển thị widget với batches
+Click "Review" mở modal xem chi tiết cards
+Click "Export All" trigger batch export
+Click "✕" dismiss batch
+Widget tự refresh khi card thay đổi
+Sprint 4: Polish
+Task 4.1: NLM Page Banner
+
+File:    bridge/nlm_passive_learning.js
+Thay đổi: ~50 dòng
+Thêm vào cuối file, sau function hiện tại:
+
+
+// SRQ Banner
+async function checkAndShowSRQBanner() {
+    const response = await chrome.runtime.sendMessage({ type: "SRQ_GET_PENDING_COUNT" });
+    if (!response?.ok || response.stats.pending === 0) return;
+    
+    // Kiểm tra cooldown (30 phút)
+    const lastDismiss = sessionStorage.getItem("srq_banner_dismiss");
+    if (lastDismiss && Date.now() - Number(lastDismiss) < 30 * 60 * 1000) return;
+    
+    // Inject banner
+    const banner = document.createElement('div');
+    banner.className = 'atom-srq-nlm-banner';
+    banner.innerHTML = `
+        📋 ATOM: ${response.stats.pending} research clips ready to export
+        <button id="atom-srq-export-current">Export All to Current Notebook</button>
+        <button id="atom-srq-open-sidepanel">Open in Sidepanel</button>
+        <button id="atom-srq-dismiss-banner">✕</button>
+    `;
+    document.body.prepend(banner);
+    
+    // Event handlers
+    document.getElementById('atom-srq-export-current').onclick = () => { ... };
+    document.getElementById('atom-srq-open-sidepanel').onclick = () => {
+        chrome.runtime.sendMessage({ type: "ATOM_OPEN_SIDEPANEL" });
+    };
+    document.getElementById('atom-srq-dismiss-banner').onclick = () => {
+        banner.remove();
+        sessionStorage.setItem("srq_banner_dismiss", Date.now());
+    };
+}
+
+// Delay check (chờ NLM load xong)
+setTimeout(checkAndShowSRQBanner, CONFIG.INITIAL_DELAY + 1000);
+Task 4.2: Stale card cleanup alarm
+
+File:    background.js
+Thay đổi: ~15 dòng
+Thêm vào nơi register alarms:
+
+
+chrome.alarms.create("atom_srq_cleanup", { periodInMinutes: 720 });
+Trong alarm handler (tìm chrome.alarms.onAlarm):
+
+
+if (alarm.name === "atom_srq_cleanup") {
+    const settings = await loadNlmSettings();
+    const removed = await cleanupStaleCards(settings.srqStaleCardDays || 14);
+    if (removed > 0) console.log(`[ATOM SRQ] Cleaned ${removed} stale cards`);
+}
+Task 4.3: Update manifest.json
+
+File:    manifest.json
+Thay đổi: Thêm file mới vào web_accessible_resources
+Thêm vào web_accessible_resources[0].resources:
+
+
+"styles/srq.css.js",
+"ui/components/srq_widget.js"
+Không cần thêm permissions mới - tất cả dùng storage (đã có) và chrome.runtime.sendMessage (không cần permission).
+
+Task 4.4: Edge case testing
+Test Case	Expected
+0 cards pending	Widget ẩn, banner không hiện
+1 card pending	Widget hiện, badge = 1
+200 cards → thêm 1	FIFO xóa card exported/dismissed cũ nhất
+Card có PII	Review modal hiện warning
+Sensitive domain (bank)	Card không tạo
+NotebookLM đóng	Export vào queue, badge hiện trên icon
+Offline	Export button disabled
+srqEnabled = false	Không tạo card, widget ẩn
+Trùng card (dedupe)	export_queue skip, không tạo job duplicate
+Tóm tắt toàn bộ
+
+Sprint 1 (Nền móng):          Sprint 2 (Logic):
+┌──────────────────────┐      ┌──────────────────────┐
+│ 1.1 types.js keys    │      │ 2.1 srq_grouper.js   │
+│ 1.2 srq_store.js     │─────→│ 2.2 background export│
+│ 1.3 srq_enricher.js  │      │ 2.3 floating button   │
+│ 1.4 background msgs  │      │ 2.4 E2E data test    │
+└──────────────────────┘      └──────────────────────┘
+                                        │
+Sprint 4 (Polish):             Sprint 3 (UI):
+┌──────────────────────┐      ┌──────────────────────┐
+│ 4.1 NLM banner       │←─────│ 3.1 srq.css.js       │
+│ 4.2 Cleanup alarm    │      │ 3.2 srq_widget.js    │
+│ 4.3 manifest.json    │      │ 3.3 sidepanel mount  │
+│ 4.4 Edge case tests  │      │ 3.4 i18n strings     │
+└──────────────────────┘      │ 3.5 Broadcast msgs   │
+                              └──────────────────────┘
+
+Files mới: 5     |  Files sửa: 7     |  Tổng ~740 LOC

@@ -402,11 +402,22 @@ function generateDisplayTitle(context) {
         }
     }
 
-    // Priority 3: Extract from title
+    // Priority 3: Extract from title (Improved Fallback)
     if (title) {
-        const keywords = extractKeywordsFromText(title, 3);
-        if (keywords.length > 0) {
-            return keywords.slice(0, 2).join(" ");
+        // Remove common separators and site names at the end
+        // e.g. "Article Title | Site Name" -> "Article Title"
+        // Also remove " - VnExpress", etc.
+        let cleanTitle = title.split(/[|\-–—:]/).filter(p => p.trim().length > 0)[0].trim();
+
+        // Return first 14 words to give sufficient context
+        // e.g., "Diện tích tối thiểu được tách thửa với..."
+        const words = cleanTitle.split(/\s+/);
+        if (words.length > 0) {
+            // Remove quotes if present
+            let clipped = words.slice(0, 14).join(" ").replace(/^['"]|['"]$/g, '');
+            // Remove trailing punctuation marks (comma, colon, hyphen, etc.)
+            clipped = clipped.replace(/[.,:;|\-–—]+$/, "");
+            return clipped;
         }
     }
 
@@ -629,6 +640,10 @@ export function extractTopicCandidates(context) {
         const fingerprint = keywordFingerprint(title);
         const titleKeywords = extractKeywordsFromText(title, 5);
 
+        // Better display title logic (same as generateDisplayTitle)
+        let cleanTitle = title.split(/[|\-–—:]/).filter(p => p.trim().length > 0)[0].trim();
+        const betterDisplayTitle = cleanTitle.split(/\s+/).slice(0, 8).join(" ").replace(/^['"]|['"]$/g, '');
+
         if (fingerprint) {
             // Add domain prefix if broad domain
             const prefix = BROAD_DOMAINS.has(regDomain) ? (DOMAIN_PREFIX_MAP[regDomain] || "") : "";
@@ -637,13 +652,13 @@ export function extractTopicCandidates(context) {
                 topicSource: "keyword",
                 topicLabel: fingerprint.replace(/-/g, " "),
                 keywords: titleKeywords,
-                displayTitle: titleKeywords.slice(0, 2).join(" "),
+                displayTitle: betterDisplayTitle,
                 source: "title",
                 confidence: 0.6
             });
         } else if (titleKeywords.length > 0) {
             // Fallback: use simplified title keywords
-            const displayTitle = titleKeywords.slice(0, 2).join(" ");
+            const displayTitle = betterDisplayTitle;
             const simpleFp = titleKeywords.slice(0, 3).sort().join("-");
             candidates.push({
                 topicKey: `kw:${simpleFp}`,

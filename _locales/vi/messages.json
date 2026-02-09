@@ -1002,10 +1002,10 @@
     "message": "WORK còn"
   },
   "focus_phase_work_end_title": {
-    "message": "Hết giờ làm việc!"
+    "message": "🎯 Phiên tập trung hoàn thành!"
   },
   "focus_phase_work_end_msg": {
-    "message": "Phiên làm việc đã kết thúc. Hãy nghỉ ngơi chút nhé."
+    "message": "Mở AmoNexus để review những gì bạn vừa học."
   },
   "focus_phase_break_end_title": {
     "message": "Hết giờ nghỉ!"
@@ -1343,82 +1343,231 @@
   "sp_empty_desc": {
     "message": "Bôi đen đoạn văn hoặc chọn Tóm tắt để bắt đầu ngay."
   },
-
-  "srq_widget_title": { "message": "Ghi chú đã lưu" },
-  "srq_clips_label": { "message": "mục" },
-  "srq_clips_count": { "message": "$1 đoạn", "placeholders": { "count": { "content": "$1" } } },
-  "srq_uncategorized": { "message": "Chung" },
-  "srq_export_all": { "message": "Lưu tất cả" },
-  "srq_export": { "message": "Lưu" },
-  "srq_review": { "message": "Xem lại" },
-  "srq_dismiss": { "message": "Bỏ qua" },
-  "srq_toggle": { "message": "Xem thêm" },
-  "srq_toggle_collapse": { "message": "Thu gọn" },
-  "srq_pagination_prev": { "message": "Trang trước" },
-  "srq_pagination_next": { "message": "Trang sau" },
+  "srq_widget_title": {
+    "message": "Ghi chú đã lưu"
+  },
+  "srq_clips_label": {
+    "message": "mục"
+  },
+  "srq_clips_count": {
+    "message": "$1 đoạn",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_uncategorized": {
+    "message": "Chung"
+  },
+  "srq_export_all": {
+    "message": "Lưu tất cả"
+  },
+  "srq_export": {
+    "message": "Lưu"
+  },
+  "srq_review": {
+    "message": "Xem lại"
+  },
+  "srq_dismiss": {
+    "message": "Bỏ qua"
+  },
+  "srq_toggle": {
+    "message": "Xem thêm"
+  },
+  "srq_toggle_collapse": {
+    "message": "Thu gọn"
+  },
+  "srq_pagination_prev": {
+    "message": "Trang trước"
+  },
+  "srq_pagination_next": {
+    "message": "Trang sau"
+  },
   "srq_pagination_info": {
     "message": "Trang $1 / $2",
     "placeholders": {
-      "current": { "content": "$1" },
-      "total": { "content": "$2" }
+      "current": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
     }
   },
   "srq_batch_export_aria": {
     "message": "Lưu $1 đoạn tóm tắt từ $2",
     "placeholders": {
-      "count": { "content": "$1" },
-      "topic": { "content": "$2" }
+      "count": {
+        "content": "$1"
+      },
+      "topic": {
+        "content": "$2"
+      }
     }
   },
   "srq_batch_review_aria": {
     "message": "Xem lại $1 đoạn tóm tắt từ $2",
     "placeholders": {
-      "count": { "content": "$1" },
-      "topic": { "content": "$2" }
+      "count": {
+        "content": "$1"
+      },
+      "topic": {
+        "content": "$2"
+      }
     }
   },
   "srq_batch_dismiss_aria": {
     "message": "Bỏ qua nhóm $1",
     "placeholders": {
-      "topic": { "content": "$1" }
+      "topic": {
+        "content": "$1"
+      }
     }
   },
   "srq_modal_export_aria": {
     "message": "Lưu $1 đoạn đã chọn",
     "placeholders": {
-      "count": { "content": "$1" }
+      "count": {
+        "content": "$1"
+      }
     }
   },
-  "srq_review_title": { "message": "Xem lại: $1", "placeholders": { "topic": { "content": "$1" } } },
-  "srq_review_subtitle": { "message": "$1 ghi chú chờ lưu", "placeholders": { "count": { "content": "$1" } } },
-  "srq_target_notebook": { "message": "Lưu vào:" },
-  "srq_export_selected": { "message": "Lưu đã chọn ($1)", "placeholders": { "count": { "content": "$1" } } },
-  "srq_cancel": { "message": "Hủy" },
-  "srq_select": { "message": "Chọn" },
-  "srq_selected": { "message": "Đã chọn" },
-  "srq_skip": { "message": "Bỏ qua" },
-  "srq_exporting": { "message": "Đang lưu..." },
-  "srq_exported_success": { "message": "Đã lưu $1 đoạn", "placeholders": { "count": { "content": "$1" } } },
-  "srq_export_error": { "message": "Lưu thất bại. Thử lại." },
-  "srq_in_flight": { "message": "Đang xử lý..." },
-  "srq_related_to": { "message": "Liên quan đến: $1", "placeholders": { "titles": { "content": "$1" } } },
-  "srq_pii_warning": { "message": "Đoạn này có thể chứa thông tin cá nhân. Hãy xem lại trước khi lưu." },
-  "srq_mode_deep": { "message": "Đọc kỹ" },
-  "srq_mode_skim": { "message": "Đọc nhanh" },
-  "srq_mode_reference": { "message": "Tra cứu" },
-  "srq_mode_reread": { "message": "Đọc lại" },
-  "srq_time_now": { "message": "vừa xong" },
-  "srq_time_mins": { "message": "$1 phút trước", "placeholders": { "mins": { "content": "$1" } } },
-  "srq_time_hours": { "message": "$1 giờ trước", "placeholders": { "hours": { "content": "$1" } } },
-  "srq_time_yesterday": { "message": "hôm qua" },
-  "srq_time_days": { "message": "$1 ngày trước", "placeholders": { "days": { "content": "$1" } } },
-  "srq_nlm_banner": { "message": "$1 đoạn ghi chú sẵn sàng lưu", "placeholders": { "count": { "content": "$1" } } },
-  "srq_nlm_export_current": { "message": "Lưu tất cả vào sổ này" },
-  "srq_nlm_open_sidepanel": { "message": "Mở thanh bên" },
-  "srq_loading": { "message": "Đang tải..." },
-  "srq_empty_state": { "message": "Chưa có đoạn trích nào chờ lưu." },
-  "srq_error_state": { "message": "Tải thất bại. Nhấn 'Thử lại'." },
-  "srq_retry": { "message": "Thử lại" },
+  "srq_review_title": {
+    "message": "Xem lại: $1",
+    "placeholders": {
+      "topic": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_review_subtitle": {
+    "message": "$1 ghi chú chờ lưu",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_target_notebook": {
+    "message": "Lưu vào:"
+  },
+  "srq_export_selected": {
+    "message": "Lưu đã chọn ($1)",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_cancel": {
+    "message": "Hủy"
+  },
+  "srq_select": {
+    "message": "Chọn"
+  },
+  "srq_selected": {
+    "message": "Đã chọn"
+  },
+  "srq_skip": {
+    "message": "Bỏ qua"
+  },
+  "srq_exporting": {
+    "message": "Đang lưu..."
+  },
+  "srq_exported_success": {
+    "message": "Đã lưu $1 đoạn",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_export_error": {
+    "message": "Lưu thất bại. Thử lại."
+  },
+  "srq_in_flight": {
+    "message": "Đang xử lý..."
+  },
+  "srq_related_to": {
+    "message": "Liên quan đến: $1",
+    "placeholders": {
+      "titles": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_pii_warning": {
+    "message": "Đoạn này có thể chứa thông tin cá nhân. Hãy xem lại trước khi lưu."
+  },
+  "srq_mode_deep": {
+    "message": "Đọc kỹ"
+  },
+  "srq_mode_skim": {
+    "message": "Đọc nhanh"
+  },
+  "srq_mode_reference": {
+    "message": "Tra cứu"
+  },
+  "srq_mode_reread": {
+    "message": "Đọc lại"
+  },
+  "srq_time_now": {
+    "message": "vừa xong"
+  },
+  "srq_time_mins": {
+    "message": "$1 phút trước",
+    "placeholders": {
+      "mins": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_time_hours": {
+    "message": "$1 giờ trước",
+    "placeholders": {
+      "hours": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_time_yesterday": {
+    "message": "hôm qua"
+  },
+  "srq_time_days": {
+    "message": "$1 ngày trước",
+    "placeholders": {
+      "days": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_nlm_banner": {
+    "message": "$1 đoạn ghi chú sẵn sàng lưu",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_nlm_export_current": {
+    "message": "Lưu tất cả vào sổ này"
+  },
+  "srq_nlm_open_sidepanel": {
+    "message": "Mở thanh bên"
+  },
+  "srq_loading": {
+    "message": "Đang tải..."
+  },
+  "srq_empty_state": {
+    "message": "Chưa có đoạn trích nào chờ lưu."
+  },
+  "srq_error_state": {
+    "message": "Tải thất bại. Nhấn 'Thử lại'."
+  },
+  "srq_retry": {
+    "message": "Thử lại"
+  },
   "popup_onboarding_title": {
     "message": "Bat dau trong 1 phut"
   },
@@ -1442,6 +1591,30 @@
   },
   "popup_onboarding_open_settings": {
     "message": "Mo Cai dat"
+  },
+  "popup_no_focus": {
+    "message": "Chua co phien tap trung"
+  },
+  "popup_open_panel": {
+    "message": "Mo bang dieu khien"
+  },
+  "popup_action_settings": {
+    "message": "Cai dat"
+  },
+  "popup_action_website": {
+    "message": "Trang web"
+  },
+  "popup_action_feedback": {
+    "message": "Gop y"
+  },
+  "cmd_onboarding_title": {
+    "message": "Moi: dieu khien bang chat"
+  },
+  "cmd_onboarding_body": {
+    "message": "Gio ban co the noi:<br>- \"Tap trung 25 phut\"<br>- \"Ghi nhat ky: hom nay met\"<br>- \"Luu vao ghi chu\"<br><br>Hoac bam nut nhanh o dau trang."
+  },
+  "cmd_onboarding_dismiss": {
+    "message": "Hieu roi"
   },
   "sp_welcome_title": {
     "message": "Bat dau trong 1 phut"
@@ -1503,7 +1676,6 @@
   "sp_onboarding_complete": {
     "message": "Ban da hoan thanh thiet lap co ban."
   },
-
   "opt_ai_pilot_timeout_hint": {
     "message": "Thời gian tối đa chờ AI phản hồi (đơn vị: mili giây)"
   },
@@ -1582,12 +1754,11 @@
   "popup_connecting": {
     "message": "Đang kết nối với AI..."
   },
-
   "sp_title": {
     "message": "Đọc tích cực"
   },
   "sp_threads_label": {
-    "message": "Thảo luận"
+    "message": "Trò chuyện"
   },
   "sp_highlighted_text": {
     "message": "Đang thảo luận"
@@ -1599,10 +1770,10 @@
     "message": "Xóa cuộc trò chuyện"
   },
   "sp_no_discussions": {
-    "message": "Chưa có thảo luận"
+    "message": "Chưa có cuộc trò chuyện"
   },
   "sp_no_connections": {
-    "message": "Chưa có kết nối"
+    "message": "Chưa có ý liên quan"
   },
   "sp_no_highlight": {
     "message": "Chưa chọn đoạn nào"
@@ -1706,7 +1877,6 @@
   "sp_toast_already_saved": {
     "message": "Đã lưu hôm nay"
   },
-
   "sp_retention_quiz_title": {
     "message": "Kiểm tra"
   },
@@ -1842,7 +2012,6 @@
   "reading_card_flashcard_action": {
     "message": "Thẻ ghi nhớ"
   },
-
   "sp_primer_title": {
     "message": "Trước khi đọc..."
   },
@@ -1883,7 +2052,7 @@
     "message": "Thời gian"
   },
   "sp_stats_discussions": {
-    "message": "Thảo luận"
+    "message": "cuộc trò chuyện"
   },
   "sp_stats_done": {
     "message": "Hoàn tất"
@@ -1892,7 +2061,7 @@
     "message": "Đã lưu"
   },
   "sp_connections_title": {
-    "message": "Kết nối"
+    "message": "Ý liên quan"
   },
   "sp_connection_contradicts": {
     "message": "Mâu thuẫn"
@@ -1928,25 +2097,25 @@
     "message": "Vui lòng bật liên kết nội dung trước"
   },
   "sp_deep_angle": {
-    "message": "Góc nhìn sâu"
+    "message": "Góc nhìn mới"
   },
   "sp_deep_angle_title": {
-    "message": "Góc nhìn khác"
+    "message": "Một góc nhìn mới"
   },
   "sp_deep_angle_hint": {
-    "message": "Xem xét các góc nhìn khác nhau"
+    "message": "Xem một góc nhìn khác từ các đoạn bạn vừa lưu."
   },
   "sp_deep_angle_analyzing": {
-    "message": "Đang phân tích..."
+    "message": "Đang tìm góc nhìn mới..."
   },
   "sp_deep_angle_loading": {
     "message": "Đang tải..."
   },
   "sp_deep_angle_empty": {
-    "message": "Không tìm thấy góc nhìn khác"
+    "message": "Hãy tô sáng hoặc lưu thêm nội dung để dùng tính năng này."
   },
   "sp_deep_angle_error": {
-    "message": "Lỗi"
+    "message": "Không tạo được góc nhìn mới."
   },
   "sp_auto_summary_title": {
     "message": "Điểm chính"
@@ -1996,7 +2165,6 @@
   "sp_quick_note_empty": {
     "message": "Chưa có ghi chú"
   },
-
   "ctx_chat_with_page": {
     "message": "Trò chuyện với trang"
   },
@@ -2264,6 +2432,24 @@
   "sp_pending_partial": {
     "message": "Gửi một phần"
   },
+  "sp_no_active_tab": {
+    "message": "Không có tab đang hoạt động"
+  },
+  "sp_post_captured": {
+    "message": "Đã lưu bài viết!"
+  },
+  "sp_no_post_found": {
+    "message": "Không tìm thấy bài viết"
+  },
+  "sp_capture_error": {
+    "message": "Không thể lưu bài viết"
+  },
+  "sp_capture_post_title": {
+    "message": "Lưu bài viết (Alt+C)"
+  },
+  "sp_shortcut_capture": {
+    "message": "Lưu bài viết (Alt+C)"
+  },
   "sp_waiting_connection": {
     "message": "Đang chờ kết nối"
   },
@@ -2297,7 +2483,9 @@
   "sp_error_rate_limit_desc": {
     "message": "Vui lòng đợi $1 giây trước khi thử lại.",
     "placeholders": {
-      "seconds": { "content": "$1" }
+      "seconds": {
+        "content": "$1"
+      }
     }
   },
   "sp_error_server": {
@@ -2344,5 +2532,250 @@
   },
   "sp_confirm_export_all": {
     "message": "Lưu tất cả ghi chú?"
+  },
+  "tabChat": {
+    "message": "Chat"
+  },
+  "tabNotes": {
+    "message": "Ghi chú"
+  },
+  "tabCards": {
+    "message": "Ôn tập"
+  },
+  "tabSaved": {
+    "message": "Đã lưu"
+  },
+  "sp_cards_title": {
+    "message": "Luyện tập"
+  },
+  "sp_cards_desc": {
+    "message": "Thẻ luyện tập sẽ xuất hiện ở đây khi bạn lưu thêm nội dung."
+  },
+  "sp_cards_back_chat": {
+    "message": "Quay lại Chat"
+  },
+  "focusWorking": {
+    "message": "Đang tập trung"
+  },
+  "focusBreak": {
+    "message": "Nghỉ giải lao"
+  },
+  "focusIdle": {
+    "message": "Sẵn sàng tập trung"
+  },
+  "btnUndo": {
+    "message": "Hoàn tác"
+  },
+  "btnStart": {
+    "message": "Bắt đầu"
+  },
+  "btnStop": {
+    "message": "Dừng"
+  },
+  "btnCancel": {
+    "message": "Hủy"
+  },
+  "btnContinue": {
+    "message": "Tiếp tục"
+  },
+  "cmdUnknown": {
+    "message": "Mình chưa hiểu ý bạn..."
+  },
+  "cmdError": {
+    "message": "Có lỗi xảy ra..."
+  },
+  "cmdUndone": {
+    "message": "Đã hoàn tác!"
+  },
+  "cmdDone": {
+    "message": "Xong rồi!"
+  },
+  "cmd_confirm_action": {
+    "message": "Tiếp tục?"
+  },
+  "cmd_focus_confirm_sub": {
+    "message": "Bắt đầu tập trung {min} phút?"
+  },
+  "cmd_focus_stop_confirm": {
+    "message": "Dừng phiên tập trung?"
+  },
+  "cmd_focus_min_too_low": {
+    "message": "Hãy nhập ít nhất 1 phút."
+  },
+  "cmd_focus_min_too_high": {
+    "message": "Tối đa 180 phút."
+  },
+  "confirmFocusStart": {
+    "message": "Bắt đầu tập trung $1 phút?"
+  },
+  "confirmFocusStop": {
+    "message": "Dừng phiên tập trung?"
+  },
+  "confirmFocusStopHint": {
+    "message": "Tiến độ phiên hiện tại sẽ được lưu lại."
+  },
+  "confirmGeneric": {
+    "message": "Thực hiện?"
+  },
+  "btnPause": {
+    "message": "Tạm dừng"
+  },
+  "focusStarted": {
+    "message": "Bắt đầu tập trung $1 phút."
+  },
+  "focusStopped": {
+    "message": "Đã dừng phiên tập trung."
+  },
+  "focusPaused": {
+    "message": "Đã tạm dừng tập trung."
+  },
+  "focusNotRunning": {
+    "message": "Không có phiên tập trung nào đang chạy."
+  },
+  "diaryNoContent": {
+    "message": "Hãy nhập vài dòng trước khi lưu."
+  },
+  "diarySaved": {
+    "message": "Đã lưu vào Nhật ký"
+  },
+  "quickDiaryHint": {
+    "message": "Ghi nhanh..."
+  },
+  "quickDiaryTitle": {
+    "message": "Ghi nhanh"
+  },
+  "quickDiaryPlaceholder": {
+    "message": "Bạn đang nghĩ gì?"
+  },
+  "diaryBtnSave": {
+    "message": "Lưu vào nhật ký"
+  },
+  "diarySummaryEmpty": {
+    "message": "Chưa có mục nào trong khoảng này."
+  },
+  "diarySummaryTitle": {
+    "message": "Tóm tắt nhật ký"
+  },
+  "diarySummaryEntries": {
+    "message": "mục"
+  },
+  "diarySummaryMood": {
+    "message": "Cảm xúc chính"
+  },
+  "diarySummaryTags": {
+    "message": "Chủ đề chính"
+  },
+  "diarySummaryTagsEmpty": {
+    "message": "chung"
+  },
+  "periodToday": {
+    "message": "hôm nay"
+  },
+  "periodWeek": {
+    "message": "tuần này"
+  },
+  "periodMonth": {
+    "message": "tháng này"
+  },
+  "noteNoContent": {
+    "message": "Hãy chọn đoạn văn bản hoặc nhập nội dung trước."
+  },
+  "noteSaved": {
+    "message": "Đã lưu vào Ghi chú"
+  },
+  "noteSaveFailed": {
+    "message": "Không thể lưu ghi chú."
+  },
+  "savedExported": {
+    "message": "Đã xuất $1 highlight",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "savedExportEmpty": {
+    "message": "Chưa có highlight để xuất."
+  },
+  "savedExportFailed": {
+    "message": "Xuất thất bại. Thử lại."
+  },
+  "mem_related_diary_title": {
+    "message": "Nhật ký liên quan"
+  },
+  "mem_related_diary_open": {
+    "message": "Mở nhật ký"
+  },
+  "chipFocus25": {
+    "message": "Tập trung 25p"
+  },
+  "chipQuickDiary": {
+    "message": "Ghi chú nhanh"
+  },
+  "chipReview": {
+    "message": "Mục đã lưu"
+  },
+  "cmd_unknown": {
+    "message": "Mình chưa hiểu ý bạn."
+  },
+  "cmd_error": {
+    "message": "Có lỗi xảy ra, thử lại nhé."
+  },
+  "cmd_done": {
+    "message": "Xong rồi!"
+  },
+  "cmd_undo": {
+    "message": "Hoàn tác"
+  },
+  "cmd_confirm_yes": {
+    "message": "Đồng ý"
+  },
+  "cmd_confirm_no": {
+    "message": "Hủy"
+  },
+  "opt_tab_account": {
+    "message": "Tài khoản"
+  },
+  "opt_account_title": {
+    "message": "Tài khoản"
+  },
+  "opt_account_loading": {
+    "message": "Đang tải thông tin..."
+  },
+  "opt_account_signin_title": {
+    "message": "Đăng nhập AmoNexus"
+  },
+  "opt_account_signin_desc": {
+    "message": "Đồng bộ cài đặt, quản lý gói cước và truy cập các tính năng cao cấp."
+  },
+  "opt_account_signin_google": {
+    "message": "Đăng nhập bằng Google"
+  },
+  "opt_account_remember_me": {
+    "message": "Duy trì đăng nhập 7 ngày"
+  },
+  "opt_account_privacy_note": {
+    "message": "Chúng tôi chỉ dùng email để xác thực gói cước. Dữ liệu đọc của bạn vẫn riêng tư trên thiết bị."
+  },
+  "opt_account_upgrade": {
+    "message": "Nâng cấp Pro"
+  },
+  "opt_account_manage": {
+    "message": "Quản lý gói cước"
+  },
+  "opt_account_signout": {
+    "message": "Đăng xuất"
+  },
+  "opt_account_sync_info": {
+    "message": "Trạng thái tài khoản tự động đồng bộ."
+  },
+  "opt_account_error_title": {
+    "message": "Có lỗi xảy ra"
+  },
+  "opt_account_error_desc": {
+    "message": "Không thể tải thông tin tài khoản."
+  },
+  "opt_account_retry": {
+    "message": "Thử lại"
   }
 }

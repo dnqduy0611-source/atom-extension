@@ -900,6 +900,316 @@
                 flex-direction: column;
             }
         }
+
+        /* ================================
+           Account / Auth Styles
+           ================================ */
+        .auth-section {
+            animation: fadeSlideIn 0.25s ease forwards;
+        }
+
+        /* Loading State */
+        .auth-loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            gap: 16px;
+            color: var(--muted);
+        }
+
+        .auth-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Auth Hero (Logged Out) */
+        .auth-hero {
+            text-align: center;
+            padding: 40px 24px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, transparent 100%);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        .auth-hero-icon {
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        .auth-hero-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--foreground);
+            margin: 0 0 12px 0;
+        }
+
+        .auth-hero-desc {
+            font-size: 14px;
+            color: var(--muted);
+            margin: 0 0 24px 0;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Google Sign-In Button */
+        .btn-google-signin {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            background: #fff;
+            border: 1px solid #dadce0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #3c4043;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .btn-google-signin:hover {
+            background: #f8f9fa;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        .btn-google-signin:active {
+            background: #f1f3f4;
+        }
+
+        .btn-google-signin:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Remember Me Checkbox */
+        .auth-remember-me {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--muted);
+            cursor: pointer;
+        }
+
+        .auth-remember-me input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+        }
+
+        /* Privacy Note */
+        .auth-privacy-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 14px;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .auth-privacy-note svg {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        /* User Profile Card */
+        .user-profile-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, transparent 100%);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        .user-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .user-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+
+        .user-email {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .plan-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 4px;
+            width: fit-content;
+        }
+
+        .plan-badge.plan-free {
+            background: var(--border);
+            color: var(--muted);
+        }
+
+        .plan-badge.plan-pro {
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+            color: #fff;
+        }
+
+        /* Account Actions */
+        .account-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn-action {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 20px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--background);
+            color: var(--foreground);
+        }
+
+        .btn-action:hover {
+            border-color: var(--primary);
+        }
+
+        .btn-action.btn-upgrade {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(249, 115, 22, 0.1));
+            border-color: #f59e0b;
+            color: #f59e0b;
+        }
+
+        .btn-action.btn-upgrade:hover {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(249, 115, 22, 0.2));
+        }
+
+        .btn-action.btn-manage {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-action.btn-signout {
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-action.btn-signout:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+        }
+
+        .btn-action.btn-retry {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+        }
+
+        .btn-action.btn-retry:hover {
+            filter: brightness(1.1);
+        }
+
+        /* Sync Status Card */
+        .sync-status-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px;
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .sync-status-card svg {
+            flex-shrink: 0;
+            color: var(--primary);
+        }
+
+        /* Auth Error State */
+        .auth-error-card {
+            text-align: center;
+            padding: 40px 24px;
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 16px;
+        }
+
+        .auth-error-card svg {
+            color: #ef4444;
+            margin-bottom: 16px;
+        }
+
+        .auth-error-card h4 {
+            font-size: 18px;
+            color: var(--foreground);
+            margin: 0 0 8px 0;
+        }
+
+        .auth-error-card .error-message {
+            font-size: 14px;
+            color: var(--muted);
+            margin: 0 0 20px 0;
+        }
+
+        /* Light mode auth adjustments */
+        body.light-mode .btn-google-signin {
+            border-color: #dadce0;
+        }
+
+        body.light-mode .auth-hero {
+            background: linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, transparent 100%);
+        }
+
+        body.light-mode .user-profile-card {
+            background: linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, transparent 100%);
+        }
     </style>
 </head>
 
@@ -972,6 +1282,17 @@
                 <span class="nav-label" data-i18n="opt_tab_advanced">Developer Tools</span>
             </button>
 
+            <button class="nav-tab" data-tab="account">
+                <span class="nav-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg>
+                </span>
+                <span class="nav-label" data-i18n="opt_tab_account">Account</span>
+            </button>
+
             <div class="nav-footer">
                 <button class="icon-btn" id="btn-theme-toggle" data-i18n-title="opt_theme_toggle_title"
                     title="Toggle Theme" style="width: 100%; justify-content: center;">
@@ -1024,7 +1345,8 @@
                             <span data-i18n="opt_onboarding_step4">Start highlighting text on any webpage</span>
                         </li>
                     </ul>
-                    <button id="btn-complete-setup" class="btn-action" style="width: 100%; margin-top: 12px;" data-i18n="opt_onboarding_btn_complete">
+                    <button id="btn-complete-setup" class="btn-action" style="width: 100%; margin-top: 12px;"
+                        data-i18n="opt_onboarding_btn_complete">
                         Complete Setup
                     </button>
                 </div>
@@ -1065,7 +1387,7 @@
                         <label for="apiKeyInput">
                             <span data-i18n="opt_gemini_api_key">AI Access Key</span>
                             <span class="info-icon" data-tooltip-i18n="opt_gemini_api_key_tooltip"
-                                  aria-label="More information">ⓘ</span>
+                                aria-label="More information">ⓘ</span>
                         </label>
                         <input type="text" id="apiKeyInput" placeholder="AIzaSy..."
                             data-i18n-placeholder="opt_api_key_placeholder" autocomplete="off">
@@ -1189,7 +1511,8 @@
                             <label for="userPersona" data-i18n="opt_user_persona_title">User Role</label>
                             <input type="text" id="userPersona" placeholder="e.g. Doctor, Student, Engineer..."
                                 data-i18n-placeholder="opt_user_persona_placeholder">
-                            <p class="hint-text" data-i18n="opt_user_persona_desc">AI will adjust explanations to match your expertise.</p>
+                            <p class="hint-text" data-i18n="opt_user_persona_desc">AI will adjust explanations to match
+                                your expertise.</p>
                         </div>
                     </div>
                 </details>
@@ -1268,7 +1591,7 @@
                             <div class="title">
                                 <span data-i18n="opt_semantic_embeddings_title">Meaning Analysis</span>
                                 <span class="info-icon" data-tooltip-i18n="opt_semantic_embeddings_tooltip"
-                                      aria-label="More information">ⓘ</span>
+                                    aria-label="More information">ⓘ</span>
                             </div>
                             <div class="desc" data-i18n="opt_semantic_embeddings_desc">Creates a semantic fingerprint
                                 for each
@@ -1284,7 +1607,7 @@
                             <div class="title">
                                 <span data-i18n="opt_semantic_search_title">Find by Meaning</span>
                                 <span class="info-icon" data-tooltip-i18n="opt_semantic_search_tooltip"
-                                      aria-label="More information">ⓘ</span>
+                                    aria-label="More information">ⓘ</span>
                             </div>
                             <div class="desc" data-i18n="opt_semantic_search_desc">Uses embeddings to pick top related
                                 highlights in the same domain.</div>
@@ -1301,7 +1624,7 @@
                     <label for="aiPilotMode">
                         <span data-i18n="opt_ai_pilot_mode">Che do hoat dong</span>
                         <span class="info-icon" data-tooltip-i18n="opt_ai_pilot_mode_tooltip"
-                              aria-label="More information">ⓘ</span>
+                            aria-label="More information">ⓘ</span>
                     </label>
                     <div class="custom-dropdown" id="aiPilotModeDropdown">
                         <div class="dropdown-selected" tabindex="0">
@@ -1332,7 +1655,7 @@
                     <label for="aiAccuracyLevel">
                         <span data-i18n="opt_ai_pilot_accuracy_level">Do chinh xac</span>
                         <span class="info-icon" data-tooltip-i18n="opt_ai_pilot_accuracy_tooltip"
-                              aria-label="More information">ⓘ</span>
+                            aria-label="More information">ⓘ</span>
                     </label>
                     <div class="custom-dropdown" id="aiAccuracyLevelDropdown">
                         <div class="dropdown-selected" tabindex="0">
@@ -1351,7 +1674,8 @@
                         </div>
                     </div>
                     <input type="hidden" id="aiAccuracyLevel" value="balanced">
-                    <p class="hint-text" data-i18n="opt_ai_pilot_accuracy_hint">Cân bằng: nhanh hơn. Cao: chính xác hơn nhưng chậm hơn và tốn thêm chi phí.</p>
+                    <p class="hint-text" data-i18n="opt_ai_pilot_accuracy_hint">Cân bằng: nhanh hơn. Cao: chính xác hơn
+                        nhưng chậm hơn và tốn thêm chi phí.</p>
                 </div>
 
                 <!-- Advanced AI Settings -->
@@ -1363,17 +1687,19 @@
                     <div class="advanced-content">
                         <div class="settings-grid">
                             <div>
-                                <label for="aiMinConfidence" data-i18n="opt_ai_pilot_min_confidence">Minimum confidence level</label>
+                                <label for="aiMinConfidence" data-i18n="opt_ai_pilot_min_confidence">Minimum confidence
+                                    level</label>
                                 <input type="text" id="aiMinConfidence" placeholder="0.65">
                             </div>
                             <div>
                                 <label for="aiTimeoutMs">
                                     <span data-i18n="opt_ai_pilot_timeout_ms">Time limit</span>
                                     <span class="info-icon" data-tooltip-i18n="opt_ai_pilot_timeout_tooltip"
-                                          aria-label="More information">ⓘ</span>
+                                        aria-label="More information">ⓘ</span>
                                 </label>
                                 <input type="text" id="aiTimeoutMs" placeholder="800">
-                                <small class="hint" data-i18n="opt_ai_pilot_timeout_hint">Maximum wait time for AI response (in milliseconds)</small>
+                                <small class="hint" data-i18n="opt_ai_pilot_timeout_hint">Maximum wait time for AI
+                                    response (in milliseconds)</small>
                             </div>
                         </div>
 
@@ -1382,15 +1708,18 @@
                                 <label for="aiBudgetPerDay">
                                     <span data-i18n="opt_ai_pilot_budget_per_day">Daily quota</span>
                                     <span class="info-icon" data-tooltip-i18n="opt_ai_pilot_budget_tooltip"
-                                          aria-label="More information">ⓘ</span>
+                                        aria-label="More information">ⓘ</span>
                                 </label>
                                 <input type="text" id="aiBudgetPerDay" placeholder="200">
-                                <small class="hint" data-i18n="opt_ai_pilot_budget_hint">Number of AI calls allowed per day</small>
+                                <small class="hint" data-i18n="opt_ai_pilot_budget_hint">Number of AI calls allowed per
+                                    day</small>
                             </div>
                             <div>
-                                <label for="aiCacheTtlMs" data-i18n="opt_ai_pilot_cache_ttl_ms">Temporary storage time</label>
+                                <label for="aiCacheTtlMs" data-i18n="opt_ai_pilot_cache_ttl_ms">Temporary storage
+                                    time</label>
                                 <input type="text" id="aiCacheTtlMs" placeholder="15000">
-                                <small class="hint" data-i18n="opt_ai_pilot_cache_ttl_hint">How long to remember recent results (in milliseconds)</small>
+                                <small class="hint" data-i18n="opt_ai_pilot_cache_ttl_hint">How long to remember recent
+                                    results (in milliseconds)</small>
                             </div>
                         </div>
 
@@ -1504,7 +1833,8 @@
                     <div class="setting-row">
                         <div class="setting-row-info">
                             <div class="title" data-i18n="opt_nlm_allow_cloud">Cho phep export cloud</div>
-                            <div class="desc" data-i18n="opt_nlm_allow_cloud_desc">Cho phep gui "ATOM Clip" len NotebookLM</div>
+                            <div class="desc" data-i18n="opt_nlm_allow_cloud_desc">Cho phep gui "ATOM Clip" len
+                                NotebookLM</div>
                         </div>
                         <label class="toggle-switch">
                             <input type="checkbox" id="nlmAllowCloud">
@@ -1550,10 +1880,13 @@
                 <div class="setting-section" style="margin-top: 16px;">
                     <label for="srq-density-mode" data-i18n="opt_srq_density_label">Smart Research Queue density</label>
                     <select id="srq-density-mode">
-                        <option value="comfortable" data-i18n="opt_srq_density_comfortable">Comfortable (default)</option>
-                        <option value="compact" data-i18n="opt_srq_density_compact">Compact (more items per screen)</option>
+                        <option value="comfortable" data-i18n="opt_srq_density_comfortable">Comfortable (default)
+                        </option>
+                        <option value="compact" data-i18n="opt_srq_density_compact">Compact (more items per screen)
+                        </option>
                     </select>
-                    <p class="hint-text" data-i18n="opt_srq_density_hint">Comfortable mode is easier to read. Compact mode shows more highlights.</p>
+                    <p class="hint-text" data-i18n="opt_srq_density_hint">Comfortable mode is easier to read. Compact
+                        mode shows more highlights.</p>
                 </div>
             </div>
 
@@ -1574,48 +1907,50 @@
 
                 <!-- Debug Mode Section -->
                 <div id="debug-section">
-                <div class="subsection-header">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="m8 2 1.88 1.88" />
-                        <path d="M14.12 3.88 16 2" />
-                        <path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1" />
-                        <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6" />
-                        <path d="M12 20v-9" />
-                        <path d="M6.53 9C4.6 8.8 3 7.1 3 5" />
-                        <path d="M6 13H2" />
-                        <path d="M3 21c0-2.1 1.7-3.9 3.8-4" />
-                        <path d="M20.97 5c0 2.1-1.6 3.8-3.5 4" />
-                        <path d="M22 13h-4" />
-                        <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4" />
-                    </svg>
-                    <span data-i18n="opt_debug_title">Go loi</span>
-                </div>
-
-                <div class="setting-section">
-                    <div class="setting-row">
-                        <div class="setting-row-info">
-                            <div class="title" data-i18n="opt_debug_enable_title">Bat che do Go loi</div>
-                            <div class="desc" data-i18n="opt_debug_enable_desc">Hien log chi tiet trong console</div>
-                        </div>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="debugModeToggle">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="setting-section">
-                    <button id="btn-export-debug" class="btn-action" style="width: 100%;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    <div class="subsection-header">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="7 10 12 15 17 10" />
-                            <line x1="12" x2="12" y1="15" y2="3" />
+                            <path d="m8 2 1.88 1.88" />
+                            <path d="M14.12 3.88 16 2" />
+                            <path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1" />
+                            <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6" />
+                            <path d="M12 20v-9" />
+                            <path d="M6.53 9C4.6 8.8 3 7.1 3 5" />
+                            <path d="M6 13H2" />
+                            <path d="M3 21c0-2.1 1.7-3.9 3.8-4" />
+                            <path d="M20.97 5c0 2.1-1.6 3.8-3.5 4" />
+                            <path d="M22 13h-4" />
+                            <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4" />
                         </svg>
-                        <span data-i18n="opt_debug_export">Xuat Debug Log</span>
-                    </button>
-                </div>
+                        <span data-i18n="opt_debug_title">Go loi</span>
+                    </div>
+
+                    <div class="setting-section">
+                        <div class="setting-row">
+                            <div class="setting-row-info">
+                                <div class="title" data-i18n="opt_debug_enable_title">Bat che do Go loi</div>
+                                <div class="desc" data-i18n="opt_debug_enable_desc">Hien log chi tiet trong console
+                                </div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="debugModeToggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="setting-section">
+                        <button id="btn-export-debug" class="btn-action" style="width: 100%;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" x2="12" y1="15" y2="3" />
+                            </svg>
+                            <span data-i18n="opt_debug_export">Xuat Debug Log</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Notifications Section -->
@@ -1677,6 +2012,158 @@
                 </details>
             </div>
 
+            <!-- Tab: Account -->
+            <div class="tab-panel" id="panel-account">
+                <h2>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg>
+                    <span data-i18n="opt_account_title">Account</span>
+                </h2>
+
+                <!-- Loading State -->
+                <div id="auth-loading" class="auth-section">
+                    <div class="auth-loading-container">
+                        <div class="auth-spinner"></div>
+                        <span data-i18n="opt_account_loading">Loading...</span>
+                    </div>
+                </div>
+
+                <!-- Logged Out State -->
+                <div id="auth-logged-out" class="auth-section" style="display: none;">
+                    <div class="auth-hero">
+                        <div class="auth-hero-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                        </div>
+                        <h3 class="auth-hero-title" data-i18n="opt_account_signin_title">Sign in to AmoNexus</h3>
+                        <p class="auth-hero-desc" data-i18n="opt_account_signin_desc">
+                            Sign in to sync your data across devices and unlock Pro features.
+                        </p>
+
+                        <!-- Google Sign In Button -->
+                        <button id="btn-google-signin" class="btn-google-signin">
+                            <svg class="google-icon" width="20" height="20" viewBox="0 0 24 24">
+                                <path fill="#4285F4"
+                                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                <path fill="#34A853"
+                                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                <path fill="#FBBC05"
+                                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                                <path fill="#EA4335"
+                                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                            </svg>
+                            <span data-i18n="opt_account_signin_google">Sign in with Google</span>
+                        </button>
+
+                        <!-- Remember Me -->
+                        <label class="auth-remember-me">
+                            <input type="checkbox" id="auth-remember-me" checked>
+                            <span data-i18n="opt_account_remember_me">Remember me for 7 days</span>
+                        </label>
+                    </div>
+
+                    <div class="auth-privacy-note">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 16v-4" />
+                            <path d="M12 8h.01" />
+                        </svg>
+                        <span data-i18n="opt_account_privacy_note">
+                            We only use your email for account management. Your data stays on your device.
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Logged In State -->
+                <div id="auth-logged-in" class="auth-section" style="display: none;">
+                    <!-- User Profile Card -->
+                    <div class="user-profile-card">
+                        <img id="user-avatar" src="icons/icon128.png" alt="Avatar" class="user-avatar"
+                            onerror="this.src='icons/icon128.png'">
+                        <div class="user-info">
+                            <span id="user-name" class="user-name">User Name</span>
+                            <span id="user-email" class="user-email">email@example.com</span>
+                            <span id="user-plan-badge" class="plan-badge plan-free">Free</span>
+                        </div>
+                    </div>
+
+                    <!-- Account Actions -->
+                    <div class="account-actions">
+                        <!-- Upgrade Button (Free users) -->
+                        <button id="btn-upgrade-pro" class="btn-action btn-upgrade">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <polygon
+                                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            </svg>
+                            <span data-i18n="opt_account_upgrade">Upgrade to Pro</span>
+                        </button>
+
+                        <!-- Manage Subscription (Pro users) -->
+                        <button id="btn-manage-subscription" class="btn-action btn-manage" style="display: none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                                <line x1="1" y1="10" x2="23" y2="10" />
+                            </svg>
+                            <span data-i18n="opt_account_manage">Manage Subscription</span>
+                        </button>
+
+                        <!-- Sign Out -->
+                        <button id="btn-signout" class="btn-action btn-signout">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                <polyline points="16 17 21 12 16 7" />
+                                <line x1="21" y1="12" x2="9" y2="12" />
+                            </svg>
+                            <span data-i18n="opt_account_signout">Sign Out</span>
+                        </button>
+                    </div>
+
+                    <!-- Sync Info -->
+                    <div class="sync-status-card">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        <span data-i18n="opt_account_sync_info">
+                            Your settings are stored locally. Cloud sync coming soon!
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Error State -->
+                <div id="auth-error" class="auth-section" style="display: none;">
+                    <div class="auth-error-card">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="15" y1="9" x2="9" y2="15" />
+                            <line x1="9" y1="9" x2="15" y2="15" />
+                        </svg>
+                        <h4 data-i18n="opt_account_error_title">Something went wrong</h4>
+                        <p id="auth-error-message" class="error-message"></p>
+                        <button id="btn-retry-signin" class="btn-action btn-retry">
+                            <span data-i18n="opt_account_retry">Try Again</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Save Bar -->
             <div class="save-bar">
                 <button id="btn-save">
@@ -1693,6 +2180,7 @@
         </main>
     </div>
 
+    <script src="lib/supabase.min.js"></script>
     <script src="config/build_flags.js"></script>
     <script src="utils/console_guard.js"></script>
     <script src="utils_ui.js"></script>

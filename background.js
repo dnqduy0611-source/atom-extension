@@ -1,5 +1,7 @@
 ﻿// background.js - V3 ADAPTER
 
+import './config/build_flags.js';
+import './utils/console_guard.js';
 import { SignalExtractor, DecisionEngine } from './core_logic.js';
 import { StrategyLayer } from './strategy_layer.js';
 import { SelectionLogic } from './selection_logic.js';
@@ -7,8 +9,9 @@ import { InterventionManager } from './intervention_manager.js';
 import { AIService } from './ai_service.js';
 import { AIPilotService } from './ai_pilot_service.js';
 import { initI18n, getMessage as atomGetMessage, getActiveLocale } from './i18n_bridge.js';
+import { getEffectiveLanguage } from './utils/i18n_utils.js';
 import { prepareNlmExportFromNote, buildReadingBundle, loadNlmSettings } from './bridge/bridge_service.js';
-import { loadExportQueue, markDedupeHit, dequeueJob, updateJob, createExportJob, enqueueExportJob, buildDedupeKey } from './bridge/export_queue.js';
+import { loadExportQueue, markDedupeHit, dequeueJob, updateJob, createExportJob, enqueueExportJob, buildDedupeKey, isDedupeHit } from './bridge/export_queue.js';
 import { formatAtomClip } from './bridge/clip_format.js';
 import { resolveNotebookUrl } from './bridge/notebooklm_connector.js';
 import { NLM_RETRY_DELAYS_MS } from './bridge/types.js';
@@ -16,44 +19,62 @@ import { evaluateIdeaIncubator, loadIdeaSuggestions, recordIdeaDismiss, updateId
 import { setPendingTopic } from './bridge/topic_registry.js';
 import { addPendingJob, buildPendingJob, isJobExpired, takePendingJob } from './bridge/pending_jobs.js';
 import { handleTopicRouterMessage, handleTopicRoute, handleTopicAction, handleGetRegistry } from './bridge/topic_router_handlers.js';
+import { AI_CONFIG, syncConfigToStorage, getModel } from './config/ai_config.js';
+import { ReadingSessionService } from './storage/reading_session.module.js';
+import { RateLimitManager, parseRetryAfterSeconds } from './services/rate_limit_manager.module.js';
+
+// Smart Research Queue (SRQ)
+import { addCard, getCardStats, getCardsByTopicKey, updateCard, updateCardStatus, dismissCard, getPendingCards, cleanupStaleCards, loadCards, upsertCard, findCardByIdempotencyKey } from './storage/srq_store.js';
+import { createResearchCard, buildIdempotencyKey, enrichCardAsync } from './services/srq_enricher.js';
+import { getBatchesForExport } from './services/srq_grouper.js';
+import { SRQ_ERROR_CODES } from './bridge/types.js';
+
+const BUILD_FLAGS = globalThis.ATOM_BUILD_FLAGS || { DEBUG: false };
+const DEBUG_BUILD_ENABLED = !!BUILD_FLAGS.DEBUG;
 console.log('[ATOM] Topic Router imported, type:', typeof handleTopicRouterMessage);
 
+// Sync AI config to storage for sidepanel.js access
+syncConfigToStorage().catch(err => console.error('[ATOM] Failed to sync AI config:', err));
+
 // Global test functions for debugging
-globalThis.testTopicRouter = async function(payload = {}) {
-    const defaultPayload = {
-        title: "Test Article",
-        domain: "test.com",
-        tags: ["test"]
+if (DEBUG_BUILD_ENABLED) {
+    globalThis.testTopicRouter = async function (payload = {}) {
+        const defaultPayload = {
+            title: "Test Article",
+            domain: "test.com",
+            tags: ["test"]
+        };
+        const result = await handleTopicRoute({ payload: { ...defaultPayload, ...payload } });
+        console.log('[ATOM] Topic Router Test Result:', result);
+        return result;
     };
-    const result = await handleTopicRoute({ payload: { ...defaultPayload, ...payload } });
-    console.log('[ATOM] Topic Router Test Result:', result);
-    return result;
-};
 
-globalThis.testSaveMapping = async function(data) {
-    const result = await handleTopicAction({
-        action: "save",
-        data: data || {
-            topicKey: "test_topic",
-            displayTitle: "Test Topic",
-            keywords: ["test"],
-            notebookRef: "test-notebook",
-            notebookUrl: "https://notebooklm.google.com/notebook/test"
-        }
-    });
-    console.log('[ATOM] Save Mapping Result:', result);
-    return result;
-};
+    globalThis.testSaveMapping = async function (data) {
+        const result = await handleTopicAction({
+            action: "save",
+            data: data || {
+                topicKey: "test_topic",
+                displayTitle: "Test Topic",
+                keywords: ["test"],
+                notebookRef: "test-notebook",
+                notebookUrl: "https://notebooklm.google.com/notebook/test"
+            }
+        });
+        console.log('[ATOM] Save Mapping Result:', result);
+        return result;
+    };
 
-globalThis.testGetRegistry = async function() {
-    const result = await handleGetRegistry();
-    console.log('[ATOM] Registry:', result);
-    return result;
-};
+    globalThis.testGetRegistry = async function () {
+        const result = await handleGetRegistry();
+        console.log('[ATOM] Registry:', result);
+        return result;
+    };
+}
 
 const i18nReady = initI18n();
 const atomMsg = (key, substitutions, fallback) => atomGetMessage(key, substitutions, fallback);
 const isVietnamese = () => getActiveLocale().startsWith("vi");
+const rateManager = new RateLimitManager({ rpmTotal: 15, rpmBackground: 8, cacheTtlMs: 5 * 60 * 1000 });
 const getLanguageName = () => (isVietnamese() ? "Vietnamese" : "English");
 
 // ===========================
@@ -164,6 +185,7 @@ function atomDebugPush(evt) {
 }
 
 chrome.runtime.onConnect.addListener((port) => {
+    if (!DEBUG_BUILD_ENABLED) return;
     if (port.name !== "ATOM_DEBUG_PORT") return;
     ATOM_DEBUG.subscribers.add(port);
     port.onDisconnect.addListener(() => ATOM_DEBUG.subscribers.delete(port));
@@ -174,23 +196,25 @@ chrome.runtime.onConnect.addListener((port) => {
 
 // Debug mode flag - loaded from storage, can be toggled in Settings
 let DEBUG_PIPELINE = false;
-chrome.storage.local.get(['debug_mode'], (res) => {
-    DEBUG_PIPELINE = res.debug_mode || false;
-    ATOM_DEBUG.enabled = !!res.debug_mode;
-    if (ATOM_DEBUG.enabled) {
-        loadDebugStateFromStorage().catch(() => { });
-    }
-});
-chrome.storage.onChanged.addListener((changes) => {
-    if (changes.debug_mode) {
-        DEBUG_PIPELINE = changes.debug_mode.newValue || false;
-        ATOM_DEBUG.enabled = !!changes.debug_mode.newValue;
+if (DEBUG_BUILD_ENABLED) {
+    chrome.storage.local.get(['debug_mode'], (res) => {
+        DEBUG_PIPELINE = !!res.debug_mode;
+        ATOM_DEBUG.enabled = !!res.debug_mode;
         if (ATOM_DEBUG.enabled) {
             loadDebugStateFromStorage().catch(() => { });
         }
-        console.log("ATOM: Debug Mode changed to", DEBUG_PIPELINE);
-    }
-});
+    });
+    chrome.storage.onChanged.addListener((changes) => {
+        if (changes.debug_mode) {
+            DEBUG_PIPELINE = !!changes.debug_mode.newValue;
+            ATOM_DEBUG.enabled = !!changes.debug_mode.newValue;
+            if (ATOM_DEBUG.enabled) {
+                loadDebugStateFromStorage().catch(() => { });
+            }
+            console.log("ATOM: Debug Mode changed to", DEBUG_PIPELINE);
+        }
+    });
+}
 chrome.storage.onChanged.addListener((changes) => {
     if (changes.atom_ui_language) {
         interventionManager = null;
@@ -237,13 +261,28 @@ chrome.storage.onChanged.addListener((changes) => {
     }
 });
 const DEFAULT_WHITELIST = [
+    // --- Collaboration & Work ---
+    "notion.so",
+    "figma.com",
+    "linear.app",
+    "trello.com",
+    "slack.com",
     "docs.google.com",
     "drive.google.com",
-    "figma.com",
-    "notion.so",
+
+    // --- Knowledge & Dev ---
     "github.com",
+    "stackoverflow.com",
+    "chatgpt.com",
+    "claude.ai",
     "localhost",
-    "canvas.instructure.com" // Ví dụ LMS
+
+    // --- Education ---
+    "coursera.org",
+    "udemy.com",
+    "duolingo.com",
+    "wikipedia.org",
+    "canvas.instructure.com"
 ];
 // ===== ATOM FOCUS POMODORO (v1) =====
 const FOCUS_CONFIG_KEY = "atom_focus_config";
@@ -308,6 +347,22 @@ function scheduleFocusAlarm(whenMs) {
 }
 
 async function broadcastFocusState(state) {
+    // 1. Broadcast to extension pages (sidepanel, popup, options etc.)
+    try {
+        chrome.runtime.sendMessage({
+            type: "ATOM_FOCUS_STATE_UPDATED",
+            payload: { atom_focus_state: state }
+        }, () => {
+            // Ignore "no receiver" errors - they happen when no extension page is open
+            if (chrome.runtime.lastError) {
+                // Expected when sidepanel is closed
+            }
+        });
+    } catch {
+        // ignore
+    }
+
+    // 2. Broadcast to content scripts in all tabs
     const tabs = await chrome.tabs.query({});
     await Promise.allSettled(
         tabs.map(async (t) => {
@@ -406,12 +461,12 @@ async function rebuildContextMenus() {
     chrome.contextMenus.removeAll(() => {
         chrome.contextMenus.create({
             id: "atom-whitelist-domain",
-            title: atomMsg("ctx_whitelist_domain") || "ATOM: Always ignore this site (Safe Zone)",
+            title: atomMsg("ctx_whitelist_domain") || "AmoNexus: Always ignore this site (Safe Zone)",
             contexts: ["page"]
         });
         chrome.contextMenus.create({
             id: "atom-reading-parent",
-            title: atomMsg("ctx_reading_parent") || "ATOM: Active Reading",
+            title: atomMsg("ctx_reading_parent") || "AmoNexus: Active Reading",
             contexts: ["selection"]
         });
         chrome.contextMenus.create({
@@ -432,8 +487,61 @@ async function rebuildContextMenus() {
             title: atomMsg("ctx_reading_quiz") || "Create 3 recall questions",
             contexts: ["selection"]
         });
+        // Side Panel - Chat with Page
+        chrome.contextMenus.create({
+            id: "atom-chat-with-page",
+            title: atomMsg("ctx_chat_with_page") || "AmoNexus: Chat with this page",
+            contexts: ["page"]
+        });
     });
 }
+
+// --- 2. CONTEXT MENU HANDLER ---
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId === "atom-chat-with-page") {
+        // Open Side Panel
+        if (tab && tab.id) {
+            chrome.sidePanel.open({ tabId: tab.id });
+        }
+        return;
+    }
+
+    // Logic cho các menu khác (nếu logic xử lý chưa có trong content script thì thêm ở đây)
+    // Hiện tại các menu Active Reading (reading-summarize, etc.) chủ yếu được xử lý bởi Content Script 
+    // thông qua lắng nghe message hoặc logic nội bộ. 
+    // Tuy nhiên, MV3 Context Menu chuẩn thường bắn event về background.
+    // Nếu Content Script của bạn đã tự listen 'contextmenu' event thì OK. 
+    // Nếu dùng chrome.contextMenus API thì phải bắn message về tab.
+
+    if (info.menuItemId.startsWith("atom-reading-")) {
+        if (tab && tab.id) {
+            chrome.tabs.sendMessage(tab.id, {
+                type: "ATOM_CONTEXT_MENU_ACTION",
+                action: info.menuItemId,
+                selectionText: info.selectionText
+            });
+        }
+    }
+
+    if (info.menuItemId === "atom-whitelist-domain") {
+        // Logic whitelist domain
+        if (tab && tab.url) {
+            const domain = normalizeDomainFromUrl(tab.url);
+            if (domain) {
+                chrome.storage.local.get(['atom_whitelist'], (res) => {
+                    const list = res.atom_whitelist || [];
+                    if (!list.includes(domain)) {
+                        const newList = [...list, domain];
+                        chrome.storage.local.set({ atom_whitelist: newList }, () => {
+                            console.log(`[ATOM] Added ${domain} to whitelist.`);
+                            // Optionally reload tab
+                        });
+                    }
+                });
+            }
+        }
+    }
+});
 
 async function broadcastI18nUpdate() {
     const tabs = await chrome.tabs.query({});
@@ -456,6 +564,76 @@ async function broadcastI18nUpdate() {
 }
 
 const aiService = new AIService();
+
+// ============================================================
+// Memory Auto-Categorization Queue (background, best-effort)
+// ============================================================
+const MEMORY_CATEGORIZE_QUEUE = [];
+const MEMORY_CATEGORIZE_PENDING = new Set();
+let memoryCategorizeRunning = false;
+
+function sanitizeMemoryTags(tags, maxItems = 10) {
+    if (!Array.isArray(tags)) return [];
+    const out = [];
+    const seen = new Set();
+    for (const raw of tags) {
+        const t = String(raw || "").replace(/^#/, "").replace(/\s+/g, " ").trim();
+        if (!t) continue;
+        const normalized = t.toLowerCase();
+        if (seen.has(normalized)) continue;
+        seen.add(normalized);
+        out.push(t.slice(0, 32));
+        if (out.length >= maxItems) break;
+    }
+    return out;
+}
+
+function enqueueMemoryCategorization(noteId) {
+    if (!noteId) return;
+    if (MEMORY_CATEGORIZE_PENDING.has(noteId)) return;
+    MEMORY_CATEGORIZE_PENDING.add(noteId);
+    MEMORY_CATEGORIZE_QUEUE.push(noteId);
+    drainMemoryCategorizationQueue().catch(() => { });
+}
+
+async function drainMemoryCategorizationQueue() {
+    if (memoryCategorizeRunning) return;
+    memoryCategorizeRunning = true;
+    try {
+        while (MEMORY_CATEGORIZE_QUEUE.length > 0) {
+            const noteId = MEMORY_CATEGORIZE_QUEUE.shift();
+            MEMORY_CATEGORIZE_PENDING.delete(noteId);
+
+            try {
+                const note = await atomGetReadingNote(noteId);
+                if (!note) continue;
+                if (note.category && Array.isArray(note.tags) && note.tags.length > 0) continue;
+
+                const hasText = !!(note.selection || note.title || note.atomicThought || note.refinedInsight || note.aiDiscussionSummary);
+                if (!hasText) continue;
+
+                const result = await aiService.categorizeMemoryNote(note);
+                const category = String(result?.category || "").trim();
+                const tags = sanitizeMemoryTags(result?.tags, 5);
+                if (!category && tags.length === 0) continue;
+
+                const existingTags = Array.isArray(note.tags) ? note.tags : [];
+                const mergedTags = sanitizeMemoryTags([...existingTags, ...tags], 10);
+                const patch = {
+                    ...(category ? { category } : {}),
+                    ...(mergedTags.length ? { tags: mergedTags } : {})
+                };
+                if (Object.keys(patch).length === 0) continue;
+
+                await atomUpdateReadingNote(noteId, patch);
+            } catch (e) {
+                console.warn("[ATOM Memory] Categorization skipped:", e?.message || e);
+            }
+        }
+    } finally {
+        memoryCategorizeRunning = false;
+    }
+}
 const aiPilotService = new AIPilotService(aiService);
 
 async function broadcastAiPilotConfig(config) {
@@ -602,6 +780,16 @@ chrome.runtime.onInstalled.addListener(async (details) => {
             await chrome.storage.local.set({ adaptive_multiplier: 1.0 });
             console.log("✅ ATOM: Initialized adaptive_multiplier for AI.");
         }
+
+        // C. Migrate Reading Threads/Cards to unified ReadingSessions (v2.7)
+        try {
+            const migrationResult = await ReadingSessionService.migrateOldData();
+            if (migrationResult.migrated) {
+                console.log(`✅ ATOM: Migrated ${migrationResult.sessions} reading sessions.`);
+            }
+        } catch (e) {
+            console.error("ATOM: ReadingSession migration error:", e);
+        }
     }
 
     // 4. Tái khởi tạo Context Menu (Xóa đi tạo lại để tránh lỗi duplicate)
@@ -613,6 +801,49 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     // 6. Migrate + Broadcast AI Pilot config
     await migrateAiPilotSettings();
     loadAndBroadcastAiPilotConfig().catch(() => { });
+
+    // 7. Setup Side Panel
+    try {
+        await chrome.sidePanel.setOptions({
+            enabled: true
+        });
+        // Keep popup as default - user clicks icon → popup → "Chat with Page" → sidepanel
+        // Explicitly disable openPanelOnActionClick to ensure popup works
+        await chrome.sidePanel.setPanelBehavior({
+            openPanelOnActionClick: false
+        });
+        console.log("ATOM: Side Panel enabled, popup preserved.");
+    } catch (e) {
+        console.warn("ATOM: Side Panel setup skipped:", e.message);
+    }
+});
+
+// =========================
+// KEYBOARD SHORTCUT HANDLER
+// =========================
+chrome.commands.onCommand.addListener(async (command) => {
+    if (command === 'open-sidepanel') {
+        try {
+            await chrome.storage.local.set({
+                atom_open_sidepanel_on_popup: true,
+                atom_open_sidepanel_on_popup_ts: Date.now()
+            });
+
+            if (chrome.action?.openPopup) {
+                await chrome.action.openPopup();
+                console.log('[ATOM] Popup opened via keyboard shortcut');
+                return;
+            }
+
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (tab?.id) {
+                await chrome.sidePanel.open({ tabId: tab.id });
+                console.log('[ATOM] Sidepanel opened via keyboard shortcut');
+            }
+        } catch (e) {
+            console.error('[ATOM] Failed to open sidepanel via shortcut:', e);
+        }
+    }
 });
 
 // =========================
@@ -650,7 +881,7 @@ async function checkForStoreUpdate() {
             chrome.notifications.create('atom-store-update', {
                 type: 'basic',
                 iconUrl: 'icons/icon128.png',
-                title: 'ATOM - Update Available!',
+                title: 'AmoNexus - Update Available!',
                 message: message,
                 buttons: [
                     { title: useVi ? 'Mở Chrome Store' : 'Open Chrome Store' },
@@ -696,8 +927,29 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
     }
 });
 
+// Handle notification click (not button, just the notification itself)
+chrome.notifications.onClicked.addListener(async (notificationId) => {
+    if (notificationId === 'atom-focus-phase-change') {
+        chrome.notifications.clear(notificationId);
+        // Open popup or sidepanel
+        try {
+            if (chrome.action?.openPopup) {
+                await chrome.action.openPopup();
+            } else {
+                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                if (tab?.id) {
+                    await chrome.sidePanel.open({ tabId: tab.id });
+                }
+            }
+        } catch (e) {
+            console.warn("[ATOM] Failed to open popup/sidepanel from notification:", e.message);
+        }
+    }
+});
+
 // Đặt lịch kiểm tra định kỳ (mỗi 6 giờ khi extension active)
 chrome.alarms.create('check-store-update', { periodInMinutes: 360 });
+chrome.alarms.create('atom_srq_cleanup', { periodInMinutes: 720 });
 chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === 'check-store-update') {
         checkForStoreUpdate();
@@ -709,6 +961,12 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     }
     if (alarm.name === NLM_QUEUE_ALARM) {
         await processNlmExportQueue("alarm");
+        return;
+    }
+    if (alarm.name === 'atom_srq_cleanup') {
+        const settings = await loadNlmSettings();
+        const removed = await cleanupStaleCards(settings?.srqStaleCardDays || 14);
+        if (removed > 0) console.log(`[ATOM SRQ] Cleaned ${removed} stale cards`);
     }
 });
 
@@ -743,20 +1001,43 @@ async function focusHandlePhaseEnd() {
     // [ATOM] System Notification for Phase Change
     const isBreakNow = nextPhase === "BREAK";
     const notifTitle = isBreakNow
-        ? (atomMsg("focus_phase_work_end_title") || "Time's up!")
-        : (atomMsg("focus_phase_break_end_title") || "Break's over!");
+        ? (atomMsg("focus_phase_work_end_title") || "🎯 Phiên tập trung hoàn thành!")
+        : (atomMsg("focus_phase_break_end_title") || "☕ Hết giờ nghỉ!");
     const notifMsg = isBreakNow
-        ? (atomMsg("focus_phase_work_end_msg") || "Work session finished. Take a break.")
-        : (atomMsg("focus_phase_break_end_msg") || "Ready to get back to work?");
+        ? (atomMsg("focus_phase_work_end_msg") || "Mở AmoNexus để review những gì bạn vừa học.")
+        : (atomMsg("focus_phase_break_end_msg") || "Sẵn sàng quay lại làm việc?");
 
     console.log("[ATOM] Phase Change detected. Triggering Notification:", notifTitle, notifMsg);
+
+    // [ATOM] Store pending review for popup to pickup (WORK → BREAK only)
+    if (isBreakNow) {
+        try {
+            const linkedData = await chrome.storage.local.get(['atom_focus_linked_session_v1']);
+            const linked = linkedData.atom_focus_linked_session_v1;
+            if (linked?.sessionId) {
+                await chrome.storage.local.set({
+                    atom_focus_pending_review: {
+                        readingSessionId: linked.sessionId,
+                        focusSessionId: st.sessionId,
+                        triggeredAt: now,
+                        title: linked.title || '',
+                        url: linked.url || ''
+                    }
+                });
+                console.log("[ATOM] Pending review stored for sessionId:", linked.sessionId);
+            }
+        } catch (e) {
+            console.warn("[ATOM] Failed to store pending review:", e.message);
+        }
+    }
 
     chrome.notifications.create('atom-focus-phase-change', {
         type: 'basic',
         iconUrl: 'icons/icon128.png',
         title: notifTitle,
         message: notifMsg,
-        priority: 2
+        priority: 2,
+        requireInteraction: isBreakNow  // Keep notification visible for WORK end
     }, (id) => {
         if (chrome.runtime.lastError) {
             console.error("[ATOM] Notification Error:", chrome.runtime.lastError.message);
@@ -1180,6 +1461,17 @@ function delayMs(ms) {
 
 // --- 2. XỬ LÝ SỰ KIỆN MENU CHUỘT PHẢI ---
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+    // Side Panel - Chat with Page
+    if (info.menuItemId === "atom-chat-with-page") {
+        if (!tab?.id) return;
+        try {
+            await chrome.sidePanel.open({ tabId: tab.id });
+        } catch (e) {
+            console.error("ATOM: Failed to open side panel:", e);
+        }
+        return;
+    }
+
     // 1) Nh?nh whitelist hi?n t?i gi? nguy?n
     if (info.menuItemId === "atom-whitelist-domain") {
         if (!tab?.url) return;
@@ -1387,13 +1679,12 @@ async function atomGenerateReadingArtifact({ command, text, meta }) {
         return { summary: "(Offline) B?n ch?a nh?p Gemini API key trong Options." };
     }
 
-    const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
+    // Use centralized AI config
+    const API_BASE = AI_CONFIG.API.BASE_URL;
     const DEFAULT_MODELS = [
-        "gemini-1.5-flash",
-        "gemini-1.5-flash-8b",
-        "gemini-1.5-pro",
-        "gemini-1.0-pro",
-        "gemini-pro"
+        getModel('USER'),           // Primary: gemini-3-flash-preview
+        getModel('USER', true),     // Fallback: gemini-2.0-flash
+        "gemini-1.5-flash-8b"       // Legacy fallback
     ];
 
     const lang = getLanguageName();
@@ -1471,18 +1762,37 @@ Tone: calm, helpful, not preachy.
     };
 
     async function callGemini(url, body) {
-        const controller = new AbortController();
-        const t = setTimeout(() => controller.abort(), 30000);
+        const runRequest = async () => {
+            const controller = new AbortController();
+            const t = setTimeout(() => controller.abort(), 30000);
+            try {
+                return await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body),
+                    signal: controller.signal
+                });
+            } finally {
+                clearTimeout(t);
+            }
+        };
 
-        const res = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-            signal: controller.signal
-        }).finally(() => clearTimeout(t));
-
+        const res = await rateManager.enqueue(runRequest, { priority: 'vip' });
         const resText = await res.text();
         if (!res.ok) {
+            if (res.status === 429) {
+                rateManager.record429Error('reading');
+                const retryHeader = res.headers.get("Retry-After");
+                const retryHeaderSeconds = retryHeader ? Number(retryHeader) : null;
+                const retrySeconds = Number.isFinite(retryHeaderSeconds)
+                    ? retryHeaderSeconds
+                    : parseRetryAfterSeconds(resText);
+                if (Number.isFinite(retrySeconds)) {
+                    rateManager.setCooldown((retrySeconds + 1) * 1000, 'reading-429');
+                }
+            } else if (res.status >= 500) {
+                rateManager.recordServerError();
+            }
             const err = new Error(`Gemini API error ${res.status}: ${resText}`);
             err.status = res.status;
             err.body = resText;
@@ -1779,8 +2089,54 @@ async function atomAppendReadingNote(note) {
     const KEY = "atom_reading_notes";
     const { [KEY]: current } = await chrome.storage.local.get([KEY]);
     const list = Array.isArray(current) ? current : [];
-    const next = [...list, note].slice(-200); // gi? 200 notes g?n nh?t
+
+    // Primary dedupe: check by note.id first (handles Page Discussion with empty selection)
+    let existingIndex = -1;
+    if (note?.id) {
+        existingIndex = list.findIndex(item => item?.id === note.id);
+    }
+
+    // Fallback dedupe: check if note with same URL + selection already exists
+    if (existingIndex < 0 && note?.selection?.trim()) {
+        existingIndex = list.findIndex(item =>
+            item?.url === note?.url &&
+            item?.selection?.trim() &&
+            item.selection.trim() === note.selection.trim()
+        );
+    }
+
+    if (existingIndex >= 0) {
+        // Update existing note instead of creating new
+        const existing = list[existingIndex];
+        const merged = {
+            ...existing,
+            ...note,
+            id: existing.id,  // Keep original ID
+            created_at: existing.created_at,  // Keep original timestamp
+            updated_at: Date.now()
+        };
+        list[existingIndex] = merged;
+        await chrome.storage.local.set({ [KEY]: list });
+        console.log("[ATOM] Note dedupe: updated existing note", existing.id);
+
+        // Re-categorize if needed
+        if (!merged.category || !Array.isArray(merged.tags) || merged.tags.length === 0) {
+            enqueueMemoryCategorization(existing.id);
+        }
+        return;
+    }
+
+    // No duplicate found, create new note
+    const noteId = note?.id || `${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
+    const normalized = { ...(note || {}), id: noteId, created_at: note?.created_at || Date.now() };
+    const next = [...list, normalized].slice(-200); // giữ 200 notes gần nhất
     await chrome.storage.local.set({ [KEY]: next });
+
+    // Best-effort categorization for new notes (async, do not block save).
+    // Only runs if category/tags are missing.
+    if (!normalized.category || !Array.isArray(normalized.tags) || normalized.tags.length === 0) {
+        enqueueMemoryCategorization(noteId);
+    }
 }
 
 async function atomGetReadingNote(noteId) {
@@ -2598,22 +2954,206 @@ function countRecentInterventions(reactions, windowMinutes = 30) {
 }
 // background.js - NÂNG CẤP HÀM ASK GEMINI
 
+async function callGeminiBackground(url, payload, label = "background") {
+    const runRequest = async () => fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+    const res = await rateManager.enqueue(runRequest, {
+        priority: "background",
+        skipDuringCooldown: true  // Skip if in cooldown to prevent queue buildup
+    });
+    const text = await res.text();
+    if (!res.ok) {
+        if (res.status === 429) {
+            const sourceLabel = label ? String(label) : 'background';
+            rateManager.record429Error(sourceLabel);
+            const retryHeader = res.headers.get("Retry-After");
+            const retryHeaderSeconds = retryHeader ? Number(retryHeader) : null;
+            const retrySeconds = Number.isFinite(retryHeaderSeconds)
+                ? retryHeaderSeconds
+                : parseRetryAfterSeconds(text);
+            if (Number.isFinite(retrySeconds)) {
+                rateManager.setCooldown((retrySeconds + 1) * 1000, `${label}-429`);
+            }
+        } else if (res.status >= 500) {
+            rateManager.recordServerError();
+        }
+        throw new Error(`Gemini API error ${res.status}: ${text}`);
+    }
+    return JSON.parse(text);
+}
+
+function parseGeminiStatus(error) {
+    const msg = String(error?.message || error || '');
+    const match = msg.match(/Gemini API error\s+(\d+)/i);
+    return match ? Number(match[1]) : null;
+}
+
+function isNetworkFetchError(error) {
+    const msg = String(error?.message || error || '').toLowerCase();
+    return msg.includes('failed to fetch') || msg.includes('networkerror') || msg.includes('network error');
+}
+
+function isRetryableGeminiStatus(status) {
+    return status === 429 || (Number.isFinite(status) && status >= 500);
+}
+
+function getUserFallbackChain() {
+    const configuredChain = Array.isArray(AI_CONFIG.MODELS?.USER?.fallback_chain)
+        ? AI_CONFIG.MODELS.USER.fallback_chain
+        : [];
+    if (configuredChain.length > 0) {
+        return configuredChain.filter(Boolean);
+    }
+    if (AI_CONFIG.MODELS?.USER?.fallback) {
+        return [AI_CONFIG.MODELS.USER.fallback].filter(Boolean);
+    }
+    return [];
+}
+
+async function getLLMProviderConfig() {
+    const result = await chrome.storage.local.get([
+        'atom_llm_provider',
+        'atom_openrouter_key',
+        'atom_openrouter_model'
+    ]);
+    return {
+        provider: result.atom_llm_provider || 'google',
+        openrouterKey: result.atom_openrouter_key || '',
+        openrouterModel: result.atom_openrouter_model || AI_CONFIG.API.OPENROUTER.DEFAULT_MODEL || 'stepfun/step-3.5-flash:free'
+    };
+}
+
+function convertToOpenRouterMessages(systemPrompt, geminiContents) {
+    const messages = [];
+    if (systemPrompt) {
+        messages.push({ role: 'system', content: systemPrompt });
+    }
+    for (const item of geminiContents || []) {
+        const role = item.role === 'model' ? 'assistant' : 'user';
+        const text = item.parts?.map(p => p.text).join('\n') || '';
+        if (text.trim()) {
+            messages.push({ role, content: text });
+        }
+    }
+    return messages;
+}
+
+async function callOpenRouterAPI(openrouterKey, model, messages, generationConfig = {}) {
+    const url = 'https://openrouter.ai/api/v1/chat/completions';
+
+    let targetModel = model;
+    if (targetModel === 'google/gemini-2.0-flash-exp:free') {
+        console.warn('[ATOM AI] Intercepting broken model request. Swapping to Step 3.5 Flash.');
+        targetModel = 'stepfun/step-3.5-flash:free';
+    }
+
+    const body = {
+        model: targetModel,
+        messages,
+        temperature: generationConfig.temperature ?? 0.7,
+        max_tokens: generationConfig.maxOutputTokens ?? 2048,
+        stream: false
+    };
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${openrouterKey}`,
+            ...(AI_CONFIG.API.OPENROUTER?.HEADERS || {})
+        },
+        body: JSON.stringify(body)
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `OpenRouter API error ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || null;
+}
+
+function buildOpenRouterFallbackChain(primaryModel) {
+    const defaults = [
+        'stepfun/step-3.5-flash:free',
+        'google/gemini-2.0-flash-lite-preview-02-05:free',
+        'mistralai/mistral-small-24b-instruct-2501:free'
+    ];
+    const configured = Array.isArray(AI_CONFIG.API.OPENROUTER?.FALLBACK_CHAIN)
+        ? AI_CONFIG.API.OPENROUTER.FALLBACK_CHAIN
+        : [];
+    const chain = [primaryModel, ...configured, ...defaults].filter(Boolean);
+    return [...new Set(chain)];
+}
+
+async function callOpenRouterWithFallback(openrouterKey, primaryModel, messages, generationConfig = {}) {
+    const chain = buildOpenRouterFallbackChain(primaryModel);
+    let lastError;
+    for (const model of chain) {
+        try {
+            return await callOpenRouterAPI(openrouterKey, model, messages, generationConfig);
+        } catch (error) {
+            lastError = error;
+            console.warn('[ATOM AI] OpenRouter model failed:', model, error);
+        }
+    }
+    throw lastError;
+}
+
+async function callGeminiBackgroundWithFallback(userKey, prompt, label = 'journal') {
+    const primaryModel = getModel('USER');
+    const fallbackChain = getUserFallbackChain().filter(model => model !== primaryModel);
+    const models = [primaryModel, ...fallbackChain];
+    const payload = { contents: [{ parts: [{ text: prompt }] }] };
+    let lastError;
+
+    for (const model of models) {
+        const url = `${AI_CONFIG.API.BASE_URL}/${model}:generateContent?key=${userKey}`;
+        try {
+            return await callGeminiBackground(url, payload, label);
+        } catch (error) {
+            lastError = error;
+            const status = parseGeminiStatus(error);
+            if (!isRetryableGeminiStatus(status)) break;
+        }
+    }
+
+    throw lastError;
+}
+
 async function askGemini(journalLogs, reactions, history) {
+    const aiSettings = await chrome.storage.local.get(['atom_ai_pilot_enabled', 'ai_pilot_enabled']);
+    const aiEnabled = aiSettings.atom_ai_pilot_enabled ?? aiSettings.ai_pilot_enabled ?? AI_PILOT_DEFAULTS.enabled;
+    if (!aiEnabled) {
+        return atomMsg("journal_ai_disabled");
+    }
+
+    const llmConfig = await getLLMProviderConfig();
     const userKey = await getGeminiKey();
+    const hasGeminiKey = !!userKey;
+    const hasOpenRouterKey = !!llmConfig.openrouterKey;
+    console.debug('[Journal AI] Request', {
+        provider: llmConfig.provider,
+        hasGeminiKey,
+        hasOpenRouterKey
+    });
 
     if (!journalLogs.length && !reactions.length) {
         return "Tôi chưa thấy hoạt động nào đáng chú ý. Hãy cứ là chính mình nhé!";
     }
     // --- CHẾ ĐỘ OFFLINE ---
-    if (!userKey) {
+    if (!userKey && llmConfig.provider !== 'openrouter') {
+        console.warn('[Journal AI] No Gemini key found. Falling back to offline response.');
         const randomKey = OFFLINE_QUOTE_KEYS[Math.floor(Math.random() * OFFLINE_QUOTE_KEYS.length)];
         const quote = atomMsg(randomKey);
         // Lưu ý: Nếu muốn thêm text hướng dẫn
         return `(Offline) ${quote}`;
     }
     // --- CHẾ ĐỘ ONLINE ---
-    const MODEL_NAME = "gemini-flash-latest";
-    const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${userKey}`;
     const lang = getLanguageName();
     // 1. Tóm tắt nhật ký cảm xúc
     const logSummary = journalLogs.slice(-5).map(log => {
@@ -2628,7 +3168,7 @@ async function askGemini(journalLogs, reactions, history) {
     }, {});
 
     const prompt = `
-    Roleplay as ATOM, an empathetic AI companion.
+    Roleplay as Amo, an empathetic AI companion.
     User Language: ${lang} (You MUST reply in this language).
     
     USER STATUS:
@@ -2643,57 +3183,99 @@ async function askGemini(journalLogs, reactions, history) {
     4. Keep advice short, soft, and validating.
     5. End with a caring question about their physical state (shoulders, eyes, breath?).
     
-    Reply in ${lang} only. Under 50 words.
+    Reply in ${lang} only. Under 80 words. End with a complete sentence.
     `;
 
-    try {
-        const response = await fetch(GEMINI_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-        });
-        const data = await response.json();
+    const generationConfig = { temperature: 0.6, maxOutputTokens: 512 };
+    const geminiContents = [{ role: 'user', parts: [{ text: prompt }] }];
 
+    try {
+        if (llmConfig.provider === 'openrouter') {
+            if (!llmConfig.openrouterKey) {
+                console.warn('[Journal AI] OpenRouter provider selected but key missing.');
+                throw new Error('OpenRouter provider selected but no API Key set.');
+            }
+            const messages = convertToOpenRouterMessages('', geminiContents);
+            const response = await callOpenRouterWithFallback(
+                llmConfig.openrouterKey,
+                llmConfig.openrouterModel,
+                messages,
+                generationConfig
+            );
+            return response || atomMsg("ai_thinking_error");
+        }
+
+        const data = await callGeminiBackgroundWithFallback(userKey, prompt, 'journal');
         if (data.error) return atomMsg("ai_thinking_error");
-        return data.candidates[0].content.parts[0].text;
+        return data.candidates?.[0]?.content?.parts?.[0]?.text || atomMsg("ai_thinking_error");
     } catch (error) {
+        const status = parseGeminiStatus(error);
+        const isNetworkError = isNetworkFetchError(error);
+        console.warn('[Journal AI] Error', {
+            status,
+            isNetworkError,
+            provider: llmConfig.provider,
+            hasGeminiKey,
+            hasOpenRouterKey,
+            message: String(error?.message || error)
+        });
+        if ((status === 429 || isNetworkError) && llmConfig.openrouterKey) {
+            try {
+                console.warn('[Journal AI] Gemini failed. Attempting OpenRouter fallback.');
+                const messages = convertToOpenRouterMessages('', geminiContents);
+                const response = await callOpenRouterWithFallback(
+                    llmConfig.openrouterKey,
+                    llmConfig.openrouterModel,
+                    messages,
+                    generationConfig
+                );
+                return response || atomMsg("ai_thinking_error");
+            } catch (fallbackError) {
+                console.warn('[ATOM AI] Journal OpenRouter fallback failed:', fallbackError);
+            }
+        }
+
         const randomKey = OFFLINE_QUOTE_KEYS[Math.floor(Math.random() * OFFLINE_QUOTE_KEYS.length)];
         return `(Offline) ${atomMsg(randomKey)}`;
     }
 }
 // Thêm logic này vào background.js
-async function evolveCopyLibrary() {
+async function evolveCopyLibrary(logs, reactions) {
     const userKey = await getGeminiKey();
     if (!userKey) return; // Không có key thì không update library
-    // CHÚNG TA GIỮ NGUYÊN BẢN MODEL "gemini-flash-latest" Ở ĐÂY 👇
-    const MODEL_NAME = "gemini-flash-latest";
-    const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${userKey}`;
-    const data = await chrome.storage.local.get(['journal_logs', 'atom_reactions']);
-    const logs = data.journal_logs || [];
-    const reactions = data.atom_reactions || [];
 
+    // Use centralized AI config
+    const MODEL_NAME = getModel('PILOT');
+    const GEMINI_URL = `${AI_CONFIG.API.BASE_URL}/${MODEL_NAME}:generateContent?key=${userKey}`;
+
+    const effectiveLang = await getEffectiveLanguage();
     const prompt = `
-    Dựa trên nhật ký của người dùng: ${JSON.stringify(logs.slice(-10))}
-    Và lịch sử phản kháng: ${JSON.stringify(reactions.slice(-10))}
+    Based on the user's journal: ${JSON.stringify(logs.slice(-10))}
+    And resistance history: ${JSON.stringify(reactions.slice(-10))}
     
-    Hãy tạo ra 5 câu lời thoại mới cho ATOM. 
-    Yêu cầu: 
-    - Nếu user đang stress, hãy dùng tông giọng an ủi. 
-    - Nếu user hay bỏ qua lời nhắc, hãy dùng tông giọng thủ thỉ, gợi mở sự tò mò thay vì ra lệnh.
-    - Định dạng trả về: Chỉ trả về một mảng JSON các câu nói.
+    Generate 5 NEW dialogue lines for ATOM.
+    
+    Guidelines:
+    - If user is stressed, use a comforting tone.
+    - If user ignores reminders, use a whispering, curiosity-driven tone instead of commanding.
+    - Format: Return ONLY a JSON array of strings.
+    
+    Target Language: ${effectiveLang} (Output strictly in this language).
     `;
 
     try {
-        const response = await fetch(GEMINI_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-        });
-        const result = await response.json();
+        const result = await callGeminiBackground(
+            GEMINI_URL,
+            { contents: [{ parts: [{ text: prompt }] }] },
+            "copy-library"
+        );
 
-        // Parse kết quả trả về từ text sang JSON
+        if (result.error) {
+            console.error("ATOM: Lỗi khi tạo lời thoại mới từ Gemini", result.error);
+            return;
+        }
+
         const text = result.candidates[0].content.parts[0].text;
-        // Dọn dẹp markdown nếu có (phòng hờ Gemini trả về ```json ... ```)
         const cleanJson = text.replace(/```json|```/g, '').trim();
         const newCopy = JSON.parse(cleanJson);
 
@@ -2770,7 +3352,206 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (handled) return true;
     }
 
+    // === SIDE PANEL - Open from popup ===
+    // Note: sidePanel.open() requires user gesture. Messages from content scripts
+    // are NOT considered user gestures. This handler is kept for backwards compat
+    // but will likely fail. Popup should call sidePanel.open() directly.
+    if (request?.type === "ATOM_OPEN_SIDEPANEL") {
+        (async () => {
+            try {
+                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                if (tab?.id) {
+                    await chrome.sidePanel.open({ tabId: tab.id });
+                    sendResponse({ ok: true });
+                } else {
+                    sendResponse({ ok: false, error: "No active tab" });
+                }
+            } catch (e) {
+                // Expected to fail when called from content script (not a user gesture)
+                // Store a flag so sidepanel knows to open when user manually opens it
+                await chrome.storage.local.set({
+                    atom_sidepanel_pending_open: {
+                        timestamp: Date.now(),
+                        source: sender?.tab?.url || 'unknown'
+                    }
+                });
+                console.log("[ATOM] Side panel will open when user clicks extension icon");
+                sendResponse({ ok: false, error: "user_gesture_required", hint: "Click extension icon to open side panel" });
+            }
+        })();
+        return true;
+    }
+
+    // === SIDE PANEL - Highlight to Chat ===
+    if (request?.type === "ATOM_HIGHLIGHT_TO_SIDEPANEL") {
+        (async () => {
+            try {
+                const tabId = sender?.tab?.id;
+                const domain = request.payload?.domain || 'unknown';
+
+                // Store highlight for side panel to pick up
+                const storageKey = `atom_sidepanel_highlight_${domain}`;
+                const { [storageKey]: existingData } = await chrome.storage.local.get([storageKey]);
+
+                const threads = existingData?.threads || [];
+                const newThread = {
+                    id: `thread_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+                    highlight: request.payload,
+                    messages: [],
+                    status: 'active', // active | parked | saved
+                    createdAt: Date.now()
+                };
+
+                threads.push(newThread);
+
+                // Keep only last 50 threads per domain
+                const trimmedThreads = threads.slice(-50);
+
+                await chrome.storage.local.set({
+                    [storageKey]: {
+                        domain,
+                        threads: trimmedThreads,
+                        updatedAt: Date.now()
+                    },
+                    // Also set a "pending highlight" for immediate pickup
+                    atom_sidepanel_pending_highlight: {
+                        ...request.payload,
+                        threadId: newThread.id
+                    }
+                });
+
+                // Try to open side panel (will only work if this is considered user gesture)
+                if (tabId) {
+                    try {
+                        await chrome.sidePanel.open({ tabId });
+                    } catch (e) {
+                        // Side panel couldn't auto-open, that's ok
+                        // User can open it manually
+                        console.log("[ATOM] Side panel auto-open not available, highlight stored for later");
+                    }
+                }
+
+                sendResponse({ ok: true, threadId: newThread.id });
+            } catch (e) {
+                console.error("[ATOM] Highlight to sidepanel error:", e);
+                sendResponse({ ok: false, error: e.message });
+            }
+        })();
+        return true;
+    }
+
+    // === SIDE PANEL - Save Thread to NotebookLM ===
+    if (request?.type === "ATOM_SAVE_THREAD_TO_NLM") {
+        (async () => {
+            try {
+                const note = request.payload?.note || request.payload;
+                if (!note) {
+                    sendResponse({ ok: false, error: "No note data" });
+                    return;
+                }
+
+                // Use existing NLM bridge to export (if possible)
+                let result = null;
+                try {
+                    result = await prepareNlmExportFromNote(note);
+                } catch (err) {
+                    console.error("[ATOM] NLM export error:", err);
+                    result = { ok: false, reason: err?.message || "Export failed" };
+                }
+
+                const memoryNote = {
+                    id: note.id || `${Date.now()}_${Math.random().toString(16).slice(2)}`,
+                    command: note.command || "sidepanel_export",
+                    url: note.url,
+                    title: note.title,
+                    selection: note.selection,
+                    atomicThought: note.atomicThought,
+                    aiDiscussionSummary: note.aiDiscussionSummary,
+                    refinedInsight: note.refinedInsight,
+                    created_at: note.created_at || Date.now(),
+                    source: "sidepanel"
+                };
+
+                if (result?.ok) {
+                    memoryNote.nlm = {
+                        notebookRef: result.notebookRef,
+                        notebookUrl: result.notebookUrl,
+                        exportStatus: "queued",
+                        exportedAt: Date.now()
+                    };
+                    scheduleNlmQueueAlarm();
+                }
+
+                await atomAppendReadingNote(memoryNote);
+
+                if (result?.ok) {
+                    sendResponse({
+                        ok: true,
+                        notebookRef: result.notebookRef,
+                        notebookUrl: result.notebookUrl,
+                        savedToMemory: true
+                    });
+                } else {
+                    const reason = result?.reason || "Export failed";
+                    sendResponse({
+                        ok: false,
+                        error: reason,
+                        reason,
+                        savedToMemory: true
+                    });
+                }
+            } catch (e) {
+                console.error("[ATOM] Save thread to NLM error:", e);
+                sendResponse({ ok: false, error: e.message });
+            }
+        })();
+        return true;
+    }
+
+    // === SIDE PANEL - Upsert Note to Local Memory (no cloud required) ===
+    if (request?.type === "ATOM_UPSERT_MEMORY_NOTE") {
+        (async () => {
+            try {
+                const note = request.payload?.note || request.payload;
+                if (!note || typeof note !== "object") {
+                    sendResponse({ ok: false, error: "No note data" });
+                    return;
+                }
+
+                const noteId = note.id || `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+                const existing = await atomGetReadingNote(noteId);
+
+                const normalized = {
+                    ...note,
+                    id: noteId,
+                    created_at: note.created_at || Date.now()
+                };
+
+                if (existing) {
+                    await atomUpdateReadingNote(noteId, normalized);
+                } else {
+                    await atomAppendReadingNote(normalized);
+                }
+
+                // If user explicitly upserts a note, treat it as a save trigger for categorization.
+                if (!normalized.category || !Array.isArray(normalized.tags) || normalized.tags.length === 0) {
+                    enqueueMemoryCategorization(noteId);
+                }
+
+                sendResponse({ ok: true, id: noteId });
+            } catch (e) {
+                console.error("[ATOM] Upsert memory note error:", e);
+                sendResponse({ ok: false, error: e.message });
+            }
+        })();
+        return true;
+    }
+
     if (request?.type === "ATOM_DEBUG_PUSH") {
+        if (!DEBUG_BUILD_ENABLED) {
+            sendResponse?.({ ok: false, disabled: true });
+            return true;
+        }
         const tabId = sender?.tab?.id ?? request.payload?.tabId;
         atomDebugPush({ ...(request.payload || {}), tabId });
         sendResponse?.({ ok: true });
@@ -2778,6 +3559,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     if (request?.type === "ATOM_DEBUG_GET_STATE") {
+        if (!DEBUG_BUILD_ENABLED) {
+            sendResponse?.({
+                ok: true,
+                enabled: false,
+                maxEvents: ATOM_DEBUG.maxEvents,
+                events: [],
+                tabEvents: []
+            });
+            return true;
+        }
         const tabId = request.tabId;
         const tabEvents = typeof tabId === "number" ? (ATOM_DEBUG.byTab.get(tabId) || []) : [];
         sendResponse?.({
@@ -2911,6 +3702,32 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             chrome.storage.local.get(['atom_events'], (r) => {
                 const cur = r.atom_events || [];
                 cur.push({ timestamp: now, event: "FOCUS_STOP", mode: "FOCUS", context: {} });
+                chrome.storage.local.set({ atom_events: cur.slice(-2000) });
+            });
+
+            sendResponse({ ok: true, atom_focus_state: next });
+        })();
+        return true;
+    }
+
+    if (request.type === "FOCUS_PAUSE") {
+        (async () => {
+            const st = await loadFocusState();
+            const now = Date.now();
+            chrome.alarms.clear(FOCUS_ALARM_NAME);
+
+            if (!st?.enabled) {
+                sendResponse({ ok: false, reason: "not_running" });
+                return;
+            }
+
+            const next = { ...st, enabled: false, paused: true, lastStateUpdatedAt: now };
+            await saveFocusState(next);
+            await broadcastFocusState(next);
+
+            chrome.storage.local.get(['atom_events'], (r) => {
+                const cur = r.atom_events || [];
+                cur.push({ timestamp: now, event: "FOCUS_PAUSE", mode: "FOCUS", context: {} });
                 chrome.storage.local.set({ atom_events: cur.slice(-2000) });
             });
 
@@ -3251,7 +4068,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 const KEY = "atom_reading_notes";
                 const { [KEY]: current } = await chrome.storage.local.get([KEY]);
                 const list = Array.isArray(current) ? current : [];
-                const exists = list.some((item) => item?.id === note.id);
+
+                // Check by ID first
+                let exists = list.some((item) => item?.id === note.id);
+                let existingNoteId = exists ? note.id : null;
+
+                // Content-based dedupe: check URL + selection if no ID match
+                if (!exists && note.url && note.selection) {
+                    const contentMatch = list.find(item =>
+                        item?.url === note.url &&
+                        item?.selection?.trim() === note.selection.trim()
+                    );
+                    if (contentMatch) {
+                        exists = true;
+                        existingNoteId = contentMatch.id;
+                        note.id = contentMatch.id;  // Use existing ID
+                        console.log("[ATOM] Content dedupe: found existing note", existingNoteId);
+                    }
+                }
+
                 let nlmResponse = null;
                 let nlmMeta = null;
 
@@ -4173,5 +5008,593 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
         return true; // async response
     }
+});
+
+// ==========================================
+// [ATOM V2.5] UNIFIED SMART BUBBLE HANDLERS
+// ==========================================
+
+// Shared Active Reading Handler (Called by Context Menu OR Smart Bubble)
+async function handleActiveReadingRequest(tab, command, text) {
+    if (!tab?.id || !text) return;
+
+    // Limit length to avoid token waste
+    const MAX_CHARS = 4000;
+    const clipped = text.length > MAX_CHARS ? text.slice(0, MAX_CHARS) : text;
+
+    try {
+        const result = await atomGenerateReadingArtifact({
+            command: command,
+            text: clipped,
+            meta: {
+                url: tab.url,
+                title: tab.title || "",
+                ts: Date.now()
+            }
+        });
+
+        const note = {
+            id: `${Date.now()}_${Math.random().toString(16).slice(2)}`,
+            command: command,
+            url: tab.url,
+            title: tab.title || "",
+            selection: clipped,
+            result,
+            created_at: Date.now()
+        };
+
+        // NLM Bridge Integration
+        let nlmPayload = null;
+        try {
+            logNlmEvent("nlm_bridge.export_attempt", { source: "smart_bubble", noteId: note.id, url: note.url });
+            const nlmResult = await prepareNlmExportFromNote(note);
+
+            if (nlmResult && nlmResult.ok) {
+                const suggestedQuestion = buildSuggestedQuestion(note);
+                await markDedupeHit(nlmResult.job?.dedupeKey);
+
+                note.nlm = {
+                    notebookRef: nlmResult.notebookRef,
+                    notebookUrl: nlmResult.notebookUrl,
+                    exportStatus: "queued",
+                    exportedAt: Date.now(),
+                    dedupeKey: nlmResult.job?.dedupeKey,
+                    jobId: nlmResult.job?.jobId,
+                    suggestedQuestion
+                };
+
+                nlmPayload = {
+                    clipText: nlmResult.clipText,
+                    notebookUrl: nlmResult.notebookUrl,
+                    notebookRef: nlmResult.notebookRef,
+                    suggestedQuestion,
+                    jobId: nlmResult.job?.jobId || ""
+                };
+
+                scheduleNlmQueueAlarm();
+                logNlmEvent("nlm_bridge.export_success", { source: "smart_bubble", noteId: note.id, notebookRef: nlmResult.notebookRef });
+
+            } else if (nlmResult && nlmResult.reason === "pii_warning") {
+                const pending = await createPendingNlmJob(note, nlmResult, tab.id, tab.url);
+                note.nlm = {
+                    notebookRef: nlmResult.notebookRef,
+                    notebookUrl: nlmResult.notebookUrl,
+                    exportStatus: "pending_pii",
+                    exportedAt: Date.now(),
+                    dedupeKey: nlmResult.dedupeKey,
+                    jobId: pending.jobId,
+                    suggestedQuestion: pending.suggestedQuestion
+                };
+                nlmPayload = {
+                    reason: "pii_warning",
+                    jobId: pending.jobId,
+                    nonce: pending.nonce,
+                    piiSummary: nlmResult.piiSummary || { types: [], count: 0 },
+                    suggestedQuestion: pending.suggestedQuestion
+                };
+                logNlmEvent("nlm_bridge.export_failed", { source: "smart_bubble", noteId: note.id, reason: "pii_warning" });
+            } else if (nlmResult && !nlmResult.ok) {
+                logNlmEvent("nlm_bridge.export_failed", { source: "smart_bubble", noteId: note.id, reason: nlmResult.reason });
+            }
+        } catch (e) {
+            logNlmEvent("nlm_bridge.export_failed", { source: "smart_bubble", noteId: note.id, reason: "error" });
+        }
+
+        // Save to Vault
+        await atomAppendReadingNote(note);
+        await maybeTriggerIdeaIncubator(note, tab.id);
+
+        // Send Result to Content Script (to show the Card)
+        const requestId = note.id;
+        const payload = {
+            command: command,
+            result,
+            note,
+            saved: true,
+            requestId,
+            nlm: nlmPayload
+        };
+
+        let sent = await sendReadingResult(tab.id, payload);
+        if (!sent.ok) {
+            await ensureReadingUI(tab.id);
+            await delayMs(200);
+            await sendReadingResult(tab.id, payload);
+        }
+
+    } catch (e) {
+        console.warn("ATOM Active Reading Error:", e);
+        const errorSummary = e && e.userMessage
+            ? e.userMessage
+            : (atomMsg("reading_error_summary") || "ATOM hit an error. Please try again.");
+
+        const requestId = `err_${Date.now()}`;
+        const errPayload = {
+            command: command,
+            result: { summary: errorSummary },
+            saved: false,
+            requestId
+        };
+
+        let sent = await sendReadingResult(tab.id, errPayload);
+        if (!sent.ok) {
+            await ensureReadingUI(tab.id);
+            await delayMs(200);
+            await sendReadingResult(tab.id, errPayload);
+        }
+    }
+}
+
+// Unified Message Listener
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === "ATOM_REQUEST_READING") {
+        const { command, text } = message.payload || {};
+        if (sender.tab && command && text) {
+            handleActiveReadingRequest(sender.tab, command, text);
+            sendResponse({ ok: true });
+        }
+        return true;
+    }
+});
+
+// Connect Topic Router
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (handleTopicRouterMessage(request, sendResponse)) {
+        return true; // async response
+    }
+});
+
+// ===========================
+// Smart Research Queue (SRQ)
+// ===========================
+
+/**
+ * Wave 1 P0: Rollback flag for legacy addCard flow
+ * Default: false (use new upsert flow)
+ * Set to true to fallback to old append-only behavior
+ */
+const SRQ_USE_LEGACY_ADD_CARD = false;
+
+/**
+ * Wave 2 P1: In-flight operation guard
+ * Prevents race conditions from duplicate export/dismiss clicks
+ */
+const inFlightOps = new Map();
+const IN_FLIGHT_TIMEOUT_MS = 10000;  // 10 seconds
+
+/**
+ * Acquire operation lock. Returns true if acquired, false if already in-flight.
+ * @param {string} opType - "export" | "dismiss" | "enrich"
+ * @param {string} targetType - "card" | "batch"
+ * @param {string} targetId - cardId or topicKey
+ * @param {string} requestId - Unique request identifier for tracing
+ * @returns {boolean} True if lock acquired, false if already locked
+ */
+function acquireOpLock(opType, targetType, targetId, requestId) {
+    const key = `${opType}:${targetType}:${targetId}`;
+
+    if (inFlightOps.has(key)) {
+        const existing = inFlightOps.get(key);
+        console.warn("[SRQ] Operation already in-flight:", {
+            key,
+            existing: existing.requestId,
+            attempted: requestId
+        });
+        return false;  // Lock not acquired
+    }
+
+    inFlightOps.set(key, {
+        requestId,
+        opType,
+        targetType,
+        targetId,
+        startedAt: Date.now(),
+        timeout: IN_FLIGHT_TIMEOUT_MS
+    });
+
+    return true;  // Lock acquired
+}
+
+/**
+ * Release operation lock.
+ * @param {string} opType - "export" | "dismiss" | "enrich"
+ * @param {string} targetType - "card" | "batch"
+ * @param {string} targetId - cardId or topicKey
+ */
+function releaseOpLock(opType, targetType, targetId) {
+    const key = `${opType}:${targetType}:${targetId}`;
+    inFlightOps.delete(key);
+}
+
+// Cleanup expired locks every 5 seconds (prevents permanent deadlock)
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, op] of inFlightOps.entries()) {
+        if (now - op.startedAt > op.timeout) {
+            console.warn("[SRQ] Operation timeout, cleaning up:", key);
+            inFlightOps.delete(key);
+        }
+    }
+}, 5000);
+
+/**
+ * Export all pending cards in a batch (by topicKey) to NotebookLM export queue.
+ * Uses existing clip_format + export_queue pipeline.
+ */
+async function handleSrqBatchExport(topicKey, notebookRef) {
+    const batchCards = await getCardsByTopicKey(topicKey);
+    const pending = batchCards.filter(c => c.status === "pending_review" || c.status === "approved");
+    const targetNotebook = notebookRef || "Inbox";
+
+    let exported = 0;
+    let skipped = 0;
+    const cardIds = [];  // Wave 2 P1: Track exported card IDs
+
+    for (const card of pending) {
+        const clipText = formatAtomClip({
+            title: card.title,
+            url: card.url,
+            selectedText: card.selectedText,
+            viewportExcerpt: card.viewportExcerpt,
+            readingMode: card.readingMode,
+            confidence: card.topicConfidence,
+            tags: [...(card.keywords || []), ...(card.userTags || [])],
+            atomicThought: card.atomicThought,
+            refinedInsight: card.refinedInsight,
+            threadConnections: (card.relatedSessions || []).map(r => ({
+                type: card.connectionHint || "related",
+                explanation: `${r.title} (${Math.round((r.similarity || 0) * 100)}%)`
+            })),
+            whySaved: card.userNote || null,
+            capturedAt: card.createdAt
+        });
+
+        if (!clipText) { skipped++; continue; }
+
+        const dedupeKey = await buildDedupeKey({
+            url: card.url,
+            selectedText: card.selectedText,
+            notebookRef: targetNotebook,
+            capturedAt: card.createdAt
+        });
+
+        const isDupe = await (async () => {
+            try {
+                return isDedupeHit(dedupeKey);
+            } catch { return false; }
+        })();
+
+        if (isDupe) { skipped++; continue; }
+
+        const job = createExportJob({
+            bundleId: card.cardId,
+            notebookRef: targetNotebook,
+            dedupeKey
+        });
+        await enqueueExportJob(job);
+        await markDedupeHit(dedupeKey);
+
+        await updateCardStatus(card.cardId, "exported");
+        await updateCard(card.cardId, { exportedJobId: job.jobId, exportedAt: Date.now() });
+        exported++;
+        cardIds.push(card.cardId);  // Wave 2 P1: Track exported card ID
+    }
+
+    return { exported, skipped, total: pending.length, cardIds };
+}
+
+/**
+ * Export a single SRQ card to NotebookLM export queue.
+ */
+async function handleSrqSingleExport(cardId, notebookRef) {
+    const allCards = await loadCards();
+    const card = allCards.find(c => c?.cardId === cardId);
+    if (!card) return { exported: 0, error: "Card not found" };
+    if (card.status === "exported") return { exported: 0, error: "Already exported" };
+
+    // Reuse batch export logic with a virtual single-card batch
+    const targetNotebook = notebookRef || card.suggestedNotebook || "Inbox";
+
+    const clipText = formatAtomClip({
+        title: card.title,
+        url: card.url,
+        selectedText: card.selectedText,
+        viewportExcerpt: card.viewportExcerpt,
+        readingMode: card.readingMode,
+        confidence: card.topicConfidence,
+        tags: [...(card.keywords || []), ...(card.userTags || [])],
+        atomicThought: card.atomicThought,
+        refinedInsight: card.refinedInsight,
+        capturedAt: card.createdAt
+    });
+
+    if (!clipText) return { exported: 0, error: "Empty clip" };
+
+    const dedupeKey = await buildDedupeKey({
+        url: card.url,
+        selectedText: card.selectedText,
+        notebookRef: targetNotebook,
+        capturedAt: card.createdAt
+    });
+
+    const job = createExportJob({
+        bundleId: card.cardId,
+        notebookRef: targetNotebook,
+        dedupeKey
+    });
+    await enqueueExportJob(job);
+    await markDedupeHit(dedupeKey);
+    await updateCardStatus(card.cardId, "exported");
+    await updateCard(card.cardId, { exportedJobId: job.jobId, exportedAt: Date.now() });
+
+    return { exported: 1 };
+}
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (!request?.type?.startsWith("SRQ_")) return false;
+
+    (async () => {
+        try {
+            switch (request.type) {
+                case "SRQ_CREATE_CARD": {
+                    // Wave 1 P0: Idempotent card creation with upsert
+                    let rollbackApplied = false;
+
+                    try {
+                        const card = await createResearchCard(request.payload);
+                        if (!card) {
+                            sendResponse({ ok: false, errorCode: SRQ_ERROR_CODES.INVALID_PARAM, message: "Card creation failed" });
+                            break;
+                        }
+
+                        // Upsert with idempotency (or legacy addCard if rollback flag is set)
+                        const savedCard = SRQ_USE_LEGACY_ADD_CARD
+                            ? await addCard(card)
+                            : await upsertCard(card);
+
+                        rollbackApplied = true;
+
+                        // Trigger async enrichment (non-blocking)
+                        enrichCardAsync(savedCard.cardId).catch(err => {
+                            console.warn("[SRQ] Async enrichment failed:", err.message);
+                        });
+
+                        sendResponse({ ok: true, card: savedCard });
+
+                        // Notify sidepanel of change (only after successful save)
+                        chrome.runtime.sendMessage({ type: "SRQ_CARDS_UPDATED" }).catch(() => { });
+                    } catch (err) {
+                        console.error("[ATOM SRQ] CREATE_CARD error:", {
+                            reason: err.message,
+                            rollbackApplied,
+                            requestType: "SRQ_CREATE_CARD"
+                        });
+                        sendResponse({
+                            ok: false,
+                            errorCode: SRQ_ERROR_CODES.TRANSIENT,
+                            message: err.message
+                        });
+                    }
+                    break;
+                }
+                case "SRQ_GET_PENDING_COUNT": {
+                    const stats = await getCardStats();
+                    sendResponse({ ok: true, stats });
+                    break;
+                }
+                case "SRQ_GET_CARDS": {
+                    const cards = await getPendingCards();
+                    sendResponse({ ok: true, cards });
+                    break;
+                }
+                case "SRQ_GET_ALL_CARDS": {
+                    const all = await loadCards();
+                    sendResponse({ ok: true, cards: all });
+                    break;
+                }
+                case "SRQ_UPDATE_CARD": {
+                    const updated = await updateCard(request.cardId, request.patch);
+                    sendResponse({ ok: true, card: updated });
+                    chrome.runtime.sendMessage({ type: "SRQ_CARDS_UPDATED" }).catch(() => { });
+                    break;
+                }
+                case "SRQ_DISMISS_CARD": {
+                    const { cardId } = request;
+                    const requestId = `req_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
+
+                    // Wave 2 P1: Acquire in-flight lock
+                    if (!acquireOpLock("dismiss", "card", cardId, requestId)) {
+                        sendResponse({
+                            ok: false,
+                            errorCode: SRQ_ERROR_CODES.CONFLICT,
+                            message: "Dismiss already in progress for this card"
+                        });
+                        break;
+                    }
+
+                    try {
+                        await dismissCard(cardId);
+                        sendResponse({ ok: true });
+                        chrome.runtime.sendMessage({
+                            type: "SRQ_CARDS_UPDATED",
+                            reason: "card_dismissed",
+                            changedIds: [cardId]
+                        }).catch(() => { });
+                    } catch (err) {
+                        console.error("[SRQ] Dismiss error:", err);
+                        sendResponse({
+                            ok: false,
+                            errorCode: SRQ_ERROR_CODES.TRANSIENT,
+                            message: err.message
+                        });
+                    } finally {
+                        releaseOpLock("dismiss", "card", cardId);
+                    }
+                    break;
+                }
+                case "SRQ_DISMISS_BATCH": {
+                    const { topicKey } = request;
+                    const requestId = `req_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
+
+                    // Wave 2 P1: Acquire in-flight lock
+                    if (!acquireOpLock("dismiss", "batch", topicKey, requestId)) {
+                        sendResponse({
+                            ok: false,
+                            errorCode: SRQ_ERROR_CODES.CONFLICT,
+                            message: "Dismiss already in progress for this batch"
+                        });
+                        break;
+                    }
+
+                    try {
+                        const batchCards = await getCardsByTopicKey(topicKey);
+                        let dismissed = 0;
+                        const dismissedIds = [];
+                        for (const card of batchCards) {
+                            if (card.status === "pending_review" || card.status === "approved") {
+                                await updateCardStatus(card.cardId, "dismissed");
+                                dismissed++;
+                                dismissedIds.push(card.cardId);
+                            }
+                        }
+                        sendResponse({ ok: true, dismissed });
+                        chrome.runtime.sendMessage({
+                            type: "SRQ_CARDS_UPDATED",
+                            reason: "batch_dismissed",
+                            changedIds: dismissedIds
+                        }).catch(() => { });
+                    } catch (err) {
+                        console.error("[SRQ] Batch dismiss error:", err);
+                        sendResponse({
+                            ok: false,
+                            errorCode: SRQ_ERROR_CODES.TRANSIENT,
+                            message: err.message
+                        });
+                    } finally {
+                        releaseOpLock("dismiss", "batch", topicKey);
+                    }
+                    break;
+                }
+                case "SRQ_GET_BATCHES": {
+                    try {
+                        const batches = await getBatchesForExport();
+                        sendResponse({ ok: true, batches: batches || [] });
+                    } catch (err) {
+                        sendResponse({
+                            ok: false,
+                            errorCode: SRQ_ERROR_CODES.TRANSIENT,
+                            message: "Failed to load batches"
+                        });
+                    }
+                    break;
+                }
+                case "SRQ_EXPORT_BATCH": {
+                    const { topicKey, notebookRef } = request;
+                    const requestId = `req_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
+
+                    // Wave 2 P1: Acquire in-flight lock
+                    if (!acquireOpLock("export", "batch", topicKey, requestId)) {
+                        sendResponse({
+                            ok: false,
+                            errorCode: SRQ_ERROR_CODES.CONFLICT,
+                            message: "Export already in progress for this batch"
+                        });
+                        break;
+                    }
+
+                    try {
+                        const result = await handleSrqBatchExport(topicKey, notebookRef);
+                        sendResponse({ ok: true, ...result });
+                        chrome.runtime.sendMessage({
+                            type: "SRQ_CARDS_UPDATED",
+                            reason: "batch_exported",
+                            changedIds: result.cardIds || []
+                        }).catch(() => { });
+                    } catch (err) {
+                        console.error("[SRQ] Batch export error:", err);
+                        sendResponse({
+                            ok: false,
+                            errorCode: SRQ_ERROR_CODES.TRANSIENT,
+                            message: err.message
+                        });
+                    } finally {
+                        releaseOpLock("export", "batch", topicKey);
+                    }
+                    break;
+                }
+                case "SRQ_EXPORT_CARD": {
+                    const { cardId, notebookRef } = request;
+                    const requestId = `req_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
+
+                    // Wave 2 P1: Acquire in-flight lock
+                    if (!acquireOpLock("export", "card", cardId, requestId)) {
+                        sendResponse({
+                            ok: false,
+                            errorCode: SRQ_ERROR_CODES.CONFLICT,
+                            message: "Export already in progress for this card"
+                        });
+                        break;
+                    }
+
+                    try {
+                        const result = await handleSrqSingleExport(cardId, notebookRef);
+                        sendResponse({ ok: true, ...result });
+                        chrome.runtime.sendMessage({
+                            type: "SRQ_CARDS_UPDATED",
+                            reason: "card_exported",
+                            changedIds: [cardId]
+                        }).catch(() => { });
+                    } catch (err) {
+                        console.error("[SRQ] Export error:", err);
+                        sendResponse({
+                            ok: false,
+                            errorCode: SRQ_ERROR_CODES.TRANSIENT,
+                            message: err.message
+                        });
+                    } finally {
+                        releaseOpLock("export", "card", cardId);
+                    }
+                    break;
+                }
+                case "SRQ_FIND_RELATED": {
+                    // Placeholder for related_memory integration
+                    sendResponse({ ok: true, sessions: [] });
+                    break;
+                }
+                default:
+                    sendResponse({ ok: false, errorCode: SRQ_ERROR_CODES.UNKNOWN, message: "Unknown SRQ action" });
+            }
+        } catch (err) {
+            console.error("[ATOM SRQ] Handler error:", err);
+            // Wave 1 P0: Standardized error responses
+            sendResponse({
+                ok: false,
+                errorCode: SRQ_ERROR_CODES.TRANSIENT,
+                message: err.message || "Internal error"
+            });
+        }
+    })();
+
+    return true; // async response
 });
 

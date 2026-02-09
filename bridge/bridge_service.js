@@ -140,6 +140,11 @@ export function buildReadingBundle(note, settings) {
     const atomicThought = normalizeString(note.atomicThought) || "";
     const tags = Array.isArray(note.tags) ? note.tags.filter(Boolean) : [];
 
+    // NEW: Side Panel Active Reading fields
+    const aiDiscussionSummary = normalizeString(note.aiDiscussionSummary) || "";
+    const refinedInsight = normalizeString(note.refinedInsight) || "";
+    const threadConnections = Array.isArray(note.connections) ? note.connections : [];
+
     return {
         id: note.id,
         url,
@@ -157,7 +162,11 @@ export function buildReadingBundle(note, settings) {
         privacy: {
             containsPII: piiDetected,
             allowCloudExport
-        }
+        },
+        // NEW: Active Reading 2.0 fields
+        aiDiscussionSummary,
+        refinedInsight,
+        threadConnections
     };
 }
 

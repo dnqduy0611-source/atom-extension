@@ -1,4 +1,152 @@
 // content.js - FIXED: OPT-IN JOURNAL & EVENT LISTENER BUG
+
+// ===== AUTO-FOCUS POST DETECTION (SYNCHRONOUS INIT - outside IIFE) =====
+// Must be synchronous and before IIFE to ensure it's ready for messages
+(function initPostFocusObserver() {
+    if (window.__ATOM_POST_FOCUS_OBSERVER__) return; // Already initialized
+    if (window.top !== window) return; // Skip iframes
+
+    // Check if this is a supported platform
+    const host = location.hostname.replace(/^www\./, '');
+    const supportedPlatforms = ['facebook.com', 'reddit.com'];
+    if (!supportedPlatforms.includes(host)) return;
+
+    window.__ATOM_POST_FOCUS_OBSERVER__ = {
+        cachedContent: null,
+        platform: host,
+
+        // NEW APPROACH: Find post by element at center of viewport
+        detectFocusedPost() {
+            const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 800;
+            const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 800;
+
+            // Sample multiple points in the center area to find the main content
+            const samplePoints = [
+                { x: viewportWidth * 0.3, y: viewportHeight * 0.4 },
+                { x: viewportWidth * 0.3, y: viewportHeight * 0.5 },
+                { x: viewportWidth * 0.3, y: viewportHeight * 0.6 },
+                { x: viewportWidth * 0.4, y: viewportHeight * 0.5 },
+            ];
+
+            for (const point of samplePoints) {
+                const element = document.elementFromPoint(point.x, point.y);
+                if (!element) continue;
+
+                // Walk up the DOM to find a suitable post container
+                const postContainer = this.findPostContainer(element);
+                if (postContainer) {
+                    return postContainer;
+                }
+            }
+
+            return null;
+        },
+
+        // Find the post container by walking up the DOM
+        findPostContainer(element) {
+            let el = element;
+            let bestCandidate = null;
+            let bestScore = 0;
+
+            for (let i = 0; i < 25 && el && el !== document.body; i++) {
+                const score = this.scoreAsPostContainer(el);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestCandidate = el;
+                }
+                el = el.parentElement;
+            }
+
+            // Only return if we have a reasonably good candidate
+            return bestScore >= 3 ? bestCandidate : null;
+        },
+
+        // Score how likely this element is a post container
+        scoreAsPostContainer(el) {
+            let score = 0;
+
+            // Check role attribute (legacy Facebook)
+            if (el.getAttribute('role') === 'article') score += 5;
+
+            // Check for common post indicators
+            const text = el.innerText || '';
+            const textLength = text.length;
+
+            // Good text length for a post (100-10000 chars)
+            if (textLength > 100 && textLength < 10000) score += 2;
+            if (textLength > 300) score += 1;
+
+            // Has reasonable height
+            const rect = el.getBoundingClientRect();
+            if (rect.height > 150 && rect.height < 2000) score += 1;
+
+            // Contains typical post elements
+            if (el.querySelector('a[href*="/posts/"], a[href*="/photo"], a[href*="/reel"]')) score += 2;
+            if (el.querySelector('img')) score += 1;
+            if (el.querySelector('[role="button"]')) score += 1;
+
+            // Contains timestamp-like patterns
+            if (text.match(/\d+\s*(h|m|d|phút|giờ|ngày|hour|minute|day)/i)) score += 2;
+
+            // Reddit specific
+            if (this.platform === 'reddit.com') {
+                if (el.tagName === 'SHREDDIT-POST') score += 5;
+                if (el.getAttribute('data-testid') === 'post-container') score += 5;
+            }
+
+            return score;
+        },
+
+        extractPostContent(postElement) {
+            if (!postElement) return null;
+
+            const textWalker = document.createTreeWalker(
+                postElement,
+                NodeFilter.SHOW_TEXT,
+                {
+                    acceptNode: (node) => {
+                        const parent = node.parentElement;
+                        if (!parent) return NodeFilter.FILTER_REJECT;
+                        if (parent.closest('script, style, noscript, [aria-hidden="true"]'))
+                            return NodeFilter.FILTER_REJECT;
+                        const text = node.textContent;
+                        if (!text || !text.trim()) return NodeFilter.FILTER_REJECT;
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                }
+            );
+
+            let fullText = '';
+            while (textWalker.nextNode()) {
+                fullText += textWalker.currentNode.textContent + ' ';
+            }
+
+            const cleanText = fullText.replace(/\s+/g, ' ').trim();
+            if (!cleanText || cleanText.length < 50) return null; // Need at least 50 chars
+
+            return {
+                text: cleanText.slice(0, 8000),
+                url: window.location.href,
+                title: document.title,
+                domain: this.platform,
+                source: 'auto_focus_post',
+                postId: postElement.getAttribute('aria-posinset')
+                    || postElement.id
+                    || `post_${Date.now()}`
+            };
+        },
+
+        update() {
+            const post = this.detectFocusedPost();
+            this.cachedContent = post ? this.extractPostContent(post) : null;
+            console.log('[ATOM] PostFocusObserver.update():', this.cachedContent ? 'Found post ✓' : 'No post');
+            return this.cachedContent;
+        }
+    };
+
+    console.log('[ATOM] PostFocusObserver initialized (sync) for:', host);
+})();
+
 (async () => {
     console.log("🔥 ATOM content.js injected", window.location.href);
     if (window.top !== window) {
@@ -11,6 +159,8 @@
     if (!window.__ATOM_READING_SEEN__) {
         window.__ATOM_READING_SEEN__ = new Set();
     }
+
+
     if (!window.__ATOM_READING_LISTENER__) {
         window.__ATOM_READING_LISTENER__ = true;
         chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -38,6 +188,12 @@
                 sendResponse({ ok: true });
                 return true;
             }
+            // ===== AUTO-FOCUS POST DETECTION =====
+            if (message?.type === "ATOM_GET_FOCUSED_POST") {
+                const post = window.__ATOM_POST_FOCUS_OBSERVER__?.update?.();
+                sendResponse({ ok: !!post, post });
+                return true;
+            }
         });
     }
 
@@ -61,7 +217,15 @@
     })();
 
     await i18nReady;
+
+
+
     // --- 0. KHỞI TẠO ---
+    // ===== SMART NUDGES (Phase 1) =====
+    const nudgeEngine = window.NudgeEngine?.create?.() || null;
+    let currentNudge = null;
+    let nudgePassiveTimer = null;
+    let nudgeSectionObserver = null;
     // ===== AI-PILOT CONFIG (optional) =====
     let __ATOM_AI_PILOT_CFG__ = {
         enabled: false,
@@ -547,7 +711,7 @@
     readingVault.id = 'atom-reading-vault';
     readingVault.innerHTML = `
     <div class="reading-vault-header">
-        <div class="reading-vault-title">ATOM - Reading Vault</div>
+        <div class="reading-vault-title">AmoNexus - Reading Vault</div>
         <button class="reading-vault-close" type="button" aria-label="Close">x</button>
     </div>
     <div class="reading-vault-empty"></div>
@@ -561,7 +725,7 @@
     };
 
     const readingVaultTitle = readingVault.querySelector('.reading-vault-title');
-    readingVaultTitle.textContent = msg("reading_vault_title", "ATOM - Reading Vault");
+    readingVaultTitle.textContent = msg("reading_vault_title", "AmoNexus - Reading Vault");
     const readingVaultClose = readingVault.querySelector('.reading-vault-close');
     const readingVaultList = readingVault.querySelector('.reading-vault-list');
     const readingVaultEmpty = readingVault.querySelector('.reading-vault-empty');
@@ -580,6 +744,9 @@
         save: msg("reading_card_save", "Save"),
         saved: msg("reading_card_saved", "Saved"),
         openVault: msg("reading_card_open_vault", "Open Vault"),
+        quizAction: msg("reading_card_quiz_action", "Quiz"),
+        teachBackAction: msg("reading_card_teachback_action", "Teach-back"),
+        flashcardAction: msg("reading_card_flashcard_action", "Flashcards"),
         vaultEmpty: msg("reading_vault_empty", "No reading notes yet.")
     };
     const readingLabelsRef = readingLabels;
@@ -1480,6 +1647,9 @@
                 <button class="reading-card-action reading-card-save" type="button">${readingLabels.save}</button>
                 <button class="reading-card-action reading-card-open" type="button">${readingLabels.openVault}</button>
                 <button class="reading-card-action reading-card-eval" type="button">${readingLabels.evalAction}</button>
+                <button class="reading-card-action reading-card-quiz" type="button">${readingLabels.quizAction}</button>
+                <button class="reading-card-action reading-card-teachback" type="button">${readingLabels.teachBackAction}</button>
+                <button class="reading-card-action reading-card-flashcard" type="button">${readingLabels.flashcardAction}</button>
             </div>
         </div>
         `;
@@ -1496,6 +1666,9 @@
         const saveBtn = card.querySelector('.reading-card-save');
         const openBtn = card.querySelector('.reading-card-open');
         const evalBtn = card.querySelector('.reading-card-eval');
+        const quizBtn = card.querySelector('.reading-card-quiz');
+        const teachBackBtn = card.querySelector('.reading-card-teachback');
+        const flashcardBtn = card.querySelector('.reading-card-flashcard');
 
         const safe = mergeLooseReadingResult(
             normalizeSummaryText(maybeParseSummaryAsJson(coerceReadingResult(result)))
@@ -1560,6 +1733,48 @@
                 }
             });
         });
+
+        const dispatchRetentionAction = (action) => {
+            const selectionText = typeof note?.selection === 'string' ? note.selection.trim() : '';
+            if (!selectionText) {
+                showNlmToast(atomMsg("sp_retention_no_highlight", null, "Please select a section you care about."), "error");
+                return;
+            }
+
+            const payload = {
+                text: selectionText.slice(0, 2000),
+                url: note?.url || window.location.href,
+                title: note?.title || document.title,
+                domain: (() => {
+                    try {
+                        return new URL(note?.url || window.location.href).hostname;
+                    } catch {
+                        return window.location.hostname || '';
+                    }
+                })(),
+                timestamp: Date.now(),
+                retentionAction: action,
+                source: 'reading_card',
+                noteId: note?.id || null
+            };
+
+            try {
+                chrome.runtime.sendMessage({
+                    type: 'ATOM_HIGHLIGHT_TO_SIDEPANEL',
+                    payload
+                }, () => {
+                    if (chrome.runtime.lastError) {
+                        console.warn('[ATOM] Retention action failed:', chrome.runtime.lastError.message);
+                    }
+                });
+            } catch (err) {
+                console.warn('[ATOM] Retention action error:', err);
+            }
+        };
+
+        quizBtn?.addEventListener('click', () => dispatchRetentionAction('quiz'));
+        teachBackBtn?.addEventListener('click', () => dispatchRetentionAction('teachback'));
+        flashcardBtn?.addEventListener('click', () => dispatchRetentionAction('flashcard'));
 
         openBtn.addEventListener('click', () => {
             openReadingVault();
@@ -1695,6 +1910,9 @@
             readingLabelsRef.save = msgNext("reading_card_save", "Save");
             readingLabelsRef.saved = msgNext("reading_card_saved", "Saved");
             readingLabelsRef.openVault = msgNext("reading_card_open_vault", "Open Vault");
+            readingLabelsRef.quizAction = msgNext("reading_card_quiz_action", "Quiz");
+            readingLabelsRef.teachBackAction = msgNext("reading_card_teachback_action", "Teach-back");
+            readingLabelsRef.flashcardAction = msgNext("reading_card_flashcard_action", "Flashcards");
             readingLabelsRef.vaultEmpty = msgNext("reading_vault_empty", "No reading notes yet.");
 
             readingVaultTitle.textContent = msgNext("reading_vault_title", "ATOM - Reading Vault");
@@ -1733,6 +1951,12 @@
                     if (evalBtn.textContent === readingLabelsRef.evalPending) return;
                     evalBtn.textContent = evalBtn.disabled ? readingLabelsRef.evalAction : readingLabelsRef.evalAction;
                 }
+                const quizBtn = card.querySelector('.reading-card-quiz');
+                if (quizBtn) quizBtn.textContent = readingLabelsRef.quizAction;
+                const teachBackBtn = card.querySelector('.reading-card-teachback');
+                if (teachBackBtn) teachBackBtn.textContent = readingLabelsRef.teachBackAction;
+                const flashcardBtn = card.querySelector('.reading-card-flashcard');
+                if (flashcardBtn) flashcardBtn.textContent = readingLabelsRef.flashcardAction;
                 const inputs = card.querySelectorAll('.reading-card-question-input');
                 inputs.forEach((input) => {
                     input.placeholder = readingLabelsRef.answerPlaceholder;
@@ -1881,8 +2105,8 @@
         <div class="widget-section actions">
             <button class="focus-btn primary" id="atom-focus-back">Quay lại</button>
             <div class="allow-group">
-                <button class="focus-btn icon-only" id="atom-focus-allow-60" title="Allow 60s">+1m</button>
-                <button class="focus-btn icon-only" id="atom-focus-allow-120" title="Allow 2m">+2m</button>
+                <button class="focus-btn ghost time-add" id="atom-focus-allow-60" title="Allow 60s">+1m</button>
+                <button class="focus-btn ghost time-add" id="atom-focus-allow-120" title="Allow 2m">+2m</button>
             </div>
             <div class="widget-divider small"></div>
             <button id="atom-focus-reset-btn" class="widget-icon-btn" title="${atomMsg('focus_btn_reset')}">
@@ -2212,7 +2436,7 @@
         try {
             await chrome.runtime.sendMessage({ type: "FOCUS_RESET_PHASE" });
             const timerEl = shadow.getElementById("atom-focus-timer");
-            if (timerEl) timerEl.textContent = "Updating...";
+            if (timerEl) timerEl.textContent = atomMsg("focus_updating", [], "Updating...");
         } catch (e) {
             console.warn("[ATOM] Reset request failed:", e.message);
         }
@@ -3206,6 +3430,174 @@
         lastScrollEventAt = now;
     };
 
+    // ===== SMART NUDGE HELPERS =====
+    const handleNudgeScroll = () => {
+        if (!nudgeEngine) return;
+        const now = Date.now();
+        const scrollY = window.scrollY || 0;
+        nudgeEngine.recordScroll({ scrollY, time: now });
+
+        const fast = nudgeEngine.checkFastScroll();
+        if (fast) {
+            showNudge(fast);
+            return;
+        }
+
+        const docHeight = Math.max(
+            document.documentElement.scrollHeight || 0,
+            document.body.scrollHeight || 0
+        );
+        const progress = docHeight > 0
+            ? (scrollY + window.innerHeight) / docHeight
+            : 0;
+        const completion = nudgeEngine.checkCompletion(progress);
+        if (completion) {
+            showNudge(completion);
+        }
+    };
+
+    function localizeNudge(nudgeData) {
+        if (!nudgeData) return nudgeData;
+        const base = { ...nudgeData };
+
+        const actionLabels = {
+            summarize: atomMsg('sp_chip_summarize', null, 'Summarize'),
+            ask_question: atomMsg('sp_nudge_action_ask', null, 'Ask a question'),
+            self_check: atomMsg('sp_nudge_action_self_check', null, 'Quick self-check'),
+            create_insight: atomMsg('sp_nudge_action_insight', null, 'Create insight'),
+            key_point: atomMsg('sp_nudge_action_key_point', null, 'Key point'),
+            next_steps: atomMsg('sp_nudge_action_next_steps', null, 'Next steps')
+        };
+
+        const titles = {
+            fast_scroll: atomMsg('sp_nudge_fast_scroll_title', null, 'Slow down a bit'),
+            passive_reading: atomMsg('sp_nudge_passive_title', null, 'Active recall'),
+            section_end: atomMsg('sp_nudge_section_title', null, 'Section checkpoint'),
+            completion: atomMsg('sp_nudge_completion_title', null, 'Wrap-up')
+        };
+
+        const messages = {
+            fast_scroll: atomMsg('sp_nudge_fast_scroll_msg', null, 'You are scrolling quickly. Want to pause and capture a key idea?'),
+            passive_reading: atomMsg('sp_nudge_passive_msg', null, 'Try to recall the main point you just read.'),
+            section_end: atomMsg('sp_nudge_section_msg', nudgeData?.triggerData?.sectionTitle || '', 'You reached this section. Capture 1 takeaway?'),
+            completion: atomMsg('sp_nudge_completion_msg', null, 'You are near the end. Want a quick summary or next steps?')
+        };
+
+        base.title = titles[base.id] || base.title;
+        base.message = messages[base.id] || base.message;
+        base.actions = (base.actions || []).map(action => ({
+            ...action,
+            label: actionLabels[action.id] || action.label
+        }));
+
+        return base;
+    }
+
+    function showNudge(nudgeData) {
+        if (!nudgeEngine || !window.NudgeUI) return;
+        if (currentNudge) return;
+        nudgeEngine.recordNudgeShown();
+        const localized = localizeNudge(nudgeData);
+        currentNudge = window.NudgeUI.createNudgeUI(localized, handleNudgeAction);
+        document.body.appendChild(currentNudge);
+
+        setTimeout(() => {
+            if (currentNudge) {
+                currentNudge.classList.add('dismissed');
+                setTimeout(() => {
+                    currentNudge?.remove();
+                    currentNudge = null;
+                }, 200);
+            }
+        }, 12000);
+    }
+
+    function handleNudgeAction(actionId) {
+        if (!actionId) return;
+        try {
+            chrome.runtime.sendMessage({ type: 'ATOM_OPEN_SIDEPANEL' }, (response) => {
+                // If sidepanel couldn't auto-open (user gesture required), show hint
+                if (response?.error === 'user_gesture_required') {
+                    showSidepanelHint();
+                }
+            });
+        } catch (e) {
+            console.warn('[ATOM] Failed to open side panel:', e);
+            showSidepanelHint();
+        }
+        if (nudgeEngine) {
+            nudgeEngine.recordHighlight();
+        }
+        if (currentNudge) {
+            currentNudge.classList.add('dismissed');
+            setTimeout(() => {
+                currentNudge?.remove();
+                currentNudge = null;
+            }, 200);
+        }
+    }
+
+    function showSidepanelHint() {
+        // Show a brief toast suggesting keyboard shortcut or extension icon
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        const shortcut = isMac ? '⌘+Shift+S' : 'Ctrl+Shift+S';
+
+        const toast = document.createElement('div');
+        toast.className = 'atom-sidepanel-hint';
+        toast.innerHTML = `
+            <div style="display:flex;flex-direction:column;gap:4px;">
+                <span>💡 Press <strong>${shortcut}</strong> to open Active Reading</span>
+                <span style="font-size:12px;opacity:0.8;">or click ATOM icon → Chat with Amo</span>
+            </div>
+        `;
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 2147483647;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            animation: atomSlideIn 0.3s ease-out;
+        `;
+        document.body.appendChild(toast);
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.3s';
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+
+    function initNudgeTracking() {
+        if (!nudgeEngine || !window.NudgeUI) return;
+        window.NudgeUI.injectNudgeStyles();
+
+        if (nudgePassiveTimer) clearInterval(nudgePassiveTimer);
+        nudgePassiveTimer = setInterval(() => {
+            const passive = nudgeEngine.checkPassiveReading();
+            if (passive) showNudge(passive);
+        }, 30000);
+
+        const headings = Array.from(document.querySelectorAll('h2, h3'));
+        if (headings.length) {
+            nudgeSectionObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+                    const text = (entry.target?.textContent || '').trim();
+                    const nudge = nudgeEngine.checkSectionEnd(text);
+                    if (nudge) showNudge(nudge);
+                });
+            }, { rootMargin: '-10% 0px -70% 0px', threshold: 0.2 });
+
+            headings.forEach(h => nudgeSectionObserver.observe(h));
+        }
+    }
+
     const handleKeydown = (e) => {
         updateActivity(e);
         if ((e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === "f") {
@@ -3220,6 +3612,7 @@
     window.addEventListener('scroll', (e) => {
         updateActivity(e);
         handleScrollEvent();
+        handleNudgeScroll();
     }, { passive: true });
     window.addEventListener('click', updateActivity);
     window.addEventListener('keydown', handleKeydown);
@@ -3351,5 +3744,257 @@
             sendTick();
         }, 5000);
     });
+
+    // =====================================================
+    // SIDE PANEL: Highlight-to-Chat Integration
+    // =====================================================
+    const HIGHLIGHT_MIN_LENGTH = 20; // Minimum chars to trigger
+    let lastHighlightTime = 0;
+    const HIGHLIGHT_DEBOUNCE = 500; // ms
+
+    document.addEventListener('mouseup', async (e) => {
+        // Skip if clicking on ATOM UI elements
+        if (e.target.closest('[data-atom-ui]')) return;
+
+        const now = Date.now();
+        if (now - lastHighlightTime < HIGHLIGHT_DEBOUNCE) return;
+
+        // Small delay to ensure selection is complete
+        await new Promise(r => setTimeout(r, 50));
+
+        const selection = window.getSelection();
+        const selectedText = selection ? selection.toString().trim() : '';
+
+        if (selectedText.length < HIGHLIGHT_MIN_LENGTH) return;
+
+        lastHighlightTime = now;
+        if (nudgeEngine) {
+            nudgeEngine.recordHighlight();
+        }
+
+        // Get context around selection
+        const range = selection.getRangeAt(0);
+        const container = range.commonAncestorContainer;
+        const parentElement = container.nodeType === Node.TEXT_NODE
+            ? container.parentElement
+            : container;
+
+        // === SMART CONTEXT EXTRACTION (Token Optimization) ===
+
+        // 1. Get surrounding paragraph (find containing block element)
+        const surroundingContext = extractSurroundingParagraph(range, parentElement);
+
+        // 2. Get nearest section heading
+        const sectionHeading = findNearestHeading(range);
+
+        // 3. Get page outline (structure)
+        const pageOutline = extractPageOutline();
+
+        // 4. Get paragraph position for reference
+        const position = getSelectionPosition(range);
+
+        // Build highlight data with smart context
+        const highlightData = {
+            text: selectedText.slice(0, 2000), // Reduced from 5000 to 2000
+            context: parentElement?.innerText?.slice(0, 500) || '', // Reduced from 1000
+            // NEW: Smart context fields
+            surroundingContext: surroundingContext,
+            sectionHeading: sectionHeading,
+            pageOutline: pageOutline,
+            position: position,
+            // Metadata
+            url: window.location.href,
+            title: document.title,
+            domain: window.location.hostname,
+            timestamp: now
+        };
+
+        // Send to background to open side panel
+        try {
+            chrome.runtime.sendMessage({
+                type: 'ATOM_HIGHLIGHT_TO_SIDEPANEL',
+                payload: highlightData
+            });
+            console.log('[ATOM] Highlight sent with smart context:', {
+                textLength: selectedText.length,
+                surroundingLength: surroundingContext.length,
+                hasHeading: !!sectionHeading
+            });
+        } catch (err) {
+            console.warn('[ATOM] Failed to send highlight:', err);
+        }
+    });
+
+    // === SMART CONTEXT HELPER FUNCTIONS ===
+
+    /**
+     * Extract surrounding paragraph/block content
+     */
+    function extractSurroundingParagraph(range, parentElement) {
+        // Find containing block element
+        let blockElement = parentElement;
+        const blockTags = ['P', 'DIV', 'ARTICLE', 'SECTION', 'LI', 'BLOCKQUOTE', 'TD', 'TH'];
+
+        while (blockElement && blockElement !== document.body) {
+            if (blockTags.includes(blockElement.tagName)) {
+                break;
+            }
+            blockElement = blockElement.parentElement;
+        }
+
+        if (!blockElement || blockElement === document.body) {
+            blockElement = parentElement;
+        }
+
+        // Get text content, clean it up
+        const text = (blockElement?.textContent || '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 800); // Max 800 chars for surrounding context
+
+        return text;
+    }
+
+    /**
+     * Find nearest heading above selection
+     */
+    function findNearestHeading(range) {
+        const headings = document.querySelectorAll('h1, h2, h3, h4');
+        if (!headings.length) return '';
+
+        const rangeRect = range.getBoundingClientRect();
+        let nearestHeading = null;
+        let minDistance = Infinity;
+
+        for (const h of headings) {
+            const hRect = h.getBoundingClientRect();
+            // Only consider headings above the selection
+            if (hRect.bottom < rangeRect.top) {
+                const distance = rangeRect.top - hRect.bottom;
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestHeading = h;
+                }
+            }
+        }
+
+        return nearestHeading ? nearestHeading.textContent.trim().slice(0, 100) : '';
+    }
+
+    /**
+     * Extract page structure (headings only)
+     */
+    function extractPageOutline() {
+        const headings = document.querySelectorAll('h1, h2, h3');
+        const outline = [];
+
+        for (const h of headings) {
+            if (outline.length >= 8) break; // Max 8 headings
+
+            const text = h.textContent.trim().slice(0, 60);
+            if (text) {
+                outline.push(`${h.tagName}: ${text}`);
+            }
+        }
+
+        return outline.join('\n').slice(0, 500); // Max 500 chars total
+    }
+
+    /**
+     * Get selection position for reference
+     */
+    function getSelectionPosition(range) {
+        try {
+            // Count paragraphs before selection
+            const paragraphs = document.querySelectorAll('p');
+            let paragraphIndex = -1;
+
+            for (let i = 0; i < paragraphs.length; i++) {
+                if (paragraphs[i].contains(range.startContainer) ||
+                    paragraphs[i] === range.startContainer) {
+                    paragraphIndex = i;
+                    break;
+                }
+            }
+
+            return {
+                paragraphIndex: paragraphIndex,
+                charOffset: range.startOffset
+            };
+        } catch (e) {
+            return { paragraphIndex: -1, charOffset: 0 };
+        }
+    }
+
+    // Listen for side panel requests
+    chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+        if (msg?.type === 'ATOM_GET_PAGE_CONTENT') {
+            // Extract page content for side panel
+            const content = extractMainContent();
+            const headings = extractHeadings();
+            sendResponse({
+                ok: true,
+                content,
+                url: window.location.href,
+                title: document.title,
+                domain: window.location.hostname,
+                headings
+            });
+            return true;
+        }
+    });
+
+    function extractMainContent() {
+        const selectors = [
+            'article', 'main', '[role="main"]',
+            '.post-content', '.article-content', '.entry-content',
+            '.content', '#content', '.post', '.article'
+        ];
+
+        let mainElement = null;
+        for (const selector of selectors) {
+            mainElement = document.querySelector(selector);
+            if (mainElement) break;
+        }
+
+        if (!mainElement) mainElement = document.body;
+
+        const clone = mainElement.cloneNode(true);
+
+        // Remove noise elements
+        const removeSelectors = [
+            'script', 'style', 'noscript', 'iframe', 'svg',
+            'nav', 'header', 'footer', 'aside',
+            '.sidebar', '.navigation', '.menu', '.nav',
+            '.comments', '.advertisement', '.ad',
+            '.social-share', '.share-buttons', '.related-posts'
+        ];
+
+        removeSelectors.forEach(sel => {
+            clone.querySelectorAll(sel).forEach(el => el.remove());
+        });
+
+        let content = clone.innerText || clone.textContent || '';
+        content = content.replace(/\s+/g, ' ').replace(/\n\s*\n/g, '\n').trim();
+
+        return content.slice(0, 100000); // Limit to 100k chars
+    }
+
+    function extractHeadings() {
+        const nodes = Array.from(document.querySelectorAll('h1, h2, h3'));
+        const headings = [];
+
+        for (const node of nodes) {
+            const text = (node.textContent || '').replace(/\s+/g, ' ').trim();
+            if (!text) continue;
+            const level = Number(String(node.tagName || '').replace('H', '')) || 1;
+            headings.push({ text, level });
+            if (headings.length >= 12) break;
+        }
+
+        return headings;
+    }
+
+    initNudgeTracking();
 })();
 

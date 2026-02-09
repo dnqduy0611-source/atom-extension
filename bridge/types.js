@@ -12,15 +12,44 @@ export const NLM_IDEA_COOLDOWN_KEY = "atom_nlm_idea_cooldown_v1";
 export const NLM_MAX_QUEUE_SIZE = 50;
 export const NLM_RETRY_DELAYS_MS = [5000, 30000, 120000];
 
+// Smart Research Queue (SRQ)
+export const SRQ_CARDS_KEY = "atom_srq_cards_v1";
+export const SRQ_MAX_CARDS = 200;
+
+// SRQ Wave 1 P0: Idempotency
+export const SRQ_IDEMPOTENCY_TIME_BUCKET_MS = 60000; // 60 seconds
+export const SRQ_IDEMPOTENCY_KEY_VERSION = "v1";
+
+// SRQ Wave 1 P0: Error codes
+export const SRQ_ERROR_CODES = {
+    INVALID_PARAM: "INVALID_PARAM",
+    UNAUTHORIZED: "UNAUTHORIZED",
+    NOT_FOUND: "NOT_FOUND",
+    CONFLICT: "CONFLICT",
+    RATE_LIMIT: "RATE_LIMIT",
+    TIMEOUT: "TIMEOUT",
+    TRANSIENT: "TRANSIENT",
+    SERVER_ERROR: "SERVER_ERROR",
+    UNKNOWN: "UNKNOWN"
+};
+
 export const DEFAULT_NLM_SETTINGS = {
-    enabled: false,
+    enabled: true,
     mode: "ui_assisted",
     defaultNotebookRef: "Inbox",
     exportFormat: "clip_and_url",
     baseUrl: "https://notebooklm.google.com",
-    allowCloudExport: false,
+    allowCloudExport: true,
     piiWarning: true,
-    exportMaxChars: 5000  // Max characters for NLM clip export (0 = unlimited)
+    exportMaxChars: 5000,  // Max characters for NLM clip export (0 = unlimited)
+    // Smart Research Queue
+    srqEnabled: true,
+    srqAutoEnrich: true,
+    srqShowSidepanelWidget: true,
+    srqShowNlmBanner: true,
+    srqMaxCardsPerBatch: 20,
+    srqStaleCardDays: 14,
+    srqNotifyThreshold: 3
 };
 
 export const DEFAULT_NLM_RULES = {

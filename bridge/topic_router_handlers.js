@@ -8,6 +8,7 @@ import { routeTopic, routeTopicWithCandidates, quickMatchCheck, getRoutingStats 
 console.log('[ATOM] Imported topic_router.js');
 import { loadRegistry, upsertTopic, recordUsage, completePendingTopic, getPendingTopic, setPendingTopic, clearPendingTopic, deleteTopic } from "./topic_registry.js";
 import { buildPromptPayload, buildConfirmMappingPrompt, buildToastPayload, ACTION } from "./ui_prompt.js";
+import { formatAtomClip } from "./clip_format.js";
 import { resolveNotebookUrl } from "./notebooklm_connector.js";
 import { loadNlmSettings } from "./bridge_service.js";
 import {
@@ -34,6 +35,20 @@ import {
 // Re-export for background.js
 export { setupQueueProcessor, handleQueueAlarm };
 import { getQueueSummary } from "./export_queue.js";
+
+// AI Title Generator (lazy loaded to avoid startup overhead)
+let aiTitleGenerator = null;
+async function getAITitleGenerator() {
+    if (!aiTitleGenerator) {
+        try {
+            aiTitleGenerator = await import("../services/ai_title_generator.js");
+        } catch (e) {
+            console.warn('[ATOM] AI title generator not available:', e.message);
+            return null;
+        }
+    }
+    return aiTitleGenerator;
+}
 
 /**
  * Log topic router events (wrapper for backward compatibility)
@@ -66,12 +81,38 @@ export async function handleTopicRoute(request) {
         const routerResult = await routeTopic(context, { savePending: true });
         const settings = await loadNlmSettings();
         const locale = settings.locale || "en";
+
+        // Try to generate AI-powered title (non-blocking fallback to regex)
+        let aiGeneratedTitle = null;
+        try {
+            const generator = await getAITitleGenerator();
+            if (generator && generator.generateSmartTitle) {
+                aiGeneratedTitle = await Promise.race([
+                    generator.generateSmartTitle({
+                        title: context.title,
+                        selection: context.selection,
+                        intent: context.intent,
+                        domain: context.domain
+                    }),
+                    new Promise(resolve => setTimeout(() => resolve(null), 5000)) // 5s timeout
+                ]);
+            }
+        } catch (e) {
+            console.warn('[ATOM] AI title generation failed, using fallback:', e.message);
+        }
+
+        // Merge AI title into result if available
+        if (aiGeneratedTitle) {
+            routerResult.aiGeneratedTitle = aiGeneratedTitle;
+        }
+
         const promptPayload = buildPromptPayload(routerResult, { locale });
 
         logRouterEvent(NLM_ROUTER_EVENTS.ROUTE_COMPLETE, {
             decision: routerResult.decision,
             topicKey: routerResult.topicKey,
-            hasMatch: !!routerResult.bestMatch
+            hasMatch: !!routerResult.bestMatch,
+            hasAITitle: !!aiGeneratedTitle
         });
 
         // Log suggested if there's a match
@@ -154,7 +195,7 @@ export async function handleTopicAction(request) {
  * Handle "use" action - Use existing notebook
  */
 async function handleUseExisting(data) {
-    const { notebookRef, notebookUrl, topicKey } = data;
+    const { notebookRef, notebookUrl, topicKey, selection } = data;
 
     logChosenExisting({ notebookRef, topicKey });
 
@@ -166,11 +207,28 @@ async function handleUseExisting(data) {
     // Clear pending topic
     await clearPendingTopic();
 
+    // Generate summary for long content (>500 chars)
+    let summary = null;
+    if (selection && selection.length > 500) {
+        try {
+            const generator = await getAITitleGenerator();
+            if (generator && generator.generateSummary) {
+                summary = await Promise.race([
+                    generator.generateSummary(selection),
+                    new Promise(resolve => setTimeout(() => resolve(null), 5000))
+                ]);
+            }
+        } catch (e) {
+            console.warn('[ATOM] Summary generation failed:', e.message);
+        }
+    }
+
     return {
         ok: true,
         action: "use",
         notebookRef,
         notebookUrl,
+        summary,
         toast: buildToastPayload(`Using notebook: ${notebookRef}`, "success")
     };
 }
@@ -222,7 +280,15 @@ async function handleCreateNew(data) {
             url: data.sourceUrl || "",
             title: data.sourceTitle || "",
             domain: data.sourceDomain || "",
-            selection: selection.substring(0, 500) // Limit selection size
+            // v2: Use formatted CLIP (Markdown) as the payload for paste
+            // We store this in 'selection' because that's what nlm_passive_learning copies
+            selection: formatAtomClip({
+                title: data.sourceTitle,
+                url: data.sourceUrl,
+                selectedText: selection,
+                capturedAt: Date.now(),
+                tags: keywords
+            })
         }
     });
 
@@ -234,12 +300,29 @@ async function handleCreateNew(data) {
     await chrome.tabs.create({ url: createUrl });
 
     // Return info - NOT saved to registry yet
+    // Generate summary for long content (>500 chars)
+    let summary = null;
+    if (selection && selection.length > 500) {
+        try {
+            const generator = await getAITitleGenerator();
+            if (generator && generator.generateSummary) {
+                summary = await Promise.race([
+                    generator.generateSummary(selection),
+                    new Promise(resolve => setTimeout(() => resolve(null), 5000))
+                ]);
+            }
+        } catch (e) {
+            console.warn('[ATOM] Summary generation failed:', e.message);
+        }
+    }
+
     return {
         ok: true,
         action: "create",
         pendingTopic: { topicKey, displayTitle, keywords },
         createUrl,
         needsMapping: true, // Flag that we need to capture the created notebook
+        summary,
         toast: buildToastPayload(`Opening NotebookLM... Create notebook "${displayTitle}"`, "info")
     };
 }
