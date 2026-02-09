@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AmoNexus Extension Preview</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #111;
+            margin-bottom: 40px;
+        }
+
+        .link-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .link-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .link-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .link-title {
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+            color: #0070f3;
+        }
+
+        .link-desc {
+            font-size: 0.9em;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>AmoNexus Extension Pages</h1>
+    <div class="link-list">
+        <a href="popup.html" class="link-card">
+            <span class="link-title">Popup</span>
+            <span class="link-desc">Main extension popup</span>
+        </a>
+        <a href="sidepanel.html" class="link-card">
+            <span class="link-title">Side Panel</span>
+            <span class="link-desc">Sidebar interface</span>
+        </a>
+        <a href="options.html" class="link-card">
+            <span class="link-title">Options</span>
+            <span class="link-desc">Settings page</span>
+        </a>
+        <a href="memory.html" class="link-card">
+            <span class="link-title">Memory</span>
+            <span class="link-desc">Memory management</span>
+        </a>
+        <a href="journal.html" class="link-card">
+            <span class="link-title">Journal</span>
+            <span class="link-desc">User journal</span>
+        </a>
+        <a href="bug_report.html" class="link-card">
+            <span class="link-title">Bug Report</span>
+            <span class="link-desc">Issue reporting form</span>
+        </a>
+        <a href="debug.html" class="link-card">
+            <span class="link-title">Debug</span>
+            <span class="link-desc">Debugging tools</span>
+        </a>
+    </div>
+</body>
+
+</html>
