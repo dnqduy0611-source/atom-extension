@@ -22,6 +22,9 @@ import { handleTopicRouterMessage, handleTopicRoute, handleTopicAction, handleGe
 import { AI_CONFIG, syncConfigToStorage, getModel } from './config/ai_config.js';
 import { ReadingSessionService } from './storage/reading_session.module.js';
 import { RateLimitManager, parseRetryAfterSeconds } from './services/rate_limit_manager.module.js';
+import { initQuota, checkQuota, incrementQuota, resetDailyQuota, getQuotaDisplayStatus } from './services/quota_service.js';
+import { checkForGitHubUpdate, isSideloaded, getUpdateStatus, dismissUpdate } from './services/github_update_checker.js';
+import { isProxyAvailable, callGeminiProxy, callEmbeddingProxy } from './services/proxy_service.js';
 
 // Smart Research Queue (SRQ)
 import { addCard, getCardStats, getCardsByTopicKey, updateCard, updateCardStatus, dismissCard, getPendingCards, cleanupStaleCards, loadCards, upsertCard, findCardByIdempotencyKey } from './storage/srq_store.js';
@@ -817,6 +820,12 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     } catch (e) {
         console.warn("ATOM: Side Panel setup skipped:", e.message);
     }
+
+    // 8. Initialize Quota & Trial tracking (Phase 1 Monetization)
+    initQuota().catch(e => console.warn('[ATOM] Quota init failed:', e));
+
+    // 9. Check GitHub update for sideloaded builds
+    checkForGitHubUpdate().catch(e => console.warn('[ATOM] GitHub update check failed:', e));
 });
 
 // =========================
@@ -952,6 +961,8 @@ chrome.notifications.onClicked.addListener(async (notificationId) => {
 chrome.alarms.create('check-store-update', { periodInMinutes: 360 });
 chrome.alarms.create('atom_srq_cleanup', { periodInMinutes: 720 });
 chrome.alarms.create('atom_kg_decay_cycle', { periodInMinutes: 360 }); // Phase 3: decay every 6h
+chrome.alarms.create('atom_daily_quota_reset', { periodInMinutes: 60 }); // Phase 1: hourly quota reset check
+chrome.alarms.create('atom_github_update', { periodInMinutes: 360 }); // Phase 1: GitHub update check every 6h
 chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === 'check-store-update') {
         checkForStoreUpdate();
@@ -1004,6 +1015,14 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
         } catch (err) {
             console.warn('[KG Decay] Failed:', err);
         }
+    }
+    // Phase 1 Monetization: Daily quota reset
+    if (alarm.name === 'atom_daily_quota_reset') {
+        resetDailyQuota().catch(e => console.warn('[Quota] Reset failed:', e));
+    }
+    // Phase 1 Monetization: GitHub update check for sideloaded builds
+    if (alarm.name === 'atom_github_update') {
+        checkForGitHubUpdate().catch(e => console.warn('[GitHubUpdate] Check failed:', e));
     }
 });
 
@@ -5035,6 +5054,112 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
         sendResponse({ ok: true });
         return false;
+    }
+});
+
+// ===== QUOTA & UPDATE STATUS HANDLERS (Phase 1 Monetization) =====
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type === 'ATOM_GET_QUOTA_STATUS') {
+        getQuotaDisplayStatus().then(status => sendResponse(status)).catch(e => {
+            console.warn('[Quota] Status error:', e);
+            sendResponse({ error: e.message });
+        });
+        return true; // async
+    }
+    if (message.type === 'ATOM_INCREMENT_QUOTA') {
+        incrementQuota().then(count => sendResponse({ count })).catch(e => {
+            sendResponse({ error: e.message });
+        });
+        return true; // async
+    }
+    if (message.type === 'ATOM_CHECK_QUOTA') {
+        checkQuota().then(result => sendResponse(result)).catch(e => {
+            sendResponse({ allowed: true, error: e.message }); // Fail open
+        });
+        return true; // async
+    }
+    if (message.type === 'ATOM_GET_UPDATE_STATUS') {
+        getUpdateStatus().then(status => sendResponse(status || {})).catch(e => {
+            sendResponse({});
+        });
+        return true; // async
+    }
+    if (message.type === 'ATOM_DISMISS_UPDATE') {
+        dismissUpdate().then(() => sendResponse({ ok: true })).catch(e => {
+            sendResponse({ error: e.message });
+        });
+        return true; // async
+    }
+    if (message.type === 'ATOM_CHECK_SIDELOADED') {
+        isSideloaded().then(result => sendResponse({ sideloaded: result })).catch(() => {
+            sendResponse({ sideloaded: false });
+        });
+        return true; // async
+    }
+    // ── Phase 3B: Proxy Handlers ──
+    if (message.type === 'ATOM_CHECK_PROXY') {
+        isProxyAvailable().then(result => sendResponse(result)).catch(e => {
+            sendResponse({ available: false, error: e.message });
+        });
+        return true;
+    }
+    if (message.type === 'ATOM_PROXY_GEMINI') {
+        (async () => {
+            try {
+                // Get session token
+                const proxyStatus = await isProxyAvailable();
+                console.log('[Proxy BG] isProxyAvailable:', {
+                    available: proxyStatus.available,
+                    hasToken: !!proxyStatus.accessToken,
+                    tokenPreview: proxyStatus.accessToken?.substring(0, 20) + '...'
+                });
+                if (!proxyStatus.available || !proxyStatus.accessToken) {
+                    sendResponse({ error: 'Not signed in', code: 'AUTH_REQUIRED' });
+                    return;
+                }
+                const result = await callGeminiProxy({
+                    model: message.model,
+                    contents: message.contents,
+                    systemInstruction: message.systemInstruction,
+                    generationConfig: message.generationConfig,
+                    accessToken: proxyStatus.accessToken
+                });
+                sendResponse({ data: result });
+            } catch (e) {
+                sendResponse({
+                    error: e.message || 'Proxy call failed',
+                    status: e.status,
+                    code: e.code,
+                    isQuotaExceeded: !!e.isQuotaExceeded
+                });
+            }
+        })();
+        return true;
+    }
+    if (message.type === 'ATOM_PROXY_EMBED') {
+        (async () => {
+            try {
+                const proxyStatus = await isProxyAvailable();
+                if (!proxyStatus.available || !proxyStatus.accessToken) {
+                    sendResponse({ error: 'Not signed in', code: 'AUTH_REQUIRED' });
+                    return;
+                }
+                const result = await callEmbeddingProxy({
+                    text: message.text,
+                    accessToken: proxyStatus.accessToken,
+                    model: message.model,
+                    outputDimensionality: message.outputDimensionality
+                });
+                sendResponse({ data: result });
+            } catch (e) {
+                sendResponse({
+                    error: e.message || 'Proxy embed failed',
+                    status: e.status,
+                    code: e.code
+                });
+            }
+        })();
+        return true;
     }
 });
 

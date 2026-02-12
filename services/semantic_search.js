@@ -13,20 +13,27 @@
     };
 
     /**
-     * Gets API key from storage.
-     * @returns {Promise<string>}
+     * Gets API key from storage. Returns null if not configured.
+     * @returns {Promise<string|null>}
      */
     async function getApiKey() {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             chrome.storage.local.get(['user_gemini_key', 'gemini_api_key', 'apiKey'], (result) => {
-                const key = result.user_gemini_key || result.gemini_api_key || result.apiKey;
-                if (key) {
-                    resolve(key);
-                } else {
-                    reject(new Error('api_key_not_configured'));
-                }
+                resolve(result.user_gemini_key || result.gemini_api_key || result.apiKey || null);
             });
         });
+    }
+
+    /**
+     * Checks if user is signed in (proxy available).
+     */
+    async function isUserSignedIn() {
+        try {
+            const data = await chrome.storage.local.get('atom_auth_cache');
+            return !!data?.atom_auth_cache?.isAuthenticated;
+        } catch {
+            return false;
+        }
     }
 
     /**
@@ -48,7 +55,29 @@
         return '';
     }
 
+    /**
+     * Generate embedding via proxy (background service worker).
+     */
+    async function generateProxyEmbedding(queryText) {
+        const response = await chrome.runtime.sendMessage({
+            type: 'ATOM_PROXY_EMBED',
+            text: queryText
+        });
+        if (response?.error) {
+            throw new Error(response.error);
+        }
+        if (!response?.data?.embedding?.values) {
+            throw new Error('invalid_proxy_embedding_response');
+        }
+        return response.data.embedding.values;
+    }
+
     async function generateQueryEmbedding(queryText, apiKey) {
+        // Use proxy if no API key
+        if (!apiKey) {
+            return generateProxyEmbedding(queryText);
+        }
+
         const rateManager = window.RateLimitManager
             ? (window.__ATOM_RATE_MANAGER__ || (window.__ATOM_RATE_MANAGER__ = new window.RateLimitManager({
                 rpmTotal: 15,
@@ -85,6 +114,9 @@
 
         try {
             const apiKey = await getApiKey();
+            if (!apiKey && !(await isUserSignedIn())) {
+                return [];
+            }
 
             // Generate query embedding
             const queryEmbedding = await generateQueryEmbedding(queryText, apiKey);
@@ -205,6 +237,9 @@
 
         try {
             const apiKey = await getApiKey();
+            if (!apiKey && !(await isUserSignedIn())) {
+                return [];
+            }
             const opts = options && typeof options === 'object' ? options : {};
             const minSimilarity = Number.isFinite(opts.minSimilarity)
                 ? opts.minSimilarity
@@ -264,11 +299,14 @@
     }
 
     /**
-     * Checks if semantic search is available.
+     * Checks if semantic search is available (has API key or signed in, and has embeddings).
      */
     async function isAvailable() {
         try {
-            await getApiKey();
+            const apiKey = await getApiKey();
+            if (!apiKey && !(await isUserSignedIn())) {
+                return false;
+            }
             const count = await window.VectorStore?.getEmbeddingCount() || 0;
             return count > 0;
         } catch {

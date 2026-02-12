@@ -4,6 +4,8 @@
 import { initI18n, getActiveLocale } from './i18n_bridge.js';
 import { AI_CONFIG, getModel } from './config/ai_config.js';
 import { RateLimitManager, parseRetryAfterSeconds } from './services/rate_limit_manager.module.js';
+import { checkQuota, incrementQuota } from './services/quota_service.js';
+import { isProxyAvailable, callGeminiProxy } from './services/proxy_service.js';
 
 const i18nReady = initI18n();
 const getLanguageName = () => (getActiveLocale().startsWith('vi') ? 'Vietnamese' : 'English');
@@ -333,8 +335,63 @@ Output JSON only: { "category": "...", "tags": ["...", "..."] }
      * @param {number} retries - Số lần thử lại nếu gặp lỗi 429/5xx
      */
     async _callCloudGemini(prompt, responseSchema, timeoutMs = 8000, retries = 1, options = {}) {
+        // ── Quota Gate (Phase 2) ──
+        const skipQuota = (typeof options === 'object' && options?.skipQuota === true);
+        if (!skipQuota) {
+            try {
+                const quotaResult = await checkQuota();
+                if (!quotaResult.allowed) {
+                    console.warn('[AIService] Quota exceeded:', quotaResult.used, '/', quotaResult.limit);
+                    throw new Error('QUOTA_EXCEEDED');
+                }
+            } catch (e) {
+                if (e.message === 'QUOTA_EXCEEDED') throw e;
+                // Fail-open: if quota check itself fails, proceed
+                console.warn('[AIService] Quota check failed (fail-open):', e.message);
+            }
+        }
+
         const key = await this._getApiKey();
-        if (!key) throw new Error("Missing API Key");
+
+        // ── Phase 3B: Route via proxy if no user key ──
+        if (!key) {
+            try {
+                const proxyStatus = await isProxyAvailable();
+                if (!proxyStatus.available || !proxyStatus.accessToken) {
+                    throw new Error("Missing API Key and not signed in");
+                }
+
+                const generationConfig = {
+                    temperature: 0.5,
+                    maxOutputTokens: 8192
+                };
+                if (responseSchema) {
+                    generationConfig.responseMimeType = "application/json";
+                    generationConfig.responseSchema = responseSchema;
+                }
+
+                const proxyData = await callGeminiProxy({
+                    model: getModel('USER'),
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig,
+                    accessToken: proxyStatus.accessToken
+                });
+
+                const rawJSON = proxyData?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!rawJSON) throw new Error("Empty Response from proxy");
+
+                // Increment quota on success
+                if (!skipQuota) {
+                    incrementQuota().catch(() => { });
+                }
+
+                if (!responseSchema) return rawJSON;
+                return JSON.parse(rawJSON);
+            } catch (e) {
+                console.warn('[AIService] Proxy fallback failed:', e.message);
+                throw e;
+            }
+        }
 
         let modelOverride = "";
         let allowFallback = true;
@@ -416,6 +473,10 @@ Output JSON only: { "category": "...", "tags": ["...", "..."] }
                     const data = await response.json();
                     const rawJSON = data.candidates?.[0]?.content?.parts?.[0]?.text;
                     if (!rawJSON) throw new Error("Empty Response");
+                    // Increment quota on success (fire-and-forget)
+                    if (!skipQuota) {
+                        incrementQuota().catch(() => { });
+                    }
                     if (!responseSchema) {
                         return rawJSON;
                     }

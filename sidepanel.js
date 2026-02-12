@@ -1077,8 +1077,15 @@
 
     async function updateSemanticMenuUI() {
         const apiKey = await getApiKey();
-        const hasKey = !!apiKey;
-        if (!hasKey) {
+        let hasAccess = !!apiKey;
+        if (!hasAccess) {
+            // Check if user is signed in (can use proxy)
+            try {
+                const authData = await chrome.storage.local.get('atom_auth_cache');
+                hasAccess = !!authData?.atom_auth_cache?.isAuthenticated;
+            } catch (e) { /* ignore */ }
+        }
+        if (!hasAccess) {
             setMenuBadgeState(elements.menuEmbeddingsStatus, 'locked');
             setMenuBadgeState(elements.menuSemanticStatus, 'locked');
             return;
@@ -1114,9 +1121,17 @@
     async function toggleSemanticFlag(flagKey) {
         const apiKey = await getApiKey();
         if (!apiKey) {
-            showToast(getMessage('sp_semantic_key_required', 'Add your API key in Settings to enable this.'), 'warning');
-            updateSemanticMenuUI();
-            return;
+            // Check if user is signed in (can use proxy)
+            let isSignedIn = false;
+            try {
+                const authData = await chrome.storage.local.get('atom_auth_cache');
+                isSignedIn = !!authData?.atom_auth_cache?.isAuthenticated;
+            } catch (e) { /* ignore */ }
+            if (!isSignedIn) {
+                showToast(getMessage('sp_semantic_key_required', 'Add your API key in Settings or sign in to enable this.'), 'warning');
+                updateSemanticMenuUI();
+                return;
+            }
         }
 
         const currentValue = flagKey === 'EMBEDDINGS_ENABLED'
@@ -1138,46 +1153,61 @@
     }
 
     async function checkAndShowPrimer() {
-        if (!FEATURE_FLAGS.PRE_READING_PRIMER || !elements.primerRoot) return;
-        if (!pageContext || !window.PrimerService || !window.PrimerUI) return;
+        try {
+            if (!FEATURE_FLAGS.PRE_READING_PRIMER || !elements.primerRoot) return;
+            if (!pageContext?.url || !window.PrimerService || !window.PrimerUI) return;
 
-        elements.primerRoot.classList.remove('active');
-        elements.primerRoot.innerHTML = '';
+            elements.primerRoot.classList.remove('active');
+            elements.primerRoot.innerHTML = '';
 
-        if (!window.PrimerService.shouldShowPrimer(pageContext)) return;
-        if (await window.PrimerService.wasPrimerShown(pageContext.url)) return;
+            if (!window.PrimerService.shouldShowPrimer(pageContext)) return;
+            if (await window.PrimerService.wasPrimerShown(pageContext.url)) return;
 
-        const apiKey = await getApiKey();
-        if (!apiKey) return;
-
-        const primerData = await window.PrimerService.generatePrimer(
-            pageContext,
-            apiKey,
-            SP.callGeminiAPI
-        );
-
-        if (!primerData?.success) return;
-
-        const primerUi = window.PrimerUI.createPrimerUI(
-            primerData,
-            {
-                title: getMessage('sp_primer_title', 'Before you read...'),
-                topicLabel: getMessage('sp_primer_topic_label', 'This article covers:'),
-                objectivesLabel: getMessage('sp_primer_objectives', 'Reading objectives:'),
-                startLabel: getMessage('sp_primer_start', 'Start reading'),
-                skipLabel: getMessage('sp_primer_skip', 'Skip')
-            },
-            async (questions) => {
-                await handlePrimerAccept(questions);
-            },
-            () => {
-                handlePrimerSkip();
+            const apiKey = await getApiKey();
+            if (!apiKey) {
+                // Allow if user is signed in (proxy available)
+                try {
+                    const authData = await chrome.storage.local.get('atom_auth_cache');
+                    if (!authData?.atom_auth_cache?.isAuthenticated) return;
+                } catch (e) { return; }
             }
-        );
 
-        elements.primerRoot.appendChild(primerUi);
-        elements.primerRoot.classList.add('active');
-        await window.PrimerService.markPrimerShown(pageContext.url);
+            // Adapter: callLLMAPI has different signature than callGeminiAPI
+            const proxyAdapter = async (_key, systemPrompt, conversationHistory) => {
+                return await SP.callLLMAPI(systemPrompt, conversationHistory);
+            };
+
+            const primerData = await window.PrimerService.generatePrimer(
+                pageContext,
+                apiKey,
+                apiKey ? SP.callGeminiAPI : proxyAdapter
+            );
+
+            if (!primerData?.success) return;
+
+            const primerUi = window.PrimerUI.createPrimerUI(
+                primerData,
+                {
+                    title: getMessage('sp_primer_title', 'Before you read...'),
+                    topicLabel: getMessage('sp_primer_topic_label', 'This article covers:'),
+                    objectivesLabel: getMessage('sp_primer_objectives', 'Reading objectives:'),
+                    startLabel: getMessage('sp_primer_start', 'Start reading'),
+                    skipLabel: getMessage('sp_primer_skip', 'Skip')
+                },
+                async (questions) => {
+                    await handlePrimerAccept(questions);
+                },
+                () => {
+                    handlePrimerSkip();
+                }
+            );
+
+            elements.primerRoot.appendChild(primerUi);
+            elements.primerRoot.classList.add('active');
+            await window.PrimerService.markPrimerShown(pageContext.url);
+        } catch (err) {
+            console.warn('[Primer] checkAndShowPrimer error:', err.message);
+        }
     }
 
     async function handlePrimerAccept(questions) {
@@ -3293,7 +3323,15 @@ Text: "${highlightText.slice(0, promptMaxChars)}"`
 
         try {
             const apiKey = await getApiKey();
+            // Check if user is signed in (can use proxy even without BYOK key)
+            let isSignedIn = false;
             if (!apiKey) {
+                try {
+                    const authData = await chrome.storage.local.get('atom_auth_cache');
+                    isSignedIn = !!authData?.atom_auth_cache?.isAuthenticated;
+                } catch (e) { /* ignore */ }
+            }
+            if (!apiKey && !isSignedIn) {
                 hideTypingIndicator();
                 addErrorMessageToDOM(
                     getMessage('sp_error_no_api_key', 'AI Access Key not set'),
@@ -3350,6 +3388,23 @@ Text: "${highlightText.slice(0, promptMaxChars)}"`
         } catch (error) {
             console.error('[SidePanel] Gemini error:', error);
             hideTypingIndicator();
+
+            // Quota exceeded — show specific toast (not rate limit countdown)
+            if (error?.isQuotaExceeded || (SP.QuotaExceededError && error instanceof SP.QuotaExceededError)) {
+                showToast(
+                    getMessage('quota_exceeded_toast', 'Daily limit reached. Add your own API key in Settings.'),
+                    'warning'
+                );
+                addErrorMessageToDOM(
+                    getMessage('trial_banner_limit_reached', 'Daily AI limit reached'),
+                    getMessage('quota_exceeded_toast', 'Daily limit reached. Add your own API key in Settings for unlimited use.'),
+                    [{ label: getMessage('sp_error_cta_settings', 'Open Settings'), action: 'openSettings' }]
+                );
+                // Refresh trial banner to show updated usage
+                if (typeof initTrialBanner === 'function') initTrialBanner();
+                setLoading(false);
+                return;
+            }
 
             if (SP.ApiError && error instanceof SP.ApiError && error.status === 429) {
                 // Extract retry-after seconds from error message if available
@@ -3666,7 +3721,13 @@ ${(pageContext?.content || '').slice(0, 10000)}
     async function maybeAutoSummarize(thread) {
         if (!shouldAutoSummarize(thread)) return;
         const apiKey = await getApiKey();
-        if (!apiKey) return;
+        if (!apiKey) {
+            // Allow if user is signed in (proxy available)
+            try {
+                const authData = await chrome.storage.local.get('atom_auth_cache');
+                if (!authData?.atom_auth_cache?.isAuthenticated) return;
+            } catch (e) { return; }
+        }
 
         const summaryData = await generateThreadSummary(thread, apiKey);
         if (!summaryData) return;
@@ -4008,9 +4069,16 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
 
         const llmConfig = await (SP.getLLMProvider ? SP.getLLMProvider() : Promise.resolve({ provider: 'google' }));
         const geminiKey = await getApiKey();
-        const hasProviderKey = llmConfig.provider === 'openrouter'
+        let hasProviderKey = llmConfig.provider === 'openrouter'
             ? !!llmConfig.openrouterKey
             : !!geminiKey;
+        // Also allow if user is signed in (proxy available)
+        if (!hasProviderKey) {
+            try {
+                const authData = await chrome.storage.local.get('atom_auth_cache');
+                if (authData?.atom_auth_cache?.isAuthenticated) hasProviderKey = true;
+            } catch (e) { /* ignore */ }
+        }
         if (!hasProviderKey) {
             showToast(getMessage('sp_error_no_api_key', 'AI Access Key not set'), 'error');
             return;
@@ -4372,7 +4440,118 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
         loadUserPreferences();
         startSessionTimer();
         mountSRQWidget();
+        initTrialBanner();
+        initUpdateBanner();
     });
+
+    // ===========================
+    // Trial / Quota Banner (Phase 1 Monetization)
+    // ===========================
+    const BANNER_DISMISS_KEY = 'atom_trial_banner_dismissed_until';
+    const UPDATE_BANNER_DISMISS_KEY = 'atom_update_banner_dismissed_until';
+
+    async function initTrialBanner() {
+        const banner = document.getElementById('trial-banner');
+        if (!banner) return;
+
+        // Check if dismissed
+        try {
+            const { [BANNER_DISMISS_KEY]: dismissedUntil } = await chrome.storage.local.get([BANNER_DISMISS_KEY]);
+            if (dismissedUntil && Date.now() < dismissedUntil) return;
+        } catch { /* proceed */ }
+
+        try {
+            const status = await chrome.runtime.sendMessage({ type: 'ATOM_GET_QUOTA_STATUS' });
+            if (!status || status.error) return;
+
+            // BYOK users: no banner needed
+            if (status.isByok) return;
+
+            let className = '';
+            let icon = '';
+            let text = '';
+            let usage = '';
+
+            if (status.isTrial && status.trialDaysLeft > 7) {
+                // Trial active, plenty of days left
+                className = 'trial-active';
+                icon = '🥂';
+                text = getMessage('trial_banner_active', `Early Access Pro — ${status.trialDaysLeft} days left`).replace('$1', status.trialDaysLeft);
+                usage = `${status.used}/${status.limit} ${getMessage('trial_banner_today', 'today')}`;
+            } else if (status.isTrial && status.trialDaysLeft <= 7) {
+                // Trial warning
+                className = 'trial-warning';
+                icon = '⏳';
+                text = getMessage('trial_banner_warning', `Trial ending soon — ${status.trialDaysLeft} days left`).replace('$1', status.trialDaysLeft);
+                usage = `${status.used}/${status.limit} ${getMessage('trial_banner_today', 'today')}`;
+            } else if (!status.isTrial && !status.allowed) {
+                // Free tier, limit reached
+                className = 'trial-expired';
+                icon = '🔒';
+                text = getMessage('trial_banner_limit_reached', 'Daily limit reached');
+                usage = `${status.used}/${status.limit}`;
+            } else if (!status.isTrial) {
+                // Free tier, active
+                className = 'trial-expired';
+                icon = '💡';
+                text = getMessage('trial_banner_free', 'Free tier');
+                usage = `${status.used}/${status.limit} ${getMessage('trial_banner_today', 'today')}`;
+            }
+
+            if (!text) return;
+
+            banner.className = `sp-trial-banner visible ${className}`;
+            banner.innerHTML = `
+                <span class="sp-trial-banner__icon">${icon}</span>
+                <span class="sp-trial-banner__text">${text}
+                    <span class="sp-trial-banner__usage">${usage}</span>
+                </span>
+                <button class="sp-trial-banner__dismiss" aria-label="Dismiss">×</button>
+            `;
+
+            banner.querySelector('.sp-trial-banner__dismiss')?.addEventListener('click', () => {
+                banner.classList.remove('visible');
+                // Dismiss for 24 hours
+                chrome.storage.local.set({ [BANNER_DISMISS_KEY]: Date.now() + 24 * 60 * 60 * 1000 });
+            });
+        } catch (e) {
+            console.warn('[TrialBanner] Init failed:', e);
+        }
+    }
+
+    async function initUpdateBanner() {
+        const banner = document.getElementById('update-banner');
+        if (!banner) return;
+
+        // Check if dismissed
+        try {
+            const { [UPDATE_BANNER_DISMISS_KEY]: dismissedUntil } = await chrome.storage.local.get([UPDATE_BANNER_DISMISS_KEY]);
+            if (dismissedUntil && Date.now() < dismissedUntil) return;
+        } catch { /* proceed */ }
+
+        try {
+            const status = await chrome.runtime.sendMessage({ type: 'ATOM_GET_UPDATE_STATUS' });
+            if (!status || !status.hasUpdate || status.dismissed) return;
+
+            banner.className = 'sp-trial-banner visible update-available';
+            banner.innerHTML = `
+                <span class="sp-trial-banner__icon">🚀</span>
+                <span class="sp-trial-banner__text">
+                    ${getMessage('update_available', `v${status.latestVersion} available`)}
+                    — <a class="sp-trial-banner__link" href="${status.downloadUrl}" target="_blank">${getMessage('update_download', 'Download')}</a>
+                </span>
+                <button class="sp-trial-banner__dismiss" aria-label="Dismiss">×</button>
+            `;
+
+            banner.querySelector('.sp-trial-banner__dismiss')?.addEventListener('click', () => {
+                banner.classList.remove('visible');
+                chrome.runtime.sendMessage({ type: 'ATOM_DISMISS_UPDATE' });
+                chrome.storage.local.set({ [UPDATE_BANNER_DISMISS_KEY]: Date.now() + 7 * 24 * 60 * 60 * 1000 }); // 7 days
+            });
+        } catch (e) {
+            console.warn('[UpdateBanner] Init failed:', e);
+        }
+    }
 
     // Auto-refresh Saved tab when SRQ cards are updated
     chrome.runtime.onMessage.addListener((msg) => {

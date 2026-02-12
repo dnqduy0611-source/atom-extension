@@ -129,6 +129,97 @@
         }
 
         /* ============================================
+           TRIAL / QUOTA BANNER (Phase 1 Monetization)
+           ============================================ */
+        .sp-trial-banner {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            font-size: 11px;
+            flex-shrink: 0;
+            animation: bannerSlideDown 0.2s ease;
+        }
+
+        .sp-trial-banner.visible {
+            display: flex;
+        }
+
+        .sp-trial-banner.trial-active {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(59, 130, 246, 0.08));
+            border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--primary);
+        }
+
+        .sp-trial-banner.trial-warning {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.05));
+            border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+            color: #F59E0B;
+        }
+
+        .sp-trial-banner.trial-expired {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(239, 68, 68, 0.03));
+            border-bottom: 1px solid rgba(239, 68, 68, 0.15);
+            color: #EF4444;
+        }
+
+        .sp-trial-banner.update-available {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(139, 92, 246, 0.08));
+            border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+            color: #3B82F6;
+        }
+
+        .sp-trial-banner__icon {
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .sp-trial-banner__text {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .sp-trial-banner__usage {
+            font-size: 10px;
+            opacity: 0.8;
+            font-weight: 400;
+        }
+
+        .sp-trial-banner__dismiss {
+            border: none;
+            background: transparent;
+            color: inherit;
+            opacity: 0.6;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px;
+            line-height: 1;
+        }
+
+        .sp-trial-banner__dismiss:hover {
+            opacity: 1;
+        }
+
+        .sp-trial-banner__link {
+            color: inherit;
+            text-decoration: underline;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        @keyframes bannerSlideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================
            ZONE 1: TOP BAR (Always visible)
            ============================================ */
         .sp-topbar {
@@ -4508,6 +4599,12 @@
             </div>
         </nav>
     </header>
+
+    <!-- Trial / Quota Banner (Phase 1 Monetization) -->
+    <div id="trial-banner" class="sp-trial-banner" role="status" aria-live="polite"></div>
+
+    <!-- GitHub Update Banner -->
+    <div id="update-banner" class="sp-trial-banner" role="status" aria-live="polite"></div>
 
     <!-- Offline Banner -->
     <div class="sp-offline-banner" id="offline-banner">

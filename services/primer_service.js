@@ -70,7 +70,7 @@
     }
 
     async function generatePrimer(pageContext, apiKey, callGeminiAPI) {
-        if (!apiKey || typeof callGeminiAPI !== 'function') {
+        if (typeof callGeminiAPI !== 'function') {
             return { success: false, error: 'missing_api' };
         }
 

@@ -2,7 +2,7 @@
   "default_locale": "vi",
   "manifest_version": 3,
   "name": "AmoNexus",
-  "version": "3.4",
+  "version": "3.5",
   "description": "The Neural Nexus for Your Second Brain.",
   "permissions": [
     "storage",
@@ -12,7 +12,8 @@
     "contextMenus",
     "notifications",
     "sidePanel",
-    "identity"
+    "identity",
+    "management"
   ],
   "host_permissions": [
     "<all_urls>",

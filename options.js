@@ -72,9 +72,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const apiKeyInput = document.getElementById('apiKeyInput');
     if (apiKeyInput) {
-        apiKeyInput.addEventListener('input', () => {
+        apiKeyInput.addEventListener('input', async () => {
             const hasKey = apiKeyInput.value.trim().length > 0;
-            updateSemanticToggleAvailability(hasKey);
+            const isSignedIn = await isUserSignedInForOptions();
+            updateSemanticToggleAvailability(hasKey || isSignedIn);
         });
     }
 
@@ -227,21 +228,33 @@ function updateDropdownUI(dropdownId, value) {
     }
 }
 
-function updateSemanticToggleAvailability(hasKey) {
+function updateSemanticToggleAvailability(hasAccess) {
     const embeddingsToggle = document.getElementById('semanticEmbeddingsEnabled');
     const searchToggle = document.getElementById('semanticSearchEnabled');
     const keyRequiredNote = document.getElementById('semantic-key-required');
 
     if (embeddingsToggle) {
-        embeddingsToggle.disabled = !hasKey;
-        if (!hasKey) embeddingsToggle.checked = false;
+        embeddingsToggle.disabled = !hasAccess;
+        if (!hasAccess) embeddingsToggle.checked = false;
     }
     if (searchToggle) {
-        searchToggle.disabled = !hasKey;
-        if (!hasKey) searchToggle.checked = false;
+        searchToggle.disabled = !hasAccess;
+        if (!hasAccess) searchToggle.checked = false;
     }
     if (keyRequiredNote) {
-        keyRequiredNote.style.display = hasKey ? 'none' : 'block';
+        keyRequiredNote.style.display = hasAccess ? 'none' : 'block';
+    }
+}
+
+/**
+ * Check if user is signed in (for options page context).
+ */
+async function isUserSignedInForOptions() {
+    try {
+        const data = await chrome.storage.local.get('atom_auth_cache');
+        return !!data?.atom_auth_cache?.isAuthenticated;
+    } catch {
+        return false;
     }
 }
 
@@ -331,111 +344,124 @@ function saveOptions() {
     btn.disabled = true;
 
     if ((semanticEmbeddingsEnabled || semanticSearchEnabled) && !key) {
-        status.textContent = atomMsg('opt_semantic_key_required', null, 'Add your AI Access Key to enable these toggles.');
-        status.className = 'error';
-        btn.textContent = atomMsg('opt_btn_save');
-        btn.disabled = false;
+        // Allow if user is signed in (can use proxy)
+        isUserSignedInForOptions().then(isSignedIn => {
+            if (!isSignedIn) {
+                status.textContent = atomMsg('opt_semantic_key_required', null, 'Add your AI Access Key or sign in to enable these toggles.');
+                status.className = 'error';
+                btn.textContent = atomMsg('opt_btn_save');
+                btn.disabled = false;
+            } else {
+                doSaveOptions();
+            }
+        });
         return;
     }
+    doSaveOptions();
 
-    chrome.storage.local.get(['atom_feature_flags_v1', 'accepted_cost_warning'], (flagResult) => {
-        const currentFlags = flagResult.atom_feature_flags_v1 || {};
-        const nextFlags = {
-            ...currentFlags,
-            EMBEDDINGS_ENABLED: semanticEmbeddingsEnabled,
-            SEMANTIC_SEARCH_ENABLED: semanticSearchEnabled
-        };
-        const nextCostAck = flagResult.accepted_cost_warning || semanticEmbeddingsEnabled || semanticSearchEnabled;
+    function doSaveOptions() {
+        chrome.storage.local.get(['atom_feature_flags_v1', 'accepted_cost_warning'], (flagResult) => {
+            const currentFlags = flagResult.atom_feature_flags_v1 || {};
+            const nextFlags = {
+                ...currentFlags,
+                EMBEDDINGS_ENABLED: semanticEmbeddingsEnabled,
+                SEMANTIC_SEARCH_ENABLED: semanticSearchEnabled
+            };
+            const nextCostAck = flagResult.accepted_cost_warning || semanticEmbeddingsEnabled || semanticSearchEnabled;
 
-        chrome.storage.local.set({
-            user_gemini_key: key,
-            user_sensitivity: sensitivity,
-            debug_mode: debugMode,
-            user_persona: userPersona,
-            atom_ui_language: language,
-            atom_ai_pilot_enabled: aiPilotEnabled,
-            atom_ai_pilot_mode: aiPilotMode,
-            atom_ai_pilot_accuracy_level: aiAccuracyLevel,
-            atom_ai_confidence_threshold_primary: aiMinConfidence,
-            atom_ai_timeout_ms: aiTimeoutMs,
-            atom_ai_budget_daily_cap: aiBudgetPerDay,
-            atom_ai_cache_ttl_ms: aiCacheTtlMs,
-            atom_ai_max_viewport_chars: aiMaxViewportChars,
-            atom_ai_max_selected_chars: aiMaxSelectedChars,
-            atom_ai_provider: aiProvider,
-            atom_ai_proxy_url: aiProxyUrl,
-            // OpenRouter Integration
-            atom_llm_provider: llmProvider,
-            atom_openrouter_key: openrouterKey,
-            atom_openrouter_model: openrouterModel,
-            atom_nlm_settings_v1: {
-                enabled: nlmEnabled === true,  // Ensure boolean
-                mode: nlmMode,
-                defaultNotebookRef: nlmDefaultNotebook,
-                exportFormat: "clip_and_url",
-                baseUrl: nlmBaseUrl,
-                allowCloudExport: nlmAllowCloud,
-                piiWarning: nlmPiiWarning,
-                exportMaxChars: nlmExportMaxChars
-            },
-            atom_nlm_sensitive_domains_v1: nlmSensitiveDomainsRaw
-                .split(/\r?\n/)
-                .map((line) => line.trim())
-                .filter(Boolean),
-            atom_nlm_rules_v1: parseNlmRules(nlmRulesRaw),
-            atom_feature_flags_v1: nextFlags,
-            accepted_cost_warning: nextCostAck
-        }, () => {
-            // Feedback UI: Dùng text từ file ngôn ngữ
-            status.textContent = atomMsg("opt_save_success");
-            status.className = 'success';
+            chrome.storage.local.set({
+                user_gemini_key: key,
+                user_sensitivity: sensitivity,
+                debug_mode: debugMode,
+                user_persona: userPersona,
+                atom_ui_language: language,
+                atom_ai_pilot_enabled: aiPilotEnabled,
+                atom_ai_pilot_mode: aiPilotMode,
+                atom_ai_pilot_accuracy_level: aiAccuracyLevel,
+                atom_ai_confidence_threshold_primary: aiMinConfidence,
+                atom_ai_timeout_ms: aiTimeoutMs,
+                atom_ai_budget_daily_cap: aiBudgetPerDay,
+                atom_ai_cache_ttl_ms: aiCacheTtlMs,
+                atom_ai_max_viewport_chars: aiMaxViewportChars,
+                atom_ai_max_selected_chars: aiMaxSelectedChars,
+                atom_ai_provider: aiProvider,
+                atom_ai_proxy_url: aiProxyUrl,
+                // OpenRouter Integration
+                atom_llm_provider: llmProvider,
+                atom_openrouter_key: openrouterKey,
+                atom_openrouter_model: openrouterModel,
+                atom_nlm_settings_v1: {
+                    enabled: nlmEnabled === true,  // Ensure boolean
+                    mode: nlmMode,
+                    defaultNotebookRef: nlmDefaultNotebook,
+                    exportFormat: "clip_and_url",
+                    baseUrl: nlmBaseUrl,
+                    allowCloudExport: nlmAllowCloud,
+                    piiWarning: nlmPiiWarning,
+                    exportMaxChars: nlmExportMaxChars
+                },
+                atom_nlm_sensitive_domains_v1: nlmSensitiveDomainsRaw
+                    .split(/\r?\n/)
+                    .map((line) => line.trim())
+                    .filter(Boolean),
+                atom_nlm_rules_v1: parseNlmRules(nlmRulesRaw),
+                atom_feature_flags_v1: nextFlags,
+                accepted_cost_warning: nextCostAck
+            }, () => {
+                // Feedback UI: Dùng text từ file ngôn ngữ
+                status.textContent = atomMsg("opt_save_success");
+                status.className = 'success';
 
-            btn.textContent = atomMsg('opt_btn_saved');
-            btn.style.backgroundColor = '#059669';
-            btn.disabled = false;
+                btn.textContent = atomMsg('opt_btn_saved');
+                btn.style.backgroundColor = '#059669';
+                btn.disabled = false;
 
-            // Log kiểm tra
-            console.log("ATOM: Saved Key =", key ? "***" : "Empty");
-            console.log("ATOM: Saved Sensitivity =", sensitivity);
-            console.log("ATOM: Saved Debug Mode =", debugMode);
-            console.log("ATOM: Saved Debug Mode =", debugMode);
-            console.log("ATOM: Saved Persona =", userPersona);
-            console.log("ATOM: Saved Language =", language);
-            console.log("ATOM: Saved AI Pilot =", aiPilotEnabled, aiPilotMode);
-            console.log("ATOM: Saved NotebookLM Bridge =", nlmEnabled, nlmDefaultNotebook);
+                // Log kiểm tra
+                console.log("ATOM: Saved Key =", key ? "***" : "Empty");
+                console.log("ATOM: Saved Sensitivity =", sensitivity);
+                console.log("ATOM: Saved Debug Mode =", debugMode);
+                console.log("ATOM: Saved Debug Mode =", debugMode);
+                console.log("ATOM: Saved Persona =", userPersona);
+                console.log("ATOM: Saved Language =", language);
+                console.log("ATOM: Saved AI Pilot =", aiPilotEnabled, aiPilotMode);
+                console.log("ATOM: Saved NotebookLM Bridge =", nlmEnabled, nlmDefaultNotebook);
 
-            // Verify NLM settings were saved correctly
-            chrome.storage.local.get(['atom_nlm_settings_v1'], (r) => {
-                console.log('[ATOM Options] Verified NLM settings in storage:', r.atom_nlm_settings_v1);
-            });
-
-            // Auto-complete onboarding step 3 if key was saved (Wave 2)
-            if (key || openrouterKey) {
-                updateOnboardingStep('onboarding-step-3', true);
-            }
-
-            chrome.storage.sync.set({ srqDensityMode }, () => {
-                chrome.runtime.sendMessage({
-                    type: 'SRQ_SETTINGS_CHANGED',
-                    settings: { srqDensityMode }
-                }).catch(() => { });
-            });
-
-            setTimeout(() => {
-                status.textContent = '';
-                btn.textContent = atomMsg("opt_btn_save");
-                btn.style.backgroundColor = '#374151';
-            }, 2000);
-
-            if (window.AtomI18n && window.AtomUI) {
-                window.AtomI18n.setOverride(language).then(() => {
-                    window.AtomUI.localize();
-                    updateDropdownUI('languageDropdown', language);
+                // Verify NLM settings were saved correctly
+                chrome.storage.local.get(['atom_nlm_settings_v1'], (r) => {
+                    console.log('[ATOM Options] Verified NLM settings in storage:', r.atom_nlm_settings_v1);
                 });
-            }
-            updateSemanticToggleAvailability(!!key);
+
+                // Auto-complete onboarding step 3 if key was saved (Wave 2)
+                if (key || openrouterKey) {
+                    updateOnboardingStep('onboarding-step-3', true);
+                }
+
+                chrome.storage.sync.set({ srqDensityMode }, () => {
+                    chrome.runtime.sendMessage({
+                        type: 'SRQ_SETTINGS_CHANGED',
+                        settings: { srqDensityMode }
+                    }).catch(() => { });
+                });
+
+                setTimeout(() => {
+                    status.textContent = '';
+                    btn.textContent = atomMsg("opt_btn_save");
+                    btn.style.backgroundColor = '#374151';
+                }, 2000);
+
+                isUserSignedInForOptions().then(isSignedIn => {
+                    updateSemanticToggleAvailability(!!key || isSignedIn);
+                });
+
+                if (window.AtomI18n && window.AtomUI) {
+                    window.AtomI18n.setOverride(language).then(() => {
+                        window.AtomUI.localize();
+                        updateDropdownUI('languageDropdown', language);
+                    });
+                }
+            });
         });
-    });
+    } // end doSaveOptions
 }
 
 // 2. Khôi phục Key đã lưu khi mở trang
@@ -515,13 +541,16 @@ function restoreOptions() {
         const semanticEmbeddingsToggle = document.getElementById('semanticEmbeddingsEnabled');
         const semanticSearchToggle = document.getElementById('semanticSearchEnabled');
         const hasKey = !!result.user_gemini_key;
-        if (semanticEmbeddingsToggle) {
-            semanticEmbeddingsToggle.checked = hasKey ? !!featureFlags.EMBEDDINGS_ENABLED : false;
-        }
-        if (semanticSearchToggle) {
-            semanticSearchToggle.checked = hasKey ? !!featureFlags.SEMANTIC_SEARCH_ENABLED : false;
-        }
-        updateSemanticToggleAvailability(hasKey);
+        isUserSignedInForOptions().then(isSignedIn => {
+            const hasAccess = hasKey || isSignedIn;
+            if (semanticEmbeddingsToggle) {
+                semanticEmbeddingsToggle.checked = hasAccess ? !!featureFlags.EMBEDDINGS_ENABLED : false;
+            }
+            if (semanticSearchToggle) {
+                semanticSearchToggle.checked = hasAccess ? !!featureFlags.SEMANTIC_SEARCH_ENABLED : false;
+            }
+            updateSemanticToggleAvailability(hasAccess);
+        });
 
         const aiPilotEnabled = document.getElementById('aiPilotEnabled');
         if (aiPilotEnabled) aiPilotEnabled.checked = result.atom_ai_pilot_enabled ?? result.ai_pilot_enabled ?? false;
@@ -1088,7 +1117,13 @@ function setupAuthButtons() {
     // Sign Out button
     const btnSignOut = document.getElementById('btn-signout');
     if (btnSignOut) {
-        btnSignOut.addEventListener('click', handleSignOut);
+        console.log('[Auth UI] Attaching click handler to btn-signout');
+        btnSignOut.addEventListener('click', (e) => {
+            console.log('[Auth UI] btn-signout clicked!', e);
+            handleSignOut();
+        });
+    } else {
+        console.warn('[Auth UI] btn-signout element NOT FOUND');
     }
 
     // Retry button
@@ -1164,6 +1199,7 @@ async function handleGoogleSignIn() {
  * Handle Sign Out button click
  */
 async function handleSignOut() {
+    console.log('[Auth UI] handleSignOut called');
     const btnSignOut = document.getElementById('btn-signout');
 
     // Disable button
@@ -1172,11 +1208,34 @@ async function handleSignOut() {
     }
 
     try {
+        console.log('[Auth UI] Importing auth_service...');
         const authModule = await import('./services/auth_service.js');
-        await authModule.signOut();
+        console.log('[Auth UI] auth_service imported, calling signOut...');
+
+        // Add timeout: if signOut takes more than 5s, force local sign out
+        const signOutWithTimeout = Promise.race([
+            authModule.signOut(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Sign out timed out')), 5000))
+        ]);
+
+        try {
+            await signOutWithTimeout;
+            console.log('[Auth UI] signOut completed');
+        } catch (timeoutErr) {
+            console.warn('[Auth UI] signOut timed out, forcing local sign out');
+            // Force clear local cache even if Supabase call hangs
+            try {
+                const { clearAuthCache } = await import('./services/auth_cache_service.js');
+                await clearAuthCache();
+            } catch (e) { /* ignore */ }
+        }
+
         showAuthState('logged-out');
+        console.log('[Auth UI] UI switched to logged-out');
     } catch (error) {
         console.error('[Auth UI] Sign out error:', error);
+        // Even on error, switch to logged-out UI
+        showAuthState('logged-out');
     } finally {
         if (btnSignOut) {
             btnSignOut.disabled = false;

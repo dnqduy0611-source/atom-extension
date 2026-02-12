@@ -98,7 +98,20 @@ export async function signInWithGoogle(rememberMe = true) {
 
         if (DEBUG_MODE) console.log('[Auth] Supabase session created successfully');
 
-        // Step 5: Get auth state and cache it
+        // Step 5: Save session for proxy access (background service worker needs this)
+        if (sessionData?.session) {
+            await chrome.storage.local.set({
+                atom_proxy_session: {
+                    access_token: sessionData.session.access_token,
+                    refresh_token: sessionData.session.refresh_token,
+                    expires_at: sessionData.session.expires_at,
+                    user_id: sessionData.session.user?.id
+                }
+            });
+            if (DEBUG_MODE) console.log('[Auth] Proxy session saved to storage');
+        }
+
+        // Step 6: Get auth state and cache it
         const authState = await getAuthState();
         await cacheAuthState(authState, rememberMe);
 
@@ -126,15 +139,18 @@ export async function signOut() {
     try {
         if (DEBUG_MODE) console.log('[Auth] Signing out...');
 
-        const { error } = await getClient().auth.signOut();
+        // Use scope: 'local' to only clear local session (no network call)
+        // This prevents hanging when Supabase is unreachable
+        const { error } = await getClient().auth.signOut({ scope: 'local' });
 
         if (error) {
             console.error('[Auth] Sign-out error:', error);
             return { success: false, error: error.message };
         }
 
-        // Clear local cache
+        // Clear local cache and proxy session
         await clearAuthCache();
+        await chrome.storage.local.remove('atom_proxy_session');
 
         if (DEBUG_MODE) console.log('[Auth] Sign-out complete');
         return { success: true };
@@ -158,8 +174,14 @@ export async function getAuthState(forceRefresh = false) {
         if (!forceRefresh) {
             const cached = await getCachedAuthState();
             if (cached && !cached.expired) {
-                if (DEBUG_MODE) console.log('[Auth] Using cached state');
-                return cached;
+                // If cached but proxy session missing, force refresh to save it
+                const proxyData = await chrome.storage.local.get('atom_proxy_session');
+                if (cached.isAuthenticated && !proxyData?.atom_proxy_session?.access_token) {
+                    if (DEBUG_MODE) console.log('[Auth] Proxy session missing, forcing refresh');
+                } else {
+                    if (DEBUG_MODE) console.log('[Auth] Using cached state');
+                    return cached;
+                }
             }
         }
 
@@ -178,6 +200,18 @@ export async function getAuthState(forceRefresh = false) {
 
         // Get user profile from database
         const profile = await getUserProfile(session.user.id);
+
+        // Auto-save proxy session for background service worker
+        try {
+            await chrome.storage.local.set({
+                atom_proxy_session: {
+                    access_token: session.access_token,
+                    refresh_token: session.refresh_token,
+                    expires_at: session.expires_at,
+                    user_id: session.user?.id
+                }
+            });
+        } catch (e) { /* ignore */ }
 
         const authState = {
             isAuthenticated: true,
@@ -207,11 +241,18 @@ export async function getAuthState(forceRefresh = false) {
  */
 export async function getUserProfile(userId) {
     try {
-        const { data, error } = await getClient()
+        // Add timeout to prevent hanging if profiles table doesn't exist
+        const profilePromise = getClient()
             .from('profiles')
             .select('*')
             .eq('id', userId)
             .single();
+
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Profile query timeout')), 3000)
+        );
+
+        const { data, error } = await Promise.race([profilePromise, timeoutPromise]);
 
         if (error) {
             if (DEBUG_MODE) console.log('[Auth] Profile not found:', error.message);
@@ -220,7 +261,7 @@ export async function getUserProfile(userId) {
 
         return data;
     } catch (error) {
-        console.error('[Auth] getUserProfile error:', error);
+        if (DEBUG_MODE) console.log('[Auth] getUserProfile skipped:', error.message);
         return null;
     }
 }

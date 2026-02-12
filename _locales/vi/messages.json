@@ -183,18 +183,21 @@
     "message": "Amo sử dụng Google Gemini để trò chuyện và đưa ra lời khuyên tâm lý. Kết nối Key riêng của bạn để dùng miễn phí & bảo mật."
   },
   "opt_dual_key_title": {
-    "message": "💡 Khuyến nghị: Thiết lập cả 2 key"
+    "message": "✨ 30 lượt AI miễn phí mỗi ngày"
   },
   "opt_dual_key_desc": {
-    "message": "Amo sử dụng AI để phân tích và hỗ trợ bạn. Mỗi nhà cung cấp có giới hạn miễn phí riêng. Khi thiết lập cả <b>Gemini</b> (phân tích nhanh) lẫn <b>OpenRouter</b> (dự phòng), Amo sẽ tự động chuyển đổi khi một bên đạt giới hạn — đảm bảo trải nghiệm ổn định không bị gián đoạn."
+    "message": "Đăng nhập tài khoản để nhận <b>30 lượt AI miễn phí mỗi ngày</b> — không cần API key. Muốn dùng <b>không giới hạn</b>? Thêm API key miễn phí bên dưới. Khuyến nghị thiết lập cả 2 key để trải nghiệm tốt nhất."
   },
   "opt_dual_key_benefit1": {
-    "message": "<b>Gemini</b> — miễn phí, nhanh, chất lượng phân tích tốt nhất — đây là lựa chọn chính của Amo"
+    "message": "<b>Đăng nhập</b> → 30 lượt AI/ngày, không cần key — đủ cho sử dụng thông thường"
   },
   "opt_dual_key_benefit2": {
-    "message": "<b>OpenRouter</b> — ~50 lượt/ngày miễn phí, sử dụng các model AI nhỏ hơn nên trải nghiệm sẽ không bằng Gemini — được xem là <b>phương án dự phòng</b> khi Gemini hết quota"
+    "message": "<b>Gemini key</b> (khuyến nghị) → không giới hạn, nhanh, chất lượng phân tích tốt nhất — lựa chọn chính của Amo"
   },
   "opt_dual_key_benefit3": {
+    "message": "<b>OpenRouter key</b> (dự phòng) → ~50 lượt/ngày miễn phí, dùng model AI nhỏ hơn nên trải nghiệm không bằng Gemini — tự động chuyển sang khi Gemini hết quota"
+  },
+  "opt_dual_key_benefit4": {
     "message": "Cả 2 key đều <b>miễn phí</b> và mất khoảng <b>30 giây</b> để tạo"
   },
   "opt_btn_get_key": {
@@ -2972,5 +2975,38 @@
   },
   "opt_free_tier_toast": {
     "message": "Bạn đang được trải nghiệm toàn bộ tính năng miễn phí. Hãy tận hưởng và cảm nhận giá trị mà Amo mang lại nhé!"
+  },
+  "trial_banner_active": {
+    "message": "Early Access Pro — còn $1 ngày"
+  },
+  "trial_banner_warning": {
+    "message": "Trial sắp hết — còn $1 ngày"
+  },
+  "trial_banner_limit_reached": {
+    "message": "Đã hết giới hạn AI hôm nay. Thêm key riêng trong Cài đặt để dùng không giới hạn."
+  },
+  "trial_banner_free": {
+    "message": "Gói miễn phí"
+  },
+  "trial_banner_today": {
+    "message": "hôm nay"
+  },
+  "update_available": {
+    "message": "Có phiên bản mới"
+  },
+  "update_download": {
+    "message": "Tải về"
+  },
+  "quota_exceeded": {
+    "message": "Hết giới hạn hôm nay. Thử lại ngày mai hoặc thêm API key riêng."
+  },
+  "quota_exceeded_toast": {
+    "message": "Hết giới hạn hôm nay. Thêm API key riêng trong Cài đặt để dùng không giới hạn."
+  },
+  "proxy_signin_required": {
+    "message": "Đăng nhập để sử dụng tính năng AI. Chưa cấu hình API key."
+  },
+  "proxy_error": {
+    "message": "Dịch vụ AI tạm thời không khả dụng. Thử thêm API key riêng."
   }
 }

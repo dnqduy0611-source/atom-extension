@@ -147,18 +147,21 @@
     "message": "AmoNexus uses Google Gemini to chat and provide psychological advice. Connect your own Key for free & private use."
   },
   "opt_dual_key_title": {
-    "message": "💡 Recommended: Set up both keys"
+    "message": "✨ 30 free AI calls every day"
   },
   "opt_dual_key_desc": {
-    "message": "Amo uses AI to analyze and assist you. Each provider has its own free quota. By setting up both <b>Gemini</b> (fast analysis) and <b>OpenRouter</b> (backup), Amo will automatically switch when one reaches its limit — ensuring a smooth, uninterrupted experience."
+    "message": "Sign in to get <b>30 free AI calls per day</b> — no API key needed. Want <b>unlimited</b> access? Add a free API key below. We recommend setting up both keys for the best experience."
   },
   "opt_dual_key_benefit1": {
-    "message": "<b>Gemini</b> — free, fast, best analysis quality — Amo's primary choice"
+    "message": "<b>Sign in</b> → 30 AI calls/day, no key needed — enough for regular use"
   },
   "opt_dual_key_benefit2": {
-    "message": "<b>OpenRouter</b> — ~50 free calls/day, uses smaller AI models so the experience may not match Gemini — serves as a <b>backup</b> when Gemini hits quota"
+    "message": "<b>Gemini key</b> (recommended) → unlimited, fast, best analysis quality — Amo's primary choice"
   },
   "opt_dual_key_benefit3": {
+    "message": "<b>OpenRouter key</b> (backup) → ~50 free calls/day, uses smaller AI models so experience may not match Gemini — auto-switches when Gemini hits quota"
+  },
+  "opt_dual_key_benefit4": {
     "message": "Both keys are <b>free</b> and take about <b>30 seconds</b> to create"
   },
   "opt_btn_get_key": {
@@ -3011,5 +3014,38 @@
   },
   "opt_free_tier_toast": {
     "message": "You have full access to all features for free. Enjoy and experience the value Amo brings!"
+  },
+  "trial_banner_active": {
+    "message": "Early Access Pro — $1 days left"
+  },
+  "trial_banner_warning": {
+    "message": "Trial ending soon — $1 days left"
+  },
+  "trial_banner_limit_reached": {
+    "message": "Daily AI limit reached. Add your own key in Settings for unlimited use."
+  },
+  "trial_banner_free": {
+    "message": "Free tier active"
+  },
+  "trial_banner_today": {
+    "message": "today"
+  },
+  "update_available": {
+    "message": "New version available"
+  },
+  "update_download": {
+    "message": "Download"
+  },
+  "quota_exceeded": {
+    "message": "Daily limit reached. Try again tomorrow or add your own API key."
+  },
+  "quota_exceeded_toast": {
+    "message": "Daily limit reached. Add your own API key in Settings for unlimited use."
+  },
+  "proxy_signin_required": {
+    "message": "Sign in to use AI features. No API key configured."
+  },
+  "proxy_error": {
+    "message": "AI service temporarily unavailable. Try adding your own API key."
   }
 }

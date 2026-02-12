@@ -3,6 +3,16 @@
 # Credentials (NEVER commit these)
 config/supabase_config.js
 
+# Supabase local config & Edge Functions (contains server-side secrets)
+supabase/
+
+# Internal planning docs (private)
+spec/
+ideas/
+
+# Agent workflows
+.agent/
+
 # External libraries / repos
 neural-memory-main/
 

@@ -42,6 +42,14 @@
         }
     }
 
+    class QuotaExceededError extends ApiError {
+        constructor(msg) {
+            super(msg || getMessage('quota_exceeded', 'Daily limit reached. Add your own API key in Settings.'), 429, 'QUOTA_EXCEEDED');
+            this.name = 'QuotaExceededError';
+            this.isQuotaExceeded = true;
+        }
+    }
+
     // ===========================
     // Error Handling Utilities
     // ===========================
@@ -290,6 +298,24 @@
 
     // Unified LLM caller - automatically routes to appropriate provider with fallback
     async function callLLMAPI(systemPrompt, conversationHistory, options = {}) {
+        // ── Quota Gate (Phase 2) ──
+        // Skip quota check for background-priority calls (embeddings, etc.)
+        const skipQuota = options?.skipQuota === true;
+        if (!skipQuota) {
+            try {
+                const quotaStatus = await chrome.runtime.sendMessage({ type: 'ATOM_CHECK_QUOTA' });
+                if (quotaStatus && !quotaStatus.allowed) {
+                    console.warn('[LLM] Quota exceeded:', quotaStatus.used, '/', quotaStatus.limit);
+                    throw new QuotaExceededError();
+                }
+            } catch (e) {
+                // If it's already a QuotaExceededError, re-throw
+                if (e instanceof QuotaExceededError) throw e;
+                // Otherwise, fail-open: allow the call if quota check itself fails
+                console.warn('[LLM] Quota check failed (fail-open):', e.message);
+            }
+        }
+
         const llmConfig = await getLLMProvider();
         const geminiKey = await (SP.getApiKey ? SP.getApiKey() : Promise.resolve(null));
 
@@ -346,13 +372,58 @@
                     }
                 }
             } else {
-                throw new Error('OpenRouter provider selected but no API Key set.');
+                // No OpenRouter key — fall through to Gemini/proxy path
+                console.warn('[LLM] OpenRouter selected but no key. Falling back to Gemini/proxy.');
             }
         }
 
         // 2. Default Gemini Mode (with auto-fallback)
         if (!geminiKey) {
-            throw new Error('No API key configured');
+            // ── Phase 3B: Route through managed proxy ──
+            try {
+                console.log('[LLM] Sending to proxy...');
+                const proxyResult = await chrome.runtime.sendMessage({
+                    type: 'ATOM_PROXY_GEMINI',
+                    model: (SP.API_CONFIG || {}).MODEL_NAME || 'gemini-2.0-flash-lite',
+                    contents: conversationHistory,
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    generationConfig: {
+                        temperature: 0.7,
+                        maxOutputTokens: 8192,
+                        ...(options?.generationConfig || {})
+                    }
+                });
+                console.log('[LLM] Proxy result:', JSON.stringify(proxyResult).substring(0, 200));
+
+                if (proxyResult?.error) {
+                    if (proxyResult.code === 'AUTH_REQUIRED') {
+                        throw new ApiError(
+                            getMessage('proxy_signin_required', 'Sign in to use AI features.'),
+                            401, 'AUTH_REQUIRED'
+                        );
+                    }
+                    if (proxyResult.isQuotaExceeded) {
+                        throw new QuotaExceededError();
+                    }
+                    throw new ApiError(
+                        proxyResult.error,
+                        proxyResult.status || 500,
+                        proxyResult.code || 'PROXY_ERROR'
+                    );
+                }
+
+                // Extract text from Gemini response
+                const proxyData = proxyResult?.data;
+                const text = proxyData?.candidates?.[0]?.content?.parts?.[0]?.text;
+                return text || null;
+            } catch (e) {
+                if (e instanceof ApiError || e instanceof QuotaExceededError) throw e;
+                // Proxy failed — propagate as ApiError
+                throw new ApiError(
+                    getMessage('proxy_error', 'AI service temporarily unavailable. Try adding your own API key.'),
+                    503, 'PROXY_UNAVAILABLE'
+                );
+            }
         }
 
         try {
@@ -414,6 +485,17 @@
             }
             throw error;
         }
+    }
+
+    // Wrap callLLMAPI to increment quota on success
+    const _originalCallLLMAPI = callLLMAPI;
+    async function callLLMAPIWithQuota(systemPrompt, conversationHistory, options = {}) {
+        const result = await _originalCallLLMAPI(systemPrompt, conversationHistory, options);
+        // Increment quota after successful call (fire-and-forget)
+        if (options?.skipQuota !== true) {
+            chrome.runtime.sendMessage({ type: 'ATOM_INCREMENT_QUOTA' }).catch(() => { });
+        }
+        return result;
     }
 
     async function callGeminiAPI(apiKey, systemPrompt, conversationHistory, attempt = 1, options = {}) {
@@ -631,10 +713,11 @@
     }
 
     // ── Expose API on SP ──
-    SP.callLLMAPI = callLLMAPI;
+    SP.callLLMAPI = callLLMAPIWithQuota;
     SP.callGeminiAPI = callGeminiAPI;
     SP.getLLMProvider = getLLMProvider;
     SP.ApiError = ApiError;
+    SP.QuotaExceededError = QuotaExceededError;
     SP.showRateLimitCountdown = showRateLimitCountdown;
     SP.clearRateLimitCountdown = clearRateLimitCountdown;
 
