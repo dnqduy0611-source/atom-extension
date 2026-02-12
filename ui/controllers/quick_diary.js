@@ -16,7 +16,7 @@
         this.container = document.getElementById(this.containerId);
         if (!this.container || !this.executor) return;
 
-        this.container.classList.add('active');
+        // Widget stays hidden by default — shown via show() or command
 
         var collapsed = this.container.querySelector('.qd-collapsed');
         if (collapsed) {
@@ -52,6 +52,17 @@
                 }
             });
         }
+    };
+
+    QuickDiaryController.prototype.show = function () {
+        if (!this.container) return;
+        this.container.classList.add('active');
+    };
+
+    QuickDiaryController.prototype.hide = function () {
+        if (!this.container) return;
+        this.container.classList.remove('active', 'expanded');
+        this.reset();
     };
 
     QuickDiaryController.prototype.expand = function () {

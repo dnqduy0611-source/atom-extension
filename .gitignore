@@ -3,6 +3,13 @@
 # Credentials (NEVER commit these)
 config/supabase_config.js
 
+# External libraries / repos
+neural-memory-main/
+
+# AI assistant config
+.claude/
+.gemini/
+
 # Build outputs
 dist/
 build/

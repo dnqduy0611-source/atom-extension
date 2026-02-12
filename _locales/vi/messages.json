@@ -1,4 +1,4 @@
-{
+﻿{
   "mem_stat_top_category": {
     "message": "Chủ đề nổi bật"
   },
@@ -36,7 +36,7 @@
     "message": "Đã bắt đầu chat mới"
   },
   "appName": {
-    "message": "ATOM - Mindful Browsing"
+    "message": "Amo - Mindful Browsing"
   },
   "appDesc": {
     "message": "Hệ điều hành sự chú ý tích hợp AI."
@@ -174,13 +174,28 @@
     "message": "Tìm cảm hứng"
   },
   "opt_title": {
-    "message": "Cài đặt ATOM"
+    "message": "Cài đặt Amo"
   },
   "opt_hero_title": {
     "message": "⚛️ Kích hoạt Trí tuệ nhân tạo"
   },
   "opt_hero_desc": {
-    "message": "ATOM sử dụng Google Gemini để trò chuyện và đưa ra lời khuyên tâm lý. Kết nối Key riêng của bạn để dùng miễn phí & bảo mật."
+    "message": "Amo sử dụng Google Gemini để trò chuyện và đưa ra lời khuyên tâm lý. Kết nối Key riêng của bạn để dùng miễn phí & bảo mật."
+  },
+  "opt_dual_key_title": {
+    "message": "💡 Khuyến nghị: Thiết lập cả 2 key"
+  },
+  "opt_dual_key_desc": {
+    "message": "Amo sử dụng AI để phân tích và hỗ trợ bạn. Mỗi nhà cung cấp có giới hạn miễn phí riêng. Khi thiết lập cả <b>Gemini</b> (phân tích nhanh) lẫn <b>OpenRouter</b> (dự phòng), Amo sẽ tự động chuyển đổi khi một bên đạt giới hạn — đảm bảo trải nghiệm ổn định không bị gián đoạn."
+  },
+  "opt_dual_key_benefit1": {
+    "message": "<b>Gemini</b> — miễn phí, nhanh, chất lượng phân tích tốt nhất — đây là lựa chọn chính của Amo"
+  },
+  "opt_dual_key_benefit2": {
+    "message": "<b>OpenRouter</b> — ~50 lượt/ngày miễn phí, sử dụng các model AI nhỏ hơn nên trải nghiệm sẽ không bằng Gemini — được xem là <b>phương án dự phòng</b> khi Gemini hết quota"
+  },
+  "opt_dual_key_benefit3": {
+    "message": "Cả 2 key đều <b>miễn phí</b> và mất khoảng <b>30 giây</b> để tạo"
   },
   "opt_btn_get_key": {
     "message": "👉 Lấy Key Miễn Phí từ Google (30s)"
@@ -561,7 +576,7 @@
     "message": "AmoNexus"
   },
   "popup_status_desc": {
-    "message": "ATOM đang bảo vệ sự chú ý của bạn."
+    "message": "Amo đang bảo vệ sự chú ý của bạn."
   },
   "popup_btn_export": {
     "message": "Xuất dữ liệu"
@@ -603,16 +618,16 @@
     "message": "Trang không xác định"
   },
   "pop_btn_safe_add_new": {
-    "message": "Tắt ATOM"
+    "message": "Tắt Amo"
   },
   "pop_btn_safe_remove_new": {
-    "message": "Bật ATOM"
+    "message": "Bật Amo"
   },
   "pop_status_running": {
-    "message": "ATOM đang chạy"
+    "message": "Amo đang chạy"
   },
   "pop_status_off": {
-    "message": "ATOM đã tắt"
+    "message": "Amo đã tắt"
   },
   "pop_loading": {
     "message": "Đang tải..."
@@ -645,7 +660,7 @@
     "message": "Không rõ"
   },
   "ai_thinking_error": {
-    "message": "ATOM đang suy ngẫm, hãy thử lại sau nhé!"
+    "message": "Amo đang suy ngẫm, hãy thử lại sau nhé!"
   },
   "fallback_location": {
     "message": "nơi này"
@@ -681,13 +696,13 @@
     "message": "Báo lỗi"
   },
   "bug_title": {
-    "message": "Báo lỗi - ATOM"
+    "message": "Báo lỗi - Amo"
   },
   "bug_header": {
     "message": "Báo cáo lỗi"
   },
   "bug_subheader": {
-    "message": "Giúp chúng tôi cải thiện ATOM bằng cách mô tả lỗi bạn gặp phải"
+    "message": "Giúp chúng tôi cải thiện Amo bằng cách mô tả lỗi bạn gặp phải"
   },
   "bug_auto_collected": {
     "message": "Thông tin tự động thu thập"
@@ -768,7 +783,7 @@
     "message": "Xem chính sách quyền riêng tư"
   },
   "update_title": {
-    "message": "ATOM đã có trên Chrome Store!"
+    "message": "Amo đã có trên Chrome Store!"
   },
   "update_desc": {
     "message": "Nhấn vào đây để cài đặt phiên bản chính thức và nhận cập nhật tự động."
@@ -816,10 +831,10 @@
     "message": "$1 (ưu tiên)"
   },
   "ctx_whitelist_domain": {
-    "message": "ATOM: Luôn bỏ qua trang này (Safe Zone)"
+    "message": "Amo: Luôn bỏ qua trang này (Safe Zone)"
   },
   "ctx_reading_parent": {
-    "message": "ATOM: Đọc chủ động"
+    "message": "Amo: Đọc chủ động"
   },
   "ctx_reading_summarize": {
     "message": "Tóm tắt đoạn này (2 câu)"
@@ -831,7 +846,7 @@
     "message": "Tạo 3 câu hỏi để nhớ lâu"
   },
   "reading_card_title": {
-    "message": "ATOM - Đọc chủ động"
+    "message": "Amo - Đọc chủ động"
   },
   "reading_card_key_points": {
     "message": "Ý chính"
@@ -864,7 +879,7 @@
     "message": "Không có tóm tắt."
   },
   "reading_vault_title": {
-    "message": "ATOM - Kho đọc"
+    "message": "Amo - Kho đọc"
   },
   "reading_vault_empty": {
     "message": "Chưa có ghi chú nào."
@@ -966,7 +981,7 @@
     "message": "Câu hỏi"
   },
   "reading_error_summary": {
-    "message": "ATOM gặp lỗi khi phân tích đoạn này. Thử lại giúp mình nhé."
+    "message": "Amo gặp lỗi khi phân tích đoạn này. Thử lại giúp mình nhé."
   },
   "reading_cooldown_summary": {
     "message": "Đã vượt giới hạn. Active Reading tạm nghỉ $1 giây."
@@ -1074,7 +1089,7 @@
     "message": "<b>Khởi động lại:</b> Đóng và mở lại Chrome sau khi thay đổi"
   },
   "opt_notif_test_title": {
-    "message": "ATOM - Kiểm tra thông báo"
+    "message": "Amo - Kiểm tra thông báo"
   },
   "opt_notif_test_msg": {
     "message": "Nếu bạn thấy thông báo này, hệ thống đang hoạt động bình thường!"
@@ -1140,7 +1155,7 @@
     "message": "Đặt lại giờ"
   },
   "mem_title": {
-    "message": "Bộ Nhớ ATOM"
+    "message": "Bộ Nhớ Amo"
   },
   "mem_desc": {
     "message": "Các ghi chú đọc và xuất tri thức của bạn"
@@ -1578,103 +1593,151 @@
     "message": "Mở Cài đặt để thêm Khóa truy cập AI, sau đó quay lại thanh bên."
   },
   "popup_onboarding_step1": {
-    "message": "1) Boi den 1 doan ngan"
+    "message": "1) Bôi đen 1 đoạn ngắn"
   },
   "popup_onboarding_step2": {
-    "message": "2) Nhan Tom tat"
+    "message": "2) Nhấn Tóm tắt"
   },
   "popup_onboarding_step3": {
-    "message": "3) Nhan Luu"
+    "message": "3) Nhấn Lưu"
   },
   "popup_onboarding_open_sidepanel": {
-    "message": "Mo thanh ben"
+    "message": "Mở thanh bên"
   },
   "popup_onboarding_open_settings": {
-    "message": "Mo Cai dat"
+    "message": "Mở Cài đặt"
   },
   "popup_no_focus": {
-    "message": "Chua co phien tap trung"
+    "message": "Chưa có phiên tập trung"
   },
   "popup_open_panel": {
-    "message": "Mo bang dieu khien"
+    "message": "Chat with Amo"
   },
   "popup_action_settings": {
-    "message": "Cai dat"
+    "message": "Cài đặt"
   },
   "popup_action_website": {
     "message": "Trang web"
   },
   "popup_action_feedback": {
-    "message": "Gop y"
+    "message": "Góp ý"
+  },
+  "popup_action_website": {
+    "message": "Web"
+  },
+  "popup_action_journal": {
+    "message": "Nhật ký"
+  },
+  "popup_action_notes": {
+    "message": "Bộ nhớ"
+  },
+  "popup_focus_label": {
+    "message": "Bắt đầu tập trung"
+  },
+  "cmdCatFocus": {
+    "message": "Tập trung"
+  },
+  "cmdCatTools": {
+    "message": "Công cụ"
+  },
+  "cmdCatAI": {
+    "message": "AI"
+  },
+  "cmdCatSettings": {
+    "message": "Cài đặt"
+  },
+  "cmdFocus25": {
+    "message": "Tập trung 25 phút"
+  },
+  "cmdFocus40": {
+    "message": "Tập trung 40 phút"
+  },
+  "cmdFocus50": {
+    "message": "Tập trung 50 phút"
+  },
+  "cmdOpenDiary": {
+    "message": "Nhật ký"
+  },
+  "cmdOpenNotes": {
+    "message": "Ghi chú"
+  },
+  "cmdOpenSaved": {
+    "message": "Ghi chú đã lưu"
+  },
+  "cmdExportSaved": {
+    "message": "Xuất ghi chú"
+  },
+  "cmdOpenSettings": {
+    "message": "Cài đặt"
   },
   "cmd_onboarding_title": {
-    "message": "Moi: dieu khien bang chat"
+    "message": "Mới: điều khiển bằng chat"
   },
   "cmd_onboarding_body": {
-    "message": "Gio ban co the noi:<br>- \"Tap trung 25 phut\"<br>- \"Ghi nhat ky: hom nay met\"<br>- \"Luu vao ghi chu\"<br><br>Hoac bam nut nhanh o dau trang."
+    "message": "Giờ bạn có thể nói:<br>- \"Tập trung 25 phút\"<br>- \"Ghi nhật ký: hôm nay mệt\"<br>- \"Lưu vào ghi chú\"<br><br>Hoặc bấm nút nhanh ở đầu trang."
   },
   "cmd_onboarding_dismiss": {
-    "message": "Hieu roi"
+    "message": "Hiểu rồi"
   },
   "sp_welcome_title": {
-    "message": "Bat dau trong 1 phut"
+    "message": "Bắt đầu trong 1 phút"
   },
   "sp_welcome_desc": {
-    "message": "Lam theo 3 buoc ngan de co gia tri dau tien."
+    "message": "Làm theo 3 bước ngắn để có giá trị đầu tiên."
   },
   "sp_welcome_steps": {
-    "message": "3 buoc nhanh"
+    "message": "3 bước nhanh"
   },
   "sp_welcome_start": {
-    "message": "Bat dau ngay"
+    "message": "Bắt đầu ngay"
   },
   "sp_onboard_step1": {
-    "message": "Boi den 1 doan van ngan."
+    "message": "Bôi đen 1 đoạn văn ngắn."
   },
   "sp_onboard_step2": {
-    "message": "Nhan Tom tat."
+    "message": "Nhấn Tóm tắt."
   },
   "sp_onboard_step3": {
-    "message": "Nhan Luu."
+    "message": "Nhấn Lưu."
   },
   "sp_onboarding_progress_title": {
-    "message": "Tien do huong dan"
+    "message": "Tiến độ hướng dẫn"
   },
   "sp_onboarding_progress_step1": {
-    "message": "Buoc 1/3"
+    "message": "Bước 1/3"
   },
   "sp_onboarding_progress_step2": {
-    "message": "Buoc 2/3"
+    "message": "Bước 2/3"
   },
   "sp_onboarding_progress_step3": {
-    "message": "Buoc 3/3"
+    "message": "Bước 3/3"
   },
   "sp_onboarding_skip": {
-    "message": "Bo qua huong dan"
+    "message": "Bỏ qua hướng dẫn"
   },
   "sp_onboarding_skip_confirm": {
-    "message": "Bo qua huong dan bay gio? Ban van co the mo lai trong menu."
+    "message": "Bỏ qua hướng dẫn bây giờ? Bạn vẫn có thể mở lại trong menu."
   },
   "sp_onboarding_skipped": {
-    "message": "Da bo qua huong dan. Ban co the mo lai trong menu."
+    "message": "Đã bỏ qua hướng dẫn. Bạn có thể mở lại trong menu."
   },
   "sp_onboarding_menu_item": {
-    "message": "Mo huong dan"
+    "message": "Mở hướng dẫn"
   },
   "sp_onboarding_reopen_menu": {
-    "message": "Mo lai huong dan"
+    "message": "Mở lại hướng dẫn"
   },
   "sp_tooltip_ok": {
-    "message": "Da hieu"
+    "message": "Đã hiểu"
   },
   "sp_tooltip_first_highlight": {
-    "message": "Tot. Tiep theo, nhan Tom tat."
+    "message": "Tốt. Tiếp theo, nhấn Tóm tắt."
   },
   "sp_tooltip_first_chat": {
-    "message": "Tot. Bay gio nhan Luu de giu lai doan nay."
+    "message": "Tốt. Bây giờ nhấn Lưu để giữ lại đoạn này."
   },
   "sp_onboarding_complete": {
-    "message": "Ban da hoan thanh thiet lap co ban."
+    "message": "Bạn đã hoàn thành thiết lập cơ bản."
   },
   "opt_ai_pilot_timeout_hint": {
     "message": "Thời gian tối đa chờ AI phản hồi (đơn vị: mili giây)"
@@ -1731,7 +1794,7 @@
     "message": "Bỏ qua"
   },
   "opt_onboarding_completed": {
-    "message": "Thiết lập hoàn tất! Bạn có thể bắt đầu sử dụng ATOM."
+    "message": "Thiết lập hoàn tất! Bạn có thể bắt đầu sử dụng Amo."
   },
   "sp_error_cta_retry": {
     "message": "Thử lại"
@@ -2397,7 +2460,7 @@
     "message": "Đã lưu thành công"
   },
   "sp_multitab_warning": {
-    "message": "ATOM đang mở ở tab khác"
+    "message": "Amo đang mở ở tab khác"
   },
   "sp_multitab_continue": {
     "message": "Tiếp tục ở đây"
@@ -2446,6 +2509,15 @@
   },
   "sp_capture_post_title": {
     "message": "Lưu bài viết (Alt+C)"
+  },
+  "sp_capture_post_label": {
+    "message": "Bắt bài viết"
+  },
+  "sp_compact_on": {
+    "message": "Giao diện gọn"
+  },
+  "sp_compact_off": {
+    "message": "Giao diện đầy đủ"
   },
   "sp_shortcut_capture": {
     "message": "Lưu bài viết (Alt+C)"
@@ -2550,6 +2622,9 @@
   },
   "sp_cards_desc": {
     "message": "Thẻ luyện tập sẽ xuất hiện ở đây khi bạn lưu thêm nội dung."
+  },
+  "sp_cards_coming_soon": {
+    "message": "Thẻ ôn tập thông minh đang được phát triển! Chúng mình đang xây dựng trải nghiệm luyện tập giúp bạn ghi nhớ tốt hơn. Hãy chờ đón ở bản cập nhật tiếp theo nhé ✨"
   },
   "sp_cards_back_chat": {
     "message": "Quay lại Chat"
@@ -2777,5 +2852,125 @@
   },
   "opt_account_retry": {
     "message": "Thử lại"
+  },
+  "diaryNoContent": {
+    "message": "Hãy viết gì đó trước khi lưu."
+  },
+  "diarySaved": {
+    "message": "Đã lưu vào Nhật ký ✍️"
+  },
+  "diarySummaryEmpty": {
+    "message": "Chưa có bài viết nào trong khoảng thời gian này."
+  },
+  "diarySummaryTitle": {
+    "message": "Tổng kết nhật ký"
+  },
+  "diarySummaryEntries": {
+    "message": "bài viết"
+  },
+  "diarySummaryMood": {
+    "message": "Cảm xúc nổi bật"
+  },
+  "diarySummaryTags": {
+    "message": "Chủ đề nổi bật"
+  },
+  "diarySummaryTagsEmpty": {
+    "message": "chung"
+  },
+  "periodToday": {
+    "message": "hôm nay"
+  },
+  "periodWeek": {
+    "message": "tuần này"
+  },
+  "periodMonth": {
+    "message": "tháng này"
+  },
+  "noteNoContent": {
+    "message": "Chọn đoạn văn bản hoặc nhập nội dung trước."
+  },
+  "noteSaved": {
+    "message": "Đã lưu vào Ghi chú 📝"
+  },
+  "noteSaveFailed": {
+    "message": "Không thể lưu ghi chú."
+  },
+  "quickDiaryHint": {
+    "message": "Nhật ký nhanh..."
+  },
+  "quickDiaryTitle": {
+    "message": "Nhật ký nhanh"
+  },
+  "quickDiaryPlaceholder": {
+    "message": "Hôm nay bạn cảm thấy thế nào?"
+  },
+  "diaryBtnSave": {
+    "message": "Lưu vào nhật ký"
+  },
+  "cmd_diary_empty": {
+    "message": "Hãy viết gì đó sau lệnh nhật ký."
+  },
+  "savedExportEmpty": {
+    "message": "Chưa có highlight nào để xuất."
+  },
+  "savedExported": {
+    "message": "Đã xuất $1 highlight"
+  },
+  "savedExportFailed": {
+    "message": "Xuất thất bại. Hãy thử lại."
+  },
+  "sp_connection_empty": {
+    "message": "Chưa có ý tưởng liên quan"
+  },
+  "popup_toggle_title": {
+    "message": "Bật/Tắt"
+  },
+  "focus_review_loading": {
+    "message": "Đang tạo câu hỏi ôn tập…"
+  },
+  "popup_focus_custom_placeholder": {
+    "message": "phút"
+  },
+  "popup_focus_custom_go": {
+    "message": "Bắt đầu"
+  },
+  "sp_memory_title": {
+    "message": "Liên quan từ Bộ nhớ"
+  },
+  "sp_memory_intro": {
+    "message": "Nội dung này liên quan đến ghi chú của bạn về:"
+  },
+  "sp_memory_similar": {
+    "message": "tương tự"
+  },
+  "sp_memory_insights": {
+    "message": "ý tưởng"
+  },
+  "sp_memory_view": {
+    "message": "Xem ghi chú"
+  },
+  "sp_memory_compare": {
+    "message": "So sánh"
+  },
+  "sp_memory_dismiss": {
+    "message": "Bỏ qua"
+  },
+  "sp_memory_also": {
+    "message": "Cũng liên quan:"
+  },
+  "opt_free_tier_title": {
+    "message": "🎁 Tất cả tính năng đều miễn phí"
+  },
+  "opt_free_tier_desc": {
+    "message": "Hiện tại, bạn đang được trải nghiệm toàn bộ tính năng của Amo hoàn toàn miễn phí. Chúng tôi muốn bạn có đủ thời gian khám phá và cảm nhận giá trị thực sự mà Amo mang lại."
+  },
+  "opt_free_tier_future": {
+    "message": "Trong các phiên bản tiếp theo, Amo sẽ tiếp tục phát triển thêm nhiều tính năng hữu ích hơn nữa. Để duy trì và nâng cao chất lượng sản phẩm, chúng tôi sẽ giới thiệu gói Pro — nhằm tạo nguồn lực phát triển bền vững, mang đến giá trị lớn hơn cho người dùng."
+  },
+  "opt_free_tier_thanks": {
+    "message": "Cảm ơn bạn đã đồng hành cùng Amo. Sự ủng hộ của bạn là động lực lớn nhất để chúng tôi tiếp tục. 💚"
+  },
+  "opt_free_tier_toast": {
+    "message": "Bạn đang được trải nghiệm toàn bộ tính năng miễn phí. Hãy tận hưởng và cảm nhận giá trị mà Amo mang lại nhé!"
   }
 }

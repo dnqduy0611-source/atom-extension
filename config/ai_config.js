@@ -23,8 +23,12 @@ export const AI_CONFIG = {
     MODELS: {
         // Backend: Optimized for speed & cost (Doomscrolling, Strategy)
         PILOT: {
-            primary: "gemini-2.5-flash-lite",
-            fallback: "gemini-2.5-flash"
+            primary: "gemini-2.0-flash",       // 1,500 RPD free — optimal for pilot classify
+            fallback: "gemini-2.5-flash-lite",
+            fallback_chain: [
+                "gemini-2.5-flash-lite",       // First fallback
+                "openrouter"                   // Last resort — free, unlimited
+            ]
         },
         // Frontend: Optimized for reasoning & nuance (Chat, Active Reading)
         // Using gemini-3-flash-preview
@@ -79,7 +83,7 @@ export const AI_CONFIG = {
     },
     CACHE: {
         STRATEGY_TTL_MS: 30000,      // 30s for strategy cache
-        PILOT_TTL_MS: 300000,        // 5 min for pilot classification cache
+        PILOT_TTL_MS: 900000,        // 15 min for pilot classification cache (hybrid rule-first)
         SMARTLINK_TTL_MS: 600000,    // 10 min
         RELATED_MEMORY_TTL_MS: 600000, // 10 min
         DEEP_ANGLE_TTL_MS: 21600000, // 6 hours

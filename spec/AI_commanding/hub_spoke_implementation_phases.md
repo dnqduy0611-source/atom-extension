@@ -1,7 +1,7 @@
 # Hub-Spoke Architecture - Implementation Phases
 
-**Version:** 2.0
-**Updated:** 2026-02-09
+**Version:** 2.1
+**Updated:** 2026-02-10
 **Mục tiêu:** Non-tech friendly, buttons-first, confirm+undo, offline-capable, module split
 
 ---
@@ -12,53 +12,57 @@
 Phase 0          Phase 1          Phase 2          Phase 3          Phase 4
 Foundation  →   Core Router  →   Side Panel   →   Diary + Notes  →  Polish &
 + Toast/Undo    + Focus Cmds     Unification      + SRQ Link        Release
-+ Intent Parser + Quick Chips    + Module Split
++ Intent Parser + "/" Cmd Menu   + Tabs + Bar
 
-[1 tuần]        [1.5 tuần]       [1.5 tuần]       [1 tuần]        [1 tuần]
+[✅ DONE]       [✅ DONE]        [⚠️ PARTIAL]     [⚠️ PARTIAL]    [❌ TODO]
                                                                   Total: ~6 tuần
 ```
 
 ---
 
-## Phase 0: Foundation
+## Phase 0: Foundation ✅ DONE
 
-**Thời gian:** 1 tuần
+**Thời gian:** 1 tuần → ✅ Hoàn thành
 **Mục tiêu:** Chuẩn bị nền tảng, không ảnh hưởng user hiện tại
 
 ### Checklist
-- [ ] **0.1** Tạo `services/command_router.js` - CommandRouter class, isolated
-- [ ] **0.2** Tạo `services/intent_parser.js` - Client-side regex intent parser (Tier 1)
-- [ ] **0.3** Tạo `services/action_executor.js` - Confirm + undo + execute pipeline
-- [ ] **0.4** Tạo `ui/controllers/toast_manager.js` - Toast + undo toast + confirm toast
-- [ ] **0.5** Thêm feature flag `ENABLE_AI_COMMANDS` (mặc định OFF)
-- [ ] **0.6** Chuẩn bị i18n strings với **non-tech vocabulary** (xem Vocabulary Standard)
-- [ ] **0.7** Viết unit tests cho CommandRouter, IntentParser, ActionExecutor
+- [x] **0.1** Tạo `services/command_router.js` - CommandRouter class, isolated (152 lines)
+- [x] **0.2** Tạo `services/intent_parser.js` - Client-side regex intent parser (156 lines)
+- [x] **0.3** Tạo `services/action_executor.js` - Confirm + undo + execute pipeline (146 lines)
+- [x] **0.4** Tạo `ui/controllers/toast_manager.js` - Toast + undo toast + confirm toast (364 lines)
+- [x] **0.5** Thêm feature flag `ENABLE_AI_COMMANDS` (mặc định OFF) trong `config/feature_flags.js`
+- [x] **0.6** Chuẩn bị i18n strings với **non-tech vocabulary** (`cmd_*` keys in en/vi)
+- [ ] **0.7** ~~Viết unit tests cho CommandRouter, IntentParser, ActionExecutor~~ — chưa viết
 
 ### Acceptance Criteria
-- CommandRouter + IntentParser hoạt động trong isolation
-- Toast manager render 4 loại: success, undo, confirm, error
-- Không có thay đổi UI/UX cho user
-- Feature flag bật/tắt dễ dàng
-- Tất cả i18n strings dùng non-tech vocabulary
+- ✅ CommandRouter + IntentParser hoạt động trong isolation
+- ✅ Toast manager render 4 loại: success, undo, confirm, error
+- ✅ Không có thay đổi UI/UX cho user
+- ✅ Feature flag bật/tắt dễ dàng
+- ✅ Tất cả i18n strings dùng non-tech vocabulary
 
 ---
 
-## Phase 1: Core AI Command Router + Focus Commands
+## Phase 1: Core AI Command Router + Focus Commands ✅ DONE
 
-**Thời gian:** 1.5 tuần
-**Mục tiêu:** AI và client-side intent hiểu Focus commands, Quick Action Chips
+**Thời gian:** 1.5 tuần → ✅ Hoàn thành
+**Mục tiêu:** AI và client-side intent hiểu Focus commands, "/" Command Menu
 
 ### Checklist
-- [ ] **1.1** Tích hợp CommandRouter vào `sidepanel.js`
-- [ ] **1.2** Tích hợp IntentParser (Tier 1 - client-side, instant)
-- [ ] **1.3** Thêm AI System Prompt với command capabilities (Tier 2)
-- [ ] **1.4** Implement Focus commands: `FOCUS_START`, `FOCUS_STOP`, `FOCUS_PAUSE`
-- [ ] **1.5** Thêm Quick Action Chips (context-aware: focus state, current tab)
-- [ ] **1.6** Implement confirmation dialog cho Focus Stop (destructive)
-- [ ] **1.7** Test với câu lệnh tự nhiên (VI/EN) + Quick Action tap
+- [x] **1.1** Tích hợp CommandRouter vào `sidepanel.js` (`initCommandSystem()` function)
+- [x] **1.2** Tích hợp IntentParser (Tier 1 - client-side, instant) (`tryHandleIntentLocally()`)
+- [x] **1.3** Thêm AI System Prompt với command capabilities (`COMMAND_SYSTEM_PROMPT`)
+- [x] **1.4** Implement Focus commands: `FOCUS_START`, `FOCUS_STOP`, `FOCUS_PAUSE`
+- [x] **1.5** Thêm "/" Command Menu (thay thế Quick Action Chips — gọn hơn, phân nhóm rõ)
+  > **Design Change:** Thay vì inline chips, dùng dropdown menu "/" với 4 nhóm:
+  > Focus (25/40/50min), AI (Summarize/Explain/Critique/Connect/Save),
+  > Tools (Journal/Notes/Saved/Export), Settings.
+  > File: `ui/controllers/command_menu.js` + HTML ở `sidepanel.html` lines 4032-4096
+- [x] **1.6** Implement confirmation dialog cho Focus Stop (destructive)
+- [ ] **1.7** ~~Test với câu lệnh tự nhiên (VI/EN)~~ — chưa test formal
 
 ### UX Guidelines
-- **Buttons first** - Quick Action Chips là primary path, text command là secondary
+- **"/" Menu first** - "/" Command Menu là primary path, text command là secondary
 - **Subtle feedback** - Toast notification nhỏ, fade out 3-5s
 - **Confirmation** - AI/IntentParser hỏi xác nhận cho destructive actions
 - **Friendly errors** - "Mình chưa hiểu ý bạn" thay vì "Lệnh không hỗ trợ"
@@ -70,8 +74,8 @@ CLIENT-SIDE (instant, offline):
 "Dừng timer" → ✅ Confirm "Dừng phiên tập trung?" → Focus stops
 "Mở ghi chú" → ✅ Switch to Notes tab
 
-Quick Action Chip tap:
-[🎯 Tập trung 25p] → ✅ Confirm → Focus starts (< 500ms)
+"/" Command Menu tap:
+/ → Focus 25 min → ✅ Confirm → Focus starts (< 500ms)
 
 AI-PATH (when no client match):
 "Focus" (mơ hồ) → AI hỏi "Bạn muốn tập trung bao lâu?"
@@ -80,70 +84,80 @@ AI-PATH (when no client match):
 
 ---
 
-## Phase 2: Side Panel Unification
+## Phase 2: Side Panel Unification ⚠️ PARTIAL
 
-**Thời gian:** 1.5 tuần
-**Mục tiêu:** Side Panel = hub, module split, tabs, Focus Widget
+**Thời gian:** 1.5 tuần → ⚠️ Đang tiến hành
+**Mục tiêu:** Side Panel = hub, module split, tabs, Focus Bar
 
 ### Checklist
-- [ ] **2.1** **Module split sidepanel.js** (TRƯỚC khi thêm features mới)
-  - Tách TabController → `ui/controllers/tab_controller.js`
-  - Tách FocusWidget → `ui/controllers/focus_widget.js`
-  - Tách QuickActions → `ui/controllers/quick_actions.js`
-  - sidepanel.js chỉ giữ orchestration (~2000 lines max)
-- [ ] **2.2** Thêm Tab Navigation vào Side Panel
+- [/] **2.1** **Module split sidepanel.js**
+  - [x] Tách TabController → `ui/controllers/tab_controller.js` (150 lines)
+  - [x] ~~Tách FocusWidget~~ → Thay bằng `ui/controllers/focus_bar.js` (133 lines)
+  - [x] ~~Tách QuickActions~~ → Thay bằng `ui/controllers/command_menu.js` (120 lines)
+  - [ ] sidepanel.js giảm xuống ≤3000 lines (hiện 8010 lines)
+- [x] **2.2** Thêm Main Tab Navigation (đã implement)
   ```
-  💬 Chat  |  📝 Ghi chú  |  🃏 Thẻ ôn  |  📋 Đã lưu
+  💬 Chat  |  📝 Notes  |  🃏 Review  |  📋 Saved
   ```
-- [ ] **2.3** Di chuyển Memory view vào tab "Ghi chú" (lazy load)
-- [ ] **2.4** Di chuyển SRQ view vào tab "Đã lưu" (lazy load)
-- [ ] **2.5** Thêm Focus Widget compact ở bottom bar
-- [ ] **2.6** Implement smooth tab transitions (animation 200ms)
-- [ ] **2.7** Responsive design (280px - 500px+)
+  > HTML: `sidepanel.html` lines 3873-3878, class `sp-main-tab-btn`, attribute `data-main-tab`
+- [ ] **2.3** ~~Di chuyển Memory view vào tab "Notes"~~ — Notes tab exists nhưng chưa tích hợp full Memory
+- [x] **2.4** SRQ view accessible via Main Tab "Saved" + "/" Menu
+- [x] **2.5** Focus Bar inline (thay thế Focus Widget compact)
+  > **Design Change:** Thay vì FocusWidget 3-state (idle/active/break), dùng FocusBar inline:
+  > - Chỉ hiện khi focus session đang active
+  > - Auto-hide khi idle (gọn hơn, không chiếm không gian)
+  > - HTML: `sidepanel.html` lines 3977-3986, class `sp-focus-bar`
+- [ ] **2.6** ~~Implement smooth tab transitions~~ — transitions chưa có animation
+- [ ] **2.7** ~~Responsive design (280px - 500px+)~~ — chưa implement
+- [x] **2.8** (Bonus) Bottom Tabs: Chats | Notes | Related (collapsible panel)
+  > HTML: `sidepanel.html` lines 4116-4197, class `sp-bottom-tabs`
 
 ### UX Guidelines
-- **Max 4 tabs** - không overwhelm user
-- **Smooth transitions** - Fade/slide animations < 300ms
-- **Persistent state** - Nhớ tab cuối user đang dùng
-- **Focus Widget** - 3 states: idle (presets), compact (timer), expanded (full controls)
-- **Non-tech tab names** - "Ghi chú" KHÔNG PHẢI "Memory", "Đã lưu" KHÔNG PHẢI "SRQ"
+- **Max 4 main tabs** - không overwhelm user ✅
+- **Smooth transitions** - Fade/slide animations < 300ms (TODO)
+- **Persistent state** - Nhớ tab cuối user đang dùng (TODO)
+- **Focus Bar** - Inline, auto-show khi active, auto-hide khi idle ✅
+- **Non-tech tab names** - "Notes" thay vì "Memory", "Saved" thay vì "SRQ" ✅
 
-### Design Specs
+### Design Specs (Actual Implementation)
 ```
 ┌─────────────────────────────────────┐
-│  💬 Chat │ 📝 Ghi chú│🃏 Thẻ ôn│📋 Đã lưu│  ← Tab bar
-├─────────────────────────────────────┤
-│  [🎯 Tập trung 25p] [📝 Ghi nhanh]│  ← Quick Action Chips
+│ 💬 Chat │ 📝 Notes │🃏 Review│📋 Saved│  ← Main Tab Bar
 ├─────────────────────────────────────┤
 │                                     │
-│         [Tab Content Area]          │  ← Dynamic, lazy loaded
+│         [Tab Content Area]          │  ← Dynamic
 │                                     │
 ├─────────────────────────────────────┤
-│ 🎯 Đang tập trung  23:45  ⏸️ ⏹️     │  ← Focus Widget (compact)
+│ 🎯 Focus  23:45 ████░░ ⏸️ ⏹️       │  ← Focus Bar (only when active)
+├─────────────────────────────────────┤
+│ [/]  [Ask a question...]     [Send] │  ← Input + "/" Command Menu
+├─────────────────────────────────────┤
+│ 💬 Chats │ 📝 Notes │ 🔗 Related │▼ │ ← Bottom Tabs (collapsible)
+│  [collapsed content panel]          │
 └─────────────────────────────────────┘
 ```
 
 ---
 
-## Phase 3: Diary + Notes + SRQ Integration
+## Phase 3: Diary + Notes + SRQ Integration ⚠️ PARTIAL
 
-**Thời gian:** 1 tuần
+**Thời gian:** 1 tuần → ⚠️ Handlers done, UI widgets chưa wire
 **Mục tiêu:** AI commands cho Diary, Notes, SRQ. AI-powered mood detection.
 
 ### Checklist
-- [ ] **3.1** Implement `DIARY_ADD` command với **AI-powered mood detection**
+- [x] **3.1** Implement `DIARY_ADD` command với **AI-powered mood detection**
   - AI detect mood từ context + phủ định ("không vui" = sad)
   - KHÔNG dùng client regex cho mood (quá nhiều false positive)
-- [ ] **3.2** Implement `DIARY_SUMMARY` command (AI summarization)
-- [ ] **3.3** Implement `SAVE_TO_NOTES` command (auto-categorize via AI)
-- [ ] **3.4** Thêm "Ghi nhanh" (Quick Diary) widget trong Chat tab
-- [ ] **3.5** Implement SRQ commands: `OPEN_SAVED`, `EXPORT_SAVED`
-- [ ] **3.6** Cross-linking Notes ↔ Diary (AI-powered semantic matching)
-- [ ] **3.7** Undo support cho DIARY_ADD, SAVE_TO_NOTES, CREATE_CARD
+- [x] **3.2** Implement `DIARY_SUMMARY` command (local summary)
+- [x] **3.3** Implement `SAVE_TO_NOTES` command (auto-source from highlight/selection)
+- [x] **3.4** "/" Menu tích hợp Journal, Notes, Saved, Export (thay thế Quick Diary widget riêng)
+- [x] **3.5** Implement SRQ commands: `OPEN_SAVED`, `EXPORT_SAVED`
+- [ ] **3.6** Cross-linking Notes ↔ Diary (AI-powered semantic matching) — chưa implement
+- [x] **3.7** Undo support cho DIARY_ADD, SAVE_TO_NOTES
 
 ### UX Guidelines
 - **Mood detection by AI** - Tự động, chính xác hơn regex, hiểu phủ định
-- **Quick Diary** - 1-tap expand, mood emoji picker, auto-tag
+- **"/" Menu** - 1-tap access đến Journal, Notes, Saved từ menu
 - **Gentle prompts** - "Muốn ghi lại suy nghĩ này không?"
 - **Undo everything** - Toast + "Hoàn tác" cho mọi action tạo data
 
@@ -158,7 +172,7 @@ AI: "✅ Đã ghi vào Nhật ký 🤩"
 
 ---
 
-## Phase 4: Polish & Release
+## Phase 4: Polish & Release ❌ NOT STARTED
 
 **Thời gian:** 1 tuần
 **Mục tiêu:** Hoàn thiện, testing, optimize, rollout
@@ -167,7 +181,7 @@ AI: "✅ Đã ghi vào Nhật ký 🤩"
 - [ ] **4.1** Đơn giản hóa Popup (chỉ status badge + "Mở bảng điều khiển")
 - [ ] **4.2** End-to-end testing toàn bộ commands (Focus, Diary, Notes, SRQ, Nav)
 - [ ] **4.3** Performance optimization (lazy load, debounce search, virtual scroll)
-- [ ] **4.4** Onboarding tooltip cho first-time users
+- [/] **4.4** Onboarding tooltip cho first-time users (partial: `showCommandOnboardingIfNeeded()`)
 - [ ] **4.5** A/B testing engagement metrics
 - [ ] **4.6** Bật feature flag: 5% → 25% → 50% → 100%
 
@@ -229,13 +243,13 @@ Phase 0 (Foundation)
 
 ## Non-Tech Friendly Principles (Bắt buộc)
 
-1. **No jargon** - "Ghi chú" thay vì "Memory", "Nhật ký" thay vì "Journal"
-2. **Buttons first** - Quick Action Chips = primary path, typing = secondary
+1. **No jargon** - "Notes" thay vì "Memory", "Journal" thay vì "Diary"
+2. **"/" Menu first** - "/" Command Menu = primary path, typing = secondary
 3. **Forgiving** - AI đoán ý, hỏi xác nhận nếu không chắc
 4. **Invisible complexity** - Command parsing "behind the scenes", user chỉ thấy kết quả
 5. **Confirm + Undo** - Destructive actions cần confirm, tạo data có undo
 6. **Friendly errors** - "Mình chưa hiểu ý bạn" + gợi ý, không "Error code"
-7. **Progressive disclosure** - Features xuất hiện khi cần, chips thay đổi theo context
+7. **Progressive disclosure** - Features xuất hiện khi cần, menu items phân nhóm rõ
 
 ---
 

@@ -1620,6 +1620,8 @@
     }
 
     function createReadingCard(command, result, note, saved) {
+        // [DISABLED] Floating Active Reading panel removed — sidepanel reading features still active
+        return;
         const card = document.createElement('div');
         card.className = 'atom-reading-card';
         card.innerHTML = `

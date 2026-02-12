@@ -100,7 +100,7 @@ const AtomUI = {
                 console.log('AtomUI: Saved theme', isLight ? 'light' : 'dark');
             });
         } else {
-            console.error('AtomUI: Toggle button not found', toggleBtnId);
+            console.log('AtomUI: Theme toggle button not found (expected in popup/sidepanel)', toggleBtnId);
         }
     }
 };

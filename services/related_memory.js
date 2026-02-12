@@ -91,8 +91,114 @@
         }
     }
 
+    // ─── Hybrid Recall (Phase D) ─────────────────────────────
+    /**
+     * Hybrid recall: combines vector similarity with graph activation.
+     * hybrid_score = α × cosine + (1-α) × activation
+     *
+     * @param {Object} pageContext - Current page context { url, title, content }
+     * @param {Object} [options]
+     * @param {number} [options.alpha=0.6] - Weight for cosine (0-1)
+     * @param {number} [options.maxResults=5] - Max results to return
+     * @param {number} [options.minHybridScore=0.3] - Min score threshold
+     * @returns {Promise<Array<{ sessionId, hybridScore, cosineScore, activationScore, source }>>}
+     */
+    async function hybridRecall(pageContext, options = {}) {
+        const {
+            alpha = 0.6,
+            maxResults = 5,
+            minHybridScore = 0.3
+        } = options;
+
+        // 1. Vector search (existing)
+        let vectorResults = [];
+        try {
+            vectorResults = await window.SemanticSearchService.findRelatedToPage(
+                pageContext,
+                maxResults * 2  // Fetch more, will re-rank
+            );
+        } catch (err) {
+            console.warn('[HybridRecall] Vector search failed:', err);
+        }
+
+        // 2. Graph recall (via SpreadingActivationService)
+        let graphResults = [];
+        try {
+            if (window.SpreadingActivationService) {
+                graphResults = await window.SpreadingActivationService.recallForPageContext(pageContext);
+            }
+        } catch (err) {
+            console.warn('[HybridRecall] Graph recall failed:', err);
+        }
+
+        // 3. Merge results by sessionId
+        const merged = new Map();
+
+        for (const vr of vectorResults) {
+            const sid = vr.sessionId;
+            if (!sid) continue;
+            if (!merged.has(sid)) {
+                merged.set(sid, { cosine: 0, activation: 0, data: vr });
+            }
+            merged.get(sid).cosine = vr.similarity || 0;
+        }
+
+        for (const gr of graphResults) {
+            const sid = gr.sessionId;
+            if (!sid) continue;
+            if (!merged.has(sid)) {
+                merged.set(sid, { cosine: 0, activation: 0, data: gr });
+            }
+            merged.get(sid).activation = gr.activation || 0;
+        }
+
+        // 4. Compute hybrid scores
+        const scored = [];
+        for (const [sessionId, { cosine, activation, data }] of merged) {
+            const hybridScore = alpha * cosine + (1 - alpha) * activation;
+
+            if (hybridScore >= minHybridScore) {
+                scored.push({
+                    sessionId,
+                    hybridScore: Math.round(hybridScore * 1000) / 1000,
+                    cosineScore: Math.round(cosine * 1000) / 1000,
+                    activationScore: Math.round(activation * 1000) / 1000,
+                    source: cosine > 0 && activation > 0 ? 'both'
+                        : cosine > 0 ? 'vector'
+                            : 'graph',
+                    similarity: hybridScore,  // compat with existing UI
+                    title: data.title || '',
+                    url: data.url || '',
+                    preview: data.preview || ''
+                });
+            }
+        }
+
+        // 5. Sort by hybrid score descending
+        scored.sort((a, b) => b.hybridScore - a.hybridScore);
+        return scored.slice(0, maxResults);
+    }
+
+    /**
+     * Checks if Knowledge Graph has edges (for hybrid/fallback decision).
+     * @returns {Promise<boolean>}
+     */
+    async function graphHasEdges() {
+        try {
+            const KG_KEY = 'atom_knowledge_graph_v1';
+            const data = await chrome.storage.local.get([KG_KEY]);
+            const edges = data[KG_KEY];
+            return Array.isArray(edges) && edges.length > 0;
+        } catch {
+            return false;
+        }
+    }
+
     /**
      * Checks if we should show "Related from Memory" for current page.
+     * Uses hybrid recall (vector + graph) when graph is available,
+     * falls back to vector-only for backward compatibility.
+     *
      * @param {Object} pageContext - Current page context
      * @param {string} apiKey - API key
      * @param {Function} callGeminiAPI - API call function
@@ -128,14 +234,35 @@
                 return null;
             }
 
-            // Find related content
-            const related = await window.SemanticSearchService.findRelatedToPage(
-                pageContext,
-                MEMORY_CONFIG.maxResults
-            );
+            // Decide: hybrid vs vector-only
+            let strongMatches;
+            let recallMode = 'vector';
 
-            // Filter by higher threshold
-            const strongMatches = related.filter(r => r.similarity >= MEMORY_CONFIG.minSimilarity);
+            const hasGraph = window.SpreadingActivationService && await graphHasEdges();
+
+            if (hasGraph) {
+                // Hybrid mode: vector + graph
+                recallMode = 'hybrid';
+                strongMatches = await hybridRecall(pageContext, {
+                    maxResults: MEMORY_CONFIG.maxResults,
+                    minHybridScore: 0.4
+                });
+            } else {
+                // Fallback: vector-only (backward compatible)
+                const related = await window.SemanticSearchService.findRelatedToPage(
+                    pageContext,
+                    MEMORY_CONFIG.maxResults
+                );
+                strongMatches = related
+                    .filter(r => r.similarity >= MEMORY_CONFIG.minSimilarity)
+                    .map(r => ({
+                        ...r,
+                        hybridScore: r.similarity,
+                        cosineScore: r.similarity,
+                        activationScore: 0,
+                        source: 'vector'
+                    }));
+            }
 
             if (strongMatches.length === 0) {
                 return null;
@@ -153,6 +280,7 @@
             return {
                 matches: strongMatches,
                 connection: connection,
+                recallMode: strongMatches[0]?.source === 'both' ? 'hybrid' : recallMode,
                 currentPage: {
                     title: pageContext.title || '',
                     url: pageContext.url || ''
@@ -213,6 +341,7 @@
     window.RelatedMemoryService = {
         MEMORY_CONFIG,
         checkForRelatedMemory,
+        hybridRecall,
         markSuggestionShown,
         dismissForUrl,
         resetDismissed,

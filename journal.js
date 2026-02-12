@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // --- AUTO-HIDE Logic State ---
-    let isJournalSubmitted = false;
     let hasInteracted = false;
     let initialTimeout = null;
     const composeContainer = document.querySelector('.journal-compose');
@@ -34,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 1. Initial 10s Timeout (Auto-hide if ignored)
+    // 1. Initial 10s Timeout (Auto-hide if ignored on first visit)
     initialTimeout = setTimeout(() => {
         if (!hasInteracted) {
             hideCompose();
@@ -54,26 +53,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         composeContainer.addEventListener('input', markInteraction);
         composeContainer.addEventListener('focusin', markInteraction);
     }
-
-    // 3. Blur / Visibility Logic
-    function handleFocusLoss() {
-        // Case A: User ignored prompt -> Hide immediate
-        if (!hasInteracted) {
-            hideCompose();
-            return;
-        }
-        // Case B: User submitted -> Hide on switch
-        if (isJournalSubmitted) {
-            hideCompose();
-            return;
-        }
-        // Case C: User is writing -> Keep visible (Do nothing)
-    }
-
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) handleFocusLoss();
-    });
-    window.addEventListener('blur', handleFocusLoss);
 
 
     function renderTimeline(logs) {
@@ -360,7 +339,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             await refreshTimeline();
 
             // Keep compose visible for consecutive entries
-            isJournalSubmitted = false;
             if (composeContainer) {
                 composeContainer.style.display = '';
             }

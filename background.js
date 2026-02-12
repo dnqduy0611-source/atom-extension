@@ -464,29 +464,30 @@ async function rebuildContextMenus() {
             title: atomMsg("ctx_whitelist_domain") || "AmoNexus: Always ignore this site (Safe Zone)",
             contexts: ["page"]
         });
-        chrome.contextMenus.create({
-            id: "atom-reading-parent",
-            title: atomMsg("ctx_reading_parent") || "AmoNexus: Active Reading",
-            contexts: ["selection"]
-        });
-        chrome.contextMenus.create({
-            id: "atom-reading-summarize",
-            parentId: "atom-reading-parent",
-            title: atomMsg("ctx_reading_summarize") || "Summarize this selection (2 sentences)",
-            contexts: ["selection"]
-        });
-        chrome.contextMenus.create({
-            id: "atom-reading-critique",
-            parentId: "atom-reading-parent",
-            title: atomMsg("ctx_reading_critique") || "Critique / weak points",
-            contexts: ["selection"]
-        });
-        chrome.contextMenus.create({
-            id: "atom-reading-quiz",
-            parentId: "atom-reading-parent",
-            title: atomMsg("ctx_reading_quiz") || "Create 3 recall questions",
-            contexts: ["selection"]
-        });
+        // [DISABLED] Active Reading floating panel removed — context menus disabled
+        // chrome.contextMenus.create({
+        //     id: "atom-reading-parent",
+        //     title: atomMsg("ctx_reading_parent") || "AmoNexus: Active Reading",
+        //     contexts: ["selection"]
+        // });
+        // chrome.contextMenus.create({
+        //     id: "atom-reading-summarize",
+        //     parentId: "atom-reading-parent",
+        //     title: atomMsg("ctx_reading_summarize") || "Summarize this selection (2 sentences)",
+        //     contexts: ["selection"]
+        // });
+        // chrome.contextMenus.create({
+        //     id: "atom-reading-critique",
+        //     parentId: "atom-reading-parent",
+        //     title: atomMsg("ctx_reading_critique") || "Critique / weak points",
+        //     contexts: ["selection"]
+        // });
+        // chrome.contextMenus.create({
+        //     id: "atom-reading-quiz",
+        //     parentId: "atom-reading-parent",
+        //     title: atomMsg("ctx_reading_quiz") || "Create 3 recall questions",
+        //     contexts: ["selection"]
+        // });
         // Side Panel - Chat with Page
         chrome.contextMenus.create({
             id: "atom-chat-with-page",
@@ -950,6 +951,7 @@ chrome.notifications.onClicked.addListener(async (notificationId) => {
 // Đặt lịch kiểm tra định kỳ (mỗi 6 giờ khi extension active)
 chrome.alarms.create('check-store-update', { periodInMinutes: 360 });
 chrome.alarms.create('atom_srq_cleanup', { periodInMinutes: 720 });
+chrome.alarms.create('atom_kg_decay_cycle', { periodInMinutes: 360 }); // Phase 3: decay every 6h
 chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === 'check-store-update') {
         checkForStoreUpdate();
@@ -967,6 +969,41 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
         const settings = await loadNlmSettings();
         const removed = await cleanupStaleCards(settings?.srqStaleCardDays || 14);
         if (removed > 0) console.log(`[ATOM SRQ] Cleaned ${removed} stale cards`);
+    }
+    if (alarm.name === 'atom_kg_decay_cycle') {
+        // Phase 3: Knowledge Graph decay cycle
+        try {
+            const KG_KEY = 'atom_knowledge_graph_v1';
+            const { [KG_KEY]: rawEdges } = await chrome.storage.local.get([KG_KEY]);
+            const edges = Array.isArray(rawEdges) ? rawEdges : [];
+            if (edges.length === 0) return;
+
+            const now = Date.now();
+            const DEAD = 0.05;
+            const DECAY_RATE = 0.05;
+            const alive = [];
+            let dead = 0;
+
+            for (const edge of edges) {
+                const lastActive = edge.lastReinforcedAt || edge.lastActivatedAt || edge.createdAt || now;
+                const days = (now - lastActive) / 86400000;
+                const decayed = (edge.strength ?? 1.0) * Math.exp(-DECAY_RATE * Math.max(0, days));
+
+                if (decayed < DEAD) {
+                    dead++;
+                } else {
+                    edge.strength = Math.round(decayed * 100) / 100;
+                    alive.push(edge);
+                }
+            }
+
+            if (dead > 0) {
+                await chrome.storage.local.set({ [KG_KEY]: alive });
+                console.log(`[KG Decay] Updated ${alive.length}, removed ${dead} dead edges`);
+            }
+        } catch (err) {
+            console.warn('[KG Decay] Failed:', err);
+        }
     }
 });
 
@@ -992,6 +1029,8 @@ async function focusHandlePhaseEnd() {
 
     st.phase = nextPhase;
     st.phaseStartedAt = now;
+    st.workMin = cfg.workMin;
+    st.breakMin = cfg.breakMin;
     st.phaseEndsAt = now + (nextPhase === "WORK" ? cfg.workMin : cfg.breakMin) * 60 * 1000;
     resetWorkCounters(st);
     st.lastStateUpdatedAt = now;
@@ -2169,7 +2208,7 @@ const AI_PILOT_DEFAULTS = {
     mode: "shadow",
     minConfidence: 0.65,
     timeoutMs: 800,
-    budgetPerDay: 200,
+    budgetPerDay: 30,
     provider: "gemini",
     proxyUrl: "",
     cacheTtlMs: 15000
@@ -2617,12 +2656,21 @@ async function handleTick(payload, sender) {
             (frame.snippet?.selectedTextChars || 0) > 0
         );
         const pageType = frame?.page?.pageType || "unknown";
+        // Derive zone early for AI gating
+        const zone = signals.attention_risk ? "red" : (signals.approaching_risk ? "yellow" : "green");
+        // Hybrid Rule-First: only call AI in yellow (ambiguous) zone
+        // Green = safe (rules sufficient), Red = clear doomscroll (rules sufficient)
+        const zoneNeedsAi = zone === "yellow";
         const shouldCallAi = aiEnabled
             && !!frame
             && frameHasSignal
             && !aiBudgetExhausted
             && !aiCooldownActive
-            && (!decision.is_safe_to_scroll || ["forum", "doc", "pdf", "article"].includes(pageType));
+            && zoneNeedsAi;
+        if (aiEnabled && !shouldCallAi && DEBUG_PIPELINE) {
+            const skipReason = aiBudgetExhausted ? "budget" : aiCooldownActive ? "cooldown" : !zoneNeedsAi ? `zone=${zone}` : "no_signal";
+            console.log(`[TICK:AI_SKIP] ${skipReason} | scroll=${payload.continuous_scroll_sec}s`);
+        }
 
         let aiLatencyMs = null;
         let aiError = null;
@@ -3054,7 +3102,7 @@ async function callOpenRouterAPI(openrouterKey, model, messages, generationConfi
         model: targetModel,
         messages,
         temperature: generationConfig.temperature ?? 0.7,
-        max_tokens: generationConfig.maxOutputTokens ?? 2048,
+        max_tokens: generationConfig.maxOutputTokens ?? 4096,
         stream: false
     };
 
@@ -3627,6 +3675,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 phase: "WORK",
                 phaseStartedAt: now,
                 phaseEndsAt: now + workMin * 60 * 1000,
+                workMin,
+                breakMin,
                 attempts: {},
                 lastAttemptAt: {},
                 allowUntil: {},
@@ -3901,54 +3951,58 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 await chrome.storage.local.set({ journal_logs: logs });
             }
             // 2. TẠO LỜI NHẮN RIÊNG (FEATURE-BASED & PRIVACY-FIRST)
-            // ... (bên trong ROUTE 2: ANALYZE_JOURNAL)
-            if (lastLog) {
-                const note = lastLog.input.user_note || "";
+            // Wrap in try/catch to ensure sendResponse is always called
+            try {
+                if (lastLog) {
+                    const note = lastLog.input.user_note || "";
 
-                // [UPDATED] Regex song ngữ (Việt + Anh)
-                let detectedTopic = "general";
-                const keywords = {
-                    work: /(bệnh viện|trực|mổ|khám|thuốc|work|job|shift|hospital|meeting|deadline)/i,
-                    study: /(học|thi|bài|đồ án|study|exam|homework|assignment|class)/i,
-                    mood: /(buồn|chán|mệt|cô đơn|sad|tired|lonely|bored|stress|anxious)/i,
-                    distraction: /(facebook|tiktok|reels|youtube|scroll|lướt)/i
-                };
+                    // [UPDATED] Regex song ngữ (Việt + Anh)
+                    let detectedTopic = "general";
+                    const keywords = {
+                        work: /(bệnh viện|trực|mổ|khám|thuốc|work|job|shift|hospital|meeting|deadline)/i,
+                        study: /(học|thi|bài|đồ án|study|exam|homework|assignment|class)/i,
+                        mood: /(buồn|chán|mệt|cô đơn|sad|tired|lonely|bored|stress|anxious)/i,
+                        distraction: /(facebook|tiktok|reels|youtube|scroll|lướt)/i
+                    };
 
-                if (keywords.work.test(note)) detectedTopic = "work";
-                else if (keywords.study.test(note)) detectedTopic = "study";
-                else if (keywords.mood.test(note)) detectedTopic = "mood";
-                else if (keywords.distraction.test(note)) detectedTopic = "distraction";
+                    if (keywords.work.test(note)) detectedTopic = "work";
+                    else if (keywords.study.test(note)) detectedTopic = "study";
+                    else if (keywords.mood.test(note)) detectedTopic = "mood";
+                    else if (keywords.distraction.test(note)) detectedTopic = "distraction";
 
-                // [UPDATED] Regex tìm địa điểm (Hỗ trợ "at" tiếng Anh và "ở/tại" tiếng Việt)
-                // Match: "at Home", "ở Chợ Rẫy", "tại Cafe"
-                const locMatch = note.match(/(?:ở|tại|at)\s+([A-ZÀ-Ỹa-zA-Z0-9]+(?:\s+[A-ZÀ-Ỹa-zA-Z0-9]+)*)/);
-                const rawLocation = locMatch ? locMatch[1] : null;
+                    // [UPDATED] Regex tìm địa điểm (Hỗ trợ "at" tiếng Anh và "ở/tại" tiếng Việt)
+                    // Match: "at Home", "ở Chợ Rẫy", "tại Cafe"
+                    const locMatch = note.match(/(?:ở|tại|at)\s+([A-ZÀ-Ỹa-zA-Z0-9]+(?:\s+[A-ZÀ-Ỹa-zA-Z0-9]+)*)/);
+                    const rawLocation = locMatch ? locMatch[1] : null;
 
-                const features = {
-                    sentiment: lastLog.input.user_feeling || "neutral",
-                    topic: detectedTopic
-                };
+                    const features = {
+                        sentiment: lastLog.input.user_feeling || "neutral",
+                        topic: detectedTopic
+                    };
 
-                const template = await aiService.generateCopy(features);
+                    const template = await aiService.generateCopy(features);
 
-                if (template) {
-                    // [UPDATED] Dùng chrome.i18n cho các từ điền vào chỗ trống
-                    const fallbackAct = detectedTopic === "work"
-                        ? atomMsg("fallback_activity_work")
-                        : atomMsg("fallback_activity_general");
+                    if (template) {
+                        // [UPDATED] Dùng chrome.i18n cho các từ điền vào chỗ trống
+                        const fallbackAct = detectedTopic === "work"
+                            ? atomMsg("fallback_activity_work")
+                            : atomMsg("fallback_activity_general");
 
-                    const finalMessage = fillEmpathyTemplate(template, {
-                        locationRaw: rawLocation,
-                        activityRaw: fallbackAct
-                    });
+                        const finalMessage = fillEmpathyTemplate(template, {
+                            locationRaw: rawLocation,
+                            activityRaw: fallbackAct
+                        });
 
-                    await chrome.storage.local.set({
-                        'atom_personalized_msg': {
-                            text: finalMessage,
-                            timestamp: Date.now()
-                        }
-                    });
+                        await chrome.storage.local.set({
+                            'atom_personalized_msg': {
+                                text: finalMessage,
+                                timestamp: Date.now()
+                            }
+                        });
+                    }
                 }
+            } catch (personalizeErr) {
+                console.warn('[Journal AI] Personalized message generation failed (non-critical):', personalizeErr?.message || personalizeErr);
             }
             sendResponse({ success: true, message: advice });
         });
@@ -5238,6 +5292,123 @@ setInterval(() => {
 }, 5000);
 
 /**
+ * SRQ: Find related reading sessions using vector similarity.
+ * Self-contained — accesses IndexedDB and Gemini API directly from service worker.
+ */
+const SRQ_RELATED_CONFIG = {
+    model: 'gemini-embedding-001',
+    dimension: 768,
+    minSimilarity: 0.7,
+    maxResults: 3,
+    maxTextLength: 10000
+};
+
+function srqCosineSimilarity(a, b) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return 0;
+    let dot = 0, normA = 0, normB = 0;
+    for (let i = 0; i < a.length; i++) {
+        dot += a[i] * b[i];
+        normA += a[i] * a[i];
+        normB += b[i] * b[i];
+    }
+    const mag = Math.sqrt(normA) * Math.sqrt(normB);
+    return mag === 0 ? 0 : dot / mag;
+}
+
+async function srqOpenVectorDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open('atom_vectors', 1);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            if (!db.objectStoreNames.contains('embeddings')) {
+                const store = db.createObjectStore('embeddings', { keyPath: 'sessionId' });
+                store.createIndex('timestamp', 'timestamp', { unique: false });
+                store.createIndex('domain', 'domain', { unique: false });
+            }
+        };
+    });
+}
+
+async function srqGetAllEmbeddings() {
+    try {
+        const db = await srqOpenVectorDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(['embeddings'], 'readonly');
+            const store = tx.objectStore('embeddings');
+            const req = store.getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => reject(req.error);
+        });
+    } catch (err) {
+        console.warn('[SRQ] Failed to read vector store:', err.message);
+        return [];
+    }
+}
+
+async function srqGenerateEmbedding(text, apiKey) {
+    const truncated = (text || '').trim().slice(0, SRQ_RELATED_CONFIG.maxTextLength);
+    if (!truncated || !apiKey) return null;
+
+    const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${SRQ_RELATED_CONFIG.model}:embedContent?key=${apiKey}`,
+        {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                content: { parts: [{ text: truncated }] },
+                outputDimensionality: SRQ_RELATED_CONFIG.dimension
+            })
+        }
+    );
+
+    if (!response.ok) {
+        console.warn('[SRQ] Embedding API error:', response.status);
+        return null;
+    }
+
+    const data = await response.json();
+    return Array.isArray(data?.embedding?.values) ? data.embedding.values : null;
+}
+
+async function findRelatedForSRQ(url, title) {
+    try {
+        // Get API key
+        const storage = await chrome.storage.local.get(['gemini_api_key', 'apiKey']);
+        const apiKey = storage.gemini_api_key || storage.apiKey;
+        if (!apiKey) return [];
+
+        // Get all stored embeddings
+        const allEmbeddings = await srqGetAllEmbeddings();
+        if (!allEmbeddings.length) return [];
+
+        // Generate query embedding from title
+        const queryEmbedding = await srqGenerateEmbedding(title || '', apiKey);
+        if (!queryEmbedding) return [];
+
+        // Compute similarities
+        const scored = allEmbeddings
+            .filter(e => e?.sessionId && Array.isArray(e.embedding) && e.embedding.length === queryEmbedding.length)
+            .map(e => ({
+                sessionId: e.sessionId,
+                similarity: Math.round(srqCosineSimilarity(queryEmbedding, e.embedding) * 100) / 100,
+                title: e.title || 'Unknown',
+                url: e.url || '',
+                domain: e.domain || ''
+            }))
+            .filter(e => e.similarity >= SRQ_RELATED_CONFIG.minSimilarity)
+            .sort((a, b) => b.similarity - a.similarity)
+            .slice(0, SRQ_RELATED_CONFIG.maxResults);
+
+        return scored;
+    } catch (err) {
+        console.warn('[SRQ] findRelatedForSRQ failed:', err.message);
+        return [];
+    }
+}
+
+/**
  * Export all pending cards in a batch (by topicKey) to NotebookLM export queue.
  * Uses existing clip_format + export_queue pipeline.
  */
@@ -5577,8 +5748,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     break;
                 }
                 case "SRQ_FIND_RELATED": {
-                    // Placeholder for related_memory integration
-                    sendResponse({ ok: true, sessions: [] });
+                    try {
+                        const sessions = await findRelatedForSRQ(
+                            request.url,
+                            request.title
+                        );
+                        sendResponse({ ok: true, sessions });
+                    } catch (err) {
+                        console.warn('[SRQ] FIND_RELATED error:', err.message);
+                        sendResponse({ ok: true, sessions: [] });
+                    }
                     break;
                 }
                 default:

@@ -1,4 +1,4 @@
-{
+﻿{
   "appName": {
     "message": "AmoNexus"
   },
@@ -145,6 +145,21 @@
   },
   "opt_hero_desc": {
     "message": "AmoNexus uses Google Gemini to chat and provide psychological advice. Connect your own Key for free & private use."
+  },
+  "opt_dual_key_title": {
+    "message": "💡 Recommended: Set up both keys"
+  },
+  "opt_dual_key_desc": {
+    "message": "Amo uses AI to analyze and assist you. Each provider has its own free quota. By setting up both <b>Gemini</b> (fast analysis) and <b>OpenRouter</b> (backup), Amo will automatically switch when one reaches its limit — ensuring a smooth, uninterrupted experience."
+  },
+  "opt_dual_key_benefit1": {
+    "message": "<b>Gemini</b> — free, fast, best analysis quality — Amo's primary choice"
+  },
+  "opt_dual_key_benefit2": {
+    "message": "<b>OpenRouter</b> — ~50 free calls/day, uses smaller AI models so the experience may not match Gemini — serves as a <b>backup</b> when Gemini hits quota"
+  },
+  "opt_dual_key_benefit3": {
+    "message": "Both keys are <b>free</b> and take about <b>30 seconds</b> to create"
   },
   "opt_btn_get_key": {
     "message": "👉 Get Free Key from Google (30s)"
@@ -573,7 +588,7 @@
     "message": "No focus session yet"
   },
   "popup_open_panel": {
-    "message": "Open control panel"
+    "message": "Chat with Amo"
   },
   "popup_action_settings": {
     "message": "Settings"
@@ -584,6 +599,54 @@
   "popup_action_feedback": {
     "message": "Feedback"
   },
+  "popup_action_website": {
+    "message": "Web"
+  },
+  "popup_action_journal": {
+    "message": "Journal"
+  },
+  "popup_action_notes": {
+    "message": "Memory"
+  },
+  "popup_focus_label": {
+    "message": "Start focus"
+  },
+  "cmdCatFocus": {
+    "message": "Focus"
+  },
+  "cmdCatTools": {
+    "message": "Tools"
+  },
+  "cmdCatAI": {
+    "message": "AI"
+  },
+  "cmdCatSettings": {
+    "message": "Settings"
+  },
+  "cmdFocus25": {
+    "message": "Focus 25 min"
+  },
+  "cmdFocus40": {
+    "message": "Focus 40 min"
+  },
+  "cmdFocus50": {
+    "message": "Focus 50 min"
+  },
+  "cmdOpenDiary": {
+    "message": "Journal"
+  },
+  "cmdOpenNotes": {
+    "message": "Notes"
+  },
+  "cmdOpenSaved": {
+    "message": "Saved highlights"
+  },
+  "cmdExportSaved": {
+    "message": "Export saved"
+  },
+  "cmdOpenSettings": {
+    "message": "Settings"
+  },
   "cmd_onboarding_title": {
     "message": "New: control with chat"
   },
@@ -593,8 +656,74 @@
   "cmd_onboarding_dismiss": {
     "message": "Got it"
   },
+  "diaryNoContent": {
+    "message": "Add a short note before saving."
+  },
+  "diarySaved": {
+    "message": "Saved to Journal ✍️"
+  },
+  "diarySummaryEmpty": {
+    "message": "No entries yet for this period."
+  },
+  "diarySummaryTitle": {
+    "message": "Journal summary"
+  },
+  "diarySummaryEntries": {
+    "message": "entries"
+  },
+  "diarySummaryMood": {
+    "message": "Top mood"
+  },
+  "diarySummaryTags": {
+    "message": "Top tags"
+  },
+  "diarySummaryTagsEmpty": {
+    "message": "general"
+  },
+  "periodToday": {
+    "message": "today"
+  },
+  "periodWeek": {
+    "message": "this week"
+  },
+  "periodMonth": {
+    "message": "this month"
+  },
+  "noteNoContent": {
+    "message": "Select text or provide content first."
+  },
+  "noteSaved": {
+    "message": "Saved to Notes 📝"
+  },
+  "noteSaveFailed": {
+    "message": "Could not save note."
+  },
+  "quickDiaryHint": {
+    "message": "Quick diary..."
+  },
+  "quickDiaryTitle": {
+    "message": "Quick diary"
+  },
+  "quickDiaryPlaceholder": {
+    "message": "How are you feeling today?"
+  },
+  "diaryBtnSave": {
+    "message": "Save to journal"
+  },
+  "cmd_diary_empty": {
+    "message": "Write something after the diary command."
+  },
+  "savedExportEmpty": {
+    "message": "No saved highlights to export."
+  },
+  "savedExported": {
+    "message": "Exported $1 highlights"
+  },
+  "savedExportFailed": {
+    "message": "Export failed. Try again."
+  },
   "ctx_chat_with_page": {
-    "message": "ATOM: Chat with Amo"
+    "message": "Amo: Chat with Amo"
   },
   "sidepanel_title": {
     "message": "Chat with Amo"
@@ -642,16 +771,16 @@
     "message": "Unknown Page"
   },
   "pop_btn_safe_add_new": {
-    "message": "Disable ATOM"
+    "message": "Disable Amo"
   },
   "pop_btn_safe_remove_new": {
-    "message": "Enable ATOM"
+    "message": "Enable Amo"
   },
   "pop_status_running": {
-    "message": "ATOM is running"
+    "message": "Amo is running"
   },
   "pop_status_off": {
-    "message": "ATOM is off"
+    "message": "Amo is off"
   },
   "pop_loading": {
     "message": "Loading..."
@@ -684,7 +813,7 @@
     "message": "Unknown"
   },
   "ai_thinking_error": {
-    "message": "ATOM is pondering, please try again later!"
+    "message": "Amo is pondering, please try again later!"
   },
   "fallback_location": {
     "message": "this place"
@@ -720,13 +849,13 @@
     "message": "Bug"
   },
   "bug_title": {
-    "message": "Report a Bug - ATOM"
+    "message": "Report a Bug - Amo"
   },
   "bug_header": {
     "message": "Report a Bug"
   },
   "bug_subheader": {
-    "message": "Help us improve ATOM by describing what went wrong"
+    "message": "Help us improve Amo by describing what went wrong"
   },
   "bug_auto_collected": {
     "message": "Auto-collected Information"
@@ -807,7 +936,7 @@
     "message": "View Privacy Policy"
   },
   "update_title": {
-    "message": "ATOM is on Chrome Store!"
+    "message": "Amo is on Chrome Store!"
   },
   "update_desc": {
     "message": "Click here to install the official version for automatic updates."
@@ -855,10 +984,10 @@
     "message": "$1 (override)"
   },
   "ctx_whitelist_domain": {
-    "message": "ATOM: Always ignore this site (Safe Zone)"
+    "message": "Amo: Always ignore this site (Safe Zone)"
   },
   "ctx_reading_parent": {
-    "message": "ATOM: Active Reading"
+    "message": "Amo: Active Reading"
   },
   "ctx_reading_summarize": {
     "message": "Summarize this selection (2 sentences)"
@@ -870,7 +999,7 @@
     "message": "Create 3 recall questions"
   },
   "reading_card_title": {
-    "message": "ATOM - Active Reading"
+    "message": "Amo - Active Reading"
   },
   "reading_card_key_points": {
     "message": "Key points"
@@ -912,7 +1041,7 @@
     "message": "No summary available."
   },
   "reading_vault_title": {
-    "message": "ATOM - Reading Vault"
+    "message": "Amo - Reading Vault"
   },
   "reading_vault_empty": {
     "message": "No reading notes yet."
@@ -1014,7 +1143,7 @@
     "message": "Quiz"
   },
   "reading_error_summary": {
-    "message": "ATOM hit an error analyzing this selection. Please try again."
+    "message": "Amo hit an error analyzing this selection. Please try again."
   },
   "reading_cooldown_summary": {
     "message": "Rate limit reached. Active Reading pauses for $1 seconds."
@@ -1122,7 +1251,7 @@
     "message": "<b>Restart:</b> Close and reopen Chrome after changes"
   },
   "opt_notif_test_title": {
-    "message": "ATOM - Test Notification"
+    "message": "Amo - Test Notification"
   },
   "opt_notif_test_msg": {
     "message": "If you see this, notifications are working normally!"
@@ -1251,7 +1380,7 @@
     "message": "Reset Timer"
   },
   "mem_title": {
-    "message": "ATOM Memory"
+    "message": "Amo Memory"
   },
   "mem_desc": {
     "message": "Your reading traces and knowledge exports"
@@ -1919,6 +2048,15 @@
   "sp_capture_post_title": {
     "message": "Capture post (Alt+C)"
   },
+  "sp_capture_post_label": {
+    "message": "Capture"
+  },
+  "sp_compact_on": {
+    "message": "Compact view"
+  },
+  "sp_compact_off": {
+    "message": "Full view"
+  },
   "sp_shortcut_capture": {
     "message": "Capture post (Alt+C)"
   },
@@ -2561,7 +2699,7 @@
     "message": "Dismiss"
   },
   "opt_onboarding_completed": {
-    "message": "Setup completed! You can now start using ATOM."
+    "message": "Setup completed! You can now start using Amo."
   },
   "sp_error_cta_retry": {
     "message": "Try Again"
@@ -2589,6 +2727,9 @@
   },
   "sp_cards_desc": {
     "message": "Practice cards will appear here as you save more highlights."
+  },
+  "sp_cards_coming_soon": {
+    "message": "AI-powered review cards are on the way! We're crafting a smart practice experience to help you retain what you read. Stay tuned for the next update ✨"
   },
   "sp_cards_back_chat": {
     "message": "Back to Chat"
@@ -2816,5 +2957,59 @@
   },
   "opt_account_retry": {
     "message": "Try Again"
+  },
+  "sp_connection_empty": {
+    "message": "No related ideas yet"
+  },
+  "popup_toggle_title": {
+    "message": "Enable/Disable"
+  },
+  "focus_review_loading": {
+    "message": "Generating recall question…"
+  },
+  "popup_focus_custom_placeholder": {
+    "message": "min"
+  },
+  "popup_focus_custom_go": {
+    "message": "Go"
+  },
+  "sp_memory_title": {
+    "message": "Related from your Memory"
+  },
+  "sp_memory_intro": {
+    "message": "This reminds me of your notes on:"
+  },
+  "sp_memory_similar": {
+    "message": "similar"
+  },
+  "sp_memory_insights": {
+    "message": "insights"
+  },
+  "sp_memory_view": {
+    "message": "View Notes"
+  },
+  "sp_memory_compare": {
+    "message": "Compare Concepts"
+  },
+  "sp_memory_dismiss": {
+    "message": "Dismiss"
+  },
+  "sp_memory_also": {
+    "message": "Also related:"
+  },
+  "opt_free_tier_title": {
+    "message": "🎁 All features are free"
+  },
+  "opt_free_tier_desc": {
+    "message": "You currently have full access to every feature in Amo — completely free. We want you to have enough time to explore and experience the real value that Amo brings."
+  },
+  "opt_free_tier_future": {
+    "message": "In upcoming versions, Amo will continue to grow with even more powerful features. To sustain and improve the product, we will introduce a Pro plan — creating the resources needed to build something truly valuable for our users."
+  },
+  "opt_free_tier_thanks": {
+    "message": "Thank you for being part of Amo's journey. Your support means everything to us. 💚"
+  },
+  "opt_free_tier_toast": {
+    "message": "You have full access to all features for free. Enjoy and experience the value Amo brings!"
   }
 }

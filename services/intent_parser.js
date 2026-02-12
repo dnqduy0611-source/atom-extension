@@ -105,6 +105,50 @@
             validate: function () { return { valid: true }; },
             confirm: false,
             undoable: false
+        },
+
+        DIARY_ADD: {
+            patterns: [
+                /(?:ghi|viết|thêm|add)\s*(?:nhật ký|diary|journal)[:\s]*(.+)/i,
+                /(?:diary|journal|nhật ký)[:\s]+(.+)/i,
+                /(?:hôm nay|today)\s+(?:tôi|mình|I)\s+(.+)/i
+            ],
+            extractParams: function (match) {
+                return { content: (match[1] || '').trim() };
+            },
+            validate: function (params) {
+                if (!params.content) return { valid: false, hintKey: 'cmd_diary_empty' };
+                return { valid: true };
+            },
+            confirm: false,
+            undoable: true
+        },
+
+        DIARY_SUMMARY: {
+            patterns: [
+                /(?:tổng kết|tóm tắt|summary)\s+(?:nhật ký|diary|journal)\s*(hôm nay|tuần|tháng|today|week|month)?/i,
+                /(?:nhật ký|diary|journal)\s+(?:tổng kết|tóm tắt|summary)\s*(hôm nay|tuần|tháng|today|week|month)?/i
+            ],
+            extractParams: function (match) {
+                var raw = (match[1] || '').toLowerCase().trim();
+                var periodMap = { 'hôm nay': 'today', 'tuần': 'week', 'tháng': 'month' };
+                return { period: periodMap[raw] || raw || 'week' };
+            },
+            validate: function () { return { valid: true }; },
+            confirm: false,
+            undoable: false
+        },
+
+        SAVE_TO_NOTES: {
+            patterns: [
+                /(?:lưu|save)\s*(?:vào\s*)?(?:ghi chú|notes?|memory|bộ nhớ)/i,
+                /(?:ghi chú|note)\s*(?:lại|this|này)/i,
+                /(?:save|lưu)\s+(?:this|này|đoạn này)/i
+            ],
+            extractParams: function () { return {}; },
+            validate: function () { return { valid: true }; },
+            confirm: false,
+            undoable: true
         }
     };
 

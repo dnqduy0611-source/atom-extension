@@ -1375,6 +1375,40 @@
                     <p class="hint-text" id="provider-hint" style="display: none;" data-i18n="opt_provider_hint">
                         OpenRouter: Access Llama 3, Mistral, DeepSeek (~50 free requests/day)</p>
 
+                    <!-- Dual-Key Recommendation Card -->
+                    <div class="dual-key-tip"
+                        style="margin-top: 14px; padding: 14px 16px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(59, 130, 246, 0.04) 100%); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 12px; font-size: 13px; line-height: 1.6;">
+                        <div style="display: flex; align-items: flex-start; gap: 10px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px; color: var(--primary);">
+                                <path
+                                    d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+                            </svg>
+                            <div>
+                                <strong style="color: var(--foreground);" data-i18n="opt_dual_key_title">💡 Khuyến nghị:
+                                    Thiết lập cả 2 key</strong>
+                                <p style="margin: 6px 0 0; color: var(--muted);" data-i18n="opt_dual_key_desc">
+                                    Amo sử dụng AI để phân tích và hỗ trợ bạn. Mỗi nhà cung cấp có giới hạn miễn phí
+                                    riêng. Khi thiết lập cả <b>Gemini</b> (phân tích nhanh) lẫn <b>OpenRouter</b> (dự
+                                    phòng), Amo sẽ tự động chuyển đổi khi một bên đạt giới hạn — đảm bảo trải nghiệm ổn
+                                    định không bị gián đoạn.
+                                </p>
+                                <ul style="margin: 8px 0 0; padding-left: 18px; color: var(--muted); font-size: 12px;">
+                                    <li data-i18n="opt_dual_key_benefit1"><b>Gemini</b> — miễn phí, nhanh, chất lượng
+                                        phân tích tốt nhất — đây là lựa chọn chính của Amo</li>
+                                    <li data-i18n="opt_dual_key_benefit2"><b>OpenRouter</b> — ~50 lượt/ngày miễn phí, sử
+                                        dụng các model AI nhỏ hơn nên trải nghiệm sẽ không bằng Gemini — được xem là
+                                        <b>phương án dự phòng</b> khi Gemini hết quota
+                                    </li>
+                                    <li data-i18n="opt_dual_key_benefit3">Cả 2 key đều <b>miễn phí</b> và mất khoảng
+                                        <b>30 giây</b> để tạo
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Google Gemini Key (Default) -->
                     <div id="google-key-section" style="margin-top: 16px;">
                         <div class="hero-box">
@@ -1710,57 +1744,61 @@
                                     <span class="info-icon" data-tooltip-i18n="opt_ai_pilot_budget_tooltip"
                                         aria-label="More information">ⓘ</span>
                                 </label>
-                                <input type="text" id="aiBudgetPerDay" placeholder="200">
+                                <input type="text" id="aiBudgetPerDay" placeholder="30">
                                 <small class="hint" data-i18n="opt_ai_pilot_budget_hint">Number of AI calls allowed per
                                     day</small>
                             </div>
                             <div>
                                 <label for="aiCacheTtlMs" data-i18n="opt_ai_pilot_cache_ttl_ms">Temporary storage
                                     time</label>
-                                <input type="text" id="aiCacheTtlMs" placeholder="15000">
+                                <input type="text" id="aiCacheTtlMs" placeholder="900000">
                                 <small class="hint" data-i18n="opt_ai_pilot_cache_ttl_hint">How long to remember recent
                                     results (in milliseconds)</small>
                             </div>
                         </div>
 
-                        <div class="settings-grid" style="margin-top: 12px;">
-                            <div>
-                                <label for="aiMaxViewportChars" data-i18n="opt_ai_pilot_max_viewport_chars">Viewport
-                                    chars</label>
-                                <input type="text" id="aiMaxViewportChars" placeholder="1200">
-                            </div>
-                            <div>
-                                <label for="aiMaxSelectedChars" data-i18n="opt_ai_pilot_max_selected_chars">Selected
-                                    chars</label>
-                                <input type="text" id="aiMaxSelectedChars" placeholder="400">
-                            </div>
-                        </div>
-
-                        <div style="margin-top: 12px;">
-                            <label for="aiProvider" data-i18n="opt_ai_pilot_provider">Nha cung cap</label>
-                            <div class="custom-dropdown" id="aiProviderDropdown">
-                                <div class="dropdown-selected" tabindex="0">
-                                    <span class="dropdown-text" data-i18n="opt_ai_pilot_provider_gemini">Gemini</span>
-                                    <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="16"
-                                        height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="m6 9 6 6 6-6" />
-                                    </svg>
+                        <!-- Hidden: managed automatically by hybrid rule-first system -->
+                        <div style="display: none;">
+                            <div class="settings-grid" style="margin-top: 12px;">
+                                <div>
+                                    <label for="aiMaxViewportChars" data-i18n="opt_ai_pilot_max_viewport_chars">Viewport
+                                        chars</label>
+                                    <input type="text" id="aiMaxViewportChars" placeholder="1200">
                                 </div>
-                                <div class="dropdown-options">
-                                    <div class="dropdown-option selected" data-value="gemini"
-                                        data-i18n="opt_ai_pilot_provider_gemini">Gemini</div>
-                                    <div class="dropdown-option" data-value="proxy"
-                                        data-i18n="opt_ai_pilot_provider_proxy">
-                                        Proxy</div>
+                                <div>
+                                    <label for="aiMaxSelectedChars" data-i18n="opt_ai_pilot_max_selected_chars">Selected
+                                        chars</label>
+                                    <input type="text" id="aiMaxSelectedChars" placeholder="400">
                                 </div>
                             </div>
-                            <input type="hidden" id="aiProvider" value="gemini">
-                        </div>
 
-                        <div style="margin-top: 12px;">
-                            <label for="aiProxyUrl" data-i18n="opt_ai_pilot_proxy_url">Proxy URL</label>
-                            <input type="text" id="aiProxyUrl" placeholder="https://your-proxy/decide">
+                            <div style="margin-top: 12px;">
+                                <label for="aiProvider" data-i18n="opt_ai_pilot_provider">Nha cung cap</label>
+                                <div class="custom-dropdown" id="aiProviderDropdown">
+                                    <div class="dropdown-selected" tabindex="0">
+                                        <span class="dropdown-text"
+                                            data-i18n="opt_ai_pilot_provider_gemini">Gemini</span>
+                                        <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="16"
+                                            height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="m6 9 6 6 6-6" />
+                                        </svg>
+                                    </div>
+                                    <div class="dropdown-options">
+                                        <div class="dropdown-option selected" data-value="gemini"
+                                            data-i18n="opt_ai_pilot_provider_gemini">Gemini</div>
+                                        <div class="dropdown-option" data-value="proxy"
+                                            data-i18n="opt_ai_pilot_provider_proxy">
+                                            Proxy</div>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="aiProvider" value="gemini">
+                            </div>
+
+                            <div style="margin-top: 12px;">
+                                <label for="aiProxyUrl" data-i18n="opt_ai_pilot_proxy_url">Proxy URL</label>
+                                <input type="text" id="aiProxyUrl" placeholder="https://your-proxy/decide">
+                            </div>
                         </div>
                     </div>
                 </details>
@@ -2097,25 +2135,47 @@
 
                     <!-- Account Actions -->
                     <div class="account-actions">
-                        <!-- Upgrade Button (Free users) -->
-                        <button id="btn-upgrade-pro" class="btn-action btn-upgrade">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <polygon
-                                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                            </svg>
+                        <!-- Free Tier Note (replaces Upgrade button for now) -->
+                        <div
+                            style="padding: 18px 20px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(59, 130, 246, 0.04) 100%); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 14px; line-height: 1.7;">
+                            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    style="flex-shrink: 0; margin-top: 2px; color: var(--primary);">
+                                    <path
+                                        d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                                </svg>
+                                <div>
+                                    <strong style="font-size: 14px; color: var(--foreground);"
+                                        data-i18n="opt_free_tier_title">🎁 Tất cả tính năng đều miễn phí</strong>
+                                    <p style="margin: 8px 0 0; font-size: 13px; color: var(--muted);"
+                                        data-i18n="opt_free_tier_desc">
+                                        Hiện tại, bạn đang được trải nghiệm toàn bộ tính năng của Amo hoàn toàn miễn
+                                        phí. Chúng tôi muốn bạn có đủ thời gian khám phá và cảm nhận giá trị thực sự mà
+                                        Amo mang lại.
+                                    </p>
+                                    <p style="margin: 8px 0 0; font-size: 13px; color: var(--muted);"
+                                        data-i18n="opt_free_tier_future">
+                                        Trong các phiên bản tiếp theo, Amo sẽ tiếp tục phát triển thêm nhiều tính năng
+                                        hữu ích hơn nữa. Để duy trì và nâng cao chất lượng sản phẩm, chúng tôi sẽ giới
+                                        thiệu gói Pro — nhằm tạo nguồn lực phát triển bền vững, mang đến giá trị lớn hơn
+                                        cho người dùng.
+                                    </p>
+                                    <p style="margin: 10px 0 0; font-size: 12px; color: var(--primary); font-style: italic;"
+                                        data-i18n="opt_free_tier_thanks">
+                                        Cảm ơn bạn đã đồng hành cùng Amo. Sự ủng hộ của bạn là động lực lớn nhất để
+                                        chúng tôi tiếp tục. 💚
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Manage Subscription (Pro users - hidden for now) -->
+                        <button id="btn-upgrade-pro" class="btn-action btn-upgrade" style="display: none;">
                             <span data-i18n="opt_account_upgrade">Upgrade to Pro</span>
                         </button>
-
-                        <!-- Manage Subscription (Pro users) -->
                         <button id="btn-manage-subscription" class="btn-action btn-manage" style="display: none;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-                                <line x1="1" y1="10" x2="23" y2="10" />
-                            </svg>
                             <span data-i18n="opt_account_manage">Manage Subscription</span>
                         </button>
 

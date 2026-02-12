@@ -1,6 +1,6 @@
 // ai_pilot_service.js - AI Pilot teacher adapter (build prompt + validate)
 
-import { AI_CONFIG } from './config/ai_config.js';
+import { AI_CONFIG, getModel } from './config/ai_config.js';
 
 const SYSTEM_PROMPT = `You are AmoNexus AI-Pilot (teacher). Your job is to classify user engagement mode and recommend an intervention.
 
@@ -247,7 +247,14 @@ export class AIPilotService {
       }
     }
 
-    const raw = await this.provider.classify(prompt, DECISION_SCHEMA, timeoutMs, 0);
+    // Use PILOT tier model with fallback chain (gemini-2.0-flash → flash-lite → openrouter)
+    const pilotModel = getModel('PILOT');
+    const pilotFallbackChain = AI_CONFIG.MODELS?.PILOT?.fallback_chain || [];
+    const raw = await this.provider._callCloudGemini(prompt, DECISION_SCHEMA, timeoutMs, 0, {
+      modelOverride: pilotModel,
+      fallbackChain: pilotFallbackChain,
+      priority: 'background'
+    });
     const result = validateAiDecisionOutput(raw, frame);
     const wrapped = {
       ...result,

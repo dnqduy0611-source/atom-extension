@@ -16,6 +16,10 @@ export const NLM_RETRY_DELAYS_MS = [5000, 30000, 120000];
 export const SRQ_CARDS_KEY = "atom_srq_cards_v1";
 export const SRQ_MAX_CARDS = 200;
 
+// Knowledge Graph (Neural Memory)
+export const KG_EDGES_KEY = "atom_knowledge_graph_v1";
+export const KG_MAX_EDGES = 1000;
+
 // SRQ Wave 1 P0: Idempotency
 export const SRQ_IDEMPOTENCY_TIME_BUCKET_MS = 60000; // 60 seconds
 export const SRQ_IDEMPOTENCY_KEY_VERSION = "v1";

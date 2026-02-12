@@ -27,7 +27,8 @@ export async function saveCards(cards) {
 }
 
 /**
- * FIFO eviction: remove oldest exported/dismissed cards when at capacity.
+ * Strength-based eviction: remove weakest exported/dismissed cards when at capacity.
+ * Falls back to oldest-first (FIFO) for cards without strength data.
  * Never auto-evict pending_review or approved cards.
  * @param {Array} cards - Current card list
  * @returns {Array} Trimmed card list
@@ -38,11 +39,15 @@ function evictIfNeeded(cards) {
     const evictable = ["exported", "dismissed"];
     const next = [...cards];
 
-    // Sort evictable candidates by createdAt ascending (oldest first)
+    // Sort evictable candidates: weakest first, then oldest first (FIFO fallback)
     const candidates = next
         .map((card, idx) => ({ card, idx }))
         .filter(({ card }) => evictable.includes(card?.status))
-        .sort((a, b) => (a.card.createdAt || 0) - (b.card.createdAt || 0));
+        .sort((a, b) => {
+            const sDiff = (a.card.strength ?? 1.0) - (b.card.strength ?? 1.0);
+            if (sDiff !== 0) return sDiff;
+            return (a.card.createdAt || 0) - (b.card.createdAt || 0);
+        });
 
     let removed = 0;
     const toRemove = new Set();

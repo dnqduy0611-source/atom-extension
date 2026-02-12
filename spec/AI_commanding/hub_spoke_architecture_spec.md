@@ -1,9 +1,9 @@
 # Hub-Spoke Architecture + AI Command Routing Specification
 
-**Version:** 2.0
+**Version:** 2.1
 **Created:** 2026-02-09
-**Updated:** 2026-02-09
-**Status:** Draft v2
+**Updated:** 2026-02-10
+**Status:** In Progress (Phase 0-1 Done, Phase 2-3 Partial)
 
 ---
 
@@ -21,7 +21,7 @@ AmoNexus hiện có kiến trúc rời rạc:
 **Hub-Spoke Architecture** với **Side Panel là hub trung tâm**, kết hợp:
 - **AI Command Routing** cho phép điều khiển bằng ngôn ngữ tự nhiên
 - **Client-side Intent Parser** cho deterministic commands (không phụ thuộc AI)
-- **Quick Action Chips** cho 1-tap access, không cần gõ
+- **"/" Command Menu** cho 1-tap access thay vì Quick Action Chips — gọn hơn, tập trung hơn
 
 ### 1.3 Design Principles
 
@@ -60,6 +60,12 @@ Mọi UI text PHẢI tuân theo bảng này. Đây là **quy tắc bắt buộc*
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        SIDE PANEL (HUB)                         │
+│                                                                 │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐      │
+│  │ 💬 Chat  │  │ 📝 Notes │  │ 🃏Review │  │ 📋 Saved │      │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘      │
+│                         (Main Tab Bar)                          │
+│                                                                 │
 │  ┌─────────────────────────────────────────────────────────┐   │
 │  │                    AI Chat Interface                     │   │
 │  │  ┌─────────────────────────────────────────────────┐    │   │
@@ -72,19 +78,25 @@ Mọi UI text PHẢI tuân theo bảng này. Đây là **quy tắc bắt buộc*
 │  │  └─────────────────────────────────────────────────┘    │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │                                                                 │
-│  ┌──────────────────────────────────────────────────────┐      │
-│  │  Quick Action Chips (1-tap, no typing needed)        │      │
-│  │  [Tập trung 25p] [Ghi nhật ký] [Ôn tập thẻ]        │      │
-│  └──────────────────────────────────────────────────────┘      │
-│                                                                 │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐      │
-│  │  💬 Chat │  │ 📝 Ghi  │  │ 🃏 Thẻ  │  │ 📋 Đã   │      │
-│  │          │  │   chú    │  │  ôn tập  │  │   lưu    │      │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘      │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │   🎯 Focus Bar (inline, visible only when active)       │   │
+│  │   Focus  23:45  ████████░░ [Pause] [Stop]               │   │
+│  └─────────────────────────────────────────────────────────┘   │
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │        🎯 Focus Widget (Collapsible, always visible)    │   │
+│  │  [/] Command Menu  │  [Ask a question...]  │  [Send]    │   │
+│  │  ┌──────────────────────────────┐                       │   │
+│  │  │ FOCUS: 🎯25m 🎯40m 🎯50m    │ ← Dropdown "/" menu   │   │
+│  │  │ AI: Summarize, Explain, ...  │                       │   │
+│  │  │ TOOLS: Journal, Notes, ...   │                       │   │
+│  │  │ SETTINGS: ⚙️                 │                       │   │
+│  │  └──────────────────────────────┘                       │   │
 │  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐      │
+│  │💬 Chats  │  │📝 Notes  │  │🔗Related │  │ ▼ Toggle │      │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘      │
+│                    (Bottom Tabs - Collapsible)                  │
 └────────────────────────────────┬────────────────────────────────┘
                                  │
         ┌────────────────────────┼────────────────────────┐
@@ -492,56 +504,63 @@ Confirmation:
 
 ## 5. Technical Implementation
 
-### 5.1 Module Split Strategy (Critical)
+### 5.1 Module Split Strategy
 
-Side Panel hiện ~6950 lines. Để tránh bloat, tách modules:
+Side Panel hiện ~8010 lines. Module split đang tiến hành, tách controllers ra files riêng:
 
 ```
-sidepanel.js (orchestrator, ~2000 lines max)
+sidepanel.js (orchestrator — hiện 8010 lines, mục tiêu ≤3000 lines)
 ├── services/
-│   ├── command_router.js       (NEW) Command parse + execute
-│   ├── intent_parser.js        (NEW) Client-side regex intent
-│   ├── action_executor.js      (NEW) Confirm + undo + execute
-│   ├── mood_detector.js        (NEW) AI-powered mood (Phase 3)
+│   ├── command_router.js       ✅ DONE (152 lines)
+│   ├── intent_parser.js        ✅ DONE (156 lines)
+│   ├── action_executor.js      ✅ DONE (146 lines)
 │   └── srq_enricher.js         (existing)
 ├── ui/controllers/
-│   ├── tab_controller.js       (NEW) Tab navigation logic
-│   ├── focus_widget.js         (NEW) Focus timer widget
-│   ├── quick_actions.js        (NEW) Quick action chips
-│   ├── quick_diary.js          (NEW) Quick diary widget
-│   └── toast_manager.js        (NEW) Toast + undo system
+│   ├── tab_controller.js       ✅ DONE (150 lines) — generic tab switching
+│   ├── focus_bar.js            ✅ DONE (133 lines) — inline timer bar
+│   ├── command_menu.js         ✅ DONE (120 lines) — "/" command dropdown
+│   └── toast_manager.js        ✅ DONE (364 lines) — toast + undo system
 ├── ui/components/
 │   └── srq_widget.js           (existing)
 └── styles/
-    ├── sidepanel_tabs.css.js   (NEW)
-    ├── focus_widget.css.js     (NEW)
-    └── toast.css.js            (NEW)
+    └── (CSS inline trong sidepanel.html — không dùng CSS-in-JS)
 ```
 
-### 5.2 New Files Summary
+> **Note (Design Divergence):** Spec ban đầu có `focus_widget.js`, `quick_actions.js`, `quick_diary.js`.
+> Thực tế đã thay thế bằng `focus_bar.js` (compact, chỉ hiện khi active) và `command_menu.js`
+> (gom all Quick Actions + Quick Diary + Navigation vào "/" dropdown menu cho gọn).
+> Các file cũ vẫn tồn tại nhưng KHÔNG được load.
 
-| File | Purpose |
-|------|---------|
-| `services/command_router.js` | Parse AI response, route to handlers |
-| `services/intent_parser.js` | Client-side regex intent detection |
-| `services/action_executor.js` | Confirmation + undo + execute |
-| `ui/controllers/tab_controller.js` | Tab navigation + lazy load |
-| `ui/controllers/focus_widget.js` | Focus timer compact widget |
-| `ui/controllers/quick_actions.js` | Context-aware quick action chips |
-| `ui/controllers/quick_diary.js` | Quick diary entry widget |
-| `ui/controllers/toast_manager.js` | Toast notification + undo system |
+### 5.2 Files Summary (Active)
+
+| File | Status | Purpose |
+|------|--------|---------|
+| `services/command_router.js` | ✅ Done + Loaded | Parse AI response, route to handlers |
+| `services/intent_parser.js` | ✅ Done + Loaded | Client-side regex intent detection |
+| `services/action_executor.js` | ✅ Done + Loaded | Confirmation + undo + execute |
+| `ui/controllers/tab_controller.js` | ✅ Done + Loaded | Generic tab navigation (used by bottom tabs) |
+| `ui/controllers/focus_bar.js` | ✅ Done + Loaded | Inline focus timer bar (replaces FocusWidget) |
+| `ui/controllers/command_menu.js` | ✅ Done + Loaded | "/" Command Menu dropdown (replaces Quick Chips) |
+| `ui/controllers/toast_manager.js` | ✅ Done + Loaded | Toast notification + undo system |
+
+### 5.2b Legacy Files (Exist but NOT loaded)
+
+| File | Status | Reason |
+|------|--------|--------|
+| `ui/controllers/focus_widget.js` | ⚠️ Not loaded | Replaced by `focus_bar.js` |
+| `ui/controllers/quick_actions.js` | ⚠️ Not loaded | Replaced by `command_menu.js` |
+| `ui/controllers/quick_diary.js` | ⚠️ Not loaded | Merged into `command_menu.js` |
 
 ### 5.3 Modified Files
 
-| File | Changes |
-|------|---------|
-| `sidepanel.js` | Import modules, orchestration only |
-| `sidepanel.html` | Tab structure, focus widget, quick actions |
-| `popup.js` | Simplify to status + launcher |
-| `popup.html` | Minimal UI |
-| `background.js` | Add command system prompt, new message types |
-| `_locales/*/messages.json` | Non-tech friendly strings |
-| `manifest.json` | New module entries if needed |
+| File | Changes | Status |
+|------|---------|--------|
+| `sidepanel.js` | Command system init, handlers, intent parsing | ✅ Done (8010 lines, chưa split nhưng functional) |
+| `sidepanel.html` | Main tabs, Focus Bar, "/" Command Menu, Bottom tabs | ✅ Done |
+| `popup.js` | Chưa simplify | ❌ Pending (Phase 4) |
+| `popup.html` | Chưa simplify | ❌ Pending (Phase 4) |
+| `background.js` | Command system prompt | ✅ Done |
+| `_locales/*/messages.json` | `cmd_*` i18n strings | ✅ Done |
 
 ### 5.4 Offline Fallback Strategy
 
@@ -573,41 +592,42 @@ async function handleOffline(command, params) {
 
 ## 6. Migration Strategy
 
-### Phase 0: Foundation (1 tuần)
-- CommandRouter class (isolated, unit tested)
-- IntentParser class (client-side regex)
-- Feature flag `ENABLE_AI_COMMANDS` (default OFF)
-- i18n strings với non-tech vocabulary
-- Toast + Undo system
+### Phase 0: Foundation ✅ DONE
+- ✅ CommandRouter class (isolated)
+- ✅ IntentParser class (client-side regex)
+- ✅ Feature flag `ENABLE_AI_COMMANDS` (default OFF)
+- ✅ i18n strings với non-tech vocabulary (`cmd_*` keys)
+- ✅ Toast + Undo system
+- ❌ Unit tests chưa viết
 
-### Phase 1: Core Router + Focus Commands (1.5 tuần)
-- Integrate CommandRouter vào sidepanel.js
-- Client-side intent for Focus start/stop (instant, offline)
-- AI system prompt addition
-- Quick Action Chips (context-aware)
-- Confirmation dialog for destructive actions
+### Phase 1: Core Router + Focus Commands ✅ DONE
+- ✅ Integrate CommandRouter vào sidepanel.js (`initCommandSystem()`)
+- ✅ Client-side intent for Focus start/stop (instant, offline)
+- ✅ AI system prompt addition (`COMMAND_SYSTEM_PROMPT`)
+- ✅ "/" Command Menu (thay thế Quick Action Chips — gọn hơn)
+- ✅ Confirmation dialog for destructive actions
 
-### Phase 2: Side Panel Unification (1.5 tuần)
-- Module split sidepanel.js trước khi thêm tabs
-- Tab Navigation: Chat | Ghi chú | Thẻ ôn | Đã lưu
-- Focus Widget compact ở bottom
-- Memory tab + SRQ tab integration
-- Smooth animations + responsive
+### Phase 2: Side Panel Unification ⚠️ PARTIAL
+- ⚠️ Module split: controllers tách ra files riêng, nhưng sidepanel.js vẫn 8010 lines
+- ✅ Main Tab Navigation: Chat | Notes | Review | Saved (implemented)
+- ✅ Focus Bar inline (thay thế Focus Widget — chỉ hiện khi active)
+- ✅ Bottom Tabs: Chats | Notes | Related (collapsible)
+- ❌ Full module split sidepanel.js chưa hoàn thành
 
-### Phase 3: Diary + Notes + SRQ Integration (1 tuần)
-- DIARY_ADD với AI-powered mood detection (không dùng regex)
-- DIARY_SUMMARY command
-- SAVE_TO_NOTES command
-- Quick Diary widget
-- SRQ commands: OPEN_SAVED, EXPORT_SAVED
-- Cross-linking Notes ↔ Diary (AI-powered, không keyword overlap)
+### Phase 3: Diary + Notes + SRQ Integration ⚠️ PARTIAL
+- ✅ DIARY_ADD handler registered (AI-powered mood)
+- ✅ DIARY_SUMMARY handler registered
+- ✅ SAVE_TO_NOTES handler registered
+- ✅ "/" Menu tích hợp Journal, Notes, Saved, Export
+- ✅ SRQ commands: OPEN_SAVED, EXPORT_SAVED handlers
+- ❌ Cross-linking Notes ↔ Diary chưa implement
 
-### Phase 4: Polish & Release (1 tuần)
-- Popup simplification
-- End-to-end testing
-- Performance optimization
-- Onboarding tooltip cho first-time users
-- Gradual rollout 5% → 100%
+### Phase 4: Polish & Release ❌ NOT STARTED
+- ❌ Popup simplification
+- ❌ End-to-end testing
+- ❌ Performance optimization
+- ⚠️ Onboarding tooltip (partial: `showCommandOnboardingIfNeeded()`)
+- ❌ Gradual rollout
 
 ---
 
@@ -635,7 +655,7 @@ async function handleOffline(command, params) {
 | Performance degradation | Medium | Lazy load, virtual scroll, debounce |
 | Offline/API down | Medium | Client-side intent for Tier 1, local queue for Tier 2 |
 | User accidentally triggers action | Medium | Confirmation for destructive, undo for all |
-| Non-tech user confused | High | Quick Action Chips (buttons > text), friendly errors |
+| Non-tech user confused | High | "/" Command Menu (buttons > text), friendly errors |
 
 ---
 
@@ -643,9 +663,9 @@ async function handleOffline(command, params) {
 
 | Question | Resolution |
 |----------|-----------|
-| ~~Voice input (speech-to-text)?~~ | Deferred to v3. Text + chips first. |
+| ~~Voice input (speech-to-text)?~~ | Deferred to v3. Text + menu first. |
 | ~~Notes tab: full list or recent?~~ | Recent 20, with search + "load more" |
-| ~~Focus widget minimizable?~~ | Yes, 3 states: idle/compact/expanded |
-| Quick Action Chips: max count? | **Max 4 chips**, context-dependent |
-| SRQ integration scope? | Open + Export commands, tab in Phase 2 |
+| ~~Focus widget minimizable?~~ | Đổi sang FocusBar inline — chỉ hiện khi active, auto-hide khi idle |
+| ~~Quick Action Chips: max count?~~ | Thay bằng "/" Command Menu dropdown — không giới hạn items, phân nhóm rõ |
+| SRQ integration scope? | Open + Export commands, tab "Saved" in Main Tab Bar |
 | Mood detection: regex vs AI? | **AI-powered** in Tier 2, no client regex for mood |

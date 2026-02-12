@@ -8,25 +8,19 @@
     // State
     // ===========================
     let pageContext = null;
-    // Per-panel in-memory cache for "Deep Angle" output (keyed by normalized URL).
-    // Keeps UX snappy without persisting potentially sensitive content.
-    const deepAngleByUrl = new Map();
+    // deepAngleByUrl extracted to sp_smartlink.js (Phase 4b)
     let threads = [];
     let activeThreadId = null;
     let activeSessionId = null; // Unified ReadingSession ID
     let isLoading = false;
     let isGeneratingInsight = false; // Prevent duplicate insight generation
-    let isGeneratingDeepAngle = false; // Prevent duplicate Deep Angle clicks
-    let isInsightDisplayHidden = false; // User preference: hide/show Key Insight box
+    // isGeneratingDeepAngle extracted to sp_smartlink.js (Phase 4b)
+    let isInsightDisplayHidden = true; // Default hidden; shown when user creates insight (Ctrl+D)
     let currentTabId = null;
     let currentDomain = null;
     let currentModeId = null;
-    let retentionOverlay = null;
-    let retryingState = {
-        active: false,
-        previousText: '',
-        previousStatusClass: ''
-    };
+    // retentionOverlay extracted to sp_retention.js (Phase 3b)
+    // retryingState extracted to sp_llm.js (Phase 4a)
     let semanticFlags = {
         embeddingsEnabled: false,
         semanticSearchEnabled: false
@@ -35,24 +29,16 @@
     let userPersona = ''; // User's role/expertise for adaptive explanations
     let commandSystemEnabled = false;
     let commandActionExecutor = null;
-    let commandQuickActionsController = null;
-    let quickDiaryController = null;
     let tabController = null;
     let focusWidgetController = null;
     let activeMainTab = 'chat';
 
     // Session Management
     let sessionStartTime = Date.now();
-    let parkingLot = []; // Ideas not ready to save
+    // parkingLot extracted to sp_parking.js (Phase 3b)  lives on SP.parkingLot
     let sessionTimer = null;
 
-    const smartLinkMetrics = {
-        connections_detected_count: 0,
-        semantic_candidates_count: 0,
-        deep_angle_generated_count: 0,
-        fallback_to_recency_count: 0,
-        embedding_api_errors: 0
-    };
+    // smartLinkMetrics extracted to sp_smartlink.js (Phase 4b)
 
     // DOM Elements (will be populated after DOM ready)
     let elements = {};
@@ -72,7 +58,7 @@
         FALLBACK_CHAIN: ["gemini-2.5-flash", "gemini-2.5-flash-lite"], // Multi-level fallback sequence
         CACHE: {
             STRATEGY_TTL_MS: 30000,
-            PILOT_TTL_MS: 300000,
+            PILOT_TTL_MS: 900000,
             SMARTLINK_TTL_MS: 600000,
             RELATED_MEMORY_TTL_MS: 600000,
             DEEP_ANGLE_TTL_MS: 21600000,
@@ -149,7 +135,7 @@
         try {
             const data = await chrome.storage.local.get(['user_persona', 'sp_insight_display_hidden']);
             userPersona = data.user_persona || '';
-            isInsightDisplayHidden = !!data.sp_insight_display_hidden;
+            isInsightDisplayHidden = data.sp_insight_display_hidden !== false;
             console.log('[Sidepanel] Loaded Persona:', userPersona);
             const thread = threads.find(t => t.id === activeThreadId);
             syncInsightDisplayUI(thread);
@@ -447,6 +433,14 @@
                 logs.push(entry);
                 await chrome.storage.local.set({ journal_logs: logs });
 
+                // Trigger AI response generation (fire-and-forget)
+                // Background will save ai_response directly to journal_logs
+                chrome.runtime.sendMessage({ type: "ANALYZE_JOURNAL" }, function (response) {
+                    if (chrome.runtime.lastError) {
+                        console.warn('[DIARY_ADD] ANALYZE_JOURNAL failed:', chrome.runtime.lastError.message);
+                    }
+                });
+
                 return {
                     success: true,
                     message: getMessage('diarySaved', 'Saved to Journal'),
@@ -515,9 +509,9 @@
                     success: true,
                     message:
                         `${getMessage('diarySummaryTitle', 'Journal summary')} (${periodLabel}):\n` +
-                        `• ${filtered.length} ${getMessage('diarySummaryEntries', 'entries')}\n` +
-                        `• ${getMessage('diarySummaryMood', 'Top mood')}: ${moodLabel}\n` +
-                        `• ${getMessage('diarySummaryTags', 'Top tags')}: ${tagLine}`,
+                        `â€¢ ${filtered.length} ${getMessage('diarySummaryEntries', 'entries')}\n` +
+                        `â€¢ ${getMessage('diarySummaryMood', 'Top mood')}: ${moodLabel}\n` +
+                        `â€¢ ${getMessage('diarySummaryTags', 'Top tags')}: ${tagLine}`,
                     data: { period: period, totalEntries: filtered.length, moodCounts, tagCounts }
                 };
             }
@@ -608,10 +602,8 @@
         commandSystemEnabled = enabled;
         router.setEnabled(enabled);
 
-        const commandContainer = document.getElementById('quick-actions-command');
         if (!enabled) {
             commandActionExecutor = null;
-            if (commandContainer) commandContainer.classList.remove('active');
             return;
         }
 
@@ -622,20 +614,16 @@
         registerNavigationHandlers();
         registerDiaryHandlers();
 
-        if (window.QuickActionsController && !commandQuickActionsController) {
-            commandQuickActionsController = new window.QuickActionsController(commandActionExecutor, {
-                containerId: 'quick-actions-command'
+        if (window.CommandMenuController) {
+            var cmdMenu = new window.CommandMenuController(commandActionExecutor, {
+                onAction: handleQuickAction
             });
-            await commandQuickActionsController.init();
+            cmdMenu.init();
         }
 
-        if (window.QuickDiaryController && !quickDiaryController) {
-            quickDiaryController = new window.QuickDiaryController(commandActionExecutor, {
-                containerId: 'quick-diary'
-            });
-            if (typeof quickDiaryController.init === 'function') {
-                quickDiaryController.init();
-            }
+        if (window.QuickDiaryController) {
+            window.quickDiaryCtrl = new window.QuickDiaryController(commandActionExecutor);
+            window.quickDiaryCtrl.init();
         }
     }
 
@@ -751,568 +739,23 @@
     let isOnline = navigator.onLine;
     let pendingMessages = []; // Queue for offline messages
 
-    // ===========================
-    // Undo System
-    // ===========================
-    const UNDO_TIMEOUT_MS = 5000; // 5 seconds
-    let undoStack = []; // Stack of undoable actions
-    let activeUndoToast = null; // Currently displayed undo toast
+
+    // Undo system extracted to sp_undo.js (Phase 3a)
     let toastTimeoutId = null;
 
-    const ONBOARDING_STORAGE_KEY = 'atom_sidepanel_onboarding';
+
     const COMMAND_ONBOARDING_STORAGE_KEY = 'ai_commands_onboarded';
-    const ONBOARDING_MENU_ID = 'menu-onboarding-guide';
-    const ONBOARDING_STATES = Object.freeze({
-        NOT_STARTED: 'not_started',
-        STARTED: 'started',
-        FIRST_HIGHLIGHT_DONE: 'first_highlight_done',
-        FIRST_AI_REPLY_DONE: 'first_ai_reply_done',
-        FIRST_SAVE_DONE: 'first_save_done',
-        COMPLETED: 'completed'
-    });
-    const ONBOARDING_ORDER = [
-        ONBOARDING_STATES.NOT_STARTED,
-        ONBOARDING_STATES.STARTED,
-        ONBOARDING_STATES.FIRST_HIGHLIGHT_DONE,
-        ONBOARDING_STATES.FIRST_AI_REPLY_DONE,
-        ONBOARDING_STATES.FIRST_SAVE_DONE,
-        ONBOARDING_STATES.COMPLETED
-    ];
-    let onboardingState = {
-        state: ONBOARDING_STATES.NOT_STARTED,
-        onboarding_completed_at: null,
-        skipped_at: null,
-        updated_at: null
-    };
-    let onboardingOverlayEscHandler = null;
-    let onboardingLastFocusedElement = null;
-    let activeTooltipEscHandler = null;
 
-    // ===========================
-    // Onboarding System (Wave 4)
-    // ===========================
-    function getOnboardingStateIndex(state) {
-        return ONBOARDING_ORDER.indexOf(state);
-    }
+    // Onboarding system extracted to sp_onboarding.js (Phase 2)
 
-    function isOnboardingStateAtLeast(state) {
-        return getOnboardingStateIndex(onboardingState.state) >= getOnboardingStateIndex(state);
-    }
 
-    function isOnboardingCompleted() {
-        return onboardingState.state === ONBOARDING_STATES.COMPLETED;
-    }
 
-    function normalizeOnboardingState(rawState) {
-        if (!rawState || typeof rawState !== 'object') {
-            return { ...onboardingState };
-        }
 
-        let normalizedState = ONBOARDING_STATES.NOT_STARTED;
-        let completedAt = null;
-        let skippedAt = null;
 
-        if (typeof rawState.state === 'string' && ONBOARDING_ORDER.includes(rawState.state)) {
-            normalizedState = rawState.state;
-        } else if (rawState.completedAt || rawState.onboarding_completed_at || rawState.tooltipsShown?.done) {
-            normalizedState = ONBOARDING_STATES.COMPLETED;
-        } else if (rawState.tooltipsShown?.chat) {
-            normalizedState = ONBOARDING_STATES.FIRST_AI_REPLY_DONE;
-        } else if (rawState.tooltipsShown?.highlight) {
-            normalizedState = ONBOARDING_STATES.FIRST_HIGHLIGHT_DONE;
-        } else if (rawState.welcomed) {
-            normalizedState = ONBOARDING_STATES.STARTED;
-        }
+    // Search & Filter vars extracted to sp_search.js (Phase 3a)
 
-        completedAt = rawState.onboarding_completed_at || rawState.completedAt || null;
-        skippedAt = rawState.skipped_at || null;
 
-        if (normalizedState === ONBOARDING_STATES.COMPLETED && !completedAt) {
-            completedAt = Date.now();
-        }
-
-        return {
-            state: normalizedState,
-            onboarding_completed_at: completedAt,
-            skipped_at: skippedAt,
-            updated_at: rawState.updated_at || Date.now()
-        };
-    }
-
-    async function loadOnboardingState() {
-        try {
-            const data = await chrome.storage.local.get([ONBOARDING_STORAGE_KEY]);
-            onboardingState = normalizeOnboardingState(data[ONBOARDING_STORAGE_KEY]);
-        } catch (e) {
-            console.error('[Onboarding] Load error:', e);
-        }
-    }
-
-    async function saveOnboardingState() {
-        try {
-            await chrome.storage.local.set({ [ONBOARDING_STORAGE_KEY]: onboardingState });
-        } catch (e) {
-            console.error('[Onboarding] Save error:', e);
-        }
-    }
-
-    async function updateOnboardingState(nextState, options = {}) {
-        if (!ONBOARDING_ORDER.includes(nextState)) return false;
-
-        const currentIndex = getOnboardingStateIndex(onboardingState.state);
-        const nextIndex = getOnboardingStateIndex(nextState);
-        if (nextIndex < currentIndex) return false;
-        if (nextIndex === currentIndex && !options.force) return false;
-
-        onboardingState.state = nextState;
-        onboardingState.updated_at = Date.now();
-
-        if (nextState === ONBOARDING_STATES.COMPLETED && !onboardingState.onboarding_completed_at) {
-            onboardingState.onboarding_completed_at = Date.now();
-        }
-        if (options.skipped) {
-            onboardingState.skipped_at = Date.now();
-        }
-
-        await saveOnboardingState();
-        renderOnboardingProgress();
-        updateOnboardingMenuItemLabel();
-        return true;
-    }
-
-    function getOnboardingStepLabelKey(state) {
-        if (state === ONBOARDING_STATES.FIRST_AI_REPLY_DONE || state === ONBOARDING_STATES.FIRST_SAVE_DONE) {
-            return 'sp_onboarding_progress_step3';
-        }
-        if (state === ONBOARDING_STATES.FIRST_HIGHLIGHT_DONE) {
-            return 'sp_onboarding_progress_step2';
-        }
-        return 'sp_onboarding_progress_step1';
-    }
-
-    function getOnboardingTaskKey(state) {
-        if (state === ONBOARDING_STATES.FIRST_AI_REPLY_DONE || state === ONBOARDING_STATES.FIRST_SAVE_DONE) {
-            return 'sp_onboard_step3';
-        }
-        if (state === ONBOARDING_STATES.FIRST_HIGHLIGHT_DONE) {
-            return 'sp_onboard_step2';
-        }
-        return 'sp_onboard_step1';
-    }
-
-    function ensureOnboardingProgressStyles() {
-        if (document.getElementById('sp-onboarding-progress-style')) return;
-        const style = document.createElement('style');
-        style.id = 'sp-onboarding-progress-style';
-        style.textContent = `
-            .sp-onboarding-progress {
-                display: none;
-                margin: 10px 0 12px;
-                padding: 10px 12px;
-                border: 1px dashed rgba(16, 185, 129, 0.45);
-                border-radius: 10px;
-                background: rgba(16, 185, 129, 0.08);
-            }
-            .sp-onboarding-progress-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 8px;
-                margin-bottom: 6px;
-            }
-            .sp-onboarding-progress-title {
-                font-size: 11px;
-                font-weight: 600;
-                color: var(--foreground);
-            }
-            .sp-onboarding-progress-step {
-                font-size: 11px;
-                color: var(--primary);
-                font-weight: 600;
-                margin-bottom: 4px;
-            }
-            .sp-onboarding-progress-task {
-                font-size: 12px;
-                color: var(--foreground);
-            }
-            .sp-onboarding-skip {
-                background: transparent;
-                border: 1px solid var(--border);
-                color: var(--muted);
-                border-radius: 6px;
-                padding: 3px 8px;
-                font-size: 10px;
-                cursor: pointer;
-            }
-            .sp-onboarding-skip:hover {
-                border-color: var(--primary);
-                color: var(--primary);
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
-    function ensureOnboardingProgressRegion() {
-        let region = document.getElementById('onboarding-progress');
-        if (region) return region;
-
-        const host = document.querySelector('.sp-main');
-        if (!host) return null;
-
-        ensureOnboardingProgressStyles();
-        region = document.createElement('section');
-        region.id = 'onboarding-progress';
-        region.className = 'sp-onboarding-progress';
-        region.setAttribute('role', 'status');
-        region.setAttribute('aria-live', 'polite');
-        region.innerHTML = `
-            <div class="sp-onboarding-progress-header">
-                <span class="sp-onboarding-progress-title" id="onboarding-progress-title"></span>
-                <button type="button" class="sp-onboarding-skip" id="btn-onboarding-skip-inline"></button>
-            </div>
-            <div class="sp-onboarding-progress-step" id="onboarding-progress-step"></div>
-            <div class="sp-onboarding-progress-task" id="onboarding-progress-task"></div>
-        `;
-
-        const anchor = document.getElementById('srq-widget-container');
-        if (anchor && anchor.parentElement === host) {
-            host.insertBefore(region, anchor.nextSibling);
-        } else {
-            host.insertBefore(region, host.firstChild);
-        }
-
-        region.querySelector('#btn-onboarding-skip-inline')?.addEventListener('click', confirmSkipOnboarding);
-        return region;
-    }
-
-    function renderOnboardingProgress() {
-        const region = ensureOnboardingProgressRegion();
-        if (!region) return;
-
-        if (isOnboardingCompleted()) {
-            region.style.display = 'none';
-            return;
-        }
-
-        region.style.display = 'block';
-        const stepLabel = getMessage(getOnboardingStepLabelKey(onboardingState.state), 'Step 1/3');
-        const taskLabel = getMessage(getOnboardingTaskKey(onboardingState.state), 'Highlight one short paragraph.');
-        const titleLabel = getMessage('sp_onboarding_progress_title', 'Onboarding progress');
-        const skipLabel = getMessage('sp_onboarding_skip', 'Skip guide');
-
-        const titleEl = region.querySelector('#onboarding-progress-title');
-        const stepEl = region.querySelector('#onboarding-progress-step');
-        const taskEl = region.querySelector('#onboarding-progress-task');
-        const skipEl = region.querySelector('#btn-onboarding-skip-inline');
-
-        if (titleEl) titleEl.textContent = titleLabel;
-        if (stepEl) stepEl.textContent = stepLabel;
-        if (taskEl) taskEl.textContent = taskLabel;
-        if (skipEl) skipEl.textContent = skipLabel;
-    }
-
-    function ensureOnboardingMenuItem() {
-        const menu = elements.menuDropdown;
-        if (!menu || document.getElementById(ONBOARDING_MENU_ID)) return;
-
-        const item = document.createElement('div');
-        item.className = 'sp-menu-item';
-        item.id = ONBOARDING_MENU_ID;
-        item.setAttribute('role', 'menuitem');
-        item.setAttribute('tabindex', '0');
-        item.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-            </svg>
-            <span class="sp-menu-label"></span>
-        `;
-
-        const divider = menu.querySelector('.sp-menu-divider');
-        if (divider) {
-            menu.insertBefore(item, divider);
-        } else {
-            menu.appendChild(item);
-        }
-
-        item.addEventListener('click', () => {
-            showWelcomeScreen({ force: true });
-            elements.menuDropdown?.classList.remove('show');
-            elements.menuBtn?.setAttribute('aria-expanded', 'false');
-        });
-
-        updateOnboardingMenuItemLabel();
-    }
-
-    function updateOnboardingMenuItemLabel() {
-        const labelEl = document.querySelector(`#${ONBOARDING_MENU_ID} .sp-menu-label`);
-        if (!labelEl) return;
-        const key = isOnboardingCompleted() ? 'sp_onboarding_reopen_menu' : 'sp_onboarding_menu_item';
-        labelEl.textContent = getMessage(key, 'Open onboarding guide');
-    }
-
-    function checkAndShowOnboarding() {
-        ensureOnboardingMenuItem();
-        renderOnboardingProgress();
-        if (onboardingState.state === ONBOARDING_STATES.NOT_STARTED) {
-            showWelcomeScreen();
-        }
-    }
-
-    function showWelcomeScreen({ force = false } = {}) {
-        if (isOnboardingCompleted() && !force) return;
-        if (document.getElementById('welcome-overlay')) return;
-
-        onboardingLastFocusedElement = document.activeElement;
-        const overlay = document.createElement('div');
-        overlay.id = 'welcome-overlay';
-        overlay.className = 'sp-welcome-overlay';
-        overlay.setAttribute('role', 'dialog');
-        overlay.setAttribute('aria-modal', 'true');
-        overlay.setAttribute('aria-labelledby', 'onboarding-dialog-title');
-
-        const step1 = getMessage('sp_onboard_step1', 'Highlight one short paragraph.');
-        const step2 = getMessage('sp_onboard_step2', 'Press Summarize.');
-        const step3 = getMessage('sp_onboard_step3', 'Press Save.');
-        const welcomeTitle = getMessage('sp_welcome_title', 'Start in one minute');
-        const welcomeDesc = getMessage('sp_welcome_desc', 'Follow 3 quick steps to get your first value.');
-        const stepsTitle = getMessage('sp_welcome_steps', '3 quick steps');
-        const btnStart = getMessage('sp_welcome_start', 'Start now');
-        const btnSkip = getMessage('sp_onboarding_skip', 'Skip guide');
-
-        overlay.innerHTML = `
-            <div class="sp-welcome-card">
-                <div class="sp-welcome-header">
-                    <span class="sp-welcome-emoji">${getIcon('hand')}</span>
-                    <h2 id="onboarding-dialog-title">${welcomeTitle}</h2>
-                    <p>${welcomeDesc}</p>
-                </div>
-
-                <div class="sp-welcome-divider"></div>
-
-                <div class="sp-welcome-steps">
-                    <h3>${stepsTitle}</h3>
-                    <div class="sp-welcome-step">
-                        <span class="sp-step-number">1</span>
-                        <span class="sp-step-text">${step1}</span>
-                    </div>
-                    <div class="sp-welcome-step">
-                        <span class="sp-step-number">2</span>
-                        <span class="sp-step-text">${step2}</span>
-                    </div>
-                    <div class="sp-welcome-step">
-                        <span class="sp-step-number">3</span>
-                        <span class="sp-step-text">${step3}</span>
-                    </div>
-                </div>
-
-                <div class="sp-welcome-divider"></div>
-
-                <div class="sp-welcome-actions">
-                    <button class="sp-welcome-btn primary" id="btn-welcome-start">${btnStart}</button>
-                    <button class="sp-welcome-btn secondary" id="btn-welcome-skip">${btnSkip}</button>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(overlay);
-
-        document.getElementById('btn-welcome-start')?.addEventListener('click', () => {
-            closeWelcomeScreen({ markStarted: true });
-        });
-        document.getElementById('btn-welcome-skip')?.addEventListener('click', confirmSkipOnboarding);
-
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) {
-                closeWelcomeScreen({ markStarted: true });
-            }
-        });
-
-        onboardingOverlayEscHandler = (e) => {
-            if (e.key === 'Escape') {
-                closeWelcomeScreen({ markStarted: true });
-            }
-        };
-        document.addEventListener('keydown', onboardingOverlayEscHandler);
-
-        document.getElementById('btn-welcome-start')?.focus();
-    }
-
-    async function closeWelcomeScreen({ markStarted = true } = {}) {
-        const overlay = document.getElementById('welcome-overlay');
-        if (overlay) {
-            overlay.classList.add('hiding');
-            setTimeout(() => overlay.remove(), 200);
-        }
-
-        if (onboardingOverlayEscHandler) {
-            document.removeEventListener('keydown', onboardingOverlayEscHandler);
-            onboardingOverlayEscHandler = null;
-        }
-
-        if (markStarted && !isOnboardingCompleted()) {
-            await updateOnboardingState(ONBOARDING_STATES.STARTED);
-        }
-
-        if (onboardingLastFocusedElement && typeof onboardingLastFocusedElement.focus === 'function') {
-            onboardingLastFocusedElement.focus();
-        }
-        onboardingLastFocusedElement = null;
-    }
-
-    function dismissActiveTooltip({ callOnDismiss = false } = {}) {
-        const tooltip = document.querySelector('.sp-tooltip');
-        if (!tooltip) return;
-
-        const dismissCallback = tooltip._onDismiss;
-        tooltip.classList.add('hiding');
-        setTimeout(() => tooltip.remove(), 200);
-
-        if (activeTooltipEscHandler) {
-            document.removeEventListener('keydown', activeTooltipEscHandler);
-            activeTooltipEscHandler = null;
-        }
-
-        if (callOnDismiss && typeof dismissCallback === 'function') {
-            dismissCallback();
-        }
-    }
-
-    // ===========================
-    // Tooltip Coach Marks
-    // ===========================
-    function showTooltip(targetElement, message, position = 'bottom', onDismiss = null) {
-        dismissActiveTooltip();
-        if (!targetElement) return;
-
-        const tooltip = document.createElement('div');
-        tooltip.className = `sp-tooltip sp-tooltip-${position}`;
-        tooltip.setAttribute('role', 'tooltip');
-        tooltip.setAttribute('aria-live', 'polite');
-        tooltip._onDismiss = onDismiss;
-
-        const okBtn = getMessage('sp_tooltip_ok', 'OK, got it');
-        tooltip.innerHTML = `
-            <div class="sp-tooltip-content">
-                <span class="sp-tooltip-icon">${getIcon('insight')}</span>
-                <span class="sp-tooltip-text">${message}</span>
-            </div>
-            <button class="sp-tooltip-btn">${okBtn}</button>
-        `;
-
-        document.body.appendChild(tooltip);
-
-        const rect = targetElement.getBoundingClientRect();
-        const tooltipRect = tooltip.getBoundingClientRect();
-
-        let top = rect.bottom + 10;
-        let left = rect.left + (rect.width - tooltipRect.width) / 2;
-
-        if (position === 'top') {
-            top = rect.top - tooltipRect.height - 10;
-        } else if (position === 'left') {
-            top = rect.top + (rect.height - tooltipRect.height) / 2;
-            left = rect.left - tooltipRect.width - 10;
-        } else if (position === 'right') {
-            top = rect.top + (rect.height - tooltipRect.height) / 2;
-            left = rect.right + 10;
-        }
-
-        left = Math.max(10, Math.min(left, window.innerWidth - tooltipRect.width - 10));
-        top = Math.max(10, Math.min(top, window.innerHeight - tooltipRect.height - 10));
-        tooltip.style.top = `${top}px`;
-        tooltip.style.left = `${left}px`;
-
-        const dismiss = (withCallback = true) => dismissActiveTooltip({ callOnDismiss: withCallback });
-        tooltip.querySelector('.sp-tooltip-btn')?.addEventListener('click', () => dismiss(true));
-        activeTooltipEscHandler = (e) => {
-            if (e.key === 'Escape') dismiss(true);
-        };
-        document.addEventListener('keydown', activeTooltipEscHandler);
-        tooltip.querySelector('.sp-tooltip-btn')?.focus();
-    }
-
-    async function maybeCompleteOnboarding() {
-        if (isOnboardingCompleted()) return;
-        const moved = await updateOnboardingState(ONBOARDING_STATES.COMPLETED);
-        if (moved) {
-            dismissActiveTooltip();
-            showToast(getMessage('sp_onboarding_complete', 'You completed the basic setup.'), 'success');
-        }
-    }
-
-    async function confirmSkipOnboarding() {
-        const confirmText = getMessage(
-            'sp_onboarding_skip_confirm',
-            'Skip onboarding now? You can open it again from the menu.'
-        );
-        if (!window.confirm(confirmText)) return;
-
-        await updateOnboardingState(ONBOARDING_STATES.COMPLETED, { skipped: true });
-        await closeWelcomeScreen({ markStarted: false });
-        dismissActiveTooltip();
-        showToast(
-            getMessage('sp_onboarding_skipped', 'Guide skipped. You can reopen it from the menu.'),
-            'info'
-        );
-    }
-
-    async function checkAndShowContextualTooltip(context) {
-        if (isOnboardingCompleted()) return;
-
-        switch (context) {
-            case 'first_highlight': {
-                const advanced = await updateOnboardingState(ONBOARDING_STATES.FIRST_HIGHLIGHT_DONE);
-                if (advanced) {
-                    setTimeout(() => {
-                        const summarizeBtn = document.querySelector('.sp-quick-chip[data-action="summarize"]');
-                        showTooltip(
-                            summarizeBtn || elements.userInput,
-                            getMessage('sp_tooltip_first_highlight', 'Great. Next, press Summarize.'),
-                            'top'
-                        );
-                    }, 400);
-                }
-                break;
-            }
-            case 'first_chat': {
-                const advanced = await updateOnboardingState(ONBOARDING_STATES.FIRST_AI_REPLY_DONE);
-                if (advanced) {
-                    setTimeout(() => {
-                        const saveBtn = document.getElementById('btn-quick-save') || document.getElementById('btn-save-insight');
-                        showTooltip(
-                            saveBtn,
-                            getMessage('sp_tooltip_first_chat', 'Great. Now press Save to keep this highlight.'),
-                            'top'
-                        );
-                    }, 400);
-                }
-                break;
-            }
-            case 'first_save':
-            case 'first_done': {
-                const moved = await updateOnboardingState(ONBOARDING_STATES.FIRST_SAVE_DONE);
-                if (moved || isOnboardingStateAtLeast(ONBOARDING_STATES.FIRST_SAVE_DONE)) {
-                    await maybeCompleteOnboarding();
-                }
-                break;
-            }
-        }
-    }
-
-    // ===========================
-    // Search & Filter System
-    // ===========================
-    let searchQuery = '';
-    let activeFilter = 'all'; // 'all', 'today', 'week', 'insights', 'notes'
-    let isSearchOpen = false;
-
-    // ===========================
-    // Multi-Tab Session Management
-    // ===========================
-    const SESSION_ID = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    let broadcastChannel = null;
+    // Multi-tab session management extracted to sp_multitab.js (Phase 2)
 
     // ===========================
     // Icon Helper
@@ -1345,6 +788,9 @@
     // ===========================
     function getMessage(key, fallback = '') {
         try {
+            if (window.AtomI18n) {
+                return window.AtomI18n.getMessage(key, null, fallback);
+            }
             const msg = chrome.i18n.getMessage(key);
             return msg || fallback;
         } catch (e) {
@@ -1354,6 +800,9 @@
 
     function getMessageWithArgs(key, args, fallback = '') {
         try {
+            if (window.AtomI18n) {
+                return window.AtomI18n.getMessage(key, args, fallback);
+            }
             const msg = chrome.i18n.getMessage(key, args);
             return msg || fallback;
         } catch (e) {
@@ -1362,7 +811,13 @@
     }
 
     function applyI18n() {
-        // Apply data-i18n to textContent
+        // Use AtomUI.localize() if available (handles data-i18n, data-i18n-placeholder, data-i18n-title)
+        if (window.AtomUI) {
+            window.AtomUI.localize();
+            return;
+        }
+
+        // Fallback: Apply data-i18n to textContent
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
             const msg = getMessage(key);
@@ -1384,6 +839,11 @@
         // Load centralized AI config first (synced from background.js)
         await loadAIConfig();
         await loadFeatureFlags();
+
+        // Ensure i18n locale is loaded before applying
+        if (window.AtomI18n) {
+            await window.AtomI18n.init();
+        }
 
         // Apply i18n
         applyI18n();
@@ -1460,16 +920,77 @@
         await initFocusWidget();
         await loadPageContext();
         await loadThreadsFromStorage();
-        await loadParkingLot();
+        if (SP.loadParkingLot) await SP.loadParkingLot();
         listenForHighlights();
         updateAllCounts();
 
-        // Initialize onboarding
-        await loadOnboardingState();
-        checkAndShowOnboarding();
+        // Initialize onboarding (Phase 2: via SP)
+        if (SP.loadOnboardingState) await SP.loadOnboardingState();
+        SP.checkAndShowOnboarding?.();
 
-        // Initialize multi-tab handling
-        initMultiTabHandling();
+        // Initialize multi-tab handling (Phase 2: via SP)
+        SP.initMultiTabHandling?.();
+
+        // â”€â”€ Phase 1: Wire Shared State Bus â”€â”€
+        if (window.SP) {
+            // Core state
+            window.SP.pageContext = pageContext;
+            window.SP.threads = threads;
+            window.SP.activeThreadId = activeThreadId;
+            window.SP.activeSessionId = activeSessionId;
+            window.SP.isLoading = isLoading;
+            window.SP.currentTabId = currentTabId;
+            window.SP.currentDomain = currentDomain;
+            window.SP.currentModeId = currentModeId;
+            window.SP.activeMainTab = activeMainTab;
+            window.SP.sessionStartTime = sessionStartTime;
+            // parkingLot: initialized by sp_parking.js via loadParkingLot()
+            window.SP.elements = elements;
+            window.SP.API_CONFIG = API_CONFIG;
+            window.SP.semanticFlags = semanticFlags;
+            window.SP.acceptedCostWarning = acceptedCostWarning;
+            window.SP.userPersona = userPersona;
+
+            // Expose helpers as functions
+            window.SP.getMessage = getMessage;
+            window.SP.getMessageWithArgs = getMessageWithArgs;
+            window.SP.getIcon = getIcon;
+            window.SP.showToast = showToast;
+            window.SP.getApiKey = getApiKey;
+            window.SP.switchMainTab = switchMainTab;
+            window.SP.loadThreadsFromStorage = loadThreadsFromStorage;
+
+            // Phase 3a: Functions needed by sp_undo, sp_search
+            window.SP.escapeHtml = escapeHtml;
+            window.SP.switchToTab = switchToTab;
+            window.SP.renderThreadList = renderThreadList;
+            window.SP.renderActiveThread = renderActiveThread;
+
+            // Phase 3b: Functions needed by sp_retention, sp_parking
+            window.SP.getApiKey = getApiKey;
+            window.SP.updateSessionStats = updateSessionStats;
+            window.SP.updateAllCounts = updateAllCounts;
+            window.SP.saveThreadsToStorage = saveThreadsToStorage;
+
+            // Phase 4a: API_CONFIG for sp_llm.js
+            window.SP.API_CONFIG = API_CONFIG;
+
+            // Phase 5: sessionStartTime for sp_export.js
+            window.SP.sessionStartTime = sessionStartTime;
+
+            // Phase 4b: Functions needed by sp_smartlink.js
+            window.SP.hashString = hashString;
+            window.SP.normalizeUrl = normalizeUrl;
+            window.SP.formatMessage = formatMessage;
+            window.SP.addMessageToDOM = addMessageToDOM;
+            window.SP.sendToGemini = sendToGemini;
+
+            console.log('[SP] State bus wired âœ“', {
+                threads: threads.length,
+                elements: Object.keys(elements).length,
+                model: API_CONFIG.MODEL_NAME
+            });
+        }
     }
 
     // ===========================
@@ -1521,34 +1042,7 @@
         updateQuickActionChips();
     }
 
-    function updateQuickActionChips() {
-        if (!elements.quickActions) return;
-        if (!window.LearningObjectiveService || !currentModeId) {
-            elements.quickActions.querySelectorAll('.sp-quick-chip').forEach((chip) => {
-                chip.style.display = 'inline-flex';
-            });
-            return;
-        }
-
-        const allowed = window.LearningObjectiveService.getChipsForMode(currentModeId) || [];
-        const chips = elements.quickActions.querySelectorAll('.sp-quick-chip');
-        chips.forEach((chip) => {
-            const action = chip.getAttribute('data-action');
-            const shouldShow = allowed.includes(action);
-            chip.style.display = shouldShow ? 'inline-flex' : 'none';
-
-            const bloomMeta = window.LearningObjectiveService.getBloomMeta?.(action);
-            if (bloomMeta) {
-                const label = getMessage(bloomMeta.key, bloomMeta.fallback);
-                chip.setAttribute('data-bloom-level', String(bloomMeta.level));
-                chip.setAttribute('data-bloom-label', label);
-                chip.title = `${label} • ${chip.title || ''}`.trim();
-            } else {
-                chip.removeAttribute('data-bloom-level');
-                chip.removeAttribute('data-bloom-label');
-            }
-        });
-    }
+    function updateQuickActionChips() { /* no-op: merged into command menu */ }
 
     function hashString(input) {
         const text = String(input || '');
@@ -1560,12 +1054,7 @@
         return hash.toString(16);
     }
 
-    function recordSmartLinkMetric(name, delta = 1) {
-        if (!Object.prototype.hasOwnProperty.call(smartLinkMetrics, name)) return;
-        const increment = Number.isFinite(delta) ? delta : 1;
-        smartLinkMetrics[name] += increment;
-        window.__ATOM_SMARTLINK_METRICS__ = { ...smartLinkMetrics };
-    }
+    // recordSmartLinkMetric extracted to sp_smartlink.js (Phase 4b)
 
     function setMenuBadgeState(element, state) {
         if (!element) return;
@@ -1664,7 +1153,7 @@
         const primerData = await window.PrimerService.generatePrimer(
             pageContext,
             apiKey,
-            callGeminiAPI
+            SP.callGeminiAPI
         );
 
         if (!primerData?.success) return;
@@ -1762,7 +1251,7 @@
             const memoryData = await window.RelatedMemoryService.checkForRelatedMemory(
                 pageContext,
                 key,
-                callGeminiAPI,
+                SP.callGeminiAPI,
                 {
                     priority: 'background',
                     allowFallback: true,
@@ -1928,19 +1417,19 @@
         }
 
         // Create comparison prompt
-        const comparisonPrompt = `🔗 **So sánh Khái niệm**
+        const comparisonPrompt = `ðŸ”— **So sÃ¡nh KhÃ¡i niá»‡m**
 
-So sánh hai chủ đề đọc này và giải thích cách chúng kết nối:
+So sÃ¡nh hai chá»§ Ä‘á» Ä‘á»c nÃ y vÃ  giáº£i thÃ­ch cÃ¡ch chÃºng káº¿t ná»‘i:
 
-**Chủ đề hiện tại:** "${currentPage.title}"
-**Ghi chú liên quan:** "${match.title}" - ${match.preview || '(Không có preview)'}
+**Chá»§ Ä‘á» hiá»‡n táº¡i:** "${currentPage.title}"
+**Ghi chÃº liÃªn quan:** "${match.title}" - ${match.preview || '(KhÃ´ng cÃ³ preview)'}
 
-Hãy cung cấp so sánh ngắn gọn bao gồm:
-1. **Điểm tương đồng** chính
-2. **Điểm khác biệt** chính  
-3. **Cách chúng bổ sung/xây dựng lẫn nhau**
+HÃ£y cung cáº¥p so sÃ¡nh ngáº¯n gá»n bao gá»“m:
+1. **Äiá»ƒm tÆ°Æ¡ng Ä‘á»“ng** chÃ­nh
+2. **Äiá»ƒm khÃ¡c biá»‡t** chÃ­nh  
+3. **CÃ¡ch chÃºng bá»• sung/xÃ¢y dá»±ng láº«n nhau**
 
-Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
+Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
 
         // Ensure we have an active thread
         if (!activeThreadId && threads.length > 0) {
@@ -1979,789 +1468,14 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
         }
     }
 
-    // ===========================
-    // Phase 2: Retention Loop
-    // ===========================
-    function getRetentionStrings() {
-        return {
-            quizTitle: getMessage('sp_retention_quiz_title', 'Quiz'),
-            teachbackTitle: getMessage('sp_retention_teachback_title', 'Teach-back'),
-            flashcardTitle: getMessage('sp_retention_flashcard_title', 'Flashcards'),
-            closeLabel: getMessage('sp_retention_close', 'Close'),
-            noHighlight: getMessage('sp_retention_no_highlight', 'Please select a section you care about.')
-        };
-    }
 
-    function getQuizStrings() {
-        return {
-            skip: getMessage('sp_quiz_skip', 'Skip'),
-            submit: getMessage('sp_quiz_submit', 'Submit Answer'),
-            evaluating: getMessage('sp_quiz_evaluating', 'Evaluating...'),
-            continue: getMessage('sp_quiz_continue', 'Continue'),
-            placeholder: getMessage('sp_quiz_placeholder', 'Type your answer here...'),
-            questionLabel: getMessage('sp_quiz_question', 'Question'),
-            ofLabel: getMessage('sp_quiz_of', 'of'),
-            summaryTitle: getMessage('sp_quiz_summary_title', 'Quiz complete'),
-            addToReview: getMessage('sp_quiz_add_review', 'Add to Review Deck'),
-            done: getMessage('sp_quiz_done', 'Done'),
-            correctLabel: getMessage('sp_quiz_correct_label', 'What you got right'),
-            missingLabel: getMessage('sp_quiz_missing_label', 'What you missed'),
-            evidenceLabel: getMessage('sp_quiz_evidence_label', 'From the text')
-        };
-    }
+    // Retention Loop extracted to sp_retention.js (Phase 3b)
 
-    function getTeachBackStrings() {
-        return {
-            title: getMessage('sp_teachback_title', 'Teach-back'),
-            promptLabel: getMessage('sp_teachback_prompt_label', 'Explain it in your own words'),
-            hintLabel: getMessage('sp_teachback_hint', 'Hint'),
-            submit: getMessage('sp_teachback_submit', 'Evaluate'),
-            retry: getMessage('sp_teachback_retry', 'Try again'),
-            addToReview: getMessage('sp_teachback_add_review', 'Add to Review Deck'),
-            placeholder: getMessage('sp_teachback_placeholder', 'Type your explanation...'),
-            feedbackTitle: getMessage('sp_teachback_feedback_title', 'Feedback'),
-            suggestionsTitle: getMessage('sp_teachback_suggestions_title', 'Suggestions'),
-            misconceptionsTitle: getMessage('sp_teachback_misconceptions_title', 'Misconceptions')
-        };
-    }
 
-    function getFlashcardStrings() {
-        return {
-            showAnswer: getMessage('sp_flashcard_show_answer', 'Show Answer'),
-            rateAgain: getMessage('sp_flashcard_rate_again', 'Again'),
-            rateHard: getMessage('sp_flashcard_rate_hard', 'Hard'),
-            rateGood: getMessage('sp_flashcard_rate_good', 'Good'),
-            rateEasy: getMessage('sp_flashcard_rate_easy', 'Easy'),
-            reviewTitle: getMessage('sp_flashcard_review_title', 'Review session'),
-            done: getMessage('sp_flashcard_review_done', 'Done'),
-            empty: getMessage('sp_flashcard_review_empty', 'No cards ready for review.')
-        };
-    }
 
-    function closeRetentionOverlay() {
-        if (!retentionOverlay) return;
-        retentionOverlay.classList.add('hiding');
-        setTimeout(() => retentionOverlay?.remove(), 150);
-        retentionOverlay = null;
-    }
 
-    function createRetentionOverlay(title) {
-        closeRetentionOverlay();
-        const overlay = document.createElement('div');
-        overlay.className = 'sp-retention-overlay';
+    // Search & Filter extracted to sp_search.js (Phase 3a)
 
-        const card = document.createElement('div');
-        card.className = 'sp-retention-card';
-
-        const header = document.createElement('div');
-        header.className = 'sp-retention-header';
-        const closeLabel = getMessage('sp_retention_close', 'Close');
-        header.innerHTML = `
-            <span>${title}</span>
-            <button class="sp-retention-close" type="button" aria-label="${closeLabel}" title="${closeLabel}">×</button>
-        `;
-
-        const body = document.createElement('div');
-        body.className = 'sp-retention-body';
-
-        card.appendChild(header);
-        card.appendChild(body);
-        overlay.appendChild(card);
-        document.body.appendChild(overlay);
-
-        header.querySelector('.sp-retention-close')?.addEventListener('click', closeRetentionOverlay);
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) closeRetentionOverlay();
-        });
-
-        retentionOverlay = overlay;
-        return { overlay, body };
-    }
-
-    function renderRetentionLoading(container, message) {
-        if (!container) return;
-        container.innerHTML = `
-            <div class="sp-retention-loading">${message || getMessage('sp_loading', 'Loading...')}</div>
-        `;
-    }
-
-    async function appendHistory(storageKey, entry) {
-        try {
-            const data = await chrome.storage.local.get([storageKey]);
-            const list = Array.isArray(data[storageKey]) ? data[storageKey] : [];
-            list.push(entry);
-            const trimmed = list.slice(-200);
-            await chrome.storage.local.set({ [storageKey]: trimmed });
-        } catch (e) {
-            console.warn('[Retention] Failed to append history:', e);
-        }
-    }
-
-    async function updateComprehensionScore(sessionId) {
-        if (!sessionId || !window.ComprehensionScoringService || !window.ReadingSessionService) return null;
-        try {
-            const session = await ReadingSessionService.getSession(sessionId);
-            if (!session?.metrics) return null;
-            const result = window.ComprehensionScoringService.calculateComprehensionScore(session.metrics);
-            await appendHistory('atom_comprehension_scores', {
-                sessionId,
-                score: result?.overall,
-                breakdown: result?.breakdown,
-                level: result?.level,
-                createdAt: Date.now()
-            });
-            return result;
-        } catch (e) {
-            console.warn('[Retention] Comprehension score failed:', e);
-            return null;
-        }
-    }
-
-    async function openRetentionFlow(action, highlight) {
-        const strings = getRetentionStrings();
-        const safeHighlight = highlight && typeof highlight === 'object' ? highlight : {};
-        const highlightText = String(safeHighlight.text || '').trim();
-        if (!highlightText) {
-            showToast(strings.noHighlight, 'warning');
-            return;
-        }
-
-        const titleMap = {
-            quiz: strings.quizTitle,
-            teachback: strings.teachbackTitle,
-            flashcard: strings.flashcardTitle
-        };
-        const { body } = createRetentionOverlay(titleMap[action] || strings.quizTitle);
-        renderRetentionLoading(body, getMessage('sp_retention_loading', 'Preparing...'));
-
-        if (action === 'quiz') {
-            await startQuizFlow(body, safeHighlight);
-        } else if (action === 'teachback') {
-            await startTeachBackFlow(body, safeHighlight);
-        } else if (action === 'flashcard') {
-            await startFlashcardFlow(body);
-        }
-    }
-
-    async function startQuizFlow(container, highlight) {
-        if (!window.QuizGeneratorService || !window.QuizUI) {
-            renderRetentionLoading(container, getMessage('sp_retention_unavailable', 'Retention tools unavailable.'));
-            return;
-        }
-
-        const apiKey = await getApiKey();
-        if (!apiKey) {
-            renderRetentionLoading(container, getMessage('sp_retention_missing_key', 'Missing API key.'));
-            return;
-        }
-
-        const context = {
-            title: highlight.title || pageContext?.title || '',
-            section: highlight.sectionHeading || ''
-        };
-
-        const questions = await window.QuizGeneratorService.generateQuizSet(
-            highlight.text,
-            context,
-            apiKey,
-            callGeminiAPI
-        );
-
-        if (!questions || questions.length === 0) {
-            renderRetentionLoading(container, getMessage('sp_retention_empty_quiz', 'Could not generate quiz.'));
-            return;
-        }
-
-        container.innerHTML = '';
-        const quizStrings = getQuizStrings();
-        const quizUI = window.QuizUI.createQuizSessionUI(
-            questions,
-            quizStrings,
-            async (question, answer) => window.QuizGeneratorService.evaluateAnswer(
-                question,
-                answer,
-                apiKey,
-                callGeminiAPI
-            ),
-            async (sessionResult) => {
-                const results = sessionResult?.results || [];
-                const avg = results.length
-                    ? Math.round(results.reduce((sum, r) => sum + (r.score || 0), 0) / results.length)
-                    : 0;
-
-                if (activeSessionId && window.ReadingSessionService) {
-                    await ReadingSessionService.updateMetrics(activeSessionId, {
-                        assessmentMetrics: { quizScore: avg }
-                    });
-                    await appendHistory('atom_quiz_history', {
-                        sessionId: activeSessionId,
-                        highlightText: highlight.text.slice(0, 200),
-                        avgScore: avg,
-                        results,
-                        createdAt: Date.now()
-                    });
-                    await updateComprehensionScore(activeSessionId);
-                }
-
-                if (sessionResult?.addToReview && window.FlashcardDeck) {
-                    const sessionData = activeSessionId
-                        ? await ReadingSessionService.getSession(activeSessionId)
-                        : null;
-
-                    for (const question of questions) {
-                        const card = window.FlashcardDeck.createFromQuiz(question, sessionData || {});
-                        await window.FlashcardDeck.saveCard(card);
-                    }
-                    showToast(getMessage('sp_quiz_added_review', 'Added to review deck.'), 'success');
-                }
-
-                closeRetentionOverlay();
-            }
-        );
-
-        container.appendChild(quizUI);
-    }
-
-    async function startTeachBackFlow(container, highlight) {
-        if (!window.TeachBackService || !window.TeachBackUI) {
-            renderRetentionLoading(container, getMessage('sp_retention_unavailable', 'Retention tools unavailable.'));
-            return;
-        }
-
-        const apiKey = await getApiKey();
-        if (!apiKey) {
-            renderRetentionLoading(container, getMessage('sp_retention_missing_key', 'Missing API key.'));
-            return;
-        }
-
-        const concept = highlight.sectionHeading || highlight.title || '';
-        const promptData = await window.TeachBackService.generateTeachBackPrompt(
-            concept,
-            highlight.text,
-            apiKey,
-            callGeminiAPI
-        );
-
-        container.innerHTML = '';
-        const teachbackUI = window.TeachBackUI.createTeachBackUI(promptData, getTeachBackStrings(), {
-            onHint: () => window.TeachBackService.getHint(promptData, Math.floor(Math.random() * 3)),
-            onSubmit: async (explanation) => {
-                const result = await window.TeachBackService.evaluateExplanation(
-                    promptData,
-                    explanation,
-                    apiKey,
-                    callGeminiAPI
-                );
-
-                if (activeSessionId && window.ReadingSessionService) {
-                    await ReadingSessionService.updateMetrics(activeSessionId, {
-                        assessmentMetrics: { teachBackScore: Number.isFinite(result?.score) ? result.score : null }
-                    });
-                    await appendHistory('atom_teachback_history', {
-                        sessionId: activeSessionId,
-                        highlightText: highlight.text.slice(0, 200),
-                        score: result?.score ?? null,
-                        result,
-                        createdAt: Date.now()
-                    });
-                    await updateComprehensionScore(activeSessionId);
-                }
-
-                return result;
-            },
-            onAddToReview: async (explanation, result) => {
-                if (!window.FlashcardDeck) return;
-                const sessionData = activeSessionId
-                    ? await ReadingSessionService.getSession(activeSessionId)
-                    : {};
-                const keyPoints = Array.isArray(promptData.keyPointsToMention)
-                    ? promptData.keyPointsToMention.filter(Boolean)
-                    : [];
-                const backText = keyPoints.length ? keyPoints.join('\n') : (result?.feedback || highlight.text.slice(0, 200));
-
-                const card = window.FlashcardDeck.createFlashcard({
-                    type: window.FlashcardDeck.CARD_TYPES.TEACHBACK,
-                    front: promptData.prompt || `Explain ${promptData.concept || 'this concept'}`,
-                    back: backText,
-                    sourceSessionId: sessionData?.id,
-                    sourceUrl: sessionData?.url || highlight.url,
-                    sourceTitle: sessionData?.title || highlight.title
-                });
-                await window.FlashcardDeck.saveCard(card);
-                showToast(getMessage('sp_teachback_added_review', 'Added to review deck.'), 'success');
-            }
-        });
-
-        container.appendChild(teachbackUI);
-    }
-
-    async function startFlashcardFlow(container) {
-        if (!window.FlashcardUI || !window.FlashcardDeck || !window.SpacedRepetitionService) {
-            renderRetentionLoading(container, getMessage('sp_retention_unavailable', 'Retention tools unavailable.'));
-            return;
-        }
-
-        const queue = await window.FlashcardDeck.getReviewQueue();
-        const cards = [];
-        const seen = new Set();
-
-        const pushCard = (card) => {
-            if (!card || !card.id || seen.has(card.id)) return;
-            seen.add(card.id);
-            cards.push(card);
-        };
-
-        (queue.overdue || []).forEach(pushCard);
-        (queue.dueToday || []).forEach(pushCard);
-        if (queue.stats?.new) {
-            (await window.FlashcardDeck.getAllCards())
-                .filter(c => c.reviewCount === 0)
-                .forEach(pushCard);
-        }
-
-        container.innerHTML = '';
-        const flashcardUI = window.FlashcardUI.createReviewSessionUI(
-            cards,
-            getFlashcardStrings(),
-            async (card, quality) => {
-                await window.SpacedRepetitionService.processReview(card.id, quality);
-            },
-            async (results) => {
-                await window.SpacedRepetitionService.recordReviewSession(results.length);
-                closeRetentionOverlay();
-            }
-        );
-
-        container.appendChild(flashcardUI);
-    }
-
-    // ===========================
-    // Multi-Tab Handling
-    // ===========================
-    function initMultiTabHandling() {
-        // Create broadcast channel for tab communication
-        try {
-            broadcastChannel = new BroadcastChannel('atom_sidepanel_sync');
-
-            broadcastChannel.onmessage = (event) => {
-                handleBroadcastMessage(event.data);
-            };
-
-            // Announce this session
-            broadcastSessionActive();
-
-            // Listen for page unload to cleanup
-            window.addEventListener('beforeunload', () => {
-                broadcastChannel?.postMessage({
-                    type: 'SESSION_CLOSED',
-                    sessionId: SESSION_ID,
-                    domain: currentDomain
-                });
-            });
-
-        } catch (e) {
-            console.log('[MultiTab] BroadcastChannel not supported');
-        }
-
-        // Check for existing sessions on same URL
-        checkForExistingSessions();
-    }
-
-    function broadcastSessionActive() {
-        broadcastChannel?.postMessage({
-            type: 'SESSION_ACTIVE',
-            sessionId: SESSION_ID,
-            domain: currentDomain,
-            url: pageContext?.url,
-            timestamp: Date.now()
-        });
-    }
-
-    function handleBroadcastMessage(data) {
-        if (data.sessionId === SESSION_ID) return; // Ignore own messages
-
-        switch (data.type) {
-            case 'SESSION_ACTIVE':
-                // Another session is active on the same domain
-                if (data.domain === currentDomain && data.url === pageContext?.url) {
-                    showMultiTabWarning(data);
-                }
-                break;
-
-            case 'SESSION_CLOSED':
-                // Another session closed - hide warning if shown
-                hideMultiTabWarning();
-                break;
-
-            case 'DATA_UPDATED':
-                // Another session updated data - offer to refresh
-                if (data.domain === currentDomain) {
-                    showDataSyncNotification(data);
-                }
-                break;
-
-            case 'REQUEST_ACTIVE_SESSIONS':
-                // Respond with our session info
-                if (data.domain === currentDomain) {
-                    broadcastSessionActive();
-                }
-                break;
-        }
-    }
-
-    async function checkForExistingSessions() {
-        // Request active sessions for this domain
-        broadcastChannel?.postMessage({
-            type: 'REQUEST_ACTIVE_SESSIONS',
-            sessionId: SESSION_ID,
-            domain: currentDomain
-        });
-    }
-
-    function showMultiTabWarning(otherSession) {
-        // Remove existing warning
-        document.getElementById('multitab-warning')?.remove();
-
-        const warning = document.createElement('div');
-        warning.id = 'multitab-warning';
-        warning.className = 'sp-multitab-warning';
-
-        const warningMsg = getMessage('sp_multitab_warning', 'This article is open in another tab');
-        const btnContinue = getMessage('sp_multitab_continue', 'Continue here');
-        const btnSwitch = getMessage('sp_multitab_switch', 'Switch to other tab');
-
-        warning.innerHTML = `
-            <div class="sp-multitab-content">
-                <span class="sp-multitab-icon">${getIcon('info')}</span>
-                <span class="sp-multitab-text">${warningMsg}</span>
-            </div>
-            <div class="sp-multitab-actions">
-                <button class="sp-multitab-btn" id="btn-multitab-continue">${btnContinue}</button>
-            </div>
-        `;
-
-        // Insert after offline banner
-        const offlineBanner = document.getElementById('offline-banner');
-        offlineBanner?.insertAdjacentElement('afterend', warning);
-
-        // Event handlers
-        document.getElementById('btn-multitab-continue')?.addEventListener('click', () => {
-            hideMultiTabWarning();
-        });
-    }
-
-    function hideMultiTabWarning() {
-        const warning = document.getElementById('multitab-warning');
-        if (warning) {
-            warning.classList.add('hiding');
-            setTimeout(() => warning.remove(), 200);
-        }
-    }
-
-    function showDataSyncNotification(data) {
-        // Only show if we have local changes that might conflict
-        if (threads.length === 0) {
-            // No local data, just reload
-            loadThreadsFromStorage();
-            return;
-        }
-
-        const syncMsg = getMessage('sp_data_sync', 'Data updated in another tab');
-        showToast(syncMsg, 'info');
-    }
-
-    // Broadcast when data changes
-    function broadcastDataUpdate() {
-        broadcastChannel?.postMessage({
-            type: 'DATA_UPDATED',
-            sessionId: SESSION_ID,
-            domain: currentDomain,
-            timestamp: Date.now()
-        });
-    }
-
-    // ===========================
-    // Search & Filter System
-    // ===========================
-    function toggleQuickSearch() {
-        if (isSearchOpen) {
-            closeQuickSearch();
-        } else {
-            openQuickSearch();
-        }
-    }
-
-    function openQuickSearch() {
-        // Remove existing search modal
-        document.getElementById('quick-search-modal')?.remove();
-
-        isSearchOpen = true;
-
-        const modal = document.createElement('div');
-        modal.id = 'quick-search-modal';
-        modal.className = 'sp-search-modal';
-
-        const searchPlaceholder = getMessage('sp_search_placeholder', 'Search in insights and notes...');
-        const filterAll = getMessage('sp_filter_all', 'All');
-        const filterToday = getMessage('sp_filter_today', 'Today');
-        const filterWeek = getMessage('sp_filter_week', 'This Week');
-        const filterInsights = getMessage('sp_filter_insights', 'Insights');
-        const filterNotes = getMessage('sp_filter_notes', 'Notes');
-
-        modal.innerHTML = `
-            <div class="sp-search-container">
-                <div class="sp-search-header">
-                    <span class="sp-search-icon">${getIcon('search')}</span>
-                    <input type="text" class="sp-search-input" id="search-input" placeholder="${searchPlaceholder}" autofocus>
-                    <kbd class="sp-search-esc">Esc</kbd>
-                </div>
-
-                <div class="sp-search-filters">
-                    <button class="sp-filter-btn active" data-filter="all">${filterAll}</button>
-                    <button class="sp-filter-btn" data-filter="today">${filterToday}</button>
-                    <button class="sp-filter-btn" data-filter="week">${filterWeek}</button>
-                    <button class="sp-filter-btn" data-filter="insights">${filterInsights}</button>
-                    <button class="sp-filter-btn" data-filter="notes">${filterNotes}</button>
-                </div>
-
-                <div class="sp-search-results" id="search-results">
-                    <div class="sp-search-empty">${getMessage('sp_search_hint', 'Type to search...')}</div>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-
-        // Focus input
-        const searchInput = document.getElementById('search-input');
-        searchInput?.focus();
-
-        // Search input handler
-        searchInput?.addEventListener('input', (e) => {
-            searchQuery = e.target.value;
-            performSearch();
-        });
-
-        // Filter buttons
-        modal.querySelectorAll('.sp-filter-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                modal.querySelectorAll('.sp-filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                activeFilter = btn.dataset.filter;
-                performSearch();
-            });
-        });
-
-        // Close on background click
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                closeQuickSearch();
-            }
-        });
-
-        // Keyboard navigation
-        searchInput?.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeQuickSearch();
-            } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                e.preventDefault();
-                navigateSearchResults(e.key === 'ArrowDown' ? 1 : -1);
-            } else if (e.key === 'Enter') {
-                e.preventDefault();
-                selectSearchResult();
-            }
-        });
-    }
-
-    function closeQuickSearch() {
-        const modal = document.getElementById('quick-search-modal');
-        if (modal) {
-            modal.classList.add('hiding');
-            setTimeout(() => modal.remove(), 200);
-        }
-        isSearchOpen = false;
-        searchQuery = '';
-    }
-
-    function performSearch() {
-        const resultsContainer = document.getElementById('search-results');
-        if (!resultsContainer) return;
-
-        const query = searchQuery.toLowerCase().trim();
-
-        // Get all searchable items
-        let items = [];
-
-        // Add threads/discussions
-        threads.forEach(thread => {
-            items.push({
-                type: 'thread',
-                id: thread.id,
-                title: thread.highlight?.text?.slice(0, 100) || 'Discussion',
-                content: thread.refinedInsight || thread.highlight?.text || '',
-                hasInsight: !!thread.refinedInsight,
-                timestamp: thread.createdAt,
-                status: thread.status
-            });
-        });
-
-        // Add parking lot notes
-        parkingLot.forEach(note => {
-            items.push({
-                type: 'note',
-                id: note.id,
-                title: 'Quick Note',
-                content: note.text,
-                hasInsight: false,
-                timestamp: note.createdAt
-            });
-        });
-
-        // Apply filters
-        items = applyFilters(items);
-
-        // Apply search query
-        if (query) {
-            items = items.filter(item =>
-                item.content.toLowerCase().includes(query) ||
-                item.title.toLowerCase().includes(query)
-            );
-        }
-
-        // Render results
-        if (items.length === 0) {
-            const noResults = getMessage('sp_search_no_results', 'No results found');
-            resultsContainer.innerHTML = `<div class="sp-search-empty">${noResults}</div>`;
-            return;
-        }
-
-        resultsContainer.innerHTML = items.map((item, index) => {
-            const icon = item.type === 'note' ? getIcon('note') :
-                item.hasInsight ? getIcon('insight') :
-                    item.status === 'parked' ? getIcon('check') : getIcon('thread');
-
-            const preview = highlightMatch(item.content.slice(0, 120), query);
-            const time = formatRelativeTime(item.timestamp);
-
-            return `
-                <div class="sp-search-result ${index === 0 ? 'selected' : ''}"
-                     data-type="${item.type}" data-id="${item.id}">
-                    <span class="sp-result-icon">${icon}</span>
-                    <div class="sp-result-content">
-                        <div class="sp-result-preview">${preview}...</div>
-                        <div class="sp-result-meta">${time}</div>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        // Add click handlers
-        resultsContainer.querySelectorAll('.sp-search-result').forEach(result => {
-            result.addEventListener('click', () => {
-                const type = result.dataset.type;
-                const id = result.dataset.id;
-                handleSearchResultClick(type, id);
-            });
-        });
-    }
-
-    function applyFilters(items) {
-        const now = Date.now();
-        const oneDayMs = 24 * 60 * 60 * 1000;
-        const oneWeekMs = 7 * oneDayMs;
-
-        switch (activeFilter) {
-            case 'today':
-                return items.filter(item => now - item.timestamp < oneDayMs);
-            case 'week':
-                return items.filter(item => now - item.timestamp < oneWeekMs);
-            case 'insights':
-                return items.filter(item => item.hasInsight);
-            case 'notes':
-                return items.filter(item => item.type === 'note');
-            default:
-                return items;
-        }
-    }
-
-    function highlightMatch(text, query) {
-        if (!query) return escapeHtml(text);
-
-        const escaped = escapeHtml(text);
-        const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
-        return escaped.replace(regex, '<mark>$1</mark>');
-    }
-
-    function escapeRegex(string) {
-        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }
-
-    function formatRelativeTime(timestamp) {
-        const now = Date.now();
-        const diff = now - timestamp;
-
-        const minutes = Math.floor(diff / 60000);
-        const hours = Math.floor(diff / 3600000);
-        const days = Math.floor(diff / 86400000);
-
-        if (minutes < 1) return getMessage('sp_time_just_now', 'Just now');
-        if (minutes < 60) return `${minutes}m`;
-        if (hours < 24) return `${hours}h`;
-        if (days < 7) return `${days}d`;
-
-        return new Date(timestamp).toLocaleDateString();
-    }
-
-    function navigateSearchResults(direction) {
-        const results = document.querySelectorAll('.sp-search-result');
-        if (results.length === 0) return;
-
-        const currentIndex = Array.from(results).findIndex(r => r.classList.contains('selected'));
-        let newIndex = currentIndex + direction;
-
-        if (newIndex < 0) newIndex = results.length - 1;
-        if (newIndex >= results.length) newIndex = 0;
-
-        results.forEach((r, i) => {
-            r.classList.toggle('selected', i === newIndex);
-        });
-
-        // Scroll into view
-        results[newIndex]?.scrollIntoView({ block: 'nearest' });
-    }
-
-    function selectSearchResult() {
-        const selected = document.querySelector('.sp-search-result.selected');
-        if (selected) {
-            const type = selected.dataset.type;
-            const id = selected.dataset.id;
-            handleSearchResultClick(type, id);
-        }
-    }
-
-    function handleSearchResultClick(type, id) {
-        closeQuickSearch();
-
-        if (type === 'thread') {
-            activeThreadId = id;
-            switchMainTab('chat', false);
-            switchToTab('discussions');
-            renderThreadList();
-            renderActiveThread();
-        } else if (type === 'note') {
-            switchMainTab('notes', false);
-            switchToTab('notes');
-            // Highlight the note
-            setTimeout(() => {
-                const noteEl = document.querySelector(`.sp-note-item[data-id="${id}"]`);
-                if (noteEl) {
-                    noteEl.classList.add('highlighted');
-                    noteEl.scrollIntoView({ block: 'center' });
-                    setTimeout(() => noteEl.classList.remove('highlighted'), 2000);
-                }
-            }, 100);
-        }
-    }
 
     function setupMenuDropdown() {
         // Toggle menu
@@ -2769,6 +1483,13 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
             e.stopPropagation();
             const isOpen = elements.menuDropdown?.classList.toggle('show');
             elements.menuBtn?.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+            // Position dropdown below button (fixed positioning)
+            if (isOpen && elements.menuDropdown && elements.menuBtn) {
+                const rect = elements.menuBtn.getBoundingClientRect();
+                elements.menuDropdown.style.top = (rect.bottom + 4) + 'px';
+                elements.menuDropdown.style.right = (window.innerWidth - rect.right) + 'px';
+            }
 
             // Focus first menu item when opening
             if (isOpen) {
@@ -2808,13 +1529,13 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
         });
 
         // Menu items
-        document.getElementById('menu-download')?.addEventListener('click', showExportDialog);
-        document.getElementById('menu-save-all')?.addEventListener('click', exportAllToNLM);
+        document.getElementById('menu-download')?.addEventListener('click', () => SP.showExportDialog?.());
+        document.getElementById('menu-save-all')?.addEventListener('click', () => SP.exportAllToNLM?.());
         elements.menuSemanticEmbeddings?.addEventListener('click', () => toggleSemanticFlag('EMBEDDINGS_ENABLED'));
         elements.menuSemanticSearch?.addEventListener('click', () => toggleSemanticFlag('SEMANTIC_SEARCH_ENABLED'));
         document.getElementById('menu-clear')?.addEventListener('click', clearCurrentThread);
         document.getElementById('menu-new-chat')?.addEventListener('click', handleNewChat);
-        document.getElementById('menu-finish')?.addEventListener('click', endSession);
+        document.getElementById('menu-finish')?.addEventListener('click', () => SP.endSession?.());
     }
 
     async function handleNewChat() {
@@ -2959,6 +1680,7 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
     function switchMainTab(tabName, persist = true) {
         const next = ['chat', 'notes', 'cards', 'saved'].includes(tabName) ? tabName : 'chat';
         activeMainTab = next;
+        if (window.SP) window.SP.activeMainTab = activeMainTab;
         document.body.setAttribute('data-main-tab', next);
 
         const tabBar = elements.mainTabBar;
@@ -3044,16 +1766,13 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
     }
 
     async function initFocusWidget() {
-        if (!window.FocusWidget) return;
+        if (!window.FocusBarController) return;
         try {
             if (focusWidgetController?.destroy) focusWidgetController.destroy();
-            focusWidgetController = new window.FocusWidget({
-                containerId: 'focus-widget',
-                actionExecutor: commandActionExecutor
-            });
+            focusWidgetController = new window.FocusBarController(commandActionExecutor);
             await focusWidgetController.init();
         } catch (e) {
-            console.warn('[Sidepanel] FocusWidget init failed:', e);
+            console.warn('[Sidepanel] FocusBarController init failed:', e);
         }
     }
 
@@ -3063,7 +1782,7 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
             const input = elements.noteInput;
             const idea = input?.value?.trim();
             if (idea) {
-                addToParkingLot(idea);
+                SP.addToParkingLot?.(idea);
                 input.value = '';
             }
         });
@@ -3080,7 +1799,7 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
     function setupActionBar() {
         // Quick Save button (NEW - saves without requiring insight)
         document.getElementById('btn-quick-save')?.addEventListener('click', () => {
-            quickSaveHighlight();
+            SP.quickSaveHighlight?.();
         });
 
         // Insight Hide Button
@@ -3107,7 +1826,7 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
         document.getElementById('btn-key-insight')?.addEventListener('click', makeAtomicThought);
 
         // Mark as Done button
-        document.getElementById('btn-mark-done')?.addEventListener('click', parkCurrentThread);
+        document.getElementById('btn-mark-done')?.addEventListener('click', () => SP.parkCurrentThread?.());
 
         // Copy insight
         document.getElementById('btn-copy-insight')?.addEventListener('click', () => {
@@ -3119,99 +1838,11 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
         });
 
         // Save insight
-        document.getElementById('btn-save-insight')?.addEventListener('click', saveThreadToNLM);
+        document.getElementById('btn-save-insight')?.addEventListener('click', () => SP.saveThreadToNLM?.());
     }
 
-    function getNlmExportFailureToast(reason) {
-        const code = String(reason || '').toLowerCase();
-        if (code === 'dedupe') {
-            return {
-                message: getMessage('sp_toast_already_saved', 'Already saved today'),
-                type: 'info'
-            };
-        }
-        if (code === 'disabled') {
-            return {
-                message: getMessage('sp_nlm_disabled', 'NotebookLM export is disabled'),
-                type: 'error'
-            };
-        }
-        if (code === 'pii_warning') {
-            return {
-                message: getMessage('sp_nlm_pii_blocked', 'Sensitive data detected. Export blocked.'),
-                type: 'error'
-            };
-        }
-        if (code === 'cloud_export_disabled') {
-            return {
-                message: getMessage('sp_nlm_cloud_disabled', 'Cloud Export disabled in Settings.'),
-                type: 'warning'
-            };
-        }
-        return {
-            message: getMessage('sp_error_save', 'Error saving'),
-            type: 'error'
-        };
-    }
+    // getNlmExportFailureToast + quickSaveHighlight extracted to sp_export.js (Phase 5)
 
-    /**
-     * Quick Save - Save highlight to NotebookLM without requiring insight
-     * This allows users to save immediately after highlighting
-     */
-    async function quickSaveHighlight() {
-        if (!activeThreadId) {
-            showToast(getMessage('sp_no_highlight', 'No highlight selected'), 'warning');
-            return;
-        }
-
-        const thread = threads.find(t => t.id === activeThreadId);
-        if (!thread) return;
-
-        try {
-            // Build note object for NLM (without requiring insight)
-            const note = {
-                id: thread.id,
-                url: thread.highlight?.url || pageContext?.url || '',
-                title: thread.highlight?.title || pageContext?.title || '',
-                selection: thread.highlight?.text || '',
-                atomicThought: thread.refinedInsight || '', // May be empty
-                aiDiscussionSummary: thread.messages.length > 0
-                    ? thread.messages.map(m => `${m.role}: ${m.content.slice(0, 300)}`).join('\n')
-                    : '',
-                quickSave: true, // Flag indicating quick save without insight
-                created_at: thread.createdAt,
-                command: 'sidepanel_quick_save'
-            };
-
-            // Send to background for NLM processing
-            const response = await chrome.runtime.sendMessage({
-                type: 'ATOM_SAVE_THREAD_TO_NLM',
-                payload: note
-            });
-
-            if (response?.ok) {
-                // Mark as exported
-                thread.nlmExported = true;
-                thread.nlmExportedAt = Date.now();
-                await saveThreadsToStorage();
-                renderThreadList();
-                checkAndShowContextualTooltip('first_save');
-
-                // Show appropriate toast message
-                const msg = thread.refinedInsight
-                    ? getMessage('sp_toast_saved', 'Saved to Knowledge!')
-                    : getMessage('sp_toast_quick_saved', 'Highlight saved!');
-                showToast(msg, 'success');
-            } else {
-                const failure = getNlmExportFailureToast(response?.reason || response?.error);
-                showToast(failure.message, failure.type);
-            }
-
-        } catch (e) {
-            console.error('[QuickSave] Error:', e);
-            showToast(getMessage('sp_error_save', 'Error saving'), 'error');
-        }
-    }
 
     function setupEventListeners() {
         // Send button
@@ -3227,6 +1858,17 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
 
         // Auto-resize textarea & char count
         elements.userInput?.addEventListener('input', () => {
+            // "/" command menu trigger
+            if (elements.userInput.value === '/') {
+                const cmdDropdown = document.getElementById('cmd-dropdown');
+                if (cmdDropdown && !cmdDropdown.classList.contains('show')) {
+                    document.getElementById('cmd-trigger')?.click();
+                }
+                elements.userInput.value = '';
+                updateSendButton();
+                updateCharCount();
+                return;
+            }
             elements.userInput.style.height = 'auto';
             elements.userInput.style.height = Math.min(elements.userInput.scrollHeight, 120) + 'px';
             updateSendButton();
@@ -3236,11 +1878,8 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
         // New Chat (Top Bar)
         elements.refreshBtn?.addEventListener('click', handleNewChat);
 
-        // Quick Action Chips
-        setupQuickActionChips();
-
         // Deep Angle (2-step retrieval + deep analysis)
-        elements.deepAngleBtn?.addEventListener('click', generateDeepAngle);
+        elements.deepAngleBtn?.addEventListener('click', () => SP.generateDeepAngle?.());
 
         // Listen for tab changes
         chrome.tabs.onActivated.addListener(handleTabChange);
@@ -3249,8 +1888,11 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
         // Setup keyboard shortcuts
         setupKeyboardShortcuts();
 
-        // Capture post button
+        // Capture post button (shown dynamically on social media)
         document.getElementById('capture-post-btn')?.addEventListener('click', captureFocusedPost);
+
+        // Show capture-post button on social media sites
+        updateCapturePostVisibility();
 
         // Setup network status listeners
         setupNetworkListeners();
@@ -3395,12 +2037,38 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
     }
 
     // ===========================
+    // Capture Post Visibility (Social Media Only)
+    // ===========================
+    const SOCIAL_MEDIA_DOMAINS = ['facebook.com', 'reddit.com', 'x.com', 'twitter.com'];
+
+    function updateCapturePostVisibility() {
+        const btn = document.getElementById('capture-post-btn');
+        if (!btn) return;
+
+        const domain = (pageContext?.domain || currentDomain || '').replace(/^www\./, '');
+        const isSocial = SOCIAL_MEDIA_DOMAINS.some(d => domain.includes(d));
+
+        if (isSocial) {
+            btn.classList.add('visible');
+        } else {
+            btn.classList.remove('visible');
+        }
+    }
+
+    // ===========================
     // Keyboard Shortcuts
     // ===========================
     function setupKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
             const isInputFocused = document.activeElement?.tagName === 'TEXTAREA' ||
                 document.activeElement?.tagName === 'INPUT';
+
+            // Alt+Z: Toggle compact mode
+            if (e.altKey && e.key === 'z') {
+                e.preventDefault();
+                toggleCompactMode();
+                return;
+            }
 
             // Alt+C: Capture focused post
             if (e.altKey && e.key === 'c') {
@@ -3416,7 +2084,7 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
                 return;
             }
 
-            // Ctrl/Cmd + D: Key Insight (Đúc kết ngay)
+            // Ctrl/Cmd + D: Key Insight (ÄÃºc káº¿t ngay)
             if ((e.ctrlKey || e.metaKey) && e.key === 'd' && !e.shiftKey) {
                 e.preventDefault();
                 if (activeThreadId) {
@@ -3425,11 +2093,11 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
                 return;
             }
 
-            // Ctrl/Cmd + Shift + D: Mark as Done (Xong phần này)
+            // Ctrl/Cmd + Shift + D: Mark as Done (Xong pháº§n nÃ y)
             if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'D') {
                 e.preventDefault();
                 if (activeThreadId) {
-                    parkCurrentThread();
+                    SP.parkCurrentThread?.();
                 }
                 return;
             }
@@ -3447,14 +2115,14 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
             // Ctrl/Cmd + K: Quick search
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
-                toggleQuickSearch();
+                SP.toggleQuickSearch?.();
                 return;
             }
 
             // Ctrl/Cmd + Z: Undo last action
             if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
                 e.preventDefault();
-                undoLastAction();
+                SP.undoLastAction?.();
                 return;
             }
 
@@ -3616,8 +2284,8 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
         // Notes count
         if (elements.notesCount) {
             const prevCount = parseInt(elements.notesCount.textContent) || 0;
-            elements.notesCount.textContent = parkingLot.length;
-            if (parkingLot.length > prevCount) {
+            elements.notesCount.textContent = (SP.parkingLot || []).length;
+            if ((SP.parkingLot || []).length > prevCount) {
                 pulseBadge(elements.notesCount);
             }
         }
@@ -3804,517 +2472,20 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
 
         // Smart Linking: Analyze connections with other threads
         if (threads.length > 1) {
-            analyzeConnections(thread);
+            SP.analyzeConnections?.(thread);
         }
 
         // Onboarding: Show tooltip for first highlight
-        checkAndShowContextualTooltip('first_highlight');
+        SP.checkAndShowContextualTooltip?.('first_highlight');
 
         if (highlight?.retentionAction) {
-            openRetentionFlow(highlight.retentionAction, highlight);
+            SP.openRetentionFlow?.(highlight.retentionAction, highlight);
         }
     }
 
-    // ===========================
-    // Smart Linking System
-    // ===========================
-    function getDeepAngleCacheKey(thread) {
-        const connectionKey = (thread?.connections || [])
-            .map((conn) => `${conn.type || ''}:${conn.targetId || conn.targetIndex || ''}:${Math.round((conn.confidence || 0) * 100)}`)
-            .join('|');
-        return hashString(`${thread?.id || 'thread'}::${connectionKey}`);
-    }
+    // Smart Linking System extracted to sp_smartlink.js (Phase 4b)
 
-    function getCurrentDeepAngleKey() {
-        return normalizeUrl(pageContext?.url || '');
-    }
 
-    function updateDeepAngleUI() {
-        if (!elements.deepAngleBtn || !elements.deepAngleOutput || !elements.deepAngleText) return;
-        const hasPageContext = !!pageContext?.url;
-        const cacheKey = getCurrentDeepAngleKey();
-        const cached = cacheKey ? deepAngleByUrl.get(cacheKey) : null;
-
-        elements.deepAngleBtn.disabled = !hasPageContext;
-        if (elements.deepAngleStatus) {
-            elements.deepAngleStatus.textContent = hasPageContext
-                ? getMessage('sp_deep_angle_hint', 'See another perspective from your recent highlights.')
-                : getMessage('sp_deep_angle_empty', 'Select or save more highlights to unlock this.');
-            elements.deepAngleStatus.style.display = 'block';
-        }
-
-        if (hasPageContext && cached?.text) {
-            elements.deepAngleText.innerHTML = formatMessage(cached.text);
-            elements.deepAngleOutput.hidden = false;
-        } else {
-            elements.deepAngleOutput.hidden = true;
-            elements.deepAngleText.textContent = '';
-        }
-    }
-
-    function setDeepAngleLoading(isLoading) {
-        if (!elements.deepAngleBtn) return;
-        if (isLoading) {
-            const loadingLabel = getMessage('sp_deep_angle_loading', 'Generating...');
-            elements.deepAngleBtn.classList.add('sp-action-loading');
-            elements.deepAngleBtn.setAttribute('aria-busy', 'true');
-            elements.deepAngleBtn.disabled = true;
-            elements.deepAngleBtn.innerHTML = `<span class="btn-spinner"></span> ${loadingLabel}`;
-        } else {
-            const label = getMessage('sp_deep_angle', 'New angle');
-            elements.deepAngleBtn.classList.remove('sp-action-loading');
-            elements.deepAngleBtn.setAttribute('aria-busy', 'false');
-            elements.deepAngleBtn.disabled = !pageContext?.url;
-            elements.deepAngleBtn.innerHTML = `🧠 ${label}`;
-        }
-    }
-
-    async function generateDeepAngleFromConnections(thread) {
-        if (!thread?.connections?.length) {
-            showToast('No connections available.', 'info');
-            updateDeepAngleUI();
-            return;
-        }
-
-        const ttlMs = API_CONFIG.CACHE.DEEP_ANGLE_TTL_MS || 6 * 60 * 60 * 1000;
-        const cacheKey = getDeepAngleCacheKey(thread);
-        const now = Date.now();
-        if (thread.deepAngle?.cacheKey === cacheKey && (now - (thread.deepAngle.generatedAt || 0)) < ttlMs) {
-            updateDeepAngleUI();
-            return;
-        }
-
-        const apiKey = await getApiKey();
-        if (!apiKey) {
-            showToast(getMessage('sp_error_no_api_key', 'AI Access Key not set'), 'error');
-            return;
-        }
-
-        const counts = thread.connections.reduce((acc, conn) => {
-            const type = String(conn.type || '').toLowerCase();
-            if (type === 'supports') acc.supports += 1;
-            if (type === 'contradicts') acc.contradicts += 1;
-            if (type === 'extends') acc.extends += 1;
-            return acc;
-        }, { supports: 0, contradicts: 0, extends: 0 });
-
-        const hasTension = thread.connections.some(c => c.type === 'contradicts' && (c.confidence || 0) >= 0.7);
-        let angleType = 'Evolution';
-        if (hasTension) {
-            angleType = 'Tension';
-        } else if (counts.supports >= counts.extends && counts.supports >= counts.contradicts) {
-            angleType = 'Evidence';
-        }
-
-        const lang = window.i18nUtils ? await window.i18nUtils.getEffectiveLanguage() : 'English';
-        const prompt = `You are a critical thinking coach. Create a 1-2 sentence Deep Angle suggestion in ${lang}.
-
-Angle type: ${angleType}
-
-Connections:
-${thread.connections.map((conn, idx) => (
-            `[${idx + 1}] ${conn.type?.toUpperCase() || 'UNKNOWN'} (${Math.round((conn.confidence || 0) * 100)}%): ${conn.explanation || ''}\nPreview: ${conn.targetPreview || ''}`
-        )).join('\n\n')}
-
-Rules:
-- 1-2 sentences only
-- Focus on the angle type
-- Avoid repeating the connection text verbatim`;
-
-        try {
-            setDeepAngleLoading(true);
-            const conversationHistory = [{ role: 'user', parts: [{ text: prompt }] }];
-            const response = await callLLMAPI('You generate concise deep angles.', conversationHistory, {
-                priority: 'background',
-                allowFallback: true,
-                cacheKey: `deep-angle:${thread.id}:${cacheKey}`,
-                cacheTtlMs: ttlMs,
-                generationConfig: { temperature: 0.4, maxOutputTokens: 256 }
-            });
-
-
-            const text = (response || '').trim();
-            if (!text) {
-                showToast(getMessage('sp_error_empty_response', 'No response received'), 'error');
-                return;
-            }
-
-            thread.deepAngle = {
-                text,
-                cacheKey,
-                angleType,
-                generatedAt: Date.now()
-            };
-            recordSmartLinkMetric('deep_angle_generated_count', 1);
-            await saveThreadsToStorage();
-            updateDeepAngleUI();
-        } catch (err) {
-            // Silently ignore PROBATION_ACTIVE errors - expected during rate limit recovery
-            if (err?.message?.startsWith('PROBATION_ACTIVE')) {
-                console.log('[DeepAngle] Skipped due to probation mode:', err.message);
-            } else {
-                console.error('[DeepAngle] Error:', err);
-                showToast(getMessage('sp_deep_angle_error', "Couldn't generate a new angle."), 'error');
-            }
-        } finally {
-            setDeepAngleLoading(false);
-        }
-    }
-
-    async function getSemanticCandidateThreads(newThread, otherThreads) {
-        if (!semanticFlags.embeddingsEnabled || !semanticFlags.semanticSearchEnabled) {
-            return null;
-        }
-        if (!window.SemanticSearchService || !window.EmbeddingService || !window.VectorStore) {
-            return null;
-        }
-
-        const queryText = newThread?.highlight?.text || '';
-        if (!queryText.trim()) return null;
-
-        const domain = newThread?.highlight?.domain || currentDomain;
-        if (!domain) return null;
-
-        const newUrl = normalizeUrl(newThread?.highlight?.url || '');
-        const configTtl = window.SemanticSearchService?.SEARCH_CONFIG?.domainTtlMs?.[domain];
-        const maxAgeMs = Number.isFinite(configTtl) ? configTtl : 14 * 24 * 60 * 60 * 1000;
-
-        try {
-            const related = await window.SemanticSearchService.searchWithinDomain(queryText, domain, 10, {
-                maxAgeMs,
-                onError: () => recordSmartLinkMetric('embedding_api_errors', 1)
-            });
-
-            if (!Array.isArray(related) || related.length === 0) {
-                return [];
-            }
-
-            const filtered = related.filter(r => {
-                const url = normalizeUrl(r.url || '');
-                return url && url !== newUrl;
-            });
-
-            const threadByUrl = new Map();
-            otherThreads.forEach((thread) => {
-                const url = normalizeUrl(thread.highlight?.url || '');
-                if (!url) return;
-                const existing = threadByUrl.get(url);
-                if (!existing || (thread.createdAt || 0) > (existing.createdAt || 0)) {
-                    threadByUrl.set(url, thread);
-                }
-            });
-
-            const candidates = filtered.map((result) => {
-                const url = normalizeUrl(result.url || '');
-                const thread = threadByUrl.get(url);
-                if (!thread?.highlight?.text) return null;
-                return {
-                    thread,
-                    similarity: Number.isFinite(result.similarity) ? result.similarity : 0,
-                    createdAt: thread.createdAt || 0
-                };
-            }).filter(Boolean);
-
-            if (candidates.length === 0) {
-                return [];
-            }
-
-            candidates.sort((a, b) => {
-                const diff = b.similarity - a.similarity;
-                if (Math.abs(diff) <= 0.01) {
-                    return (b.createdAt || 0) - (a.createdAt || 0);
-                }
-                return diff;
-            });
-
-            recordSmartLinkMetric('semantic_candidates_count', candidates.length);
-            const topThreads = candidates.slice(0, 5).map(c => c.thread);
-            return topThreads;
-        } catch (err) {
-            recordSmartLinkMetric('embedding_api_errors', 1);
-            console.warn('[SmartLink] Semantic candidate selection failed:', err);
-            return [];
-        }
-    }
-    async function analyzeConnections(newThread) {
-        const otherThreads = threads.filter(t => t.id !== newThread.id && t.highlight?.text);
-
-        if (otherThreads.length === 0) return;
-
-        // Show loading indicator for connections
-        showConnectionsLoading();
-
-        try {
-            const apiKey = await getApiKey();
-            if (!apiKey) {
-                hideConnectionsLoading();
-                return;
-            }
-
-            // Prepare highlights for comparison
-            const newText = newThread.highlight?.text || '';
-            if (!newText.trim()) {
-                hideConnectionsLoading();
-                return;
-            }
-
-            let candidateThreads = await getSemanticCandidateThreads(newThread, otherThreads);
-            if (!candidateThreads || candidateThreads.length === 0) {
-                recordSmartLinkMetric('fallback_to_recency_count', 1);
-                candidateThreads = otherThreads.slice(-5);
-                console.log('[SmartLink] Using recency fallback candidates:', candidateThreads.length);
-            } else {
-                console.log('[SmartLink] Using semantic candidates:', candidateThreads.length);
-            }
-
-            const previousHighlights = candidateThreads.map((t, idx) => ({
-                id: t.id,
-                index: idx + 1,
-                text: t.highlight?.text?.slice(0, 500) || ''
-            }));
-
-            if (previousHighlights.length === 0) {
-                hideConnectionsLoading();
-                return;
-            }
-
-            const connections = await detectConnections(apiKey, newText, previousHighlights);
-
-            if (connections && connections.length > 0) {
-                recordSmartLinkMetric('connections_detected_count', connections.length);
-                newThread.connections = connections;
-                newThread.deepAngle = null;
-                renderConnections(connections);
-                await saveThreadsToStorage();
-            } else {
-                hideConnectionsLoading();
-            }
-        } catch (error) {
-            // Silently ignore PROBATION_ACTIVE errors - expected during rate limit recovery
-            if (error?.message?.startsWith('PROBATION_ACTIVE')) {
-                console.log('[SmartLink] Skipped due to probation mode:', error.message);
-            } else {
-                console.error('[SmartLink] Error:', error);
-            }
-            hideConnectionsLoading();
-        }
-    }
-
-    async function detectConnections(apiKey, newText, previousHighlights) {
-        const lang = window.i18nUtils ? await window.i18nUtils.getEffectiveLanguage() : 'English';
-        const rateManager = window.RateLimitManager
-            ? (window.__ATOM_RATE_MANAGER__ || (window.__ATOM_RATE_MANAGER__ = new window.RateLimitManager({
-                rpmTotal: 15,
-                rpmBackground: 8,
-                cacheTtlMs: API_CONFIG.CACHE.DEFAULT_BACKGROUND_TTL_MS || 5 * 60 * 1000
-            })))
-            : null;
-
-        const prompt = `Analyze the relationship between a NEW highlighted text and PREVIOUS highlights from the same reading session.
-
-NEW HIGHLIGHT:
-"${newText.slice(0, 800)}"
-
-PREVIOUS HIGHLIGHTS:
-${previousHighlights.map(h => `[#${h.index}] "${h.text}"`).join('\n\n')}
-
-For each previous highlight, determine if the NEW highlight:
-1. CONTRADICTS it (opposing viewpoints, conflicting data)
-2. SUPPORTS it (adds evidence, reinforces the point)
-3. EXTENDS it (builds upon, adds new dimension)
-4. UNRELATED (no meaningful connection)
-
-Respond in JSON format:
-{
-  "connections": [
-    {
-      "targetIndex": 1,
-      "type": "contradicts|supports|extends|unrelated",
-      "confidence": 0.8,
-      "explanation": "Brief explanation in ${lang}"
-    }
-  ]
-}
-
-Only include connections with confidence >= 0.6. If no strong connections, return empty array.`;
-
-        const url = `${API_CONFIG.API_BASE}/${API_CONFIG.MODEL_NAME}:generateContent?key=${apiKey}`;
-
-        const body = {
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-                temperature: 0.3,
-                maxOutputTokens: 1024,
-                responseMimeType: "application/json"
-            }
-        };
-
-        try {
-            const cacheKey = `smartlink:${hashString(`${newText.slice(0, 500)}::${previousHighlights.map(h => h.text).join('|')}`)}`;
-            const runRequest = async () => {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-                if (!response.ok) {
-                    if (response.status === 429 && rateManager) {
-                        rateManager.record429Error('smartlink');
-                        const retryAfterHeader = response.headers.get('Retry-After');
-                        const retryAfterHeaderSeconds = retryAfterHeader ? Number(retryAfterHeader) : null;
-                        const errorText = await response.text().catch(() => '');
-                        const retryAfterSeconds = window.parseRetryAfterSeconds
-                            ? window.parseRetryAfterSeconds(errorText)
-                            : null;
-                        const retrySeconds = Number.isFinite(retryAfterHeaderSeconds)
-                            ? retryAfterHeaderSeconds
-                            : retryAfterSeconds;
-                        if (Number.isFinite(retrySeconds)) {
-                            rateManager.setCooldown((retrySeconds + 1) * 1000, 'smartlink-429');
-                        }
-                    }
-                    throw new Error(`SmartLink API error ${response.status}`);
-                }
-                return response.json();
-            };
-            const data = rateManager
-                ? await rateManager.enqueue(runRequest, {
-                    priority: 'background',
-                    cacheKey,
-                    cacheTtlMs: API_CONFIG.CACHE.SMARTLINK_TTL_MS || 10 * 60 * 1000,
-                    skipDuringCooldown: true  // Skip if in cooldown to prevent queue buildup
-                })
-                : await runRequest();
-            let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-            // Helper to clean and parse JSON
-            const parseRobustJSON = (text) => {
-                // Guard: return empty connections if text is empty/undefined
-                if (!text || typeof text !== 'string' || !text.trim()) {
-                    console.warn('[SmartLink] Empty response from API, returning empty connections');
-                    return { connections: [] };
-                }
-
-                // Robust JSON Cleaner & Parser
-                const cleanAndParseJson = (text) => {
-                    if (!text) return {};
-                    // 1. Remove markdown
-                    let clean = text.replace(/```json\s*|\s*```/g, '').trim();
-                    // 2. Extract JSON object
-                    const match = clean.match(/\{[\s\S]*\}/);
-                    if (match) clean = match[0];
-
-                    // 3. Try standard parse
-                    try { return JSON.parse(clean); } catch (e) { }
-
-                    // 4. Fix common issues (single quotes, trailing commas, unquoted keys)
-                    try {
-                        // Replace simple single quotes
-                        // Simple regex fix for trailing commas
-                        let fixed = clean.replace(/,\s*([}\]])/g, '$1');
-                        // Add quotes to unquoted keys
-                        fixed = fixed.replace(/([{,]\s*)([a-zA-Z0-9_]+?)\s*:/g, '$1"$2":');
-
-                        return JSON.parse(fixed);
-                    } catch (e) {
-                        // 5. Last resort: specific extraction for "connections"
-                        console.warn('[SmartLink] Strict parse failed, trying fallback extraction. Raw:', clean.slice(0, 100));
-
-                        // Try to find ANY array pattern if connections key is missing
-                        let arrayMatch = clean.match(/"connections"\s*:\s*\[([\s\S]*?)\]/);
-                        if (!arrayMatch) arrayMatch = clean.match(/connections\s*:\s*\[([\s\S]*?)\]/);
-                        if (!arrayMatch) arrayMatch = clean.match(/\[([\s\S]*?)\]/); // Broadest fallback
-
-                        if (arrayMatch) {
-                            try {
-                                // Sanitizer for key names
-                                const content = arrayMatch[1];
-                                // Fix unquoted keys: { type: ... } -> { "type": ... }
-                                const sanitized = content.replace(/([{,]\s*)([a-zA-Z0-9_]+?)\s*:/g, '$1"$2":');
-                                // Fix trailing commas
-                                const noTrailing = sanitized.replace(/,\s*([}\]])/g, '$1');
-
-                                return JSON.parse(`{"connections": [${noTrailing}]}`);
-                            } catch (err) {
-                                console.warn('[SmartLink] Fallback construction failed:', err);
-                            }
-                        }
-                        throw new Error('Failed to parse JSON');
-                    }
-                };
-
-                return cleanAndParseJson(text);
-            };
-
-            const parsed = parseRobustJSON(rawText);
-            const validConnections = parsed.connections;
-
-            return validConnections;
-        } catch (error) {
-            console.error('[SmartLink] Parse error:', error);
-            // Non-critical feature, just return empty
-            return [];
-        }
-    }
-
-    function showConnectionsLoading() {
-        // Show loading state in connections tab (can be enhanced later)
-        showToast(getMessage('sp_analyzing', 'Analyzing connections...'), 'info');
-    }
-
-    function hideConnectionsLoading() {
-        // No longer needed with new tab layout
-    }
-
-    function renderConnections(connections) {
-        // Update the connections list in bottom tab
-        renderConnectionsList();
-        updateAllCounts();
-    }
-
-    async function handleConnectionAction(action, targetId) {
-        const currentThread = threads.find(t => t.id === activeThreadId);
-        const targetThread = threads.find(t => t.id === targetId);
-
-        if (!currentThread || !targetThread) return;
-
-        if (action === 'compare') {
-            // Generate a comparison between the two highlights
-            const comparePrompt = `Compare these two highlighted passages and explain how they relate:
-
-PASSAGE 1:
-"${currentThread.highlight?.text?.slice(0, 500)}"
-
-PASSAGE 2:
-"${targetThread.highlight?.text?.slice(0, 500)}"
-
-Provide a clear analysis of:
-1. Key similarities
-2. Key differences
-3. How they complement each other (if at all)`;
-
-            currentThread.messages.push({ role: 'user', content: comparePrompt });
-            addMessageToDOM(comparePrompt, 'user');
-            await sendToGemini(comparePrompt, currentThread);
-            await saveThreadsToStorage();
-
-        } else if (action === 'merge') {
-            // Merge target thread into current thread
-            const mergedHighlight = `${currentThread.highlight?.text || ''}\n\n---\n\n${targetThread.highlight?.text || ''}`;
-            currentThread.highlight.text = mergedHighlight;
-            currentThread.messages = [...targetThread.messages, ...currentThread.messages];
-
-            // Remove target thread
-            threads = threads.filter(t => t.id !== targetId);
-
-            await saveThreadsToStorage();
-            renderThreadList();
-            renderActiveThread();
-
-            // Hide connections after merge
-            hideConnectionsLoading();
-        }
-    }
 
     function jumpToThread(threadId) {
         activeThreadId = threadId;
@@ -4375,6 +2546,7 @@ Provide a clear analysis of:
         } else {
             threads = [];
         }
+        if (window.SP) window.SP.threads = threads;
 
         renderThreadList();
 
@@ -4391,6 +2563,7 @@ Provide a clear analysis of:
 
 
     async function saveThreadsToStorage() {
+        if (window.SP) window.SP.threads = threads;
         if (!currentDomain) return;
 
         const storageKey = `atom_sidepanel_highlight_${currentDomain}`;
@@ -4399,7 +2572,7 @@ Provide a clear analysis of:
                 domain: currentDomain,
                 threads: threads,
                 updatedAt: Date.now(),
-                sessionId: SESSION_ID
+                sessionId: SP.SESSION_ID || 'unknown'
             }
         });
 
@@ -4419,7 +2592,7 @@ Provide a clear analysis of:
         }
 
         // Notify other tabs about data update
-        broadcastDataUpdate();
+        SP.broadcastDataUpdate?.();
     }
 
     function renderThreadList() {
@@ -4479,36 +2652,55 @@ Provide a clear analysis of:
     function extractInsightTextFromMaybeJson(rawText) {
         const s = String(rawText || '').trim();
         if (!s) return '';
-        if (!s.startsWith('{')) return s;
 
-        const stripped = s
+        // Strip markdown code fences and "json" prefix FIRST, before any checks
+        let stripped = s
             .replace(/```(?:json)?\s*/gi, '')
             .replace(/```/g, '')
+            .replace(/^"?json\s*/i, '')
             .trim();
 
+        // If no JSON-like content, return cleaned text
+        if (!stripped.includes('{')) return stripped || s;
+
         const match = stripped.match(/\{[\s\S]*\}/);
-        if (!match) return s;
+        if (!match) {
+            // Fallback for truncated JSON: extract value after "insight" key directly
+            const directMatch = stripped.match(/["']?insight["']?\s*:\s*["']([^"']+)/i);
+            if (directMatch) return directMatch[1].trim();
+            return stripped || s;
+        }
 
         const candidate = match[0];
+
+        // Helper to extract insight from parsed object (case-insensitive key)
+        function getInsightValue(obj) {
+            if (!obj || typeof obj !== 'object') return null;
+            for (const key of ['insight', 'Insight', 'INSIGHT']) {
+                if (typeof obj[key] === 'string' && obj[key].trim()) {
+                    return obj[key].trim();
+                }
+            }
+            return null;
+        }
+
         try {
             const parsed = JSON.parse(candidate);
-            if (parsed && typeof parsed.insight === 'string' && parsed.insight.trim()) {
-                return parsed.insight.trim();
-            }
-            return s;
+            const val = getInsightValue(parsed);
+            if (val) return val;
+            return stripped || s;
         } catch {
             try {
                 const fixed = candidate
                     .replace(/,\s*([}\]])/g, '$1')
                     .replace(/([{,]\s*)([a-zA-Z0-9_]+?)\s*:/g, '$1"$2":');
                 const parsed = JSON.parse(fixed);
-                if (parsed && typeof parsed.insight === 'string' && parsed.insight.trim()) {
-                    return parsed.insight.trim();
-                }
+                const val = getInsightValue(parsed);
+                if (val) return val;
             } catch {
                 // fall through
             }
-            return s;
+            return stripped || s;
         }
     }
 
@@ -4604,7 +2796,7 @@ Provide a clear analysis of:
         syncInsightDisplayUI(thread);
 
         // Render connections in bottom tab
-        renderConnectionsList();
+        SP.renderConnectionsList?.();
 
         // Render session insights (from Reading Card)
         renderSessionInsights();
@@ -4631,7 +2823,8 @@ Provide a clear analysis of:
     }
 
     function renderInsightsSummary() {
-        const insightThreads = threads.filter(t => t.refinedInsight);
+        const currentUrl = normalizeUrl(pageContext?.url);
+        const insightThreads = threads.filter(t => t.refinedInsight && (!currentUrl || normalizeUrl(t?.highlight?.url) === currentUrl));
 
         if (insightThreads.length === 0) {
             if (elements.insightsSummary) elements.insightsSummary.classList.remove('active');
@@ -4645,7 +2838,7 @@ Provide a clear analysis of:
             elements.insightsList.innerHTML = insightThreads.map(t => `
                 <div class="sp-insight-item" data-thread-id="${t.id}">
                     <span class="sp-insight-item-icon">${getIcon('insight')}</span>
-                    <span class="sp-insight-item-text">${escapeHtml(String(t.refinedInsight || '').trim())}</span>
+                    <span class="sp-insight-item-text">${escapeHtml(extractInsightTextFromMaybeJson(t.refinedInsight))}</span>
                 </div>
             `).join('');
 
@@ -4671,10 +2864,12 @@ Provide a clear analysis of:
     async function renderSessionInsights() {
         if (!elements.sessionInsights) return;
 
-        // Get key insights from ALL threads
+        // Get key insights from threads matching the current URL only
+        const currentUrl = normalizeUrl(pageContext?.url);
         const insights = threads
-            .filter(t => t.refinedInsight)
-            .map(t => ({ id: t.id, text: t.refinedInsight, type: 'insight' }));
+            .filter(t => t.refinedInsight && (!currentUrl || normalizeUrl(t?.highlight?.url) === currentUrl))
+            .map(t => ({ id: t.id, text: extractInsightTextFromMaybeJson(t.refinedInsight), type: 'insight' }))
+            .filter(item => item.text);
 
         if (insights.length === 0) {
             elements.sessionInsights.classList.remove('active');
@@ -4708,7 +2903,7 @@ Provide a clear analysis of:
         insights.forEach(item => {
             html += `
             <li class="sp-session-insight-item" data-id="${item.id}">
-                <div class="sp-session-insight-badge">💡</div>
+                <div class="sp-session-insight-badge">ðŸ’¡</div>
                 <div class="sp-session-insight-text">${item.text}</div>
             </li>`;
         });
@@ -4741,51 +2936,9 @@ Provide a clear analysis of:
         }
     }
 
-    function renderConnectionsList() {
-        if (!elements.connectionsList) return;
+    // renderConnectionsList extracted to sp_smartlink.js (Phase 4b)
 
-        const allConnections = [];
-        threads.forEach(thread => {
-            if (thread.connections) {
-                thread.connections.forEach(conn => {
-                    allConnections.push({ ...conn, threadId: thread.id });
-                });
-            }
-        });
 
-        if (allConnections.length === 0) {
-            elements.connectionsList.innerHTML = `<div class="sp-connection-empty">${getMessage('sp_no_connections', 'No related ideas yet')}</div>`;
-            updateDeepAngleUI();
-            return;
-        }
-
-        const typeLabels = {
-            'contradicts': getMessage('sp_connection_contradicts', 'Contradicts'),
-            'supports': getMessage('sp_connection_supports', 'Supports'),
-            'extends': getMessage('sp_connection_extends', 'Extends')
-        };
-
-        elements.connectionsList.innerHTML = allConnections.map(conn => `
-            <div class="sp-connection-item ${conn.type}" data-thread-id="${conn.threadId}">
-                <div class="sp-connection-type">
-                    ${conn.type === 'contradicts' ? '⚡' : conn.type === 'supports' ? '✓' : '➕'}
-                    ${typeLabels[conn.type] || conn.type}
-                </div>
-                <div class="sp-connection-preview">"${escapeHtml(conn.targetPreview?.slice(0, 50) || '')}..."</div>
-            </div>
-        `).join('');
-
-        // Click to view thread
-        elements.connectionsList.querySelectorAll('.sp-connection-item').forEach(item => {
-            item.addEventListener('click', () => {
-                activeThreadId = item.dataset.threadId;
-                renderThreadList();
-                renderActiveThread();
-            });
-        });
-
-        updateDeepAngleUI();
-    }
 
     // ===========================
     // Page Context Extraction
@@ -4841,7 +2994,8 @@ Provide a clear analysis of:
                     domain: response.domain,
                     headings: response.headings || []
                 };
-                updateDeepAngleUI();
+                if (window.SP) window.SP.pageContext = pageContext;
+                SP.updateDeepAngleUI?.();
 
                 // If we navigated within the same tab (same domain), keep the domain threads
                 // but clear active selection so we don't keep chatting about the previous URL.
@@ -4865,6 +3019,9 @@ Provide a clear analysis of:
                 checkAndShowRelatedMemory().catch(err => {
                     console.warn('[SidePanel] Related memory check failed:', err.message);
                 });
+
+                // Update capture-post button visibility based on domain
+                updateCapturePostVisibility();
             } else {
                 // Log error only if all retries failed
                 if (lastError) {
@@ -4988,63 +3145,25 @@ Provide a clear analysis of:
     }
 
     // ===========================
-    // Quick Action Chips
-    // ===========================
-    function setupQuickActionChips() {
-        // 1. Setup Chip Clicks
-        const chips = document.querySelectorAll('.sp-quick-chip[data-action]');
-        chips.forEach(chip => {
-            chip.addEventListener('click', () => {
-                const action = chip.getAttribute('data-action');
-                if (action) {
-                    handleQuickAction(action);
-                    // Hide chips after action (user is now chatting)
-                    hideQuickActions();
-                }
-            });
-        });
-
-        // 2. Setup Toggle Header
-        const toggleBtn = document.getElementById('btn-toggle-actions');
-        const actionsGrid = document.getElementById('quick-actions-grid');
-
-        if (toggleBtn && actionsGrid) {
-            toggleBtn.addEventListener('click', () => {
-                const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
-
-                // Toggle State
-                if (isExpanded) {
-                    // Collapse
-                    toggleBtn.setAttribute('aria-expanded', 'false');
-                    actionsGrid.classList.add('collapsed');
-                } else {
-                    // Expand
-                    toggleBtn.setAttribute('aria-expanded', 'true');
-                    actionsGrid.classList.remove('collapsed');
-                }
-            });
-        }
-    }
-
-    function showQuickActions() {
-        if (elements.quickActions) {
-            updateQuickActionChips();
-            elements.quickActions.classList.remove('hidden');
-        }
-    }
-
-    function hideQuickActions() {
-        if (elements.quickActions) {
-            elements.quickActions.classList.add('hidden');
-        }
-    }
+    // Quick Actions now merged into "/" command menu
+    function showQuickActions() { /* no-op: merged into command menu */ }
+    function hideQuickActions() { /* no-op: merged into command menu */ }
 
     async function handleQuickAction(type) {
         if (isLoading) return;
 
         // Handle save action separately (doesn't need AI)
         if (type === 'save') {
-            await quickSaveHighlight();
+            if (SP.quickSaveHighlight) await SP.quickSaveHighlight();
+            return;
+        }
+
+        // Handle quick-diary action â€” show inline widget
+        if (type === 'quick-diary') {
+            if (window.quickDiaryCtrl) {
+                window.quickDiaryCtrl.show();
+                window.quickDiaryCtrl.expand();
+            }
             return;
         }
 
@@ -5088,50 +3207,53 @@ Provide a clear analysis of:
         const thread = threads.find(t => t.id === activeThreadId);
         if (!thread) return;
 
-        // If it's a page discussion and no highlight, use page content
+        // If it's a page discussion and no highlight, use full article content
         const isPageLevel = thread.isPageDiscussion;
+        const PAGE_LEVEL_MAX_CHARS = 20000; // ~5000 words for full article analysis
+        const HIGHLIGHT_MAX_CHARS = 20000; // ~5000 words, same as page-level
+        const promptMaxChars = isPageLevel ? PAGE_LEVEL_MAX_CHARS : HIGHLIGHT_MAX_CHARS;
         const highlightText = isPageLevel
-            ? (pageContext?.content || '').slice(0, 5000)
+            ? (pageContext?.content || '').slice(0, PAGE_LEVEL_MAX_CHARS)
             : (thread.highlight?.text || '');
 
         // Updated prompts with evidence format requirements
         const prompts = {
             'summarize': `Summarize this text concisely.
 Format:
-📍 Key phrases: [list 2-3 key phrases EXACTLY from the text]
-📝 Summary: [your summary in Vietnamese]
+ðŸ“ Key phrases: [list 2-3 key phrases EXACTLY from the text]
+ðŸ“ Summary: [your summary in Vietnamese]
 
-Text: "${highlightText.slice(0, 1500)}"`,
+Text: "${highlightText.slice(0, promptMaxChars)}"`,
 
             'keypoints': `Extract the key points from this text.
 Format each point with evidence:
-1. 📍 "quote" → [your interpretation in Vietnamese]
+1. ðŸ“ "quote" â†’ [your interpretation in Vietnamese]
 (Note: The quote must be EXACTLY from the original text in original language)
-2. 📍 "quote" → [your interpretation in Vietnamese]
+2. ðŸ“ "quote" â†’ [your interpretation in Vietnamese]
 
-Text: "${highlightText.slice(0, 1500)}"`,
+Text: "${highlightText.slice(0, promptMaxChars)}"`,
 
             'explain': `Explain this text simply and clearly.
 Format:
-📍 Evidence: "[EXACT QUOTE from text in ORIGINAL LANGUAGE]"
-💡 Explanation: [Explain key concepts. IF user_persona is set, adapt complexity and use relevant analogies. ELSE, use simple ELI5 style. Contextualize: Who/What/Why? What is the implication?]
+ðŸ“ Evidence: "[EXACT QUOTE from text in ORIGINAL LANGUAGE]"
+ðŸ’¡ Explanation: [Explain key concepts. IF user_persona is set, adapt complexity and use relevant analogies. ELSE, use simple ELI5 style. Contextualize: Who/What/Why? What is the implication?]
 
-Text: "${highlightText.slice(0, 1500)}"`,
+Text: "${highlightText.slice(0, promptMaxChars)}"`,
 
             'counter': `Provide counter-arguments to this text.
 Format:
-📍 Author's claim: [EXACT QUOTE from text in ORIGINAL LANGUAGE]
-🤔 Counter-argument: [your counter-point in Vietnamese]
-⚖️ Considerations: [balanced view in Vietnamese]
+ðŸ“ Author's claim: [EXACT QUOTE from text in ORIGINAL LANGUAGE]
+ðŸ¤” Counter-argument: [your counter-point in Vietnamese]
+âš–ï¸ Considerations: [balanced view in Vietnamese]
 
-Text: "${highlightText.slice(0, 1500)}"`,
+Text: "${highlightText.slice(0, promptMaxChars)}"`,
 
             'connect': `How does this relate to the broader context?
 Format:
-📍 This passage: [EXACT QUOTE from text in ORIGINAL LANGUAGE]
-🔗 Connection: [how it relates to other concepts in Vietnamese]
+ðŸ“ This passage: [EXACT QUOTE from text in ORIGINAL LANGUAGE]
+ðŸ”— Connection: [how it relates to other concepts in Vietnamese]
 
-Text: "${highlightText.slice(0, 1500)}"`
+Text: "${highlightText.slice(0, promptMaxChars)}"`
         };
 
         const bloomPrompt = window.LearningObjectiveService?.getBloomPrompt?.(type) || '';
@@ -5187,7 +3309,7 @@ Text: "${highlightText.slice(0, 1500)}"`
             const contextLevel = determineContextLevel(action, messageCount);
             const systemPrompt = buildSystemPrompt(thread, contextLevel, action);
             const conversationHistory = buildConversationHistory(thread, userMessage);
-            const response = await callLLMAPI(systemPrompt, conversationHistory, {
+            const response = await SP.callLLMAPI(systemPrompt, conversationHistory, {
                 priority: 'vip',
                 allowFallback: true
             });
@@ -5214,7 +3336,7 @@ Text: "${highlightText.slice(0, 1500)}"`
 
                 // Onboarding: Show tooltip after first chat exchange
                 if (thread.messages.filter(m => m.role === 'assistant').length === 1) {
-                    checkAndShowContextualTooltip('first_chat');
+                    SP.checkAndShowContextualTooltip?.('first_chat');
                 }
 
                 await maybeAutoSummarize(thread);
@@ -5229,7 +3351,7 @@ Text: "${highlightText.slice(0, 1500)}"`
             console.error('[SidePanel] Gemini error:', error);
             hideTypingIndicator();
 
-            if (error instanceof ApiError && error.status === 429) {
+            if (SP.ApiError && error instanceof SP.ApiError && error.status === 429) {
                 // Extract retry-after seconds from error message if available
                 let retrySeconds = 30; // Default
                 const errorMsg = error.message || '';
@@ -5237,7 +3359,7 @@ Text: "${highlightText.slice(0, 1500)}"`
                 if (retryMatch) {
                     retrySeconds = Math.ceil(parseFloat(retryMatch[1]));
                 }
-                showRateLimitCountdown(retrySeconds);
+                SP.showRateLimitCountdown?.(retrySeconds);
                 setLoading(false);
                 return;
             }
@@ -5276,7 +3398,7 @@ Text: "${highlightText.slice(0, 1500)}"`
         }
 
         // API errors
-        if (error instanceof ApiError) {
+        if (SP.ApiError && error instanceof SP.ApiError) {
             switch (error.status) {
                 case 401:
                     return {
@@ -5344,7 +3466,7 @@ Text: "${highlightText.slice(0, 1500)}"`
         msgDiv.innerHTML = `
             <div class="sp-message-content">${escapeHtml(message)}</div>
             <div class="sp-message-pending-indicator">
-                <span class="pending-icon">⏳</span>
+                <span class="pending-icon">â³</span>
                 <span class="pending-text">${getMessage('sp_waiting_connection', 'Waiting for connection...')}</span>
             </div>
         `;
@@ -5363,7 +3485,7 @@ Text: "${highlightText.slice(0, 1500)}"`
         errorDiv.className = 'sp-message error';
         errorDiv.innerHTML = `
             <div class="sp-error-header">
-                <span class="sp-error-icon">⚠️</span>
+                <span class="sp-error-icon">âš ï¸</span>
                 <span class="sp-error-title">${escapeHtml(title)}</span>
             </div>
             <div class="sp-error-description">${escapeHtml(description)}</div>
@@ -5486,8 +3608,8 @@ RESPONSE REQUIREMENTS:
 - Focus on the HIGHLIGHTED TEXT when answering
 - Be clear and structured; use bullet points when appropriate
 - When explaining or analyzing, cite specific phrases from the text using:
-  📍 Evidence: "exact quote"
-  💡 Explanation: your analysis
+  ðŸ“ Evidence: "exact quote"
+  ðŸ’¡ Explanation: your analysis
 `;
 
         if (modePrompt) {
@@ -5581,7 +3703,7 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
         try {
             const systemPrompt = 'Return JSON only. No markdown.';
             const history = [{ role: 'user', parts: [{ text: prompt }] }];
-            const response = await callGeminiAPI(apiKey, systemPrompt, history, 1, {
+            const response = await SP.callGeminiAPI(apiKey, systemPrompt, history, 1, {
                 priority: 'background',
                 allowFallback: true
             });
@@ -5615,9 +3737,9 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
 
         container.innerHTML = `
             <div class="sp-auto-summary-header">
-                <span>💡</span>
+                <span>ðŸ’¡</span>
                 <span>${title}</span>
-                <button class="sp-auto-summary-dismiss" aria-label="${actionDismiss}">×</button>
+                <button class="sp-auto-summary-dismiss" aria-label="${actionDismiss}">Ã—</button>
             </div>
             <div class="sp-auto-summary-body">
                 <div class="sp-auto-summary-section">
@@ -5680,7 +3802,7 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
     function createInsightFromSummary(thread) {
         const data = thread?.autoSummaryData;
         if (!data || !data.takeaways?.length) return;
-        const insight = data.takeaways.join(' • ');
+        const insight = data.takeaways.join(' â€¢ ');
         thread.refinedInsight = insight;
         saveThreadsToStorage();
         renderAtomicThought(insight);
@@ -5701,796 +3823,12 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
         }
     }
 
-    // ===========================
-    // LLM Provider Adapter (OpenRouter Integration)
-    // ===========================
-    async function getLLMProvider() {
-        return new Promise((resolve) => {
-            chrome.storage.local.get([
-                'atom_llm_provider',
-                'atom_openrouter_key',
-                'atom_openrouter_model'
-            ], (result) => {
-                resolve({
-                    provider: result.atom_llm_provider || 'google',
-                    openrouterKey: result.atom_openrouter_key || '',
-                    // Default to Llama 3.3, avoiding the broken Gemini Free model
-                    openrouterModel: result.atom_openrouter_model || 'meta-llama/llama-3.3-70b-instruct:free'
-                });
-            });
-        });
-    }
 
-    // Convert Gemini 'contents' format to OpenAI 'messages' format
-    function convertToOpenRouterMessages(systemPrompt, geminiContents) {
-        const messages = [];
+    // LLM Provider Adapter extracted to sp_llm.js (Phase 4a)
 
-        // Add system message
-        if (systemPrompt) {
-            messages.push({ role: 'system', content: systemPrompt });
-        }
 
-        // Convert Gemini contents to OpenAI messages
-        for (const item of geminiContents) {
-            const role = item.role === 'model' ? 'assistant' : 'user';
-            const text = item.parts?.map(p => p.text).join('\n') || '';
-            if (text.trim()) {
-                messages.push({ role, content: text });
-            }
-        }
+    // Undo system extracted to sp_undo.js (Phase 3a)
 
-        return messages;
-    }
-
-    async function callOpenRouterAPI(openrouterKey, model, messages, generationConfig = {}) {
-        const url = 'https://openrouter.ai/api/v1/chat/completions';
-
-        // Intercept broken/unavailable model and swap to Step 3.5 Flash (High Availability)
-        let targetModel = model;
-        if (targetModel === 'google/gemini-2.0-flash-exp:free') {
-            console.warn('[ATOM AI] Intercepting broken model request. Swapping to Step 3.5 Flash.');
-            targetModel = 'stepfun/step-3.5-flash:free';
-        }
-
-        const body = {
-            model: targetModel,
-            messages: messages,
-            temperature: generationConfig.temperature ?? 0.7,
-            max_tokens: generationConfig.maxOutputTokens ?? 2048,
-            stream: false
-        };
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${openrouterKey}`,
-                'HTTP-Referer': 'https://atomextension.com',
-                'X-Title': 'ATOM Extension'
-            },
-            body: JSON.stringify(body)
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error?.message || `OpenRouter API error ${response.status}`);
-        }
-
-        const data = await response.json();
-        return data.choices?.[0]?.message?.content || null;
-    }
-
-    // Unified LLM caller - automatically routes to appropriate provider with fallback
-    async function callLLMAPI(systemPrompt, conversationHistory, options = {}) {
-        const llmConfig = await getLLMProvider();
-        const geminiKey = await getApiKey();
-
-        // 1. Forced OpenRouter Mode
-        if (llmConfig.provider === 'openrouter') {
-            if (llmConfig.openrouterKey) {
-                const messages = convertToOpenRouterMessages(systemPrompt, conversationHistory);
-
-                try {
-                    return await callOpenRouterAPI(
-                        llmConfig.openrouterKey,
-                        llmConfig.openrouterModel,
-                        messages,
-                        options.generationConfig || {}
-                    );
-                } catch (primaryError) {
-                    console.warn('[ATOM AI] Primary OpenRouter model failed. Trying fallbacks...', primaryError);
-                    showToast(getMessage('sp_switching_fallback', 'Model unavailable. Trying backup...'), 'info');
-
-                    // Fallback 1: Step 3.5 Flash (High Uptime)
-                    try {
-                        return await callOpenRouterAPI(
-                            llmConfig.openrouterKey,
-                            "stepfun/step-3.5-flash:free",
-                            messages,
-                            options.generationConfig || {}
-                        );
-                    } catch (stepError) {
-                        console.warn('[ATOM AI] Step 3.5 failed. Trying Gemini Flash Lite...', stepError);
-
-                        // Fallback 2: Gemini Flash Lite
-                        try {
-                            return await callOpenRouterAPI(
-                                llmConfig.openrouterKey,
-                                "google/gemini-2.0-flash-lite-preview-02-05:free",
-                                messages,
-                                options.generationConfig || {}
-                            );
-                        } catch (geminiError) {
-                            console.warn('[ATOM AI] Gemini Flash Lite failed. Trying Mistral...', geminiError);
-
-                            // Fallback 3: Mistral
-                            try {
-                                return await callOpenRouterAPI(
-                                    llmConfig.openrouterKey,
-                                    "mistralai/mistral-small-24b-instruct-2501:free",
-                                    messages,
-                                    options.generationConfig || {}
-                                );
-                            } catch (finalError) {
-                                throw primaryError; // Throw original error if all fail
-                            }
-                        }
-                    }
-                }
-            } else {
-                throw new Error('OpenRouter provider selected but no API Key set.');
-            }
-        }
-
-        // 2. Default Gemini Mode (with auto-fallback)
-        if (!geminiKey) {
-            throw new Error('No API key configured');
-        }
-
-        try {
-            return await callGeminiAPI(geminiKey, systemPrompt, conversationHistory, 1, options);
-        } catch (error) {
-            // Check for Rate Limit (429) to trigger fallback
-            if (error instanceof ApiError && error.status === 429) {
-                console.warn('[ATOM AI] Gemini Rate Limited (429). Attempting OpenRouter Fallback...');
-
-                // Fallback Strategy: Use OpenRouter (Step 3.5 -> Gemini Flash Lite -> Mistral)
-                if (llmConfig.openrouterKey) {
-                    showToast(getMessage('sp_switching_fallback', 'Switching to Step 3.5 Flash (Fallback)...'), 'info');
-                    const messages = convertToOpenRouterMessages(systemPrompt, conversationHistory);
-
-                    // Explicitly use Step 3.5 Flash as first choice
-                    const fallbackModel = "stepfun/step-3.5-flash:free";
-
-                    try {
-                        return await callOpenRouterAPI(
-                            llmConfig.openrouterKey,
-                            fallbackModel,
-                            messages,
-                            options.generationConfig || {}
-                        );
-                    } catch (stepError) {
-                        console.warn('[ATOM AI] Step 3.5 Fallback failed, trying Gemini Flash Lite:', stepError);
-
-                        // Second layer: Gemini Flash Lite
-                        try {
-                            return await callOpenRouterAPI(
-                                llmConfig.openrouterKey,
-                                "google/gemini-2.0-flash-lite-preview-02-05:free",
-                                messages,
-                                options.generationConfig || {}
-                            );
-                        } catch (geminiError) {
-                            console.warn('[ATOM AI] Gemini Flash Lite failed, trying Mistral:', geminiError);
-
-                            // Third layer: Mistral
-                            try {
-                                return await callOpenRouterAPI(
-                                    llmConfig.openrouterKey,
-                                    "mistralai/mistral-small-24b-instruct-2501:free",
-                                    messages,
-                                    options.generationConfig || {}
-                                );
-                            } catch (mistralError) {
-                                console.error('[ATOM AI] All fallbacks failed.');
-                                throw error; // Throw original Gemini error
-                            }
-                        }
-                    }
-                } else {
-                    // No OpenRouter Key set - Prompt user?
-                    // For now, allow it to fail, but maybe show a helpful toast
-                    console.warn('[ATOM AI] No OpenRouter key for fallback.');
-                    // Optional: You could implement a public proxy here if you had one, but strict adherence to user rules means we stick to their keys.
-                }
-            }
-            throw error;
-        }
-    }
-
-    async function callGeminiAPI(apiKey, systemPrompt, conversationHistory, attempt = 1, options = {}) {
-        const priority = options?.priority === 'background' ? 'background' : 'vip';
-        const shouldShowRetryState = priority === 'vip';
-        const modelOverride = typeof options?.modelOverride === 'string' ? options.modelOverride : '';
-        const modelName = modelOverride || API_CONFIG.MODEL_NAME;
-
-        // Fallback Logic Setup
-        let fallbackChain = [];
-        if (options?.fallbackChain && Array.isArray(options.fallbackChain)) {
-            fallbackChain = options.fallbackChain;
-        } else if (!modelOverride && API_CONFIG.FALLBACK_CHAIN && API_CONFIG.FALLBACK_CHAIN.length > 0) {
-            // Initial call: load chain from config
-            fallbackChain = [...API_CONFIG.FALLBACK_CHAIN];
-        } else if (!modelOverride && API_CONFIG.FALLBACK_MODEL) {
-            // Legacy single fallback support
-            fallbackChain = [API_CONFIG.FALLBACK_MODEL];
-        }
-
-        const allowFallback = typeof options?.allowFallback === 'boolean'
-            ? options.allowFallback
-            : true; // Default to true unless explicitly disabled
-
-        const errorSource = typeof options?.errorSource === 'string'
-            ? options.errorSource
-            : (priority === 'background' ? 'sidepanel-background' : 'sidepanel-chat');
-        const url = `${API_CONFIG.API_BASE}/${modelName}:generateContent?key=${apiKey}`;
-        const rateManager = window.RateLimitManager
-            ? (window.__ATOM_RATE_MANAGER__ || (window.__ATOM_RATE_MANAGER__ = new window.RateLimitManager({
-                rpmTotal: 15,
-                rpmBackground: 8,
-                cacheTtlMs: API_CONFIG.CACHE.DEFAULT_BACKGROUND_TTL_MS || 5 * 60 * 1000
-            })))
-            : null;
-        const vipCacheEnabled = API_CONFIG.CACHE?.VIP_CACHE_ENABLED === true;
-        let cacheKey = typeof options?.cacheKey === 'string' ? options.cacheKey : '';
-        let cacheTtlMs = Number.isFinite(options?.cacheTtlMs) ? options.cacheTtlMs : undefined;
-
-        if (priority === 'vip' && !vipCacheEnabled) {
-            cacheKey = '';
-            cacheTtlMs = 0;
-        } else if (cacheKey && !Number.isFinite(cacheTtlMs)) {
-            cacheTtlMs = API_CONFIG.CACHE.DEFAULT_BACKGROUND_TTL_MS || 5 * 60 * 1000;
-        }
-
-        const rateOptions = {
-            priority,
-            cacheKey,
-            cacheTtlMs
-        };
-        if (typeof options?.allowDuringCooldown === 'boolean') {
-            rateOptions.allowDuringCooldown = options.allowDuringCooldown;
-        }
-        // Default background jobs to skip during cooldown to prevent infinite retry loop
-        if (typeof options?.skipDuringCooldown === 'boolean') {
-            rateOptions.skipDuringCooldown = options.skipDuringCooldown;
-        } else if (priority === 'background') {
-            rateOptions.skipDuringCooldown = true; // Auto-skip background jobs during cooldown
-        }
-
-        const generationConfig = {
-            temperature: 0.7,
-            maxOutputTokens: 8192,
-            ...(options && typeof options.generationConfig === 'object'
-                ? options.generationConfig
-                : {})
-        };
-
-        const body = {
-            contents: conversationHistory,
-            systemInstruction: { parts: [{ text: systemPrompt }] },
-            generationConfig
-        };
-
-        try {
-            const runRequest = async () => {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT_MS);
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(body),
-                        signal: controller.signal
-                    });
-                    clearTimeout(timeoutId);
-                    return response;
-                } catch (err) {
-                    clearTimeout(timeoutId);
-                    throw err;
-                }
-            };
-
-            const response = rateManager
-                ? await rateManager.enqueue(runRequest, rateOptions)
-                : await runRequest();
-
-            if (!response.ok) {
-                const errorData = await parseApiError(response);
-                if (response.status === 429 && rateManager) {
-                    rateManager.record429Error(errorSource);
-                    // Use standard rate limit handling/cooldown even if falling back
-                    const retryAfterHeader = response.headers.get('Retry-After');
-                    const retryAfterHeaderSeconds = retryAfterHeader ? Number(retryAfterHeader) : null;
-                    const retryAfterSeconds = window.parseRetryAfterSeconds
-                        ? window.parseRetryAfterSeconds(errorData.message)
-                        : null;
-                    const retrySeconds = Number.isFinite(retryAfterHeaderSeconds)
-                        ? retryAfterHeaderSeconds
-                        : retryAfterSeconds;
-
-                    if (Number.isFinite(retrySeconds)) {
-                        const cooldownMs = (retrySeconds + 1) * 1000;
-                        rateManager.setCooldown(cooldownMs, 'sidepanel-429');
-                        // Only show toast if NOT falling back (fallback happens silently/quickly)
-                        if (!allowFallback || fallbackChain.length === 0) {
-                            const seconds = Math.ceil(cooldownMs / 1000);
-                            const msg = typeof getMessage === 'function'
-                                ? getMessage('sp_rate_limit_cooldown', `Rate limit exceeded. Waiting ${seconds}s...`)
-                                : `Rate limit exceeded. Waiting ${seconds}s...`;
-                            showToast(msg, 'warning');
-                        }
-                    }
-                }
-
-                if (response.status >= 500 && rateManager) {
-                    rateManager.recordServerError();
-                }
-
-                // FALLBACK LOGIC (CHAIN)
-                if ((response.status === 429 || response.status >= 500) && allowFallback) {
-                    if (fallbackChain.length > 0) {
-                        const nextModel = fallbackChain[0];
-                        const remainingChain = fallbackChain.slice(1);
-                        console.log(`[ATOM AI] ${response.status} received. Falling back to: ${nextModel}. Remaining: ${remainingChain.length}`);
-
-                        if (rateManager) rateManager.recordFallback();
-
-                        return callGeminiAPI(apiKey, systemPrompt, conversationHistory, 1, {
-                            ...options,
-                            priority,
-                            modelOverride: nextModel,
-                            fallbackChain: remainingChain, // Pass remaining chain
-                            allowFallback: true, // Keep allowing fallback until chain empty
-                            // Allow next call to bypass cooldown of *this* model (since it's a diff model)
-                            // Note: RateManager tracks global domain cooldown. We might need to implement per-model tracking later.
-                            // For now, assume changing model helps.
-                            skipDuringCooldown: false,
-                            allowDuringCooldown: true
-                        });
-                    } else {
-                        console.warn('[ATOM AI] Fallback chain exhausted.');
-                    }
-                }
-
-                // Check if error is retryable (only if NOT falling back or chain exhausted)
-                if (isRetryableError(response.status) && attempt < API_CONFIG.RETRY_MAX_ATTEMPTS) {
-                    if (rateManager && rateManager.isInCooldown()) {
-                        console.log('[API] In cooldown, aborting retry to prevent infinite loop');
-                        if (shouldShowRetryState) clearRetryingState();
-                        throw new ApiError(
-                            'Rate limit cooldown active. Please wait before retrying.',
-                            response.status,
-                            'COOLDOWN_ACTIVE'
-                        );
-                    }
-
-                    const delay = calculateRetryDelay(attempt);
-                    console.log(`[API] Retry attempt ${attempt + 1} after ${delay}ms`);
-                    showRetryNotification(attempt, API_CONFIG.RETRY_MAX_ATTEMPTS, priority);
-                    if (rateManager) {
-                        rateManager.recordRetry();
-                    }
-                    await sleep(delay);
-                    return callGeminiAPI(apiKey, systemPrompt, conversationHistory, attempt + 1, options);
-                }
-
-                if (shouldShowRetryState) {
-                    clearRetryingState();
-                }
-                throw new ApiError(errorData.message, response.status, errorData.code);
-            }
-
-            if (shouldShowRetryState) {
-                clearRetryingState();
-            }
-            const data = await response.json();
-            return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
-        } catch (error) {
-            // Handle network errors with retry
-            // Similar fallback could apply to network errors if we wanted, but usually network is global.
-            if (isNetworkError(error) && attempt < API_CONFIG.RETRY_MAX_ATTEMPTS) {
-                if (rateManager && rateManager.isInCooldown()) {
-                    console.log('[API] In cooldown, aborting network retry to prevent infinite loop');
-                    if (shouldShowRetryState) clearRetryingState();
-                    throw error;
-                }
-
-                const delay = calculateRetryDelay(attempt);
-                console.log(`[API] Network error, retry attempt ${attempt + 1} after ${delay}ms`);
-                showRetryNotification(attempt, API_CONFIG.RETRY_MAX_ATTEMPTS, priority);
-                if (rateManager) {
-                    rateManager.recordRetry();
-                }
-                await sleep(delay);
-                return callGeminiAPI(apiKey, systemPrompt, conversationHistory, attempt + 1, options);
-            }
-
-            if (shouldShowRetryState) {
-                clearRetryingState();
-            }
-            throw error;
-        }
-    }
-
-    // ===========================
-    // Error Handling Utilities
-    // ===========================
-    class ApiError extends Error {
-        constructor(message, status, code) {
-            super(message);
-            this.name = 'ApiError';
-            this.status = status;
-            this.code = code;
-        }
-    }
-
-    async function parseApiError(response) {
-        try {
-            const data = await response.json();
-            const error = data.error || {};
-            return {
-                message: error.message || getStatusMessage(response.status),
-                code: error.code || response.status,
-                status: response.status
-            };
-        } catch (e) {
-            return {
-                message: getStatusMessage(response.status),
-                code: response.status,
-                status: response.status
-            };
-        }
-    }
-
-    function getStatusMessage(status) {
-        const messages = {
-            400: getMessage('sp_error_bad_request', 'Invalid request'),
-            401: getMessage('sp_error_unauthorized', 'API key is invalid'),
-            403: getMessage('sp_error_forbidden', 'Access denied'),
-            404: getMessage('sp_error_not_found', 'API endpoint not found'),
-            429: getMessage('sp_error_rate_limit', 'Too many requests. Please wait.'),
-            500: getMessage('sp_error_server', 'Server error. Try again later.'),
-            502: getMessage('sp_error_server', 'Server error. Try again later.'),
-            503: getMessage('sp_error_unavailable', 'Service unavailable. Try again later.'),
-            504: getMessage('sp_error_timeout', 'Request timed out. Try again.')
-        };
-        return messages[status] || getMessage('sp_error_unknown', 'An error occurred');
-    }
-
-    function isRetryableError(status) {
-        // Retry on server errors and rate limits
-        return status >= 500 || status === 429;
-    }
-
-    function isNetworkError(error) {
-        return error.name === 'AbortError' ||
-            error.name === 'TypeError' ||
-            error.message.includes('Failed to fetch') ||
-            error.message.includes('NetworkError');
-    }
-
-    function calculateRetryDelay(attempt) {
-        // Exponential backoff: 1s, 2s, 4s, 8s...
-        return API_CONFIG.RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1);
-    }
-
-    function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    function showRetryingState(attempt, maxAttempts) {
-        if (!elements.contextText || !elements.contextStatus) return;
-
-        if (!retryingState.active) {
-            retryingState.active = true;
-            retryingState.previousText = elements.contextText.textContent || '';
-            retryingState.previousStatusClass = elements.contextStatus.className || 'status-dot';
-        }
-
-        const retryMsg = getMessage('sp_retrying', 'Retrying');
-        elements.contextText.textContent = `${retryMsg} (${attempt}/${maxAttempts})...`;
-        elements.contextText.classList.add('status-retrying');
-        elements.contextStatus.className = 'status-dot loading';
-    }
-
-    function clearRetryingState() {
-        if (!retryingState.active) return;
-        if (elements.contextText) {
-            elements.contextText.classList.remove('status-retrying');
-            if (retryingState.previousText) {
-                elements.contextText.textContent = retryingState.previousText;
-            }
-        }
-        if (elements.contextStatus && retryingState.previousStatusClass) {
-            elements.contextStatus.className = retryingState.previousStatusClass;
-        }
-        retryingState = {
-            active: false,
-            previousText: '',
-            previousStatusClass: ''
-        };
-    }
-
-    function showRetryNotification(attempt, maxAttempts, priority) {
-        if (priority === 'vip') {
-            showRetryingState(attempt, maxAttempts);
-        }
-        const retryMsg = getMessage('sp_retrying', 'Retrying');
-        showToast(`${retryMsg} (${attempt}/${maxAttempts})...`, 'info');
-    }
-
-    // ===========================
-    // Rate Limit Countdown Display
-    // ===========================
-    let rateLimitCountdownInterval = null;
-
-    function showRateLimitCountdown(seconds) {
-        // Clear any existing countdown
-        clearRateLimitCountdown();
-
-        if (!elements.contextText || !elements.contextStatus) return;
-
-        // Save previous state
-        const previousText = elements.contextText.textContent || '';
-        const previousStatusClass = elements.contextStatus.className || 'status-dot';
-
-        // Set initial countdown display
-        let remaining = Math.ceil(seconds);
-        const updateDisplay = () => {
-            const waitMsg = getMessage('sp_rate_limit_countdown', 'Retry in');
-            elements.contextText.textContent = `${waitMsg} ${remaining}s...`;
-            elements.contextText.classList.add('status-cooldown');
-            elements.contextStatus.className = 'status-dot cooldown';
-        };
-
-        updateDisplay();
-
-        // Show toast with wait time
-        const toastMsg = getMessage('sp_rate_limit_wait', 'Rate limit reached. Please wait');
-        showToast(`${toastMsg} ${remaining}s`, 'warning');
-
-        // Start countdown
-        rateLimitCountdownInterval = setInterval(() => {
-            remaining -= 1;
-            if (remaining <= 0) {
-                clearRateLimitCountdown();
-                // Restore previous state
-                elements.contextText.textContent = previousText || getMessage('sp_ready', 'Ready');
-                elements.contextText.classList.remove('status-cooldown');
-                elements.contextStatus.className = previousStatusClass;
-                showToast(getMessage('sp_rate_limit_ready', 'Ready to continue'), 'success');
-            } else {
-                updateDisplay();
-            }
-        }, 1000);
-    }
-
-    function clearRateLimitCountdown() {
-        if (rateLimitCountdownInterval) {
-            clearInterval(rateLimitCountdownInterval);
-            rateLimitCountdownInterval = null;
-        }
-        if (elements.contextText) {
-            elements.contextText.classList.remove('status-cooldown');
-        }
-        if (elements.contextStatus) {
-            elements.contextStatus.classList.remove('cooldown');
-        }
-    }
-
-    // ===========================
-    // Undo System
-    // ===========================
-
-
-    /**
-     * Create an undoable action
-     * @param {string} type - Action type (e.g., 'park_thread', 'delete_note', 'clear_chat')
-     * @param {string} message - Message to show in toast
-     * @param {object} data - Data needed to undo the action
-     * @param {function} undoFn - Function to call when undoing
-     * @param {function} commitFn - Function to call when action is committed (optional)
-     */
-    function createUndoableAction(type, message, data, undoFn, commitFn = null) {
-        // Cancel any existing undo toast
-        cancelActiveUndo();
-
-        const action = {
-            id: `undo_${Date.now()}`,
-            type,
-            message,
-            data,
-            undoFn,
-            commitFn,
-            createdAt: Date.now(),
-            timeoutId: null
-        };
-
-        // Set timeout for auto-commit
-        action.timeoutId = setTimeout(() => {
-            commitAction(action);
-        }, UNDO_TIMEOUT_MS);
-
-        undoStack.push(action);
-        showUndoToast(action);
-
-        return action;
-    }
-
-    function showUndoToast(action) {
-        let toast = document.getElementById('undo-toast');
-        if (!toast) {
-            toast = document.createElement('div');
-            toast.id = 'undo-toast';
-        }
-        toast.className = 'sp-undo-toast';
-        toast.removeAttribute('hidden');
-
-        const undoLabel = getMessage('sp_undo', 'Undo');
-
-        toast.innerHTML = `
-            <div class="sp-undo-content">
-                <span class="sp-undo-icon">✓</span>
-                <span class="sp-undo-message">${escapeHtml(action.message)}</span>
-            </div>
-            <div class="sp-undo-actions">
-                <button class="sp-undo-btn" id="btn-undo">${undoLabel}</button>
-                <div class="sp-undo-countdown">
-                    <svg class="sp-countdown-ring" viewBox="0 0 20 20">
-                        <circle class="sp-countdown-bg" cx="10" cy="10" r="8"/>
-                        <circle class="sp-countdown-progress" cx="10" cy="10" r="8"/>
-                    </svg>
-                    <span class="sp-countdown-text" id="undo-countdown">5</span>
-                </div>
-            </div>
-        `;
-
-        if (!toast.parentElement) {
-            document.body.appendChild(toast);
-        }
-        activeUndoToast = toast;
-
-        // Add undo button handler
-        toast.querySelector('#btn-undo')?.addEventListener('click', () => {
-            undoAction(action);
-        });
-
-        // Restart animation when reusing the toast
-        toast.style.animation = 'none';
-        void toast.offsetHeight;
-        toast.style.animation = '';
-
-        // Start countdown animation
-        startCountdownAnimation(action);
-    }
-
-    function startCountdownAnimation(action) {
-        const countdownText = document.getElementById('undo-countdown');
-        const progressCircle = document.querySelector('.sp-countdown-progress');
-
-        if (!countdownText || !progressCircle) return;
-
-        // Set up the countdown ring animation
-        const circumference = 2 * Math.PI * 8; // r=8
-        progressCircle.style.strokeDasharray = circumference;
-        progressCircle.style.strokeDashoffset = 0;
-
-        let remainingSeconds = 5;
-
-        const countdownInterval = setInterval(() => {
-            remainingSeconds--;
-            if (countdownText) {
-                countdownText.textContent = remainingSeconds;
-            }
-
-            // Update circle progress
-            const progress = (5 - remainingSeconds) / 5;
-            if (progressCircle) {
-                progressCircle.style.strokeDashoffset = circumference * progress;
-            }
-
-            if (remainingSeconds <= 0) {
-                clearInterval(countdownInterval);
-            }
-        }, 1000);
-
-        // Store interval ID for cleanup
-        action.countdownInterval = countdownInterval;
-    }
-
-    function undoAction(action) {
-        // Clear the timeout
-        if (action.timeoutId) {
-            clearTimeout(action.timeoutId);
-        }
-        if (action.countdownInterval) {
-            clearInterval(action.countdownInterval);
-        }
-
-        // Remove from stack
-        undoStack = undoStack.filter(a => a.id !== action.id);
-
-        // Execute undo function
-        if (action.undoFn) {
-            action.undoFn(action.data);
-        }
-
-        // Remove toast
-        hideUndoToast();
-
-        // Show confirmation
-        const undoneMsg = getMessage('sp_action_undone', 'Action undone');
-        showToast(undoneMsg, 'success');
-    }
-
-    function commitAction(action) {
-        // Clear intervals
-        if (action.countdownInterval) {
-            clearInterval(action.countdownInterval);
-        }
-
-        // Remove from stack
-        undoStack = undoStack.filter(a => a.id !== action.id);
-
-        // Execute commit function if provided
-        if (action.commitFn) {
-            action.commitFn(action.data);
-        }
-
-        // Remove toast
-        hideUndoToast();
-    }
-
-    function cancelActiveUndo() {
-        // Cancel all pending undo actions
-        undoStack.forEach(action => {
-            if (action.timeoutId) {
-                clearTimeout(action.timeoutId);
-            }
-            if (action.countdownInterval) {
-                clearInterval(action.countdownInterval);
-            }
-            // Commit the action immediately
-            if (action.commitFn) {
-                action.commitFn(action.data);
-            }
-        });
-        undoStack = [];
-        hideUndoToast();
-    }
-
-    function hideUndoToast() {
-        const toast = document.getElementById('undo-toast');
-        if (toast) {
-            toast.classList.add('hiding');
-            setTimeout(() => {
-                toast.classList.remove('hiding');
-                toast.setAttribute('hidden', '');
-            }, 200);
-        }
-        activeUndoToast = null;
-    }
-
-    function undoLastAction() {
-        if (undoStack.length === 0) {
-            showToast(getMessage('sp_nothing_to_undo', 'Nothing to undo'), 'info');
-            return;
-        }
-
-        // Get the most recent action
-        const lastAction = undoStack[undoStack.length - 1];
-        undoAction(lastAction);
-    }
 
     // ===========================
     // UI Helpers
@@ -6521,7 +3859,7 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
         // Bold
         formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
         // Bullet points
-        formatted = formatted.replace(/^[•\-\*]\s+(.+)$/gm, '<li>$1</li>');
+        formatted = formatted.replace(/^[â€¢\-\*]\s+(.+)$/gm, '<li>$1</li>');
         formatted = formatted.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
         // Line breaks
         formatted = formatted.replace(/\n/g, '<br>');
@@ -6566,6 +3904,7 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
 
     function setLoading(loading) {
         isLoading = loading;
+        if (window.SP) window.SP.isLoading = isLoading;
         updateSendButton();
         if (elements.userInput) elements.userInput.disabled = loading;
     }
@@ -6587,7 +3926,7 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
         renderActiveThread();
 
         const clearedMsg = getMessage('sp_chat_cleared', 'Chat cleared');
-        createUndoableAction(
+        SP.createUndoableAction?.(
             'clear_chat',
             clearedMsg,
             { threadId: thread.id, previousMessages },
@@ -6624,175 +3963,9 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
         }, 60000); // Update every minute
     }
 
-    // ===========================
-    // Parking Lot System
-    // ===========================
-    async function loadParkingLot() {
-        if (!currentDomain) return;
-        const key = `atom_parking_lot_${currentDomain}`;
-        const data = await chrome.storage.local.get([key]);
-        parkingLot = data[key] || [];
-        renderParkingLot();
-    }
 
-    async function saveParkingLot() {
-        if (!currentDomain) return;
-        const key = `atom_parking_lot_${currentDomain}`;
-        await chrome.storage.local.set({ [key]: parkingLot });
-    }
+    // Parking Lot extracted to sp_parking.js (Phase 3b)
 
-    function addToParkingLot(idea) {
-        const item = {
-            id: `park_${Date.now()}`,
-            text: idea,
-            threadId: activeThreadId,
-            createdAt: Date.now()
-        };
-        parkingLot.push(item);
-        saveParkingLot();
-        renderParkingLot();
-        updateSessionStats();
-    }
-
-    function removeFromParkingLot(itemId, withUndo = true) {
-        const item = parkingLot.find(p => p.id === itemId);
-        if (!item) return;
-
-        const itemIndex = parkingLot.indexOf(item);
-
-        // Remove immediately (optimistic update)
-        parkingLot = parkingLot.filter(p => p.id !== itemId);
-        renderParkingLot();
-        updateSessionStats();
-
-        if (withUndo) {
-            const deletedMsg = getMessage('sp_note_deleted', 'Note deleted');
-            createUndoableAction(
-                'delete_note',
-                deletedMsg,
-                { item, index: itemIndex },
-                // Undo function
-                (data) => {
-                    // Restore the note at its original position
-                    parkingLot.splice(data.index, 0, data.item);
-                    saveParkingLot();
-                    renderParkingLot();
-                    updateSessionStats();
-                },
-                // Commit function
-                (data) => {
-                    saveParkingLot();
-                }
-            );
-        } else {
-            saveParkingLot();
-        }
-    }
-
-    function renderParkingLot() {
-        // Update notes count in tab badge
-        if (elements.notesCount) {
-            elements.notesCount.textContent = parkingLot.length;
-        }
-
-        if (!elements.notesList) return;
-
-        if (parkingLot.length === 0) {
-            const emptyMsg = getMessage('sp_quick_note_empty', 'No notes yet');
-            elements.notesList.innerHTML = `<div class="sp-note-empty">${emptyMsg}</div>`;
-            return;
-        }
-
-        elements.notesList.innerHTML = parkingLot.map(item => `
-            <div class="sp-note-item" data-id="${item.id}">
-                <div class="sp-note-text">${escapeHtml(item.text)}</div>
-                <div class="sp-note-actions">
-                    <button class="sp-note-btn" data-action="promote" title="Convert to discussion">${getIcon('promote')}</button>
-                    <button class="sp-note-btn" data-action="remove" title="Remove">${getIcon('remove')}</button>
-                </div>
-            </div>
-        `).join('');
-
-        // Add event handlers
-        elements.notesList.querySelectorAll('.sp-note-item').forEach(item => {
-            const id = item.dataset.id;
-
-            item.querySelector('[data-action="promote"]')?.addEventListener('click', () => {
-                promoteFromParkingLot(id);
-            });
-
-            item.querySelector('[data-action="remove"]')?.addEventListener('click', () => {
-                removeFromParkingLot(id);
-            });
-        });
-
-        updateAllCounts();
-    }
-
-    function promoteFromParkingLot(itemId) {
-        const item = parkingLot.find(p => p.id === itemId);
-        if (!item) return;
-
-        // Create a new thread from parked idea
-        const newThread = {
-            id: `thread_${Date.now()}`,
-            highlight: {
-                text: item.text,
-                url: pageContext?.url,
-                title: pageContext?.title,
-                domain: currentDomain,
-                timestamp: Date.now()
-            },
-            messages: [],
-            connections: [],
-            status: 'active',
-            createdAt: Date.now(),
-            promotedFromParking: true
-        };
-
-        threads.push(newThread);
-        activeThreadId = newThread.id;
-
-        removeFromParkingLot(itemId, false); // Don't trigger undo for promote action
-        saveThreadsToStorage();
-        renderThreadList();
-        renderActiveThread();
-    }
-
-    function parkCurrentThread() {
-        const thread = threads.find(t => t.id === activeThreadId);
-        if (!thread) return;
-
-        const previousStatus = thread.status;
-
-        // Apply the change immediately (optimistic update)
-        thread.status = 'parked';
-        renderThreadList();
-        updateSessionStats();
-
-        // Create undoable action
-        const doneMsg = getMessage('sp_marked_done', 'Marked as done');
-        createUndoableAction(
-            'park_thread',
-            doneMsg,
-            { threadId: thread.id, previousStatus },
-            // Undo function
-            (data) => {
-                const t = threads.find(th => th.id === data.threadId);
-                if (t) {
-                    t.status = data.previousStatus;
-                    saveThreadsToStorage();
-                    renderThreadList();
-                    renderActiveThread();
-                    updateSessionStats();
-                }
-            },
-            // Commit function
-            (data) => {
-                saveThreadsToStorage();
-            }
-        );
-    }
 
     // ===========================
     // NotebookLM Bridge Integration
@@ -6833,7 +4006,7 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
         const thread = threads.find(t => t.id === activeThreadId);
         if (!thread) return;
 
-        const llmConfig = await getLLMProvider();
+        const llmConfig = await (SP.getLLMProvider ? SP.getLLMProvider() : Promise.resolve({ provider: 'google' }));
         const geminiKey = await getApiKey();
         const hasProviderKey = llmConfig.provider === 'openrouter'
             ? !!llmConfig.openrouterKey
@@ -6865,6 +4038,7 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
             const stripped = rawText
                 .replace(/```(?:json)?\s*/gi, '')
                 .replace(/```/g, '')
+                .replace(/^"?json\s*/i, '')
                 .trim();
 
             const match = stripped.match(/\{[\s\S]*\}/);
@@ -6887,7 +4061,18 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
                 parsed = tryParse(fixed);
             }
 
-            if (!parsed || typeof parsed !== 'object') return null;
+            // Fallback for truncated JSON: extract insight value directly via regex
+            if (!parsed || typeof parsed !== 'object') {
+                const directMatch = stripped.match(/["']?insight["']?\s*:\s*["']([^"']+)/i);
+                const catMatch = stripped.match(/["']?category["']?\s*:\s*["']([^"']+)/i);
+                if (directMatch) {
+                    return {
+                        insight: directMatch[1].trim(),
+                        category: catMatch ? catMatch[1].trim() : ''
+                    };
+                }
+                return null;
+            }
             const insight = typeof parsed.insight === 'string' ? parsed.insight : '';
             const category = typeof parsed.category === 'string' ? parsed.category : '';
             if (!insight && !category) return null;
@@ -6898,7 +4083,11 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
             const s = String(text || '').trim();
             if (!s) return '';
             const parsed = parseAtomicThoughtPayload(s);
-            return String(parsed?.insight || s).trim();
+            if (parsed?.insight) return parsed.insight.trim();
+            // Last resort: try direct regex extraction for truncated JSON
+            const directMatch = s.match(/["']?insight["']?\s*:\s*["']([^"']+)/i);
+            if (directMatch) return directMatch[1].trim();
+            return s;
         };
 
         const systemPrompt = `You are a knowledge distillation expert. Respond with valid JSON only. Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
@@ -6916,12 +4105,12 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
 
         try {
             const conversationHistory = [{ role: 'user', parts: [{ text: prompt }] }];
-            const response = await callLLMAPI(systemPrompt, conversationHistory, {
+            const response = await SP.callLLMAPI(systemPrompt, conversationHistory, {
                 priority: 'vip',
                 allowFallback: true,
                 generationConfig: {
                     temperature: 0.4,
-                    maxOutputTokens: 512
+                    maxOutputTokens: 1024
                 }
             });
 
@@ -7021,190 +4210,8 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
         updateAllCounts();
     }
 
-    async function maybeAddInsightReviewCard(thread) {
-        if (!window.FlashcardDeck) return;
-        if (!thread) return;
+    // maybeAddInsightReviewCard + saveThreadToNLM + exportAllToNLM + showExportAllLoading + hideExportAllLoading extracted to sp_export.js (Phase 5)
 
-        const insightText = String(thread.refinedInsight || '').trim();
-        if (!insightText) return;
-
-        try {
-            const cards = await window.FlashcardDeck.getAllCards();
-            const exists = cards.some(card => card?.sourceInsightId === thread.id);
-            if (exists) return;
-
-            const title = thread.highlight?.title || pageContext?.title || '';
-            const isVi = navigator.language.startsWith('vi');
-            const front = title
-                ? (isVi ? `Y chinh tu "${title}" la gi?` : `What is the key insight from "${title}"?`)
-                : (isVi ? 'Y chinh la gi?' : 'What is the key insight?');
-
-            const card = window.FlashcardDeck.createFlashcard({
-                type: window.FlashcardDeck.CARD_TYPES.INSIGHT,
-                front,
-                back: insightText,
-                sourceInsightId: thread.id,
-                sourceUrl: thread.highlight?.url || pageContext?.url || '',
-                sourceTitle: title
-            });
-            await window.FlashcardDeck.saveCard(card);
-        } catch (e) {
-            console.warn('[Retention] Failed to add insight card:', e);
-        }
-    }
-
-    /**
-     * Save current thread to NotebookLM via Bridge
-     */
-    async function saveThreadToNLM() {
-        const thread = threads.find(t => t.id === activeThreadId);
-        if (!thread) return;
-
-        // Build discussion summary from messages
-        let discussionSummary = '';
-        if (thread.messages.length > 0) {
-            discussionSummary = thread.messages.map(m =>
-                `${m.role === 'user' ? '👤' : '🤖'} ${m.content.slice(0, 500)}`
-            ).join('\n\n');
-        }
-
-        // Build note object for bridge service
-        const note = {
-            id: thread.id,
-            url: thread.highlight?.url || pageContext?.url || '',
-            title: thread.highlight?.title || pageContext?.title || '',
-            selection: thread.highlight?.text || '',
-            atomicThought: thread.refinedInsight || '',
-            aiDiscussionSummary: discussionSummary,
-            refinedInsight: thread.refinedInsight || '',
-            connections: thread.connections || [],
-            created_at: thread.createdAt,
-            command: 'sidepanel_thread',
-            tags: []
-        };
-
-        try {
-            // Send to background for NLM processing
-            const response = await chrome.runtime.sendMessage({
-                type: 'ATOM_SAVE_THREAD_TO_NLM',
-                payload: note
-            });
-
-            if (response?.ok) {
-                thread.status = 'saved';
-                thread.nlmExported = true;
-                thread.nlmExportedAt = Date.now();
-                await saveThreadsToStorage();
-                renderThreadList();
-                updateSessionStats();
-
-                await maybeAddInsightReviewCard(thread);
-                showToast(getMessage('sp_toast_saved', 'Saved to Knowledge!'), 'success');
-                checkAndShowContextualTooltip('first_save');
-            } else {
-                if (response?.savedToMemory) {
-                    await maybeAddInsightReviewCard(thread);
-                    showToast(getMessage('sp_toast_saved_local', 'Saved locally. Cloud export blocked.'), 'info');
-                    checkAndShowContextualTooltip('first_save');
-                } else {
-                    const failure = getNlmExportFailureToast(response?.reason || response?.error);
-                    showToast(failure.message, failure.type);
-                }
-            }
-        } catch (e) {
-            console.error('[NLM] Save error:', e);
-            showToast(getMessage('sp_nlm_save_error', 'Error saving to NotebookLM'), 'error');
-        }
-    }
-
-    /**
-     * Export all threads to NotebookLM
-     */
-    async function exportAllToNLM() {
-        if (threads.length === 0) {
-            alert('No threads to export.');
-            return;
-        }
-
-        const unsavedThreads = threads.filter(t => t.status !== 'saved');
-        if (unsavedThreads.length === 0) {
-            alert('All threads already saved.');
-            return;
-        }
-
-        const confirmMsg = getMessage('sp_confirm_export_all', 'Save all chats to Knowledge?');
-        const confirm = window.confirm(
-            `${confirmMsg}\n(${unsavedThreads.length} chats)`
-        );
-        if (!confirm) return;
-
-        showExportAllLoading();
-
-        let successCount = 0;
-        let failCount = 0;
-
-        for (const thread of unsavedThreads) {
-            try {
-                const note = {
-                    id: thread.id,
-                    url: thread.highlight?.url || pageContext?.url || '',
-                    title: thread.highlight?.title || pageContext?.title || '',
-                    selection: thread.highlight?.text || '',
-                    atomicThought: thread.refinedInsight || '',
-                    aiDiscussionSummary: thread.messages.length > 0 ?
-                        thread.messages.map(m => `${m.role}: ${m.content.slice(0, 300)}`).join('\n') : '',
-                    refinedInsight: thread.refinedInsight || '',
-                    connections: thread.connections || [],
-                    created_at: thread.createdAt,
-                    command: 'sidepanel_bulk_export'
-                };
-
-                const response = await chrome.runtime.sendMessage({
-                    type: 'ATOM_SAVE_THREAD_TO_NLM',
-                    payload: note
-                });
-
-                if (response?.ok) {
-                    thread.status = 'saved';
-                    thread.nlmExported = true;
-                    successCount++;
-                } else {
-                    failCount++;
-                }
-            } catch (e) {
-                failCount++;
-            }
-        }
-
-        await saveThreadsToStorage();
-        renderThreadList();
-        updateSessionStats();
-        hideExportAllLoading();
-
-        showToast(`Exported: ${successCount} success, ${failCount} failed`,
-            failCount === 0 ? 'success' : 'warning');
-        if (successCount > 0) {
-            checkAndShowContextualTooltip('first_save');
-        }
-    }
-
-    function showExportAllLoading() {
-        const btn = document.getElementById('btn-export-all-nlm');
-        if (btn) {
-            btn.disabled = true;
-            const exportingMsg = getMessage('sp_exporting', 'Exporting...');
-            btn.innerHTML = `<span class="btn-spinner"></span> ${exportingMsg}`;
-        }
-    }
-
-    function hideExportAllLoading() {
-        const btn = document.getElementById('btn-export-all-nlm');
-        if (btn) {
-            btn.disabled = false;
-            const saveAllLabel = getMessage('sp_btn_save_all_knowledge', 'Save All to Knowledge');
-            btn.innerHTML = `📚 ${saveAllLabel}`;
-        }
-    }
 
     function showToast(message, type = 'info') {
         let toast = document.getElementById('sp-toast');
@@ -7229,697 +4236,8 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
         }, 3000);
     }
 
-    // ===========================
-    // Session Dump / Export
-    // ===========================
-    async function generateSessionSummary() {
-        const apiKey = await getApiKey();
-        if (!apiKey || threads.length === 0) return null;
+    // Export Dialog + Session Export + endSession extracted to sp_export.js (Phase 5)
 
-        const allHighlights = threads.map((t, idx) =>
-            `[${idx + 1}] "${t.highlight?.text?.slice(0, 300) || 'N/A'}"`
-        ).join('\n\n');
-
-        const prompt = `Summarize this reading session. The user highlighted these passages from "${pageContext?.title || 'a web page'}":
-
-${allHighlights}
-
-Provide:
-1. Main themes/topics discovered (2-3 bullet points)
-2. Key insights from the session (2-3 bullet points)
-3. Suggested next steps or questions to explore
-
-Be concise. Respond in ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}.`;
-
-        try {
-            const url = `${API_CONFIG.API_BASE}/${API_CONFIG.MODEL_NAME}:generateContent?key=${apiKey}`;
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { temperature: 0.5, maxOutputTokens: 1024 }
-                })
-            });
-
-            if (!response.ok) return null;
-            const data = await response.json();
-            return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
-        } catch (e) {
-            console.error('[Session] Summary error:', e);
-            return null;
-        }
-    }
-
-    // ===========================
-    // Export Dialog & Multiple Formats
-    // ===========================
-    function showExportDialog() {
-        if (threads.length === 0 && parkingLot.length === 0) {
-            showToast(getMessage('sp_export_empty', 'Nothing to export'), 'info');
-            return;
-        }
-
-        // Remove existing dialog
-        document.getElementById('export-dialog')?.remove();
-
-        const dialog = document.createElement('div');
-        dialog.id = 'export-dialog';
-        dialog.className = 'sp-welcome-overlay';
-
-        const dialogTitle = getMessage('sp_export_title', 'Download Notes');
-        const formatLabel = getMessage('sp_export_format', 'Format:');
-        const contentLabel = getMessage('sp_export_content', 'Include:');
-        const btnCancel = getMessage('sp_export_cancel', 'Cancel');
-        const btnExport = getMessage('sp_export_download', 'Download');
-
-        dialog.innerHTML = `
-            <div class="sp-export-card">
-                <div class="sp-export-header">
-                    <h3>📥 ${dialogTitle}</h3>
-                </div>
-
-                <div class="sp-export-body">
-                    <div class="sp-export-section">
-                        <label class="sp-export-label">${formatLabel}</label>
-                        <div class="sp-export-formats">
-                            <label class="sp-format-option">
-                                <input type="radio" name="export-format" value="markdown" checked>
-                                <span class="sp-format-label">
-                                    <span class="sp-format-icon">📝</span>
-                                    <span class="sp-format-name">Markdown</span>
-                                    <span class="sp-format-ext">.md</span>
-                                </span>
-                            </label>
-                            <label class="sp-format-option">
-                                <input type="radio" name="export-format" value="json">
-                                <span class="sp-format-label">
-                                    <span class="sp-format-icon">📦</span>
-                                    <span class="sp-format-name">JSON</span>
-                                    <span class="sp-format-ext">.json</span>
-                                </span>
-                            </label>
-                            <label class="sp-format-option">
-                                <input type="radio" name="export-format" value="text">
-                                <span class="sp-format-label">
-                                    <span class="sp-format-icon">📄</span>
-                                    <span class="sp-format-name">Plain Text</span>
-                                    <span class="sp-format-ext">.txt</span>
-                                </span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="sp-export-section">
-                        <label class="sp-export-label">${contentLabel}</label>
-                        <div class="sp-export-options">
-                            <label class="sp-checkbox-option">
-                                <input type="checkbox" id="export-insights" checked>
-                                <span>💡 ${getMessage('sp_export_opt_insights', 'Key Insights')}</span>
-                            </label>
-                            <label class="sp-checkbox-option">
-                                <input type="checkbox" id="export-notes" checked>
-                                <span>📝 ${getMessage('sp_export_opt_notes', 'Quick Notes')}</span>
-                            </label>
-                            <label class="sp-checkbox-option">
-                                <input type="checkbox" id="export-chat">
-                                <span>💬 ${getMessage('sp_export_opt_chat', 'Full Chat History')}</span>
-                            </label>
-                            <label class="sp-checkbox-option">
-                                <input type="checkbox" id="export-source" checked>
-                                <span>🔗 ${getMessage('sp_export_opt_source', 'Source Info')}</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="sp-export-footer">
-                    <button class="sp-welcome-btn secondary" id="btn-export-cancel">${btnCancel}</button>
-                    <button class="sp-welcome-btn primary" id="btn-export-confirm">${btnExport}</button>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(dialog);
-
-        // Event handlers
-        document.getElementById('btn-export-cancel')?.addEventListener('click', () => {
-            closeExportDialog();
-        });
-
-        document.getElementById('btn-export-confirm')?.addEventListener('click', () => {
-            const format = document.querySelector('input[name="export-format"]:checked')?.value || 'markdown';
-            const options = {
-                insights: document.getElementById('export-insights')?.checked,
-                notes: document.getElementById('export-notes')?.checked,
-                chat: document.getElementById('export-chat')?.checked,
-                source: document.getElementById('export-source')?.checked
-            };
-            closeExportDialog();
-            exportWithFormat(format, options);
-        });
-
-        // Close on background click
-        dialog.addEventListener('click', (e) => {
-            if (e.target === dialog) {
-                closeExportDialog();
-            }
-        });
-    }
-
-    function closeExportDialog() {
-        const dialog = document.getElementById('export-dialog');
-        if (dialog) {
-            dialog.classList.add('hiding');
-            setTimeout(() => dialog.remove(), 200);
-        }
-    }
-
-    async function exportWithFormat(format, options) {
-        showToast(getMessage('sp_exporting', 'Exporting...'), 'info');
-
-        const sessionDuration = Math.floor((Date.now() - sessionStartTime) / 60000);
-        const exportDate = new Date().toISOString().split('T')[0];
-        const fileName = `reading-notes-${exportDate}`;
-
-        let content = '';
-        let mimeType = '';
-        let extension = '';
-
-        switch (format) {
-            case 'markdown':
-                content = await generateMarkdownExport(options, sessionDuration, exportDate);
-                mimeType = 'text/markdown';
-                extension = 'md';
-                break;
-            case 'json':
-                content = generateJsonExport(options, sessionDuration);
-                mimeType = 'application/json';
-                extension = 'json';
-                break;
-            case 'text':
-                content = generateTextExport(options, sessionDuration, exportDate);
-                mimeType = 'text/plain';
-                extension = 'txt';
-                break;
-        }
-
-        downloadFile(content, `${fileName}.${extension}`, mimeType);
-        showToast(getMessage('sp_export_success', 'Downloaded!'), 'success');
-    }
-
-    async function generateMarkdownExport(options, sessionDuration, exportDate) {
-        let md = `# Reading Session: ${pageContext?.title || 'Unknown Page'}\n\n`;
-
-        if (options.source) {
-            md += `**URL:** ${pageContext?.url || 'N/A'}\n`;
-            md += `**Date:** ${exportDate}\n`;
-            md += `**Duration:** ${sessionDuration} minutes\n`;
-            md += `**Highlights:** ${threads.length}\n\n`;
-            md += `---\n\n`;
-        }
-
-        // Key Insights
-        if (options.insights) {
-            const insightThreads = threads.filter(t => t.refinedInsight);
-            if (insightThreads.length > 0) {
-                md += `## 💡 Key Insights\n\n`;
-                insightThreads.forEach((t, i) => {
-                    md += `${i + 1}. ${t.refinedInsight}\n`;
-                });
-                md += `\n`;
-            }
-        }
-
-        // Quick Notes
-        if (options.notes && parkingLot.length > 0) {
-            md += `## 📝 Quick Notes\n\n`;
-            parkingLot.forEach((note, i) => {
-                md += `- ${note.text}\n`;
-            });
-            md += `\n`;
-        }
-
-        // Full Chat History
-        if (options.chat) {
-            md += `## 💬 Discussions\n\n`;
-            threads.forEach((thread, idx) => {
-                md += `### ${idx + 1}. Highlight\n\n`;
-                md += `> ${thread.highlight?.text || 'N/A'}\n\n`;
-
-                if (thread.messages && thread.messages.length > 0) {
-                    thread.messages.forEach(msg => {
-                        const role = msg.role === 'user' ? '**You:**' : '**AI:**';
-                        md += `${role} ${msg.content}\n\n`;
-                    });
-                }
-                md += `---\n\n`;
-            });
-        }
-
-        md += `\n---\n*Exported from ATOM Active Reading*\n`;
-
-        return md;
-    }
-
-    function generateJsonExport(options, sessionDuration) {
-        const exportData = {
-            meta: {
-                exportedAt: new Date().toISOString(),
-                sessionDuration: sessionDuration,
-                version: '2.0'
-            },
-            source: options.source ? {
-                url: pageContext?.url || null,
-                title: pageContext?.title || null,
-                domain: currentDomain
-            } : undefined,
-            insights: options.insights ? threads
-                .filter(t => t.refinedInsight)
-                .map(t => ({
-                    insight: t.refinedInsight,
-                    sourceText: t.highlight?.text?.slice(0, 200),
-                    createdAt: t.createdAt
-                })) : undefined,
-            notes: options.notes ? parkingLot.map(n => ({
-                text: n.text,
-                createdAt: n.createdAt
-            })) : undefined,
-            threads: options.chat ? threads.map(t => ({
-                id: t.id,
-                highlight: t.highlight?.text,
-                insight: t.refinedInsight,
-                status: t.status,
-                messages: t.messages,
-                connections: t.connections,
-                createdAt: t.createdAt
-            })) : undefined
-        };
-
-        // Remove undefined keys
-        Object.keys(exportData).forEach(key => {
-            if (exportData[key] === undefined) {
-                delete exportData[key];
-            }
-        });
-
-        return JSON.stringify(exportData, null, 2);
-    }
-
-    function generateTextExport(options, sessionDuration, exportDate) {
-        let txt = `READING SESSION NOTES\n`;
-        txt += `${'='.repeat(40)}\n\n`;
-
-        if (options.source) {
-            txt += `Title: ${pageContext?.title || 'Unknown'}\n`;
-            txt += `URL: ${pageContext?.url || 'N/A'}\n`;
-            txt += `Date: ${exportDate}\n`;
-            txt += `Duration: ${sessionDuration} minutes\n`;
-            txt += `\n${'='.repeat(40)}\n\n`;
-        }
-
-        if (options.insights) {
-            const insightThreads = threads.filter(t => t.refinedInsight);
-            if (insightThreads.length > 0) {
-                txt += `KEY INSIGHTS\n`;
-                txt += `${'-'.repeat(20)}\n`;
-                insightThreads.forEach((t, i) => {
-                    txt += `${i + 1}. ${t.refinedInsight}\n\n`;
-                });
-            }
-        }
-
-        if (options.notes && parkingLot.length > 0) {
-            txt += `QUICK NOTES\n`;
-            txt += `${'-'.repeat(20)}\n`;
-            parkingLot.forEach(note => {
-                txt += `* ${note.text}\n`;
-            });
-            txt += `\n`;
-        }
-
-        if (options.chat) {
-            txt += `DISCUSSIONS\n`;
-            txt += `${'-'.repeat(20)}\n`;
-            threads.forEach((thread, idx) => {
-                txt += `\n[${idx + 1}] ${thread.highlight?.text?.slice(0, 100) || 'Discussion'}...\n`;
-                if (thread.messages) {
-                    thread.messages.forEach(msg => {
-                        const role = msg.role === 'user' ? 'You' : 'AI';
-                        txt += `  ${role}: ${msg.content}\n`;
-                    });
-                }
-            });
-        }
-
-        txt += `\n${'='.repeat(40)}\n`;
-        txt += `Exported from ATOM Active Reading\n`;
-
-        return txt;
-    }
-
-    function downloadFile(content, filename, mimeType) {
-        const blob = new Blob([content], { type: mimeType });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
-
-    // Legacy export function (still used by endSession)
-    async function exportSession() {
-        const sessionDuration = Math.floor((Date.now() - sessionStartTime) / 60000);
-        const exportDate = new Date().toISOString().split('T')[0];
-
-        // Generate AI summary
-        showExportLoading();
-        const aiSummary = await generateSessionSummary();
-        hideExportLoading();
-
-        // Build Markdown content
-        let markdown = `# Reading Session: ${pageContext?.title || 'Unknown Page'}
-
-**URL:** ${pageContext?.url || 'N/A'}
-**Date:** ${exportDate}
-**Duration:** ${sessionDuration} minutes
-**Highlights:** ${threads.length}
-
----
-
-`;
-
-        if (aiSummary) {
-            markdown += `## Session Summary (AI Generated)
-
-${aiSummary}
-
----
-
-`;
-        }
-
-        markdown += `## Highlights & Discussions
-
-`;
-
-        threads.forEach((thread, idx) => {
-            const statusEmoji = thread.status === 'saved' ? '✓' :
-                thread.status === 'parked' ? '🅿️' : '📝';
-
-            markdown += `### ${idx + 1}. ${statusEmoji} Highlight
-
-> ${thread.highlight?.text || 'N/A'}
-
-`;
-
-            if (thread.connections && thread.connections.length > 0) {
-                markdown += `**Connections:**
-`;
-                thread.connections.forEach(conn => {
-                    markdown += `- ${conn.type}: ${conn.explanation}\n`;
-                });
-                markdown += '\n';
-            }
-
-            if (thread.messages && thread.messages.length > 0) {
-                markdown += `**Discussion:**
-`;
-                thread.messages.forEach(msg => {
-                    const role = msg.role === 'user' ? '👤 You' : '🤖 AI';
-                    markdown += `\n${role}:\n${msg.content}\n`;
-                });
-                markdown += '\n';
-            }
-
-            markdown += `---
-
-`;
-        });
-
-        if (parkingLot.length > 0) {
-            markdown += `## Parking Lot (Ideas to Revisit)
-
-`;
-            parkingLot.forEach((item, idx) => {
-                markdown += `${idx + 1}. ${item.text}\n`;
-            });
-        }
-
-        markdown += `
----
-*Exported from ATOM Active Reading*
-`;
-
-        // Download as file
-        downloadMarkdown(markdown, `reading-session-${exportDate}.md`);
-
-        return markdown;
-    }
-
-    function downloadMarkdown(content, filename) {
-        const blob = new Blob([content], { type: 'text/markdown' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
-
-    function showExportLoading() {
-        const btn = document.getElementById('btn-export-session');
-        if (btn) {
-            btn.disabled = true;
-            const exportingMsg = getMessage('sp_exporting', 'Exporting...');
-            btn.innerHTML = `<span class="btn-spinner"></span> ${exportingMsg}`;
-        }
-    }
-
-    function hideExportLoading() {
-        const btn = document.getElementById('btn-export-session');
-        if (btn) {
-            btn.disabled = false;
-            const downloadLabel = getMessage('sp_btn_download_notes', 'Download Notes');
-            btn.innerHTML = `📥 ${downloadLabel}`;
-        }
-    }
-
-    async function endSession() {
-        if (threads.length === 0) {
-            alert('No highlights in this session.');
-            return;
-        }
-
-        const confirmMsg = getMessage('sp_confirm_end_session', 'Finish this reading session?');
-        const statsDiscussions = getMessage('sp_stats_discussions', 'chats');
-        const quickNoteTitle = getMessage('sp_quick_note_title', 'Quick Notes');
-        const confirmEnd = window.confirm(
-            `${confirmMsg}\n\n` +
-            `• ${threads.length} ${statsDiscussions}\n` +
-            `• ${parkingLot.length} ${quickNoteTitle}`
-        );
-
-        if (!confirmEnd) return;
-
-        // Export first
-        await exportSession();
-
-        // Clear session data
-        threads = [];
-        parkingLot = [];
-        activeThreadId = null;
-        sessionStartTime = Date.now();
-
-        await saveThreadsToStorage();
-        await saveParkingLot();
-
-        renderThreadList();
-        renderParkingLot();
-        updateSessionStats();
-
-        // Show empty state
-        if (elements.emptyState) {
-            elements.emptyState.style.display = 'flex';
-        }
-        if (elements.currentHighlight) {
-            elements.currentHighlight.style.display = 'none';
-        }
-        if (elements.messages) {
-            elements.messages.innerHTML = '';
-            elements.messages.appendChild(elements.emptyState);
-        }
-    }
-
-    // ===========================
-    // Deep Angle Logic
-    // ===========================
-    async function selectRelevantThreads(currentTitle, currentText, candidates) {
-        if (!candidates || candidates.length === 0) return [];
-        if (candidates.length <= 5) return candidates;
-
-        // 1. Semantic Selection via AI (Re-ranking)
-        const listSnippet = candidates.map((t, i) => `${i}. [${t.highlight?.title}]: ${t.highlight?.text?.slice(0, 80)}`).join('\n');
-        const targetTitle = String(currentTitle || '').slice(0, 180);
-        const targetExcerpt = String(currentText || '').replace(/\s+/g, ' ').trim().slice(0, 400);
-
-        const rankingPrompt = `You are a context retrieval system.
-        Target:
-        - Title: "${targetTitle}"
-        - Excerpt: "${targetExcerpt}"
-        
-        Candidate Items:
-        ${listSnippet}
-        
-        Task: Select the 5 most relevant items to the Target Topic.
-        Output: Return ONLY the indices of the selected items as a JSON array (e.g. [0, 4, 12]).`;
-
-        try {
-            // Use JSON mode if model supports it, or just parse text
-            const response = await callLLMAPI("Context Selector", [{ role: 'user', parts: [{ text: rankingPrompt }] }], {
-                priority: 'vip',
-                generationConfig: { temperature: 0.1, maxOutputTokens: 64, response_mime_type: "application/json" }
-            });
-
-            const text = response || '[]';
-            const jsonMatch = text.match(/\[.*\]/s);
-            const raw = jsonMatch ? jsonMatch[0] : '[]';
-            const parsed = JSON.parse(raw);
-            const indices = Array.isArray(parsed) ? parsed : [];
-
-            if (indices.length > 0) {
-                const selected = [];
-                const seen = new Set();
-                for (const value of indices) {
-                    const idx = Number(value);
-                    if (!Number.isInteger(idx) || idx < 0 || idx >= candidates.length) continue;
-                    if (seen.has(idx)) continue;
-                    seen.add(idx);
-                    selected.push(candidates[idx]);
-                    if (selected.length >= 5) break;
-                }
-                if (selected.length > 0) return selected;
-            }
-        } catch (e) {
-            console.warn('[Deep Angle] Re-ranking failed, using recent.', e);
-        }
-
-        // Fallback: Just return recent ones
-        return candidates.slice(0, 5);
-    }
-
-    // ===========================
-    // Deep Angle Logic
-    // ===========================
-    async function generateDeepAngle() {
-        if (!pageContext?.url) {
-            showToast(getMessage('sp_page_read_failed', 'Failed to read page'), 'error');
-            return;
-        }
-
-        if (isGeneratingDeepAngle) return;
-
-        const llmConfig = await getLLMProvider();
-        const geminiKey = await getApiKey();
-        const hasProviderKey = llmConfig.provider === 'openrouter'
-            ? !!llmConfig.openrouterKey
-            : !!geminiKey;
-        if (!hasProviderKey) {
-            showToast(getMessage('sp_error_no_api_key', 'AI Access Key not set'), 'error');
-            return;
-        }
-
-        isGeneratingDeepAngle = true;
-        setDeepAngleLoading(true);
-
-        try {
-            // 1. Identify Contexts
-            const currentUrl = pageContext.url;
-            const currentUrlKey = normalizeUrl(currentUrl || '');
-
-            // A. Current Page Threads
-            const currentThreads = threads.filter(t => {
-                return normalizeUrl(t.highlight?.url || '') === currentUrlKey;
-            });
-
-            // B. Candidate Threads (History from other pages)
-            // Get last 30 threads from this domain (excluding current page)
-            const candidates = threads
-                .filter(t => {
-                    return normalizeUrl(t.highlight?.url || '') !== currentUrlKey;
-                })
-                .sort((a, b) => b.createdAt - a.createdAt)
-                .slice(0, 30);
-
-            // C. AI Selection (Re-rank candidates)
-            let relatedThreads = [];
-            if (candidates.length > 0) {
-                // Determine relevance using AI
-                const analyzing = getMessage('sp_deep_angle_analyzing', 'Looking for a fresh angle...');
-                showToast(analyzing, 'info');
-                if (elements.deepAngleStatus) {
-                    elements.deepAngleStatus.style.display = 'block';
-                    elements.deepAngleStatus.textContent = analyzing;
-                }
-                relatedThreads = await selectRelevantThreads(pageContext.title, pageContext.content?.slice(0, 500), candidates);
-            }
-
-            // 2. Prepare Final Prompt
-            const highlightContext = currentThreads.map(t => `- "${t.highlight?.text?.slice(0, 200)}"`).join('\n');
-            const relatedContext = relatedThreads.map(t => `- [${t.highlight?.title}]: "${t.highlight?.text?.slice(0, 150)}"`).join('\n');
-            const pageExcerpt = (pageContext?.content || '').slice(0, 5000);
-
-            const systemPrompt = `You are a profound system thinker. Your goal is to find hidden structures, counter-intuitive insights, or "deep angles" that average readers miss. Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
-
-            const userPrompt = `Analyze this content and provide ONE "Deep Angle" insight.
-
-            CONTEXT:
-            Title: ${pageContext.title}
-            
-            ${highlightContext ? `USER HIGHLIGHTS (Current Page):\n${highlightContext}\n` : ''}
-            
-            ${relatedContext ? `CONNECTED KNOWLEDGE (From your history):\n${relatedContext}\n` : ''}
-            
-            PAGE EXCERPT:
-            """${pageExcerpt}"""
-
-            Task:
-            1. Identify a systems-level connection, a hidden incentive, or a counter-intuitive truth.
-            2. SYNTHESIZE the "Connected Knowledge" to find patterns across articles.
-            3. Write a single, powerful paragraph (approx 60-80 words).
-            4. Tone: Intellectual, sharp, profound.`;
-
-            // 3. Generate Insight
-            const response = await callLLMAPI(systemPrompt, [{ role: 'user', parts: [{ text: userPrompt }] }], {
-                priority: 'vip',
-                generationConfig: { temperature: 0.7, maxOutputTokens: 512 }
-            });
-
-            const deepAngle = (response || '').trim();
-
-            if (deepAngle) {
-                deepAngleByUrl.set(currentUrlKey, { text: deepAngle, generatedAt: Date.now() });
-                recordSmartLinkMetric('deep_angle_generated_count', 1);
-                updateDeepAngleUI();
-                elements.deepAngleOutput?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            } else {
-                showToast(getMessage('sp_error_empty_response', 'No response received'), 'warning');
-            }
-
-        } catch (e) {
-            console.error('Deep Angle Error:', e);
-            showToast(getMessage('sp_deep_angle_error', "Couldn't generate a new angle."), 'error');
-        } finally {
-            setDeepAngleLoading(false);
-            updateDeepAngleUI();
-            isGeneratingDeepAngle = false;
-        }
-    }
     async function getApiKey() {
         const data = await chrome.storage.local.get(['user_gemini_key', 'gemini_api_key', 'apiKey']);
         return data.user_gemini_key || data.gemini_api_key || data.apiKey || null;
@@ -7974,6 +4292,7 @@ ${aiSummary}
 
             // Check for empty state
             const batches = Array.isArray(response.batches) ? response.batches : [];
+            console.log('[SRQ] Saved tab: got', batches.length, 'batches, response:', response);
             if (batches.length === 0) {
                 renderIntoContainer(window.SRQWidget?.createEmptyState());
                 return "empty";
@@ -8053,6 +4372,17 @@ ${aiSummary}
         loadUserPreferences();
         startSessionTimer();
         mountSRQWidget();
+    });
+
+    // Auto-refresh Saved tab when SRQ cards are updated
+    chrome.runtime.onMessage.addListener((msg) => {
+        if (msg?.type === 'SRQ_CARDS_UPDATED') {
+            console.log('[SRQ] Cards updated, refreshing Saved tab');
+            const activeTab = document.querySelector('.sp-main-tab-btn.active');
+            if (activeTab?.dataset?.tab === 'saved' || activeTab?.textContent?.trim()?.toLowerCase()?.includes('saved')) {
+                mountSRQWidget();
+            }
+        }
     });
 })();
 

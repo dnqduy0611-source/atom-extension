@@ -299,10 +299,10 @@ function saveOptions() {
     const aiAccuracyLevel = document.getElementById('aiAccuracyLevel')?.value || 'balanced';
     const aiMinConfidence = toNumberOr(document.getElementById('aiMinConfidence')?.value, 0.65);
     const aiTimeoutMs = toNumberOr(document.getElementById('aiTimeoutMs')?.value, 800);
-    const aiBudgetPerDay = toNumberOr(document.getElementById('aiBudgetPerDay')?.value, 200);
+    const aiBudgetPerDay = toNumberOr(document.getElementById('aiBudgetPerDay')?.value, 30);
     const aiMaxViewportChars = toNumberOr(document.getElementById('aiMaxViewportChars')?.value, 1200);
     const aiMaxSelectedChars = toNumberOr(document.getElementById('aiMaxSelectedChars')?.value, 400);
-    const aiCacheTtlMs = toNumberOr(document.getElementById('aiCacheTtlMs')?.value, 15000);
+    const aiCacheTtlMs = toNumberOr(document.getElementById('aiCacheTtlMs')?.value, 900000);
     const aiProvider = document.getElementById('aiProvider')?.value || 'gemini';
     const aiProxyUrl = document.getElementById('aiProxyUrl')?.value.trim() || '';
     // LLM Provider config (General tab)
@@ -540,13 +540,13 @@ function restoreOptions() {
         const aiTimeoutMs = document.getElementById('aiTimeoutMs');
         if (aiTimeoutMs) aiTimeoutMs.value = (result.atom_ai_timeout_ms ?? result.ai_timeout_ms ?? 800);
         const aiBudgetPerDay = document.getElementById('aiBudgetPerDay');
-        if (aiBudgetPerDay) aiBudgetPerDay.value = (result.atom_ai_budget_daily_cap ?? result.ai_budget_per_day ?? 200);
+        if (aiBudgetPerDay) aiBudgetPerDay.value = (result.atom_ai_budget_daily_cap ?? result.ai_budget_per_day ?? 30);
         const aiMaxViewportChars = document.getElementById('aiMaxViewportChars');
         if (aiMaxViewportChars) aiMaxViewportChars.value = (result.atom_ai_max_viewport_chars ?? result.ai_max_viewport_chars ?? 1200);
         const aiMaxSelectedChars = document.getElementById('aiMaxSelectedChars');
         if (aiMaxSelectedChars) aiMaxSelectedChars.value = (result.atom_ai_max_selected_chars ?? result.ai_max_selected_chars ?? 400);
         const aiCacheTtlMs = document.getElementById('aiCacheTtlMs');
-        if (aiCacheTtlMs) aiCacheTtlMs.value = (result.atom_ai_cache_ttl_ms ?? result.ai_cache_ttl_ms ?? 15000);
+        if (aiCacheTtlMs) aiCacheTtlMs.value = (result.atom_ai_cache_ttl_ms ?? result.ai_cache_ttl_ms ?? 900000);
 
         // Provider handled by custom dropdown update above
 
@@ -1097,21 +1097,19 @@ function setupAuthButtons() {
         btnRetry.addEventListener('click', handleGoogleSignIn);
     }
 
-    // Upgrade button (placeholder for future)
+    // Upgrade button — show friendly free-tier notice instead of 404
     const btnUpgrade = document.getElementById('btn-upgrade-pro');
     if (btnUpgrade) {
         btnUpgrade.addEventListener('click', () => {
-            // TODO: Implement upgrade flow in Phase 6 (Payments)
-            window.open('https://www.amonexus.com/pricing', '_blank');
+            showFreeTierNotice();
         });
     }
 
-    // Manage Subscription button (placeholder for future)
+    // Manage Subscription button — also show free-tier notice
     const btnManage = document.getElementById('btn-manage-subscription');
     if (btnManage) {
         btnManage.addEventListener('click', () => {
-            // TODO: Implement manage flow in Phase 6 (Payments)
-            window.open('https://www.amonexus.com/account', '_blank');
+            showFreeTierNotice();
         });
     }
 }
@@ -1196,6 +1194,57 @@ function showAuthError(message) {
         errorMessage.textContent = message;
     }
     showAuthState('error');
+}
+
+/**
+ * Show a friendly toast notice instead of opening pricing page
+ */
+function showFreeTierNotice() {
+    // Remove existing notice if any
+    const existing = document.querySelector('.free-tier-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'free-tier-toast';
+    const msg = 'Bạn đang được trải nghiệm toàn bộ tính năng miễn phí. Hãy tận hưởng và cảm nhận giá trị mà Amo mang lại nhé! 💚';
+    toast.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:22px;flex-shrink:0;">🎁</span>
+            <span>${msg}</span>
+        </div>
+    `;
+    Object.assign(toast.style, {
+        position: 'fixed',
+        bottom: '80px',
+        left: '50%',
+        transform: 'translateX(-50%) translateY(20px)',
+        background: 'linear-gradient(135deg, #0d9488, #10b981)',
+        color: '#fff',
+        padding: '16px 24px',
+        borderRadius: '14px',
+        fontSize: '14px',
+        fontWeight: '500',
+        maxWidth: '480px',
+        boxShadow: '0 8px 32px rgba(16, 185, 129, 0.3)',
+        zIndex: '9999',
+        opacity: '0',
+        transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+        lineHeight: '1.5'
+    });
+    document.body.appendChild(toast);
+
+    // Animate in
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+    });
+
+    // Auto-dismiss after 5s
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(20px)';
+        setTimeout(() => toast.remove(), 400);
+    }, 5000);
 }
 
 // Initialize auth UI when DOM is ready

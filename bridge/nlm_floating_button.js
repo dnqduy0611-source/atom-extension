@@ -607,16 +607,6 @@
                 ${ICONS.atom}
             </div>
             <div class="atom-action-menu">
-                <button class="atom-action-btn" data-tooltip="Summarize" data-action="summarize">
-                    ${ICONS.summarize} Tóm tắt
-                </button>
-                <button class="atom-action-btn" data-tooltip="Critique" data-action="critique">
-                    ${ICONS.critique} Phản biện
-                </button>
-                <button class="atom-action-btn" data-tooltip="Quiz" data-action="quiz">
-                    ${ICONS.quiz} Quiz
-                </button>
-                <div class="atom-divider"></div>
                 <button class="atom-action-btn" data-tooltip="Save to NotebookLM" data-action="nlm">
                     ${ICONS.notebook} Lưu
                 </button>
