@@ -16,17 +16,16 @@ import { useTranslation } from '../../hooks/useTranslation';
  */
 
 // ── LemonSqueezy Configuration ──
-// Replace these with real LemonSqueezy checkout URLs after creating products
-const LEMON_STORE = 'https://amonexus.lemonsqueezy.com'; // placeholder
+const LEMON_STORE = 'https://amonexus.lemonsqueezy.com';
 
 const CHECKOUT_URLS: Record<string, string> = {
     // Subscriptions
-    premium_monthly: `${LEMON_STORE}/checkout/buy/TODO_MONTHLY_VARIANT`,
-    premium_yearly: `${LEMON_STORE}/checkout/buy/TODO_YEARLY_VARIANT`,
+    premium_monthly: `${LEMON_STORE}/checkout/buy/1314073`,
+    premium_yearly: `${LEMON_STORE}/checkout/buy/1314076`,
     // Credit packs
-    credits_50: `${LEMON_STORE}/checkout/buy/TODO_50_VARIANT`,
-    credits_150: `${LEMON_STORE}/checkout/buy/TODO_150_VARIANT`,
-    credits_500: `${LEMON_STORE}/checkout/buy/TODO_500_VARIANT`,
+    credits_50: `${LEMON_STORE}/checkout/buy/1314058`,
+    credits_150: `${LEMON_STORE}/checkout/buy/1314069`,
+    credits_500: `${LEMON_STORE}/checkout/buy/1314071`,
 };
 
 interface Props {
