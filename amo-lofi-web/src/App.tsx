@@ -198,44 +198,115 @@ function App() {
                       {/* Dropdown menu */}
                       {showUserMenu && (
                         <div
-                          className="absolute right-0 top-full mt-2 w-48 rounded-xl overflow-hidden"
+                          className="absolute right-0 top-full mt-2 rounded-2xl overflow-hidden"
                           style={{
-                            background: 'rgba(18,18,24,0.95)',
-                            backdropFilter: 'blur(20px)',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                            width: 260,
+                            background: 'rgba(12,12,18,0.97)',
+                            backdropFilter: 'blur(24px)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            boxShadow: '0 12px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)',
                           }}
                         >
-                          <div className="px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                            <p className="text-xs text-white/50 truncate">{user.email}</p>
+                          {/* Gradient accent line */}
+                          <div style={{
+                            height: 2,
+                            background: 'linear-gradient(90deg, #4ade80, #22d3ee, #8b5cf6)',
+                            borderRadius: '2px 2px 0 0',
+                          }} />
+
+                          {/* User header */}
+                          <div className="flex items-center gap-3 px-4 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                            {user.user_metadata?.avatar_url ? (
+                              <img
+                                src={user.user_metadata.avatar_url}
+                                alt=""
+                                width={36}
+                                height={36}
+                                className="rounded-full shrink-0"
+                                style={{ border: '2px solid rgba(74,222,128,0.35)' }}
+                              />
+                            ) : (
+                              <div
+                                className="flex items-center justify-center rounded-full text-sm font-bold shrink-0"
+                                style={{
+                                  width: 36, height: 36,
+                                  background: 'linear-gradient(135deg, #4ade80, #22d3ee)',
+                                  color: '#0a0a0a',
+                                }}
+                              >
+                                {(user.email?.[0] || 'U').toUpperCase()}
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold text-white/90 truncate">
+                                {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                              </p>
+                              <p className="text-[11px] text-white/40 truncate">{user.email}</p>
+                            </div>
                           </div>
-                          <button
-                            className="w-full px-4 py-3 text-left text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors cursor-pointer flex items-center gap-2"
-                            onClick={() => {
-                              setShowUserMenu(false);
-                              setShowProfile(true);
-                            }}
-                          >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                              <circle cx="12" cy="7" r="4" />
-                            </svg>
-                            {t('profile.myProfile')}
-                          </button>
-                          <button
-                            className="w-full px-4 py-3 text-left text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors cursor-pointer flex items-center gap-2"
-                            onClick={async () => {
-                              setShowUserMenu(false);
-                              await signOut();
-                            }}
-                          >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                              <polyline points="16 17 21 12 16 7" />
-                              <line x1="21" y1="12" x2="9" y2="12" />
-                            </svg>
-                            {t('auth.signOut')}
-                          </button>
+
+                          {/* Plan badge */}
+                          <div className="px-4 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs">{isPro ? '👑' : '🎵'}</span>
+                                <span className="text-xs font-medium text-white/60">{isPro ? 'Pro Plan' : 'Free Plan'}</span>
+                              </div>
+                              {!isPro && (
+                                <button
+                                  className="text-[10px] font-semibold px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-200 hover:scale-105"
+                                  style={{
+                                    background: 'linear-gradient(135deg, rgba(74,222,128,0.15), rgba(34,211,238,0.15))',
+                                    color: '#4ade80',
+                                    border: '1px solid rgba(74,222,128,0.2)',
+                                  }}
+                                  onClick={() => {
+                                    setShowUserMenu(false);
+                                    showUpsell('dropdown');
+                                  }}
+                                >
+                                  Upgrade
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Menu items */}
+                          <div className="py-1.5">
+                            <button
+                              className="w-full px-4 py-2.5 text-left text-[13px] text-white/65 hover:bg-white/[0.04] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-3"
+                              onClick={() => {
+                                setShowUserMenu(false);
+                                setShowProfile(true);
+                              }}
+                            >
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                              </svg>
+                              {t('profile.myProfile')}
+                            </button>
+
+                            <div style={{ height: 1, margin: '2px 16px', background: 'rgba(255,255,255,0.04)' }} />
+
+                            <button
+                              className="w-full px-4 py-2.5 text-left text-[13px] flex items-center gap-3 transition-all duration-150 cursor-pointer"
+                              style={{ color: 'rgba(255,120,120,0.7)' }}
+                              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,80,80,0.06)'; e.currentTarget.style.color = '#ff6b6b'; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,120,120,0.7)'; }}
+                              onClick={async () => {
+                                setShowUserMenu(false);
+                                await signOut();
+                              }}
+                            >
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                <polyline points="16 17 21 12 16 7" />
+                                <line x1="21" y1="12" x2="9" y2="12" />
+                              </svg>
+                              {t('auth.signOut')}
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>
