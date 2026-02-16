@@ -102,7 +102,7 @@
             elements.deepAngleBtn.classList.remove('sp-action-loading');
             elements.deepAngleBtn.setAttribute('aria-busy', 'false');
             elements.deepAngleBtn.disabled = !pageContext?.url;
-            elements.deepAngleBtn.innerHTML = `🧠 ${label}`;
+            elements.deepAngleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M12 2a8 8 0 0 0-8 8c0 3.4 2.1 6.3 5 7.4V19a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1.6c2.9-1.1 5-4 5-7.4a8 8 0 0 0-8-8Z"/><path d="M10 22h4"/></svg> ${label}`;
         }
     }
 

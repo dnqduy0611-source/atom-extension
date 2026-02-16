@@ -2127,8 +2127,8 @@
                 </svg>
             </button>
             <select id="atom-focus-sound-select" class="focus-sound-select" title="Chọn âm thanh">
-                <option value="rain">🌧️ Rain</option>
-                <option value="forest">🔥 Forest</option>
+                <option value="rain">Rain</option>
+                <option value="forest">Forest</option>
             </select>
             <button class="focus-btn ghost" id="atom-focus-add-safe" title="Thêm vào Safe Zone">+ Safe</button>
         </div>
@@ -2256,6 +2256,157 @@
     }
 
 
+    // ===== LOFI MIRROR MODULE =====
+    // Mirrors AmoLofi Web visual scene into #atom-focus-block
+    // Config synced via chrome.storage.local key: atom_lofi_config
+    let lofiMirrorActive = false;
+
+    const LOFI_BASE = 'https://lofi.amonexus.com';
+    const SCENE_REGISTRY = {
+        cozy_cafe: {
+            bg: { day: '/scenes/cafe_day.jpg', night: '/scenes/cafe_night.jpg' },
+            tint: { day: 'rgba(30,15,5,0.4)', night: 'rgba(10,5,2,0.55)' },
+            primary: { day: '#f59e0b', night: '#fb923c' }
+        },
+        japanese_garden: {
+            bg: { day: '/scenes/garden_day.jpg', night: '/scenes/garden_night.jpg' },
+            tint: { day: 'rgba(15,10,20,0.3)', night: 'rgba(15,5,25,0.5)' },
+            primary: { day: '#ec4899', night: '#a855f7' }
+        },
+        city_night: {
+            bg: { day: '/scenes/city_day.jpg', night: '/scenes/city_night.jpg' },
+            tint: { day: 'rgba(10,5,30,0.4)', night: 'rgba(5,2,15,0.45)' },
+            primary: { day: '#8b5cf6', night: '#e879f9' }
+        },
+        forest_cabin: {
+            bg: { day: '/scenes/forest_day.jpg', night: '/scenes/forest_night.jpg' },
+            tint: { day: 'rgba(5,15,5,0.35)', night: 'rgba(3,8,3,0.5)' },
+            primary: { day: '#22c55e', night: '#34d399' }
+        },
+        ocean_cliff: {
+            bg: { day: '/scenes/ocean_day.jpg', night: '/scenes/ocean_night.jpg' },
+            tint: { day: 'rgba(5,10,25,0.3)', night: 'rgba(2,5,15,0.5)' },
+            primary: { day: '#06b6d4', night: '#38bdf8' }
+        },
+        space_station: {
+            bg: { day: '/scenes/space_day.jpg', night: '/scenes/space_night.jpg' },
+            tint: { day: 'rgba(3,3,15,0.35)', night: 'rgba(0,0,5,0.45)' },
+            primary: { day: '#6366f1', night: '#a78bfa' }
+        },
+        cyberpunk_alley: {
+            bg: { day: '/scenes/cyberpunk_day.jpg', night: '/scenes/cyberpunk_night.jpg' },
+            tint: { day: 'rgba(0,5,15,0.12)', night: 'rgba(0,3,10,0.18)' },
+            primary: { day: '#00ffd5', night: '#ff2d95' }
+        },
+        ghibli_meadow: {
+            bg: { day: '/scenes/ghibli_day.jpg', night: '/scenes/ghibli_night.jpg' },
+            tint: { day: 'rgba(20,15,5,0.2)', night: 'rgba(10,8,20,0.4)' },
+            primary: { day: '#4ade80', night: '#c084fc' }
+        },
+    };
+
+    function applyLofiMirror(config) {
+        if (!config?.active) { clearLofiMirror(); return; }
+        lofiMirrorActive = true;
+
+        const bgLayerEl = shadow.getElementById('atom-focus-bg-layer');
+        if (!bgLayerEl) return;
+
+        // Resolve background URL
+        const bgUrl = config.bg_url
+            ? (config.bg_url.startsWith('http') ? config.bg_url : `${LOFI_BASE}${config.bg_url}`)
+            : null;
+
+        if (bgUrl) {
+            bgLayerEl.style.backgroundImage = `url(${bgUrl})`;
+            bgLayerEl.style.backgroundSize = 'cover';
+            bgLayerEl.style.backgroundPosition = 'center';
+            bgLayerEl.style.filter = 'brightness(0.85)';
+
+            // Tint overlay via style injection (shadow DOM safe)
+            let tintStyle = shadow.getElementById('lofi-tint-override');
+            if (!tintStyle) {
+                tintStyle = document.createElement('style');
+                tintStyle.id = 'lofi-tint-override';
+                shadow.appendChild(tintStyle);
+            }
+            tintStyle.textContent = `
+                #atom-focus-bg-layer::before {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background: ${config.bg_tint || 'rgba(0,0,0,0.4)'};
+                    z-index: 1;
+                    pointer-events: none;
+                }
+            `;
+        }
+
+        // Rain effect color → match scene accent
+        if (config.primary_color) {
+            let rainStyle = shadow.getElementById('lofi-rain-override');
+            if (!rainStyle) {
+                rainStyle = document.createElement('style');
+                rainStyle.id = 'lofi-rain-override';
+                shadow.appendChild(rainStyle);
+            }
+            rainStyle.textContent = `
+                #atom-focus-bg-layer::after {
+                    background-image: repeating-linear-gradient(90deg,
+                        transparent,
+                        transparent 40px,
+                        ${config.primary_color}26 40px,
+                        ${config.primary_color}26 41px) !important;
+                }
+            `;
+        }
+
+        console.log('[ATOM Lofi Mirror] Scene applied:', config.scene_id, config.variant);
+    }
+
+    function clearLofiMirror() {
+        lofiMirrorActive = false;
+        const bgLayerEl = shadow.getElementById('atom-focus-bg-layer');
+        if (bgLayerEl) {
+            bgLayerEl.style.backgroundImage = '';
+            bgLayerEl.style.backgroundSize = '';
+            bgLayerEl.style.backgroundPosition = '';
+            bgLayerEl.style.filter = '';
+        }
+        // Remove style overrides
+        shadow.getElementById('lofi-tint-override')?.remove();
+        shadow.getElementById('lofi-rain-override')?.remove();
+        console.log('[ATOM Lofi Mirror] Cleared, restored defaults.');
+    }
+
+    // Build mirror config from a MixerConfig-like object (from Supabase or manual)
+    function buildMirrorConfig(raw) {
+        const sceneId = raw.scene_id || 'cozy_cafe';
+        const variant = raw.variant || 'day';
+        const scene = SCENE_REGISTRY[sceneId];
+        if (!scene) return null;
+        return {
+            active: true,
+            scene_id: sceneId,
+            variant: variant,
+            bg_url: `${LOFI_BASE}${scene.bg[variant] || scene.bg.day}`,
+            bg_tint: scene.tint[variant] || scene.tint.day,
+            primary_color: scene.primary[variant] || scene.primary.day,
+        };
+    }
+
+    // Listen for mirror updates from background.js or manual injection
+    chrome.runtime.onMessage.addListener((msg) => {
+        if (msg.type === 'LOFI_CONFIG_UPDATED' && msg.config) {
+            applyLofiMirror(msg.config);
+        }
+        if (msg.type === 'LOFI_DISCONNECTED') {
+            clearLofiMirror();
+        }
+    });
+
+    // ===== END LOFI MIRROR MODULE =====
+
     // === Focus Block Helper Functions ===
     function fmtFocusRemaining(ms) {
         const s = Math.max(0, Math.floor(ms / 1000));
@@ -2274,6 +2425,14 @@
         if (!focusBlock) return;
         focusBlock.classList.remove('hidden');
         isFocusBlockActive = true;
+
+        // [LOFI MIRROR] Check if AmoLofi scene should be applied
+        chrome.storage.local.get('atom_lofi_config', (data) => {
+            if (data.atom_lofi_config?.active) {
+                applyLofiMirror(data.atom_lofi_config);
+            }
+        });
+
         toggleFocusAtmosphere(true); // [ATOM ATMOSPHERE] ON
     }
 
@@ -2284,6 +2443,12 @@
         // ẩn micro hint nếu có
         const micro = shadow.getElementById("atom-focus-micro");
         micro?.classList.add("hidden");
+
+        // [LOFI MIRROR] Clear mirror visual when hiding (restore defaults for next show)
+        if (lofiMirrorActive) {
+            clearLofiMirror();
+        }
+
         toggleFocusAtmosphere(false); // [ATOM ATMOSPHERE] OFF
     }
 
@@ -3548,7 +3713,7 @@
         toast.className = 'atom-sidepanel-hint';
         toast.innerHTML = `
             <div style="display:flex;flex-direction:column;gap:4px;">
-                <span>💡 Press <strong>${shortcut}</strong> to open Active Reading</span>
+                <span><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg> Press <strong>${shortcut}</strong> to open Active Reading</span>
                 <span style="font-size:12px;opacity:0.8;">or click ATOM icon → Chat with Amo</span>
             </div>
         `;

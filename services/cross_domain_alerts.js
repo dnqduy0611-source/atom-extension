@@ -7,25 +7,25 @@
     const ALERT_TEMPLATES = {
         SIMILAR_CONCEPT: {
             id: 'similar_concept',
-            icon: '💡',
+            icon: '✦',
             title: 'This looks familiar!',
             template: '"{current}" is similar to "{past}" you read {timeAgo}.'
         },
         CONTRADICTION: {
             id: 'contradiction',
-            icon: '⚠️',
+            icon: '⚠',
             title: 'Different perspective!',
             template: 'This may contradict what you read about "{topic}" in "{past}".'
         },
         BUILDING_BLOCK: {
             id: 'building_block',
-            icon: '🧱',
+            icon: '▦',
             title: 'Building on your knowledge!',
             template: 'This extends your understanding of "{topic}" from "{past}".'
         },
         PRACTICAL_APPLICATION: {
             id: 'practical_application',
-            icon: '🔧',
+            icon: '⚙',
             title: 'Now you can apply it!',
             template: 'This shows how to apply "{concept}" you learned in "{past}".'
         }
@@ -196,7 +196,7 @@
             maxAlerts: ALERT_CONFIG.maxAlertsPerSession,
             cooldownRemaining: Math.max(0, ALERT_CONFIG.cooldownMs - (Date.now() - lastAlertTime)),
             canShowAlert: alertCount < ALERT_CONFIG.maxAlertsPerSession &&
-                          (Date.now() - lastAlertTime >= ALERT_CONFIG.cooldownMs)
+                (Date.now() - lastAlertTime >= ALERT_CONFIG.cooldownMs)
         };
     }
 

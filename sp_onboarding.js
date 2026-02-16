@@ -306,6 +306,50 @@
         updateOnboardingMenuItemLabel();
     }
 
+    // ── What's New menu item in sidepanel dropdown ──
+    const WHATS_NEW_MENU_ID = 'menu-whats-new';
+
+    function ensureWhatsNewMenuItem() {
+        const menu = SP.elements.menuDropdown;
+        if (!menu || document.getElementById(WHATS_NEW_MENU_ID)) return;
+
+        const item = document.createElement('div');
+        item.className = 'sp-menu-item';
+        item.id = WHATS_NEW_MENU_ID;
+        item.setAttribute('role', 'menuitem');
+        item.setAttribute('tabindex', '0');
+        item.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+            <span class="sp-menu-label">${getMessage('menu_whats_new', "What's New")}</span>
+        `;
+
+        // Insert after onboarding item, or before divider
+        const onboardingItem = document.getElementById(MENU_ID);
+        if (onboardingItem && onboardingItem.nextSibling) {
+            menu.insertBefore(item, onboardingItem.nextSibling);
+        } else {
+            const divider = menu.querySelector('.sp-menu-divider');
+            if (divider) {
+                menu.insertBefore(item, divider);
+            } else {
+                menu.appendChild(item);
+            }
+        }
+
+        item.addEventListener('click', () => {
+            const ver = chrome.runtime.getManifest().version;
+            chrome.tabs.create({
+                url: `https://www.amonexus.com/whats-new?v=${encodeURIComponent(ver)}`
+            });
+            chrome.storage.local.set({ atom_whats_new_unseen: false });
+            SP.elements.menuDropdown?.classList.remove('show');
+            SP.elements.menuBtn?.setAttribute('aria-expanded', 'false');
+        });
+    }
+
     function updateOnboardingMenuItemLabel() {
         const labelEl = document.querySelector(`#${MENU_ID} .sp-menu-label`);
         if (!labelEl) return;
@@ -315,6 +359,7 @@
 
     function checkAndShowOnboarding() {
         ensureOnboardingMenuItem();
+        ensureWhatsNewMenuItem();
         renderOnboardingProgress();
         if (onboardingState.state === STATES.NOT_STARTED) {
             showWelcomeScreen();

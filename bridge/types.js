@@ -20,6 +20,10 @@ export const SRQ_MAX_CARDS = 200;
 export const KG_EDGES_KEY = "atom_knowledge_graph_v1";
 export const KG_MAX_EDGES = 1000;
 
+// Conversation Digests (Hybrid Memory)
+export const DIGESTS_KEY = 'atom_conversation_digests_v1';
+export const MAX_DIGESTS = 200;
+
 // SRQ Wave 1 P0: Idempotency
 export const SRQ_IDEMPOTENCY_TIME_BUCKET_MS = 60000; // 60 seconds
 export const SRQ_IDEMPOTENCY_KEY_VERSION = "v1";

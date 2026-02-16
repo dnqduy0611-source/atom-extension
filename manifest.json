@@ -2,7 +2,7 @@
   "default_locale": "vi",
   "manifest_version": 3,
   "name": "AmoNexus",
-  "version": "3.5",
+  "version": "3.6",
   "description": "The Neural Nexus for Your Second Brain.",
   "permissions": [
     "storage",
@@ -13,7 +13,7 @@
     "notifications",
     "sidePanel",
     "identity",
-    "management"
+    "offscreen"
   ],
   "host_permissions": [
     "<all_urls>",
@@ -35,7 +35,7 @@
         "services/nudge_engine.js",
         "ui/components/nudge.js",
         "content.js",
-        "bridge/nlm_floating_button.js"
+        "content/floating_save.js"
       ],
       "css": [
         "styles.css"

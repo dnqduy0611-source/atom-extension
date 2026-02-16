@@ -1,0 +1,1313 @@
+// options.js
+
+const atomMsg = (key, substitutions, fallback) => {
+    if (window.AtomI18n) {
+        return window.AtomI18n.getMessage(key, substitutions, fallback);
+    }
+    return chrome.i18n.getMessage(key, substitutions) || fallback || key;
+};
+
+const BUILD_FLAGS = window.ATOM_BUILD_FLAGS || { DEBUG: false };
+const BUILD_DEBUG_ENABLED = !!BUILD_FLAGS.DEBUG;
+
+// Helper: Localize placeholders
+function localizePlaceholders() {
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        const msg = atomMsg(key);
+        if (msg && msg !== key) {
+            el.setAttribute('placeholder', msg);
+        }
+    });
+}
+
+function applyDebugVisibility() {
+    const debugSection = document.getElementById('debug-section');
+    const debugToggle = document.getElementById('debugModeToggle');
+    const btnExportDebug = document.getElementById('btn-export-debug');
+
+    if (!BUILD_DEBUG_ENABLED) {
+        if (debugSection) debugSection.style.display = 'none';
+        if (debugToggle) {
+            debugToggle.checked = false;
+            debugToggle.disabled = true;
+        }
+        if (btnExportDebug) btnExportDebug.style.display = 'none';
+    }
+
+    return BUILD_DEBUG_ENABLED;
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    if (window.AtomI18n) {
+        await window.AtomI18n.init();
+    }
+
+    // Explicitly run placeholder localization
+    localizePlaceholders();
+
+    // Initialize tooltip system (Wave 1 Non-Tech Friendly)
+    initTooltips();
+
+    // Initialize onboarding checklist (Wave 2 Settings Simplification)
+    initOnboarding();
+
+    const debugAvailable = applyDebugVisibility();
+
+    // Initialize Tab Navigation
+    setupTabs();
+    restoreLastTab();
+
+    // Initialize Custom Dropdowns
+    setupCustomDropdown('languageDropdown', 'languageSelect');
+    setupCustomDropdown('aiPilotModeDropdown', 'aiPilotMode');
+    setupCustomDropdown('aiAccuracyLevelDropdown', 'aiAccuracyLevel');
+    setupCustomDropdown('aiProviderDropdown', 'aiProvider');
+    setupCustomDropdown('providerDropdown', 'providerSelect');
+
+    // Setup Provider Toggle (show/hide appropriate key sections)
+    setupProviderToggle();
+
+    restoreOptions();   // Then load saved data
+
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    if (apiKeyInput) {
+        apiKeyInput.addEventListener('input', async () => {
+            const hasKey = apiKeyInput.value.trim().length > 0;
+            const isSignedIn = await isUserSignedInForOptions();
+            updateSemanticToggleAvailability(hasKey || isSignedIn);
+        });
+    }
+
+    // Debug Mode Toggle listener
+    const debugToggle = document.getElementById('debugModeToggle');
+    if (debugToggle && debugAvailable) {
+        debugToggle.addEventListener('change', (e) => {
+            chrome.storage.local.set({ debug_mode: e.target.checked }, () => {
+                console.log("ATOM: Debug Mode =", e.target.checked);
+            });
+        });
+    }
+
+    // Export Debug Log button
+    const btnExportDebug = document.getElementById('btn-export-debug');
+    if (btnExportDebug && debugAvailable) {
+        btnExportDebug.addEventListener('click', exportDebugLog);
+    }
+});
+
+// Tab Navigation Logic
+function setupTabs() {
+    const tabs = document.querySelectorAll('.nav-tab');
+    const panels = document.querySelectorAll('.tab-panel');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetId = tab.dataset.tab;
+
+            // Update tabs
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            // Update panels
+            panels.forEach(p => p.classList.remove('active'));
+            const targetPanel = document.getElementById(`panel-${targetId}`);
+            if (targetPanel) {
+                targetPanel.classList.add('active');
+            }
+
+            // Save last tab to storage
+            chrome.storage.local.set({ atom_options_last_tab: targetId });
+        });
+    });
+}
+
+// Restore last active tab on page load
+async function restoreLastTab() {
+    try {
+        const result = await chrome.storage.local.get('atom_options_last_tab');
+        const lastTab = result.atom_options_last_tab;
+        if (lastTab) {
+            const tabButton = document.querySelector(`[data-tab="${lastTab}"]`);
+            if (tabButton) {
+                tabButton.click();
+            }
+        }
+    } catch (error) {
+        console.log("ATOM: Could not restore last tab", error);
+    }
+}
+
+// Custom Dropdown Logic - Generic Setup
+function setupCustomDropdown(dropdownId, hiddenInputId) {
+    const dropdown = document.getElementById(dropdownId);
+    if (!dropdown) return;
+
+    const selected = dropdown.querySelector('.dropdown-selected');
+    const options = dropdown.querySelectorAll('.dropdown-option');
+    const hiddenInput = document.getElementById(hiddenInputId);
+    const textSpan = dropdown.querySelector('.dropdown-text');
+
+    // Toggle dropdown
+    selected.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Close other open dropdowns
+        document.querySelectorAll('.custom-dropdown').forEach(d => {
+            if (d !== dropdown) d.classList.remove('open');
+        });
+        dropdown.classList.toggle('open');
+    });
+
+    // Handle option selection
+    options.forEach(option => {
+        option.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const value = option.dataset.value;
+            const text = option.textContent.replace('✓', '').trim();
+
+            // Update hidden input
+            if (hiddenInput) hiddenInput.value = value;
+
+            // Update displayed text
+            if (textSpan) {
+                textSpan.textContent = text;
+                // Sync i18n key so localization doesn't revert it
+                if (option.hasAttribute('data-i18n')) {
+                    textSpan.setAttribute('data-i18n', option.getAttribute('data-i18n'));
+                }
+            }
+
+            // Update selected state
+            options.forEach(opt => opt.classList.remove('selected'));
+            option.classList.add('selected');
+
+            // Close dropdown
+            dropdown.classList.remove('open');
+        });
+    });
+
+    // Keyboard accessibility
+    selected.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            dropdown.classList.toggle('open');
+        }
+        if (e.key === 'Escape') {
+            dropdown.classList.remove('open');
+        }
+    });
+}
+
+// Helper to update custom dropdown UI
+function updateDropdownUI(dropdownId, value) {
+    const dropdown = document.getElementById(dropdownId);
+    if (!dropdown) return;
+
+    const options = dropdown.querySelectorAll('.dropdown-option');
+    const textSpan = dropdown.querySelector('.dropdown-text');
+    const hiddenInput = dropdown.parentElement.querySelector(`input[type="hidden"]`) ||
+        document.getElementById(dropdownId.replace('Dropdown', ''));
+
+    options.forEach(option => {
+        if (option.dataset.value === value) {
+            option.classList.add('selected');
+            if (textSpan) {
+                textSpan.textContent = option.textContent.replace('✓', '').trim();
+                // Sync i18n key
+                if (option.hasAttribute('data-i18n')) {
+                    textSpan.setAttribute('data-i18n', option.getAttribute('data-i18n'));
+                }
+            }
+        } else {
+            option.classList.remove('selected');
+        }
+    });
+
+    if (hiddenInput) {
+        hiddenInput.value = value;
+    }
+}
+
+function updateSemanticToggleAvailability(hasAccess) {
+    const embeddingsToggle = document.getElementById('semanticEmbeddingsEnabled');
+    const searchToggle = document.getElementById('semanticSearchEnabled');
+    const keyRequiredNote = document.getElementById('semantic-key-required');
+
+    if (embeddingsToggle) {
+        embeddingsToggle.disabled = !hasAccess;
+        if (!hasAccess) embeddingsToggle.checked = false;
+    }
+    if (searchToggle) {
+        searchToggle.disabled = !hasAccess;
+        if (!hasAccess) searchToggle.checked = false;
+    }
+    if (keyRequiredNote) {
+        keyRequiredNote.style.display = hasAccess ? 'none' : 'block';
+    }
+}
+
+/**
+ * Check if user is signed in (for options page context).
+ */
+async function isUserSignedInForOptions() {
+    try {
+        const data = await chrome.storage.local.get('atom_auth_cache');
+        return !!data?.atom_auth_cache?.isAuthenticated;
+    } catch {
+        return false;
+    }
+}
+
+// Provider toggle: show/hide Google vs OpenRouter key sections
+function setupProviderToggle() {
+    const providerDropdown = document.getElementById('providerDropdown');
+    if (!providerDropdown) return;
+
+    const options = providerDropdown.querySelectorAll('.dropdown-option');
+    options.forEach(option => {
+        option.addEventListener('click', () => {
+            const provider = option.dataset.value;
+            toggleProviderSections(provider);
+        });
+    });
+}
+
+function toggleProviderSections(provider) {
+    const googleSection = document.getElementById('google-key-section');
+    const openrouterSection = document.getElementById('openrouter-key-section');
+    const providerHint = document.getElementById('provider-hint');
+
+    if (provider === 'openrouter') {
+        if (googleSection) googleSection.style.display = 'none';
+        if (openrouterSection) openrouterSection.style.display = 'block';
+        if (providerHint) providerHint.style.display = 'block';
+    } else {
+        if (googleSection) googleSection.style.display = 'block';
+        if (openrouterSection) openrouterSection.style.display = 'none';
+        if (providerHint) providerHint.style.display = 'none';
+    }
+}
+
+// Close dropdowns on outside click
+document.addEventListener('click', () => {
+    document.querySelectorAll('.custom-dropdown').forEach(d => d.classList.remove('open'));
+});
+
+document.getElementById('btn-save').addEventListener('click', saveOptions);
+
+function toNumberOr(value, fallback) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+}
+
+// 1. Lưu Key vào Chrome Storage
+function saveOptions() {
+    const key = document.getElementById('apiKeyInput').value.trim();
+    const sensitivity = document.querySelector('input[name="sensitivity"]:checked').value;
+    const debugMode = BUILD_DEBUG_ENABLED && (document.getElementById('debugModeToggle')?.checked || false);
+    const userPersona = document.getElementById('userPersona')?.value.trim() || '';
+    const language = document.getElementById('languageSelect')?.value || 'auto';
+    const aiPilotEnabled = document.getElementById('aiPilotEnabled')?.checked || false;
+    const aiPilotMode = document.getElementById('aiPilotMode')?.value || 'shadow';
+    const aiAccuracyLevel = document.getElementById('aiAccuracyLevel')?.value || 'balanced';
+    const aiMinConfidence = toNumberOr(document.getElementById('aiMinConfidence')?.value, 0.65);
+    const aiTimeoutMs = toNumberOr(document.getElementById('aiTimeoutMs')?.value, 800);
+    const aiBudgetPerDay = toNumberOr(document.getElementById('aiBudgetPerDay')?.value, 30);
+    const aiMaxViewportChars = toNumberOr(document.getElementById('aiMaxViewportChars')?.value, 1200);
+    const aiMaxSelectedChars = toNumberOr(document.getElementById('aiMaxSelectedChars')?.value, 400);
+    const aiCacheTtlMs = toNumberOr(document.getElementById('aiCacheTtlMs')?.value, 900000);
+    const aiProvider = document.getElementById('aiProvider')?.value || 'gemini';
+    const aiProxyUrl = document.getElementById('aiProxyUrl')?.value.trim() || '';
+    // LLM Provider config (General tab)
+    const llmProvider = document.getElementById('providerSelect')?.value || 'google';
+    const openrouterKey = document.getElementById('openrouterKeyInput')?.value.trim() || '';
+    const openrouterModel = document.getElementById('openrouterModelInput')?.value.trim() || 'stepfun/step-3.5-flash:free';
+    const semanticEmbeddingsEnabled = document.getElementById('semanticEmbeddingsEnabled')?.checked || false;
+    const semanticSearchEnabled = document.getElementById('semanticSearchEnabled')?.checked || false;
+    const nlmEnabledEl = document.getElementById('nlmEnabled');
+    const nlmEnabled = nlmEnabledEl?.checked || false;
+    console.log('[ATOM Options] NLM checkbox element:', nlmEnabledEl, 'checked:', nlmEnabledEl?.checked, 'final value:', nlmEnabled);
+    const nlmMode = document.getElementById('nlmMode')?.value || 'ui_assisted';
+    const nlmDefaultNotebook = document.getElementById('nlmDefaultNotebook')?.value.trim() || 'Inbox';
+    const nlmBaseUrl = document.getElementById('nlmBaseUrl')?.value.trim() || 'https://notebooklm.google.com';
+    const nlmAllowCloud = document.getElementById('nlmAllowCloud')?.checked || false;
+    const nlmPiiWarning = document.getElementById('nlmPiiWarning')?.checked ?? true;
+    const nlmExportMaxChars = toNumberOr(document.getElementById('nlmExportMaxChars')?.value, 5000);
+    const nlmSensitiveDomainsRaw = document.getElementById('nlmSensitiveDomains')?.value || '';
+    const nlmRulesRaw = document.getElementById('nlmRulesJson')?.value || '';
+    const srqDensityMode = document.getElementById('srq-density-mode')?.value || 'comfortable';
+    const status = document.getElementById('status');
+    const btn = document.getElementById('btn-save');
+
+    // Hiệu ứng "Đang lưu..."
+    btn.textContent = atomMsg('opt_btn_saving');
+    btn.disabled = true;
+
+    if ((semanticEmbeddingsEnabled || semanticSearchEnabled) && !key) {
+        // Allow if user is signed in (can use proxy)
+        isUserSignedInForOptions().then(isSignedIn => {
+            if (!isSignedIn) {
+                status.textContent = atomMsg('opt_semantic_key_required', null, 'Add your AI Access Key or sign in to enable these toggles.');
+                status.className = 'error';
+                btn.textContent = atomMsg('opt_btn_save');
+                btn.disabled = false;
+            } else {
+                doSaveOptions();
+            }
+        });
+        return;
+    }
+    doSaveOptions();
+
+    function doSaveOptions() {
+        chrome.storage.local.get(['atom_feature_flags_v1', 'accepted_cost_warning'], (flagResult) => {
+            const currentFlags = flagResult.atom_feature_flags_v1 || {};
+            const nextFlags = {
+                ...currentFlags,
+                EMBEDDINGS_ENABLED: semanticEmbeddingsEnabled,
+                SEMANTIC_SEARCH_ENABLED: semanticSearchEnabled
+            };
+            const nextCostAck = flagResult.accepted_cost_warning || semanticEmbeddingsEnabled || semanticSearchEnabled;
+
+            chrome.storage.local.set({
+                user_gemini_key: key,
+                user_sensitivity: sensitivity,
+                debug_mode: debugMode,
+                user_persona: userPersona,
+                atom_ui_language: language,
+                atom_ai_pilot_enabled: aiPilotEnabled,
+                atom_ai_pilot_mode: aiPilotMode,
+                atom_ai_pilot_accuracy_level: aiAccuracyLevel,
+                atom_ai_confidence_threshold_primary: aiMinConfidence,
+                atom_ai_timeout_ms: aiTimeoutMs,
+                atom_ai_budget_daily_cap: aiBudgetPerDay,
+                atom_ai_cache_ttl_ms: aiCacheTtlMs,
+                atom_ai_max_viewport_chars: aiMaxViewportChars,
+                atom_ai_max_selected_chars: aiMaxSelectedChars,
+                atom_ai_provider: aiProvider,
+                atom_ai_proxy_url: aiProxyUrl,
+                // OpenRouter Integration
+                atom_llm_provider: llmProvider,
+                atom_openrouter_key: openrouterKey,
+                atom_openrouter_model: openrouterModel,
+                atom_nlm_settings_v1: {
+                    enabled: nlmEnabled === true,  // Ensure boolean
+                    mode: nlmMode,
+                    defaultNotebookRef: nlmDefaultNotebook,
+                    exportFormat: "clip_and_url",
+                    baseUrl: nlmBaseUrl,
+                    allowCloudExport: nlmAllowCloud,
+                    piiWarning: nlmPiiWarning,
+                    exportMaxChars: nlmExportMaxChars
+                },
+                atom_nlm_sensitive_domains_v1: nlmSensitiveDomainsRaw
+                    .split(/\r?\n/)
+                    .map((line) => line.trim())
+                    .filter(Boolean),
+                atom_nlm_rules_v1: parseNlmRules(nlmRulesRaw),
+                atom_feature_flags_v1: nextFlags,
+                accepted_cost_warning: nextCostAck
+            }, () => {
+                // Feedback UI: Dùng text từ file ngôn ngữ
+                status.textContent = atomMsg("opt_save_success");
+                status.className = 'success';
+
+                btn.textContent = atomMsg('opt_btn_saved');
+                btn.style.backgroundColor = '#059669';
+                btn.disabled = false;
+
+                // Log kiểm tra
+                console.log("ATOM: Saved Key =", key ? "***" : "Empty");
+                console.log("ATOM: Saved Sensitivity =", sensitivity);
+                console.log("ATOM: Saved Debug Mode =", debugMode);
+                console.log("ATOM: Saved Debug Mode =", debugMode);
+                console.log("ATOM: Saved Persona =", userPersona);
+                console.log("ATOM: Saved Language =", language);
+                console.log("ATOM: Saved AI Pilot =", aiPilotEnabled, aiPilotMode);
+                console.log("ATOM: Saved NotebookLM Bridge =", nlmEnabled, nlmDefaultNotebook);
+
+                // Verify NLM settings were saved correctly
+                chrome.storage.local.get(['atom_nlm_settings_v1'], (r) => {
+                    console.log('[ATOM Options] Verified NLM settings in storage:', r.atom_nlm_settings_v1);
+                });
+
+                // Auto-complete onboarding step 3 if key was saved (Wave 2)
+                if (key || openrouterKey) {
+                    updateOnboardingStep('onboarding-step-3', true);
+                }
+
+                chrome.storage.sync.set({ srqDensityMode }, () => {
+                    chrome.runtime.sendMessage({
+                        type: 'SRQ_SETTINGS_CHANGED',
+                        settings: { srqDensityMode }
+                    }).catch(() => { });
+                });
+
+                setTimeout(() => {
+                    status.textContent = '';
+                    btn.textContent = atomMsg("opt_btn_save");
+                    btn.style.backgroundColor = '#374151';
+                }, 2000);
+
+                isUserSignedInForOptions().then(isSignedIn => {
+                    updateSemanticToggleAvailability(!!key || isSignedIn);
+                });
+
+                if (window.AtomI18n && window.AtomUI) {
+                    window.AtomI18n.setOverride(language).then(() => {
+                        window.AtomUI.localize();
+                        updateDropdownUI('languageDropdown', language);
+                    });
+                }
+            });
+        });
+    } // end doSaveOptions
+}
+
+// 2. Khôi phục Key đã lưu khi mở trang
+function restoreOptions() {
+    chrome.storage.local.get([
+        'user_gemini_key',
+        'user_sensitivity',
+        'user_persona',
+        'debug_mode',
+        'atom_ui_language',
+        'atom_feature_flags_v1',
+        'ai_pilot_enabled',
+        'ai_pilot_mode',
+        'ai_pilot_accuracy_level',
+        'ai_min_confidence',
+        'ai_timeout_ms',
+        'ai_budget_per_day',
+        'ai_max_viewport_chars',
+        'ai_max_selected_chars',
+        'ai_cache_ttl_ms',
+        'ai_provider',
+        'ai_proxy_url',
+        'atom_ai_pilot_enabled',
+        'atom_ai_pilot_mode',
+        'atom_ai_pilot_accuracy_level',
+        'atom_ai_confidence_threshold_primary',
+        'atom_ai_timeout_ms',
+        'atom_ai_budget_daily_cap',
+        'atom_ai_cache_ttl_ms',
+        'atom_ai_max_viewport_chars',
+        'atom_ai_max_selected_chars',
+        'atom_ai_provider',
+        'atom_ai_proxy_url',
+        // OpenRouter Integration
+        'atom_llm_provider',
+        'atom_openrouter_key',
+        'atom_openrouter_model',
+        'atom_nlm_settings_v1',
+        'atom_nlm_sensitive_domains_v1',
+        'atom_nlm_rules_v1'
+    ], (result) => {
+        console.log("ATOM: Restoring Data...", result);
+
+        // 1. Khôi phục Key
+        if (result.user_gemini_key) {
+            document.getElementById('apiKeyInput').value = result.user_gemini_key;
+        }
+
+        // 2. Khôi phục Sensitivity (Mặc định 'balanced' nếu chưa có)
+        const savedMode = result.user_sensitivity || 'balanced';
+        const radioToCheck = document.querySelector(`input[name="sensitivity"][value="${savedMode}"]`);
+        if (radioToCheck) {
+            radioToCheck.checked = true;
+        }
+
+        // 3. Khôi phục Debug Mode
+
+
+
+        // 3. Khôi phục Debug Mode
+        const debugToggle = document.getElementById('debugModeToggle');
+        if (debugToggle) {
+            debugToggle.checked = BUILD_DEBUG_ENABLED && (result.debug_mode || false);
+        }
+
+        // 3.1 Khôi phục Persona
+        if (result.user_persona) {
+            const personaInput = document.getElementById('userPersona');
+            if (personaInput) personaInput.value = result.user_persona;
+        }
+
+        // 4. Khôi phục Language - sử dụng custom dropdown
+        const savedLanguage = result.atom_ui_language || 'auto';
+        updateDropdownUI('languageDropdown', savedLanguage);
+
+        const featureFlags = result.atom_feature_flags_v1 || {};
+        const semanticEmbeddingsToggle = document.getElementById('semanticEmbeddingsEnabled');
+        const semanticSearchToggle = document.getElementById('semanticSearchEnabled');
+        const hasKey = !!result.user_gemini_key;
+        isUserSignedInForOptions().then(isSignedIn => {
+            const hasAccess = hasKey || isSignedIn;
+            if (semanticEmbeddingsToggle) {
+                semanticEmbeddingsToggle.checked = hasAccess ? !!featureFlags.EMBEDDINGS_ENABLED : false;
+            }
+            if (semanticSearchToggle) {
+                semanticSearchToggle.checked = hasAccess ? !!featureFlags.SEMANTIC_SEARCH_ENABLED : false;
+            }
+            updateSemanticToggleAvailability(hasAccess);
+        });
+
+        const aiPilotEnabled = document.getElementById('aiPilotEnabled');
+        if (aiPilotEnabled) aiPilotEnabled.checked = result.atom_ai_pilot_enabled ?? result.ai_pilot_enabled ?? false;
+
+        // Restore custom dropdowns for AI settings
+        const savedPilotMode = result.atom_ai_pilot_mode || result.ai_pilot_mode || 'shadow';
+        updateDropdownUI('aiPilotModeDropdown', savedPilotMode);
+
+        const savedAccuracy = result.atom_ai_pilot_accuracy_level || result.ai_pilot_accuracy_level || 'balanced';
+        updateDropdownUI('aiAccuracyLevelDropdown', savedAccuracy);
+
+        const savedProvider = result.atom_ai_provider || result.ai_provider || 'gemini';
+        updateDropdownUI('aiProviderDropdown', savedProvider);
+        const aiMinConfidence = document.getElementById('aiMinConfidence');
+        if (aiMinConfidence) aiMinConfidence.value = (result.atom_ai_confidence_threshold_primary ?? result.ai_min_confidence ?? 0.65);
+        const aiTimeoutMs = document.getElementById('aiTimeoutMs');
+        if (aiTimeoutMs) aiTimeoutMs.value = (result.atom_ai_timeout_ms ?? result.ai_timeout_ms ?? 800);
+        const aiBudgetPerDay = document.getElementById('aiBudgetPerDay');
+        if (aiBudgetPerDay) aiBudgetPerDay.value = (result.atom_ai_budget_daily_cap ?? result.ai_budget_per_day ?? 30);
+        const aiMaxViewportChars = document.getElementById('aiMaxViewportChars');
+        if (aiMaxViewportChars) aiMaxViewportChars.value = (result.atom_ai_max_viewport_chars ?? result.ai_max_viewport_chars ?? 1200);
+        const aiMaxSelectedChars = document.getElementById('aiMaxSelectedChars');
+        if (aiMaxSelectedChars) aiMaxSelectedChars.value = (result.atom_ai_max_selected_chars ?? result.ai_max_selected_chars ?? 400);
+        const aiCacheTtlMs = document.getElementById('aiCacheTtlMs');
+        if (aiCacheTtlMs) aiCacheTtlMs.value = (result.atom_ai_cache_ttl_ms ?? result.ai_cache_ttl_ms ?? 900000);
+
+        // Provider handled by custom dropdown update above
+
+        const aiProxyUrl = document.getElementById('aiProxyUrl');
+        if (aiProxyUrl) aiProxyUrl.value = result.atom_ai_proxy_url || result.ai_proxy_url || '';
+
+        // OpenRouter Integration - restore provider dropdown and keys
+        const savedLlmProvider = result.atom_llm_provider || 'google';
+        updateDropdownUI('providerDropdown', savedLlmProvider);
+        toggleProviderSections(savedLlmProvider);
+
+        const openrouterKeyInput = document.getElementById('openrouterKeyInput');
+        if (openrouterKeyInput) openrouterKeyInput.value = result.atom_openrouter_key || '';
+
+        const openrouterModelInput = document.getElementById('openrouterModelInput');
+        if (openrouterModelInput) openrouterModelInput.value = result.atom_openrouter_model || 'stepfun/step-3.5-flash:free';
+
+        const nlmSettings = result.atom_nlm_settings_v1 || {};
+
+
+        const nlmEnabled = document.getElementById('nlmEnabled');
+        if (nlmEnabled) nlmEnabled.checked = !!nlmSettings.enabled;
+        const nlmMode = document.getElementById('nlmMode');
+        if (nlmMode) nlmMode.value = nlmSettings.mode || 'ui_assisted';
+        const nlmDefaultNotebook = document.getElementById('nlmDefaultNotebook');
+        if (nlmDefaultNotebook) nlmDefaultNotebook.value = nlmSettings.defaultNotebookRef || 'Inbox';
+        const nlmBaseUrl = document.getElementById('nlmBaseUrl');
+        if (nlmBaseUrl) nlmBaseUrl.value = nlmSettings.baseUrl || 'https://notebooklm.google.com';
+        const nlmAllowCloud = document.getElementById('nlmAllowCloud');
+        if (nlmAllowCloud) nlmAllowCloud.checked = !!nlmSettings.allowCloudExport;
+        const nlmPiiWarning = document.getElementById('nlmPiiWarning');
+        if (nlmPiiWarning) nlmPiiWarning.checked = nlmSettings.piiWarning !== false;
+        const nlmExportMaxChars = document.getElementById('nlmExportMaxChars');
+        if (nlmExportMaxChars) nlmExportMaxChars.value = nlmSettings.exportMaxChars || 5000;
+        const nlmSensitiveDomains = document.getElementById('nlmSensitiveDomains');
+        const sensitiveList = Array.isArray(result.atom_nlm_sensitive_domains_v1)
+            ? result.atom_nlm_sensitive_domains_v1
+            : [];
+        if (nlmSensitiveDomains) nlmSensitiveDomains.value = sensitiveList.join('\n');
+        const nlmRulesJson = document.getElementById('nlmRulesJson');
+        const rules = result.atom_nlm_rules_v1 || {};
+        if (nlmRulesJson) nlmRulesJson.value = JSON.stringify(rules, null, 2);
+
+        chrome.storage.sync.get({ srqDensityMode: 'comfortable' }, (syncResult) => {
+            const densitySelect = document.getElementById('srq-density-mode');
+            if (!densitySelect) return;
+            densitySelect.value = syncResult?.srqDensityMode === 'compact' ? 'compact' : 'comfortable';
+        });
+    });
+}
+
+function parseNlmRules(raw) {
+    const trimmed = String(raw || "").trim();
+    if (!trimmed) {
+        return { byTag: [], byIntent: [], byDomain: [] };
+    }
+    try {
+        const parsed = JSON.parse(trimmed);
+        if (!parsed || typeof parsed !== "object") {
+            return { byTag: [], byIntent: [], byDomain: [] };
+        }
+        return {
+            byTag: Array.isArray(parsed.byTag) ? parsed.byTag : [],
+            byIntent: Array.isArray(parsed.byIntent) ? parsed.byIntent : [],
+            byDomain: Array.isArray(parsed.byDomain) ? parsed.byDomain : []
+        };
+    } catch {
+        return { byTag: [], byIntent: [], byDomain: [] };
+    }
+}
+
+chrome.storage.onChanged.addListener((changes) => {
+    if (changes.atom_ui_language) {
+        const language = changes.atom_ui_language.newValue || 'auto';
+        if (changes.atom_ui_language) {
+            const language = changes.atom_ui_language.newValue || 'auto';
+            updateDropdownUI('languageDropdown', language);
+        }
+    }
+});
+
+// 3. Export Debug Log - Collect all relevant data for bug reports
+async function exportDebugLog() {
+    const btn = document.getElementById('btn-export-debug');
+    const originalHTML = btn.innerHTML;
+
+    btn.innerHTML = '<span>' + atomMsg('opt_debug_collecting') + '</span>';
+    btn.disabled = true;
+
+    try {
+        // Collect all storage data
+        const data = await chrome.storage.local.get(null);
+
+        // Build debug report
+        const debugReport = {
+            _meta: {
+                exported_at: new Date().toISOString(),
+                extension_version: chrome.runtime.getManifest().version,
+                user_agent: navigator.userAgent,
+                language: chrome.i18n.getUILanguage(),
+                ui_language_override: data.atom_ui_language || 'auto'
+            },
+            settings: {
+                sensitivity: data.user_sensitivity || 'balanced',
+                debug_mode: data.debug_mode || false,
+                has_api_key: !!data.user_gemini_key,
+                ai_pilot_enabled: data.ai_pilot_enabled || false,
+                ai_pilot_mode: data.ai_pilot_mode || 'shadow',
+                ai_pilot_accuracy_level: data.ai_pilot_accuracy_level || 'balanced',
+                ai_min_confidence: data.ai_min_confidence ?? 0.65,
+                ai_timeout_ms: data.ai_timeout_ms ?? 800,
+                ai_budget_per_day: data.ai_budget_per_day ?? 200,
+                ai_max_viewport_chars: data.ai_max_viewport_chars ?? 1200,
+                ai_max_selected_chars: data.ai_max_selected_chars ?? 400,
+                ai_cache_ttl_ms: data.ai_cache_ttl_ms ?? 15000,
+                ai_provider: data.ai_provider || 'gemini',
+                ai_proxy_url: data.ai_proxy_url || '',
+                atom_ai_pilot_enabled: data.atom_ai_pilot_enabled || false,
+                atom_ai_pilot_mode: data.atom_ai_pilot_mode || 'shadow',
+                atom_ai_pilot_accuracy_level: data.atom_ai_pilot_accuracy_level || 'balanced',
+                atom_ai_confidence_threshold_primary: data.atom_ai_confidence_threshold_primary ?? 0.65,
+                atom_ai_timeout_ms: data.atom_ai_timeout_ms ?? 800,
+                atom_ai_budget_daily_cap: data.atom_ai_budget_daily_cap ?? 200,
+                atom_ai_max_viewport_chars: data.atom_ai_max_viewport_chars ?? 1200,
+                atom_ai_max_selected_chars: data.atom_ai_max_selected_chars ?? 400,
+                atom_ai_cache_ttl_ms: data.atom_ai_cache_ttl_ms ?? 15000,
+                atom_ai_provider: data.atom_ai_provider || 'gemini',
+                atom_ai_proxy_url: data.atom_ai_proxy_url || ''
+            },
+            state: {
+                snooze_until: data.snoozeUntil ? new Date(data.snoozeUntil).toISOString() : null,
+                adaptive_multiplier: data.adaptive_multiplier || 1.0,
+                whitelist_count: (data.atom_whitelist || []).length
+            },
+            recent_reactions: (data.atom_reactions || []).slice(-20),
+            recent_events: (data.atom_events || []).slice(-30),
+            daily_rollups: data.atom_daily_rollups || {}
+        };
+
+        // Format as JSON string
+        const jsonStr = JSON.stringify(debugReport, null, 2);
+
+        // Copy to clipboard
+        await navigator.clipboard.writeText(jsonStr);
+
+        btn.innerHTML = '<span>' + atomMsg('opt_debug_copied') + '</span>';
+        btn.style.borderColor = 'var(--primary)';
+        btn.style.color = 'var(--primary)';
+
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+            btn.style.borderColor = '';
+            btn.style.color = '';
+        }, 2500);
+
+    } catch (err) {
+        console.error("ATOM: Export failed", err);
+        btn.innerHTML = '<span>' + atomMsg('opt_debug_failed') + '</span>';
+        btn.style.borderColor = 'var(--danger)';
+        btn.style.color = 'var(--danger)';
+
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+            btn.style.borderColor = '';
+            btn.style.color = '';
+        }, 2500);
+    }
+}
+
+// 4. Test Notification - Send a test notification to verify system settings
+function testNotification() {
+    const status = document.getElementById('notif-status');
+
+    chrome.runtime.sendMessage({ type: 'ATOM_TEST_NOTIFICATION' }, (response) => {
+        if (chrome.runtime.lastError) {
+            status.textContent = atomMsg('opt_notif_error');
+            status.style.color = 'var(--danger)';
+        } else if (response && response.success) {
+            status.textContent = atomMsg('opt_notif_sent');
+            status.style.color = 'var(--primary)';
+        } else {
+            status.textContent = atomMsg('opt_notif_failed');
+            status.style.color = 'var(--warning)';
+        }
+
+        setTimeout(() => {
+            status.textContent = '';
+        }, 5000);
+    });
+}
+
+// Initialize notification buttons on page load
+document.addEventListener('DOMContentLoaded', () => {
+    const btnTestNotif = document.getElementById('btn-test-notif');
+    if (btnTestNotif) {
+        btnTestNotif.addEventListener('click', testNotification);
+    }
+
+    const btnChromeNotif = document.getElementById('btn-open-chrome-notif');
+    if (btnChromeNotif) {
+        btnChromeNotif.addEventListener('click', () => {
+            chrome.tabs.create({ url: 'chrome://settings/content/notifications' });
+        });
+    }
+});
+
+// ============================================================
+// Onboarding Checklist System (Wave 2 Settings Simplification)
+// ============================================================
+
+async function initOnboarding() {
+    const result = await chrome.storage.local.get(['atom_options_setup_completed', 'user_gemini_key', 'atom_openrouter_key']);
+    const setupCompleted = result.atom_options_setup_completed === true;
+    const hasKey = !!(result.user_gemini_key || result.atom_openrouter_key);
+
+    const checklistEl = document.getElementById('onboarding-checklist');
+    if (!checklistEl) return;
+
+    // Show checklist if setup not completed
+    if (!setupCompleted) {
+        checklistEl.style.display = 'block';
+
+        // Update step states
+        updateOnboardingStep('onboarding-step-1', true); // Provider selection (always completed if page loaded)
+        updateOnboardingStep('onboarding-step-3', hasKey); // API key (completed if key exists)
+    }
+
+    // Dismiss button handler
+    const dismissBtn = checklistEl.querySelector('.onboarding-dismiss');
+    if (dismissBtn) {
+        dismissBtn.addEventListener('click', dismissOnboarding);
+    }
+
+    // Complete setup button handler
+    const completeBtn = document.getElementById('btn-complete-setup');
+    if (completeBtn) {
+        completeBtn.addEventListener('click', completeOnboarding);
+    }
+
+    // Watch for API key changes to update step 3
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    if (apiKeyInput) {
+        apiKeyInput.addEventListener('input', () => {
+            const hasKey = apiKeyInput.value.trim().length > 0;
+            updateOnboardingStep('onboarding-step-3', hasKey);
+        });
+    }
+
+    const openrouterKeyInput = document.getElementById('openrouterKeyInput');
+    if (openrouterKeyInput) {
+        openrouterKeyInput.addEventListener('input', () => {
+            const hasKey = openrouterKeyInput.value.trim().length > 0;
+            updateOnboardingStep('onboarding-step-3', hasKey);
+        });
+    }
+}
+
+function updateOnboardingStep(stepId, completed) {
+    const stepEl = document.getElementById(stepId);
+    if (!stepEl) return;
+
+    if (completed) {
+        stepEl.classList.add('completed');
+        stepEl.querySelector('.step-icon').textContent = '☑';
+    } else {
+        stepEl.classList.remove('completed');
+        stepEl.querySelector('.step-icon').textContent = '☐';
+    }
+}
+
+function dismissOnboarding() {
+    const checklistEl = document.getElementById('onboarding-checklist');
+    if (checklistEl) {
+        checklistEl.style.display = 'none';
+    }
+    // Don't set atom_options_setup_completed to allow checklist to reappear if user reopens settings
+}
+
+async function completeOnboarding() {
+    const checklistEl = document.getElementById('onboarding-checklist');
+    if (checklistEl) {
+        checklistEl.style.display = 'none';
+    }
+
+    // Mark setup as completed
+    await chrome.storage.local.set({ atom_options_setup_completed: true });
+
+    // Show success message
+    const status = document.getElementById('status');
+    if (status) {
+        status.textContent = atomMsg('opt_onboarding_completed', null, 'Setup completed! You can now start using ATOM.');
+        status.className = 'success';
+
+        setTimeout(() => {
+            status.textContent = '';
+        }, 3000);
+    }
+}
+
+// ============================================================
+// Tooltip System (Wave 1 Non-Tech Friendly)
+// ============================================================
+
+/**
+ * Position tooltip relative to trigger icon
+ * @param {HTMLElement} icon - The info icon element
+ * @param {HTMLElement} tooltip - The tooltip element to position
+ */
+function positionTooltip(icon, tooltip) {
+    const iconRect = icon.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+
+    // Default: position to the right of icon
+    let left = iconRect.right + 8;
+    let top = iconRect.top + (iconRect.height / 2) - (tooltipRect.height / 2);
+
+    // Check if tooltip would overflow viewport on the right
+    if (left + tooltipRect.width > window.innerWidth - 16) {
+        // Position to the left of icon instead
+        left = iconRect.left - tooltipRect.width - 8;
+    }
+
+    // Check if tooltip would overflow viewport on the left
+    if (left < 16) {
+        // Position below icon instead
+        left = iconRect.left;
+        top = iconRect.bottom + 8;
+    }
+
+    // Ensure tooltip doesn't overflow top
+    if (top < 16) {
+        top = 16;
+    }
+
+    // Ensure tooltip doesn't overflow bottom
+    if (top + tooltipRect.height > window.innerHeight - 16) {
+        top = window.innerHeight - tooltipRect.height - 16;
+    }
+
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
+}
+
+/**
+ * Initialize tooltip system for info icons
+ * Tooltips are shown on hover and provide context for settings
+ */
+function initTooltips() {
+    const tooltipIcons = document.querySelectorAll('[data-tooltip-i18n]');
+
+    tooltipIcons.forEach(icon => {
+        const key = icon.getAttribute('data-tooltip-i18n');
+        const tooltipText = chrome.i18n.getMessage(key);
+
+        // Skip if no translation found
+        if (!tooltipText) return;
+
+        // Create tooltip element
+        const tooltip = document.createElement('div');
+        tooltip.className = 'tooltip';
+        tooltip.textContent = tooltipText;
+
+        // Show on hover
+        icon.addEventListener('mouseenter', () => {
+            document.body.appendChild(tooltip);
+            // Position after a brief delay to ensure tooltip is rendered
+            requestAnimationFrame(() => {
+                positionTooltip(icon, tooltip);
+            });
+        });
+
+        // Hide when mouse leaves
+        icon.addEventListener('mouseleave', () => {
+            if (tooltip.parentNode) {
+                tooltip.remove();
+            }
+        });
+
+        // Also hide when scrolling (to prevent misaligned tooltips)
+        const hideOnScroll = () => {
+            if (tooltip.parentNode) {
+                tooltip.remove();
+            }
+        };
+
+        window.addEventListener('scroll', hideOnScroll, { passive: true });
+
+        // Clean up scroll listener when tooltip is removed
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.removedNodes.forEach((node) => {
+                    if (node === tooltip) {
+                        window.removeEventListener('scroll', hideOnScroll);
+                        observer.disconnect();
+                    }
+                });
+            });
+        });
+
+        observer.observe(document.body, { childList: true });
+    });
+}
+
+// ============================================================
+// Account / Authentication UI (Phase 2)
+// ============================================================
+
+/**
+ * Initialize Authentication UI
+ * Called when options page loads
+ */
+async function initAuthUI() {
+    const authLoading = document.getElementById('auth-loading');
+    const authLoggedOut = document.getElementById('auth-logged-out');
+    const authLoggedIn = document.getElementById('auth-logged-in');
+    const authError = document.getElementById('auth-error');
+
+    // Set up button event listeners
+    setupAuthButtons();
+
+    try {
+        // Try to import auth service dynamically
+        const authModule = await import('./services/auth_service.js');
+
+        // Get current auth state
+        const authState = await authModule.getAuthState();
+
+        // Update UI based on auth state
+        if (authState.isAuthenticated) {
+            showAuthState('logged-in');
+            updateAuthUI(authState);
+        } else {
+            showAuthState('logged-out');
+        }
+
+        // Listen for auth state changes
+        authModule.onAuthStateChange((event, newState) => {
+            if (BUILD_DEBUG_ENABLED) console.log('[Auth UI] State changed:', event);
+            if (newState.isAuthenticated) {
+                showAuthState('logged-in');
+                updateAuthUI(newState);
+            } else {
+                showAuthState('logged-out');
+            }
+        });
+
+    } catch (error) {
+        console.error('[Auth UI] Failed to initialize:', error);
+        // Show logged out state as fallback
+        showAuthState('logged-out');
+    }
+}
+
+/**
+ * Show a specific auth state section
+ * @param {string} state - 'loading', 'logged-out', 'logged-in', or 'error'
+ */
+function showAuthState(state) {
+    const sections = {
+        'loading': document.getElementById('auth-loading'),
+        'logged-out': document.getElementById('auth-logged-out'),
+        'logged-in': document.getElementById('auth-logged-in'),
+        'error': document.getElementById('auth-error')
+    };
+
+    // Hide all sections
+    Object.values(sections).forEach(el => {
+        if (el) el.style.display = 'none';
+    });
+
+    // Show target section
+    if (sections[state]) {
+        sections[state].style.display = 'block';
+    }
+}
+
+/**
+ * Update auth UI with user data
+ * @param {Object} authState - Auth state from auth_service
+ */
+function updateAuthUI(authState) {
+    const userAvatar = document.getElementById('user-avatar');
+    const userName = document.getElementById('user-name');
+    const userEmail = document.getElementById('user-email');
+    const planBadge = document.getElementById('user-plan-badge');
+    const btnUpgrade = document.getElementById('btn-upgrade-pro');
+    const btnManage = document.getElementById('btn-manage-subscription');
+
+    if (authState.user) {
+        // Update avatar
+        if (userAvatar && authState.user.avatarUrl) {
+            userAvatar.src = authState.user.avatarUrl;
+        }
+
+        // Update name and email
+        if (userName) {
+            userName.textContent = authState.user.displayName || 'User';
+        }
+        if (userEmail) {
+            userEmail.textContent = authState.user.email || '';
+        }
+    }
+
+    // Update plan badge
+    if (planBadge) {
+        if (authState.isPro) {
+            planBadge.textContent = 'Pro';
+            planBadge.className = 'plan-badge plan-pro';
+        } else {
+            planBadge.textContent = 'Free';
+            planBadge.className = 'plan-badge plan-free';
+        }
+    }
+
+    // Show/hide upgrade vs manage buttons
+    if (btnUpgrade && btnManage) {
+        if (authState.isPro) {
+            btnUpgrade.style.display = 'none';
+            btnManage.style.display = 'flex';
+        } else {
+            btnUpgrade.style.display = 'flex';
+            btnManage.style.display = 'none';
+        }
+    }
+}
+
+/**
+ * Set up auth button event listeners
+ */
+function setupAuthButtons() {
+    // Google Sign In button
+    const btnGoogleSignIn = document.getElementById('btn-google-signin');
+    if (btnGoogleSignIn) {
+        btnGoogleSignIn.addEventListener('click', handleGoogleSignIn);
+    }
+
+    // Sign Out button
+    const btnSignOut = document.getElementById('btn-signout');
+    if (btnSignOut) {
+        console.log('[Auth UI] Attaching click handler to btn-signout');
+        btnSignOut.addEventListener('click', (e) => {
+            console.log('[Auth UI] btn-signout clicked!', e);
+            handleSignOut();
+        });
+    } else {
+        console.warn('[Auth UI] btn-signout element NOT FOUND');
+    }
+
+    // Retry button
+    const btnRetry = document.getElementById('btn-retry-signin');
+    if (btnRetry) {
+        btnRetry.addEventListener('click', handleGoogleSignIn);
+    }
+
+    // Upgrade button — show friendly free-tier notice instead of 404
+    const btnUpgrade = document.getElementById('btn-upgrade-pro');
+    if (btnUpgrade) {
+        btnUpgrade.addEventListener('click', () => {
+            showFreeTierNotice();
+        });
+    }
+
+    // Manage Subscription button — also show free-tier notice
+    const btnManage = document.getElementById('btn-manage-subscription');
+    if (btnManage) {
+        btnManage.addEventListener('click', () => {
+            showFreeTierNotice();
+        });
+    }
+}
+
+/**
+ * Handle Google Sign In button click
+ */
+async function handleGoogleSignIn() {
+    const btnGoogleSignIn = document.getElementById('btn-google-signin');
+    const rememberMe = document.getElementById('auth-remember-me')?.checked ?? true;
+
+    // Disable button and show loading state
+    if (btnGoogleSignIn) {
+        btnGoogleSignIn.disabled = true;
+        btnGoogleSignIn.innerHTML = `
+            <div class="auth-spinner" style="width: 20px; height: 20px; border-width: 2px;"></div>
+            <span>Signing in...</span>
+        `;
+    }
+
+    try {
+        const authModule = await import('./services/auth_service.js');
+        const result = await authModule.signInWithGoogle(rememberMe);
+
+        if (result.success) {
+            showAuthState('logged-in');
+            updateAuthUI(result.authState);
+        } else {
+            showAuthError(result.error || 'Sign in failed');
+        }
+    } catch (error) {
+        console.error('[Auth UI] Sign in error:', error);
+        showAuthError(error.message || 'An unexpected error occurred');
+    } finally {
+        // Restore button
+        if (btnGoogleSignIn) {
+            btnGoogleSignIn.disabled = false;
+            btnGoogleSignIn.innerHTML = `
+                <svg class="google-icon" width="20" height="20" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                <span>${atomMsg('opt_account_signin_google', null, 'Sign in with Google')}</span>
+            `;
+        }
+    }
+}
+
+/**
+ * Handle Sign Out button click
+ */
+async function handleSignOut() {
+    console.log('[Auth UI] handleSignOut called');
+    const btnSignOut = document.getElementById('btn-signout');
+
+    // Disable button
+    if (btnSignOut) {
+        btnSignOut.disabled = true;
+    }
+
+    try {
+        console.log('[Auth UI] Importing auth_service...');
+        const authModule = await import('./services/auth_service.js');
+        console.log('[Auth UI] auth_service imported, calling signOut...');
+
+        // Add timeout: if signOut takes more than 5s, force local sign out
+        const signOutWithTimeout = Promise.race([
+            authModule.signOut(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Sign out timed out')), 5000))
+        ]);
+
+        try {
+            await signOutWithTimeout;
+            console.log('[Auth UI] signOut completed');
+        } catch (timeoutErr) {
+            console.warn('[Auth UI] signOut timed out, forcing local sign out');
+            // Force clear local cache even if Supabase call hangs
+            try {
+                const { clearAuthCache } = await import('./services/auth_cache_service.js');
+                await clearAuthCache();
+            } catch (e) { /* ignore */ }
+        }
+
+        showAuthState('logged-out');
+        console.log('[Auth UI] UI switched to logged-out');
+    } catch (error) {
+        console.error('[Auth UI] Sign out error:', error);
+        // Even on error, switch to logged-out UI
+        showAuthState('logged-out');
+    } finally {
+        if (btnSignOut) {
+            btnSignOut.disabled = false;
+        }
+    }
+}
+
+/**
+ * Show auth error state with message
+ * @param {string} message - Error message to display
+ */
+function showAuthError(message) {
+    const errorMessage = document.getElementById('auth-error-message');
+    if (errorMessage) {
+        errorMessage.textContent = message;
+    }
+    showAuthState('error');
+}
+
+/**
+ * Show a friendly toast notice instead of opening pricing page
+ */
+function showFreeTierNotice() {
+    // Remove existing notice if any
+    const existing = document.querySelector('.free-tier-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'free-tier-toast';
+    const msg = 'B\u1EA1n \u0111ang \u0111\u01B0\u1EE3c tr\u1EA3i nghi\u1EC7m to\u00E0n b\u1ED9 t\u00EDnh n\u0103ng mi\u1EC5n ph\u00ED. H\u00E3y t\u1EADn h\u01B0\u1EDFng v\u00E0 c\u1EA3m nh\u1EADn gi\u00E1 tr\u1ECB m\u00E0 Amo mang l\u1EA1i nh\u00E9!';
+    toast.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:22px;flex-shrink:0;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" x2="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></span>
+            <span>${msg}</span>
+        </div>
+    `;
+    Object.assign(toast.style, {
+        position: 'fixed',
+        bottom: '80px',
+        left: '50%',
+        transform: 'translateX(-50%) translateY(20px)',
+        background: 'linear-gradient(135deg, #0d9488, #10b981)',
+        color: '#fff',
+        padding: '16px 24px',
+        borderRadius: '14px',
+        fontSize: '14px',
+        fontWeight: '500',
+        maxWidth: '480px',
+        boxShadow: '0 8px 32px rgba(16, 185, 129, 0.3)',
+        zIndex: '9999',
+        opacity: '0',
+        transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+        lineHeight: '1.5'
+    });
+    document.body.appendChild(toast);
+
+    // Animate in
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+    });
+
+    // Auto-dismiss after 5s
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(20px)';
+        setTimeout(() => toast.remove(), 400);
+    }, 5000);
+}
+
+// Initialize auth UI when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize auth UI after a short delay to ensure other scripts are loaded
+    setTimeout(initAuthUI, 100);
+});

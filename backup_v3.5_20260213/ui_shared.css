@@ -1,0 +1,68 @@
+/* ================================================================
+   ATOM UI SHARED THEME
+   ================================================================
+   This file bridges the legacy variable names used across the app
+   to the new Design System tokens. Import design_system.css first.
+   
+   Legacy compat: Maps old var names → new Design System tokens.
+   ================================================================ */
+@import url('styles/design_system.css');
+
+/* ================================================================
+   LEGACY VARIABLE MAPPING
+   ================================================================
+   Many existing components use these old names.
+   We map them here so nothing breaks during migration.
+   ================================================================ */
+:root {
+    /* Map legacy names to Design System */
+    --background: var(--bg);
+    --foreground: var(--text);
+    /* --primary:    already defined in design_system.css */
+    --primary-glow: rgba(var(--primary-rgb), 0.4);
+    /* --surface:    already defined in design_system.css */
+    /* --border:     already defined in design_system.css */
+    --muted: var(--text-secondary);
+    /* --danger:     already defined in design_system.css */
+    --danger-bg: var(--danger-soft);
+}
+
+body.light-mode {
+    --background: var(--bg);
+    --foreground: var(--text);
+    --primary-glow: rgba(var(--primary-rgb), 0.3);
+    --muted: var(--text-secondary);
+    --danger-bg: var(--danger-soft);
+}
+
+/* ================================================================
+   COMMON COMPONENTS (Legacy)
+   ================================================================ */
+
+/* Icon Button (Round, transparent) — legacy class */
+.icon-btn {
+    background: var(--surface);
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: var(--space-2);
+    border-radius: 50%;
+    transition: var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn:hover {
+    color: var(--primary);
+    background: var(--primary-wash);
+}
+
+/* Standard Header Controls Container */
+.header-controls {
+    position: absolute;
+    top: var(--space-5);
+    right: var(--space-5);
+    display: flex;
+    gap: var(--space-2);
+}

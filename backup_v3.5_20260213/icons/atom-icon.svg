@@ -1,0 +1,14 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="orb_gradient" x1="32" y1="32" x2="96" y2="96" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#6EE7B7" /> <stop offset="100%" stop-color="#059669" /> </linearGradient>
+
+        <radialGradient id="halo_gradient" cx="64" cy="64" r="64" gradientUnits="userSpaceOnUse">
+            <stop offset="40%" stop-color="#6EE7B7" stop-opacity="0.4" /> <stop offset="100%" stop-color="#059669" stop-opacity="0" /> </radialGradient>
+    </defs>
+
+    <circle cx="64" cy="64" r="60" fill="url(#halo_gradient)" />
+
+    <circle cx="64" cy="64" r="44" fill="url(#orb_gradient)" />
+    
+</svg>

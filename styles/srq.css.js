@@ -40,12 +40,18 @@
         .srq-icon {
             font-size: 14px;
             flex-shrink: 0;
+            color: var(--primary, #10B981);
+        }
+
+        .srq-icon svg {
+            color: var(--primary, #10B981);
+            filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.45));
         }
 
         .srq-title {
             font-size: 12px;
             font-weight: 600;
-            color: var(--text-primary, #e5e5e5);
+            color: var(--text, #f5f5f5);
             flex: 1;
         }
 
@@ -67,7 +73,7 @@
         .srq-toggle {
             background: none;
             border: none;
-            color: var(--text-secondary, #a3a3a3);
+            color: var(--text-secondary, #d4d4d4);
             font-size: 10px;
             cursor: pointer;
             padding: 2px;
@@ -135,7 +141,7 @@
 
         .srq-pagination-info {
             font-size: 10px;
-            color: var(--text-secondary, #a3a3a3);
+            color: var(--text-secondary, #d4d4d4);
             min-width: 80px;
             text-align: center;
         }
@@ -150,7 +156,7 @@
         .srq-batch-label {
             font-size: 12px;
             font-weight: 600;
-            color: var(--text-primary, #e5e5e5);
+            color: var(--text, #f5f5f5);
             flex: 1;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -159,7 +165,7 @@
 
         .srq-batch-count {
             font-size: 11px;
-            color: var(--text-secondary, #a3a3a3);
+            color: var(--text-secondary, #d4d4d4);
             flex-shrink: 0;
         }
 
@@ -202,7 +208,7 @@
         /* Batch meta (notebook suggestion) */
         .srq-batch-meta {
             font-size: 11px;
-            color: var(--text-secondary, #a3a3a3);
+            color: var(--text-secondary, #d4d4d4);
             margin-bottom: 8px;
             display: flex;
             align-items: center;
@@ -223,9 +229,9 @@
             font-size: 11px;
             padding: 4px 10px;
             border-radius: 6px;
-            border: 1px solid var(--srq-border-strong, rgba(255,255,255,0.1));
-            background: var(--srq-surface-soft, rgba(255,255,255,0.05));
-            color: var(--text-primary, #e5e5e5);
+            border: 1px solid var(--border-strong, rgba(255,255,255,0.1));
+            background: var(--surface, rgba(255,255,255,0.05));
+            color: var(--text, #f0f0f0);
             cursor: pointer;
             transition: all 0.15s;
             line-height: 1.4;
@@ -243,6 +249,14 @@
 
         .srq-btn-export:hover {
             background: rgba(var(--srq-accent-primary-rgb, 16, 185, 129), 0.25);
+        }
+
+        .srq-btn-saved {
+            background: rgba(var(--srq-accent-primary-rgb, 16, 185, 129), 0.10);
+            border-color: rgba(var(--srq-accent-primary-rgb, 16, 185, 129), 0.2);
+            color: var(--srq-accent-success, #34D399);
+            cursor: default;
+            opacity: 0.8;
         }
 
         .srq-btn-dismiss {
@@ -345,9 +359,14 @@
             background: rgba(var(--srq-accent-primary-rgb, 16, 185, 129), 0.05);
         }
 
+        .srq-review-card.exported {
+            opacity: 0.7;
+            border-color: rgba(var(--srq-accent-primary-rgb, 16, 185, 129), 0.15);
+        }
+
         .srq-review-text {
             font-size: 12px;
-            color: var(--text-primary, #e5e5e5);
+            color: var(--text, #f5f5f5);
             line-height: 1.5;
             margin-bottom: 6px;
             display: -webkit-box;
@@ -361,7 +380,7 @@
             align-items: center;
             gap: 6px;
             font-size: 10px;
-            color: var(--text-secondary, #a3a3a3);
+            color: var(--text-secondary, #d4d4d4);
             margin-bottom: 6px;
         }
 
@@ -547,7 +566,13 @@
 
         .srq-state-icon {
             font-size: 24px;
-            opacity: 0.6;
+            opacity: 0.8;
+            color: var(--primary, #10B981);
+        }
+
+        .srq-state-icon svg {
+            color: var(--primary, #10B981);
+            filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.5));
         }
 
         .srq-state-text {
@@ -656,6 +681,46 @@
         }
 
         /* ===========================
+           Visual Anchor (Phase 2)
+           =========================== */
+
+        .srq-visual-anchor {
+            margin: 6px 0;
+            border-radius: 6px;
+            overflow: hidden;
+            opacity: 0.85;
+            transition: opacity 0.2s, max-height 0.25s ease;
+            cursor: pointer;
+        }
+        .srq-visual-anchor:hover {
+            opacity: 1;
+        }
+        .srq-anchor-img {
+            width: 100%;
+            max-height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid rgba(var(--srq-accent-primary-rgb, 16, 185, 129), 0.15);
+            transition: max-height 0.25s ease;
+        }
+        .srq-visual-anchor:hover .srq-anchor-img {
+            max-height: 160px;
+            object-fit: contain;
+        }
+        .srq-review-anchor { margin: 8px 0; cursor: pointer; }
+        .srq-review-anchor-img {
+            width: 100%;
+            max-height: 120px;
+            object-fit: contain;
+            border-radius: 6px;
+            border: 1px solid rgba(var(--srq-accent-primary-rgb, 16, 185, 129), 0.2);
+            transition: max-height 0.25s ease;
+        }
+        .srq-review-anchor:hover .srq-review-anchor-img {
+            max-height: 200px;
+        }
+
+        /* ===========================
            Utility
            =========================== */
 
@@ -673,6 +738,122 @@
 
         @keyframes srqSpin {
             to { transform: rotate(360deg); }
+        }
+
+        /* ===========================
+           Light Mode overrides
+           =========================== */
+        body.light-mode .srq-batch {
+            background: rgba(0,0,0,0.03);
+            border-color: rgba(0,0,0,0.08);
+        }
+        body.light-mode .srq-batch:hover {
+            border-color: rgba(13,148,136,0.3);
+        }
+        body.light-mode .srq-widget {
+            background: rgba(0,0,0,0.02);
+            border-color: rgba(0,0,0,0.08);
+        }
+        body.light-mode .srq-btn {
+            border-color: rgba(0,0,0,0.12);
+            background: rgba(0,0,0,0.04);
+            color: var(--text, #111827);
+        }
+        body.light-mode .srq-btn:hover {
+            background: rgba(0,0,0,0.08);
+        }
+        body.light-mode .srq-state-content {
+            color: var(--text, #111827);
+        }
+        body.light-mode .srq-loading {
+            border-color: rgba(0,0,0,0.15);
+        }
+
+        /* Light mode: text colors */
+        body.light-mode .srq-title,
+        body.light-mode .srq-batch-label,
+        body.light-mode .srq-review-text {
+            color: var(--text, #111827);
+        }
+        body.light-mode .srq-batch-count,
+        body.light-mode .srq-toggle,
+        body.light-mode .srq-batch-meta,
+        body.light-mode .srq-review-meta,
+        body.light-mode .srq-modal-subtitle,
+        body.light-mode .srq-pagination-info,
+        body.light-mode .srq-state-text {
+            color: var(--text-secondary, #4B5563);
+        }
+        body.light-mode .srq-review-meta .srq-dot {
+            background: var(--text-secondary, #4B5563);
+        }
+
+        /* Light mode: review modal */
+        body.light-mode .srq-modal {
+            background: var(--bg, #F7FDFB);
+            border-color: rgba(0,0,0,0.12);
+        }
+        body.light-mode .srq-modal-header {
+            background: var(--bg, #F7FDFB);
+            border-color: rgba(0,0,0,0.08);
+        }
+        body.light-mode .srq-modal-header.scrolled {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        body.light-mode .srq-modal-title {
+            color: var(--text, #111827);
+        }
+        body.light-mode .srq-review-card {
+            background: rgba(0,0,0,0.02);
+            border-color: rgba(0,0,0,0.08);
+        }
+        body.light-mode .srq-review-card.selected {
+            background: rgba(13,148,136,0.06);
+            border-color: rgba(13,148,136,0.3);
+        }
+        body.light-mode .srq-modal-footer {
+            border-color: rgba(0,0,0,0.08);
+        }
+        body.light-mode .srq-modal-footer .srq-target {
+            color: var(--text-secondary, #4B5563);
+        }
+        body.light-mode .srq-modal-footer .srq-target select {
+            background: rgba(0,0,0,0.03);
+            border-color: rgba(0,0,0,0.12);
+            color: var(--text, #111827);
+        }
+        body.light-mode .srq-btn-secondary {
+            border-color: rgba(0,0,0,0.12);
+            color: var(--text-secondary, #4B5563);
+        }
+        body.light-mode .srq-btn-secondary:hover {
+            background: rgba(0,0,0,0.04);
+        }
+        body.light-mode .srq-modal-overlay {
+            background: rgba(0,0,0,0.35);
+        }
+
+        /* Light mode: mode pills */
+        body.light-mode .srq-mode-deep {
+            background: rgba(59,130,246,0.1);
+            color: #2563EB;
+        }
+        body.light-mode .srq-mode-skim {
+            background: rgba(107,114,128,0.1);
+            color: #4B5563;
+        }
+        body.light-mode .srq-mode-reference {
+            background: rgba(217,119,6,0.1);
+            color: #B45309;
+        }
+        body.light-mode .srq-mode-reread {
+            background: rgba(124,58,237,0.1);
+            color: #7C3AED;
+        }
+
+        /* Light mode: header hover */
+        body.light-mode .srq-header:hover {
+            background: rgba(0,0,0,0.04);
         }
     `;
 

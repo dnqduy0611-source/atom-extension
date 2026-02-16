@@ -9,12 +9,12 @@ const UPDATE_STORAGE_KEY = 'atom_github_update';
  * Check if the extension is sideloaded (developer mode) vs Chrome Web Store.
  * @returns {Promise<boolean>} true if sideloaded
  */
-export async function isSideloaded() {
+export function isSideloaded() {
     try {
-        const self = await chrome.management.getSelf();
-        return self.installType === 'development';
+        const manifest = chrome.runtime.getManifest();
+        // Chrome Web Store auto-injects update_url; sideloaded builds don't have it
+        return !manifest.update_url;
     } catch {
-        // If management API not available, assume not sideloaded
         return false;
     }
 }

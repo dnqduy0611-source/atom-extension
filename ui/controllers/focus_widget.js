@@ -126,7 +126,7 @@
         renderIdle() {
             this.container.innerHTML = `
                 <div class="sp-focus-widget__idle">
-                    <span class="sp-focus-widget__icon" aria-hidden="true">🎯</span>
+                    <span class="sp-focus-widget__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>
                     <span class="sp-focus-widget__label">${msg('focusIdle', 'Ready to focus')}</span>
                     <div class="sp-focus-widget__presets">
                         <button type="button" class="sp-focus-widget__preset" data-min="25">25p</button>
@@ -150,7 +150,7 @@
             this.container.innerHTML = `
                 <div class="sp-focus-widget__active">
                     <div class="sp-focus-widget__row">
-                        <span class="sp-focus-widget__icon" aria-hidden="true">🎯</span>
+                        <span class="sp-focus-widget__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>
                         <span class="sp-focus-widget__label">${msg('focusWorking', 'In focus')}</span>
                         <span class="sp-focus-widget__time">${this.formatTime(remaining)}</span>
                         <button type="button" class="sp-focus-widget__btn" data-action="pause">${msg('btnPause', 'Pause')}</button>
@@ -172,7 +172,7 @@
             this.container.innerHTML = `
                 <div class="sp-focus-widget__break">
                     <div class="sp-focus-widget__row">
-                        <span class="sp-focus-widget__icon" aria-hidden="true">☕</span>
+                        <span class="sp-focus-widget__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg></span>
                         <span class="sp-focus-widget__label">${msg('focusBreak', 'Break time')}</span>
                         <span class="sp-focus-widget__time">${this.formatTime(remaining)}</span>
                     </div>

@@ -411,7 +411,7 @@
                 width: 14px;
                 height: 14px;
             }
-            
+
             /* v2 Styles */
             .atom-nlm-steps-guide {
                 background: rgba(0, 0, 0, 0.3);
@@ -486,7 +486,7 @@
             </div>
 
             ${selectedText ? `
-            
+
             <!-- v2: 3-Step Guide -->
             <div class="atom-nlm-steps-guide">
                 <div class="atom-nlm-step-row">
@@ -514,14 +514,14 @@
                 <div class="atom-nlm-reminder-content">
                     <div class="atom-nlm-reminder-title">Ready to Paste</div>
                     <div class="atom-nlm-reminder-text">Content is in your clipboard. Follow the steps above to add it as a source.</div>
-                    
+
                     <div class="atom-nlm-action-row">
                         <button class="atom-nlm-copy-btn" data-action="copy">
-                            <span>📋 Copy Text</span>
+                            <span>Copy Text</span>
                         </button>
                         ${topic.context?.url ? `
                         <button class="atom-nlm-copy-btn secondary-btn" data-action="copy-link">
-                            <span>🔗 Copy Link</span>
+                            <span>Copy Link</span>
                         </button>
                         ` : ''}
                     </div>
@@ -561,7 +561,7 @@
                     copyBtn.querySelector('span').textContent = 'Copied!';
                     setTimeout(() => {
                         copyBtn.classList.remove('copied');
-                        copyBtn.querySelector('span').textContent = '📋 Copy Text';
+                        copyBtn.querySelector('span').textContent = 'Copy Text';
                     }, 2000);
                 }
             };
@@ -577,7 +577,7 @@
                     copyLinkBtn.querySelector('span').textContent = 'Copied!';
                     setTimeout(() => {
                         copyLinkBtn.classList.remove('copied');
-                        copyLinkBtn.querySelector('span').textContent = '🔗 Copy Link';
+                        copyLinkBtn.querySelector('span').textContent = 'Copy Link';
                     }, 2000);
                 }
             };
@@ -693,6 +693,15 @@
             console.log("[ATOM NLM] Extension context invalidated, stopping checks");
             return false;
         }
+
+        // Skip mapping prompt when auto-export is enabled — cards auto-export to Inbox
+        try {
+            const flags = await chrome.storage.local.get(['SRQ_AUTO_EXPORT']);
+            if (flags.SRQ_AUTO_EXPORT) {
+                console.warn("[ATOM NLM] Skipping mapping prompt — auto-export enabled");
+                return false;
+            }
+        } catch { /* continue if flag check fails */ }
 
         // Only run on notebook pages
         if (!window.location.href.includes("/notebook/")) {
@@ -842,71 +851,6 @@
         }
     }
 
-    // SRQ banner on NotebookLM page
-    async function checkAndShowSRQBanner() {
-        try {
-            const response = await chrome.runtime.sendMessage({ type: "SRQ_GET_PENDING_COUNT" });
-            const pending = response?.ok ? Number(response?.stats?.pending || 0) : 0;
-            if (!pending) return;
-
-            const lastDismiss = Number(sessionStorage.getItem("srq_banner_dismiss") || 0);
-            if (lastDismiss && Date.now() - lastDismiss < 30 * 60 * 1000) return;
-            if (document.getElementById("atom-srq-banner")) return;
-
-            const banner = document.createElement("div");
-            banner.id = "atom-srq-banner";
-            banner.className = "atom-srq-nlm-banner";
-            const bannerText = getMessage('srq_nlm_banner', `${pending} highlights ready to save`).replace('$1', pending);
-            const exportText = getMessage('srq_nlm_export_current', 'Save all to this notebook');
-            const sidebarText = getMessage('srq_nlm_open_sidepanel', 'Open in sidebar');
-
-            banner.innerHTML = `
-                <span class="srq-banner-text">📋 ${bannerText}</span>
-                <button id="atom-srq-export-current">${escapeHtml(exportText)}</button>
-                <button id="atom-srq-open-sidepanel">${escapeHtml(sidebarText)}</button>
-                <button id="atom-srq-dismiss-banner" class="srq-banner-close" aria-label="Close">✕</button>
-            `;
-
-            const style = document.createElement("style");
-            style.textContent = `
-                #atom-srq-banner{position:fixed;top:0;left:0;right:0;z-index:2147483646;background:linear-gradient(135deg,#065F46,#064E3B);color:#D1FAE5;padding:10px 14px;display:flex;align-items:center;gap:10px;font:13px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;box-shadow:0 4px 18px rgba(0,0,0,.28)}
-                #atom-srq-banner .srq-banner-text{flex:1}
-                #atom-srq-banner button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;padding:6px 10px;border-radius:6px;cursor:pointer}
-                #atom-srq-banner .srq-banner-close{background:transparent;border:none;color:rgba(255,255,255,.75);font-size:16px;padding:2px 6px}
-            `;
-            banner.appendChild(style);
-            document.body.prepend(banner);
-
-            document.getElementById("atom-srq-export-current")?.addEventListener("click", async () => {
-                try {
-                    const notebook = extractNotebookInfo();
-                    const notebookRef = notebook?.ref || "Inbox";
-                    const batchesRes = await chrome.runtime.sendMessage({ type: "SRQ_GET_BATCHES" });
-                    const batches = Array.isArray(batchesRes?.batches) ? batchesRes.batches : [];
-                    for (const batch of batches) {
-                        await chrome.runtime.sendMessage({
-                            type: "SRQ_EXPORT_BATCH",
-                            topicKey: batch.topicKey,
-                            notebookRef
-                        });
-                    }
-                    banner.remove();
-                } catch {}
-            });
-
-            document.getElementById("atom-srq-open-sidepanel")?.addEventListener("click", () => {
-                chrome.runtime.sendMessage({ type: "ATOM_OPEN_SIDEPANEL" }).catch(() => {});
-            });
-            document.getElementById("atom-srq-dismiss-banner")?.addEventListener("click", () => {
-                banner.remove();
-                sessionStorage.setItem("srq_banner_dismiss", String(Date.now()));
-            });
-        } catch {
-            // Ignore when background is unavailable
-        }
-    }
-
     // Initialize
     init();
-    setTimeout(checkAndShowSRQBanner, CONFIG.INITIAL_DELAY + 1000);
 })();

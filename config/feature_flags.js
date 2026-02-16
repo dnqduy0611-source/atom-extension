@@ -40,7 +40,19 @@
         // Metrics collection
         METRICS_ENABLED: true,             // Collect reading/interaction metrics
         METRICS_SCROLL_DEPTH_ENABLED: true,
-        METRICS_TIME_TRACKING_ENABLED: true
+        METRICS_TIME_TRACKING_ENABLED: true,
+
+        // SRQ Auto-Flow: Auto-save & Auto-export
+        SRQ_AUTO_SAVE: true,               // Auto-approve cards (skip manual review)
+        SRQ_AUTO_EXPORT: true,             // Auto-export approved cards to NLM
+
+        // SRQ Phase 2: Smart Review features (OFF by default)
+        SRQ_P2_VISUAL_ANCHOR: true,        // Capture thumbnail khi lưu ghi chú
+        SRQ_P2_RELATED_NOTES: false,       // Tìm ghi chú liên quan (S2)
+        SRQ_P2_REVIEW_REMINDER: false,     // Nhắc ôn tập thông minh (S3)
+        SRQ_P2_HEARTBEAT: false,           // Tổng hợp định kỳ (S3)
+        SRQ_P2_ANALYTICS: false,           // Widget tiến trình học (S4)
+        SRQ_P2_MCP_BRIDGE: false           // Cầu nối MCP (S5)
     };
 
     const STORAGE_KEY = 'atom_feature_flags_v1';

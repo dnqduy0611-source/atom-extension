@@ -10,6 +10,7 @@
     let pageContext = null;
     // deepAngleByUrl extracted to sp_smartlink.js (Phase 4b)
     let threads = [];
+    let _skipStorageReload = false;
     let activeThreadId = null;
     let activeSessionId = null; // Unified ReadingSession ID
     let isLoading = false;
@@ -29,7 +30,7 @@
     let userPersona = ''; // User's role/expertise for adaptive explanations
     let commandSystemEnabled = false;
     let commandActionExecutor = null;
-    let tabController = null;
+    // Phase 2: tabController removed (bottom tabs gone)
     let focusWidgetController = null;
     let activeMainTab = 'chat';
 
@@ -149,7 +150,6 @@
         '- Start focus: [ACTION:FOCUS_START:{"minutes":25}]',
         '- Stop focus: [ACTION:FOCUS_STOP]',
         '- Pause focus: [ACTION:FOCUS_PAUSE]',
-        '- Open notes: [ACTION:OPEN_NOTES]',
         '- Open diary: [ACTION:OPEN_DIARY]',
         '- Open settings: [ACTION:OPEN_SETTINGS]',
         '- Add diary entry: [ACTION:DIARY_ADD:{"content":"...","mood":"neutral","tags":["daily"]}]',
@@ -312,11 +312,13 @@
         if (!window.CommandRouter) return;
 
         window.CommandRouter.register('OPEN_NOTES', async function () {
-            try {
-                switchMainTab('notes');
-            } catch (e) {
-                chrome.tabs.create({ url: chrome.runtime.getURL('memory.html') });
-            }
+            // Phase 2: Notes tab removed. Fallback to memory.html.
+            chrome.tabs.create({ url: chrome.runtime.getURL('memory.html') });
+            return { success: true, message: '' };
+        });
+
+        window.CommandRouter.register('OPEN_MEMORY', async function () {
+            chrome.tabs.create({ url: chrome.runtime.getURL('memory.html') });
             return { success: true, message: '' };
         });
 
@@ -621,10 +623,7 @@
             cmdMenu.init();
         }
 
-        if (window.QuickDiaryController) {
-            window.quickDiaryCtrl = new window.QuickDiaryController(commandActionExecutor);
-            window.quickDiaryCtrl.init();
-        }
+        // Phase 3: QuickDiaryController removed (use /journal command)
     }
 
     async function showCommandOnboardingIfNeeded() {
@@ -711,7 +710,6 @@
     // ===========================
     const FEATURE_FLAGS = {
         PRE_READING_PRIMER: true,
-        LEARNING_OBJECTIVES: true,
         RELATED_MEMORY: true  // Phase 3: Semantic Brain
     };
 
@@ -861,20 +859,21 @@
             pageTitle: document.getElementById('page-title'),
             contextStatus: document.getElementById('context-status'),
             contextText: document.getElementById('context-text'),
+            notebookLink: document.getElementById('notebook-link'),
+            notebookLinkText: document.getElementById('notebook-link-text'),
+            notebookLinkCount: document.getElementById('notebook-link-count'),
             refreshBtn: document.getElementById('btn-new-chat-top'),
             menuBtn: document.getElementById('btn-menu'),
             menuDropdown: document.getElementById('menu-dropdown'),
             menuSemanticEmbeddings: document.getElementById('menu-semantic-embeddings'),
             menuSemanticSearch: document.getElementById('menu-semantic-search'),
-            menuEmbeddingsStatus: document.getElementById('menu-embeddings-status'),
-            menuSemanticStatus: document.getElementById('menu-semantic-status'),
+            // Phase 3: menuEmbeddingsStatus + menuSemanticStatus removed (auto-managed)
 
             // Zone 2: Main View
             currentContext: document.getElementById('current-context'),
             highlightText: document.getElementById('highlight-text'),
             primerRoot: document.getElementById('primer-root'),
-            modeRoot: document.getElementById('mode-selector-root'),
-            memoryRoot: document.getElementById('memory-root'),
+            // Phase 3: modeRoot + memoryRoot removed (phantom UI)
             quickActions: document.getElementById('quick-actions'),
             insightsSummary: document.getElementById('insights-summary'),
             insightsList: document.getElementById('insights-list'),
@@ -890,22 +889,11 @@
             userInput: document.getElementById('user-input'),
             sendBtn: document.getElementById('btn-send'),
 
-            // Zone 3: Bottom Tabs
-            threadList: document.getElementById('thread-list'),
-            discussionsCount: document.getElementById('discussions-count'),
-            notesList: document.getElementById('notes-list'),
-            notesCount: document.getElementById('notes-count'),
-            noteInput: document.getElementById('note-input'),
-            connectionsList: document.getElementById('connections-list'),
-            connectionsCount: document.getElementById('connections-count'),
+            // Zone 3: Bottom Tabs — Phase 2: HTML removed, only deep-angle refs kept
             deepAngleBtn: document.getElementById('btn-deep-angle'),
             deepAngleOutput: document.getElementById('deep-angle-output'),
             deepAngleText: document.getElementById('deep-angle-text'),
-            deepAngleStatus: document.getElementById('deep-angle-status'),
-
-            // Toggle
-            toggleTabsBtn: document.getElementById('btn-toggle-tabs'),
-            bottomTabsContainer: document.querySelector('.sp-bottom-tabs')
+            deepAngleStatus: document.getElementById('deep-angle-status')
         };
 
         await initCommandSystem();
@@ -936,7 +924,11 @@
             // Core state
             window.SP.pageContext = pageContext;
             window.SP.threads = threads;
-            window.SP.activeThreadId = activeThreadId;
+            Object.defineProperty(window.SP, 'activeThreadId', {
+                get() { return activeThreadId; },
+                set(v) { activeThreadId = v; },
+                configurable: true
+            });
             window.SP.activeSessionId = activeSessionId;
             window.SP.isLoading = isLoading;
             window.SP.currentTabId = currentTabId;
@@ -1012,37 +1004,7 @@
         }
     }
 
-    async function initLearningModeUI() {
-        if (!FEATURE_FLAGS.LEARNING_OBJECTIVES || !elements.modeRoot) return;
-        if (!window.LearningObjectiveService || !window.ModeSelectorUI) return;
-
-        const mode = await window.LearningObjectiveService.getSessionMode(activeSessionId);
-        currentModeId = mode?.id || 'deep';
-
-        elements.modeRoot.innerHTML = '';
-        const modeUi = window.ModeSelectorUI.createModeSelectorUI(
-            currentModeId,
-            {
-                label: getMessage('sp_mode_label', 'Reading mode'),
-                skimLabel: getMessage('sp_mode_skim_label', 'Skim'),
-                skimDesc: getMessage('sp_mode_skim_desc', 'Quick overview'),
-                deepLabel: getMessage('sp_mode_deep_label', 'Deep'),
-                deepDesc: getMessage('sp_mode_deep_desc', 'Full analysis')
-            },
-            async (modeId) => {
-                currentModeId = modeId;
-                await window.LearningObjectiveService.setSessionMode(activeSessionId, modeId);
-                await window.LearningObjectiveService.setUserDefaultMode(modeId);
-                updateQuickActionChips();
-            }
-        );
-
-        elements.modeRoot.appendChild(modeUi);
-        elements.modeRoot.classList.add('active');
-        updateQuickActionChips();
-    }
-
-    function updateQuickActionChips() { /* no-op: merged into command menu */ }
+    // Phase 3: initLearningModeUI + updateQuickActionChips removed (mode selector archived)
 
     function hashString(input) {
         const text = String(input || '');
@@ -1086,12 +1048,9 @@
             } catch (e) { /* ignore */ }
         }
         if (!hasAccess) {
-            setMenuBadgeState(elements.menuEmbeddingsStatus, 'locked');
-            setMenuBadgeState(elements.menuSemanticStatus, 'locked');
             return;
         }
-        setMenuBadgeState(elements.menuEmbeddingsStatus, semanticFlags.embeddingsEnabled ? 'on' : 'off');
-        setMenuBadgeState(elements.menuSemanticStatus, semanticFlags.semanticSearchEnabled ? 'on' : 'off');
+        // Phase 3: Menu badge states removed (semantic auto-managed)
     }
 
     async function ensureCostWarningAccepted() {
@@ -1317,6 +1276,8 @@
                 },
                 onCompare: (currentPage, match) => {
                     handleCompareWithRelated(currentPage, match);
+                    // Auto-dismiss the card after starting comparison
+                    elements.memoryRoot?.classList.remove('active');
                 },
                 onDismiss: () => {
                     window.RelatedMemoryService.dismissForUrl(pageContext?.url);
@@ -1447,19 +1408,19 @@
         }
 
         // Create comparison prompt
-        const comparisonPrompt = `ðŸ”— **So sÃ¡nh KhÃ¡i niá»‡m**
+        const comparisonPrompt = `🔗 **So sánh Khái niệm**
 
-So sÃ¡nh hai chá»§ Ä‘á» Ä‘á»c nÃ y vÃ  giáº£i thÃ­ch cÃ¡ch chÃºng káº¿t ná»‘i:
+So sánh hai chủ đề đọc này và giải thích cách chúng kết nối:
 
-**Chá»§ Ä‘á» hiá»‡n táº¡i:** "${currentPage.title}"
-**Ghi chÃº liÃªn quan:** "${match.title}" - ${match.preview || '(KhÃ´ng cÃ³ preview)'}
+**Chủ đề hiện tại:** "${currentPage.title}"
+**Ghi chú liên quan:** "${match.title}" - ${match.preview || '(Không có preview)'}
 
-HÃ£y cung cáº¥p so sÃ¡nh ngáº¯n gá»n bao gá»“m:
-1. **Äiá»ƒm tÆ°Æ¡ng Ä‘á»“ng** chÃ­nh
-2. **Äiá»ƒm khÃ¡c biá»‡t** chÃ­nh  
-3. **CÃ¡ch chÃºng bá»• sung/xÃ¢y dá»±ng láº«n nhau**
+Hãy cung cấp so sánh ngắn gọn bao gồm:
+1. **Điểm tương đồng** chính
+2. **Điểm khác biệt** chính  
+3. **Cách chúng bổ sung/xây dựng lẫn nhau**
 
-Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
+Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
 
         // Ensure we have an active thread
         if (!activeThreadId && threads.length > 0) {
@@ -1565,7 +1526,24 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
         elements.menuSemanticSearch?.addEventListener('click', () => toggleSemanticFlag('SEMANTIC_SEARCH_ENABLED'));
         document.getElementById('menu-clear')?.addEventListener('click', clearCurrentThread);
         document.getElementById('menu-new-chat')?.addEventListener('click', handleNewChat);
+        document.getElementById('menu-whats-new')?.addEventListener('click', () => {
+            const ver = chrome.runtime.getManifest().version;
+            chrome.tabs.create({ url: `https://www.amonexus.com/whats-new?v=${encodeURIComponent(ver)}` });
+            elements.menuDropdown?.classList.remove('show');
+        });
         document.getElementById('menu-finish')?.addEventListener('click', () => SP.endSession?.());
+
+        // Phase 2: Chat History inline thread list
+        document.getElementById('menu-threads')?.addEventListener('click', () => {
+            elements.menuDropdown?.classList.remove('show');
+            toggleInlineThreadList();
+        });
+
+        // Phase 2: Memory page (replaces Notes tab)
+        document.getElementById('menu-memory')?.addEventListener('click', () => {
+            elements.menuDropdown?.classList.remove('show');
+            chrome.tabs.create({ url: chrome.runtime.getURL('memory.html') });
+        });
     }
 
     async function handleNewChat() {
@@ -1606,48 +1584,7 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
     }
 
     function setupTabs() {
-        if (window.TabController && elements.bottomTabsContainer) {
-            try {
-                if (tabController?.destroy) tabController.destroy();
-                tabController = new window.TabController({
-                    root: elements.bottomTabsContainer,
-                    toggleButton: elements.toggleTabsBtn,
-                    collapsedStorageKey: 'sp_tabs_collapsed'
-                });
-                const ready = tabController.init();
-                if (ready) return;
-            } catch (e) {
-                console.warn('[Sidepanel] TabController init failed, fallback to legacy tabs:', e);
-            }
-        }
-
-        // Legacy fallback
-        document.querySelectorAll('.sp-tab-btn').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                const tabId = btn.dataset.tab;
-                document.querySelectorAll('.sp-tab-btn').forEach((b) => {
-                    b.classList.remove('active');
-                    b.setAttribute('aria-selected', 'false');
-                });
-                btn.classList.add('active');
-                btn.setAttribute('aria-selected', 'true');
-
-                document.querySelectorAll('.sp-tab-panel').forEach((p) => {
-                    p.classList.remove('active');
-                    p.setAttribute('hidden', '');
-                });
-                const panel = document.getElementById(`tab-${tabId}`);
-                if (panel) {
-                    panel.classList.add('active');
-                    panel.removeAttribute('hidden');
-                }
-
-                if (elements.bottomTabsContainer?.classList.contains('collapsed')) {
-                    toggleBottomTabs(false);
-                }
-            });
-        });
-        elements.toggleTabsBtn?.addEventListener('click', () => toggleBottomTabs());
+        // Phase 2: Bottom tabs removed. No-op.
     }
 
     async function setupMainTabs() {
@@ -1697,7 +1634,7 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
         try {
             const data = await chrome.storage.local.get(['sp_active_main_tab']);
             const candidate = String(data.sp_active_main_tab || '').trim();
-            if (['chat', 'notes', 'cards', 'saved'].includes(candidate)) {
+            if (['chat', 'cards', 'saved'].includes(candidate)) {
                 initial = candidate;
             }
         } catch (e) {
@@ -1708,7 +1645,7 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
     }
 
     function switchMainTab(tabName, persist = true) {
-        const next = ['chat', 'notes', 'cards', 'saved'].includes(tabName) ? tabName : 'chat';
+        const next = ['chat', 'cards', 'saved'].includes(tabName) ? tabName : 'chat';
         activeMainTab = next;
         if (window.SP) window.SP.activeMainTab = activeMainTab;
         document.body.setAttribute('data-main-tab', next);
@@ -1723,14 +1660,12 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
             });
         }
 
-        if (next === 'notes') {
-            toggleBottomTabs(false);
-            switchToTab('notes');
-            setTimeout(() => elements.noteInput?.focus(), 100);
-        } else if (next === 'chat') {
-            switchToTab('discussions');
+        if (next === 'chat') {
+            // Bottom tabs removed — Phase 2. No switchToTab needed.
         } else if (next === 'saved') {
             mountSRQWidget();
+        } else if (next === 'cards') {
+            window.ReviewCards?.mount(document.getElementById('review-cards-root'));
         }
 
         animateMainTabSurface(next);
@@ -1749,8 +1684,7 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
             return;
         }
         const targets = [];
-        if (tabName === 'notes') {
-            if (elements.bottomTabsContainer) targets.push(elements.bottomTabsContainer);
+        if (false) { // Notes tab removed — Phase 2
         } else if (tabName === 'saved') {
             const saved = document.getElementById('srq-widget-container');
             if (saved) targets.push(saved);
@@ -1759,7 +1693,6 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
             if (cards) targets.push(cards);
         } else {
             if (elements.messages) targets.push(elements.messages);
-            if (elements.bottomTabsContainer) targets.push(elements.bottomTabsContainer);
         }
 
         targets.forEach((el) => {
@@ -1774,25 +1707,8 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
     }
 
     function toggleBottomTabs(forceCollapsed) {
-        if (tabController?.toggleCollapsed) {
-            return tabController.toggleCollapsed(forceCollapsed);
-        }
-
-        if (!elements.bottomTabsContainer) return false;
-
-        let isCollapsed = forceCollapsed;
-        if (typeof isCollapsed !== 'boolean') {
-            isCollapsed = !elements.bottomTabsContainer.classList.contains('collapsed');
-        }
-
-        elements.bottomTabsContainer.classList.toggle('collapsed', isCollapsed);
-
-        try {
-            chrome.storage.local.set({ 'sp_tabs_collapsed': isCollapsed });
-        } catch (e) {
-            console.warn('Failed to save tabs state', e);
-        }
-        return isCollapsed;
+        // Phase 2: Bottom tabs removed. No-op.
+        return;
     }
 
     async function initFocusWidget() {
@@ -1807,27 +1723,12 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
     }
 
     function setupNotes() {
-        // Add note button
-        document.getElementById('btn-add-note')?.addEventListener('click', () => {
-            const input = elements.noteInput;
-            const idea = input?.value?.trim();
-            if (idea) {
-                SP.addToParkingLot?.(idea);
-                input.value = '';
-            }
-        });
-
-        // Note input enter key
-        elements.noteInput?.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                document.getElementById('btn-add-note')?.click();
-            }
-        });
+        // Phase 2: Notes tab removed. No-op.
     }
 
     function setupActionBar() {
-        // Quick Save button (NEW - saves without requiring insight)
+        // Phase 2: Action bar removed. No-op.
+        return;
         document.getElementById('btn-quick-save')?.addEventListener('click', () => {
             SP.quickSaveHighlight?.();
         });
@@ -2086,6 +1987,56 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
     }
 
     // ===========================
+    // Notebook Smart Link
+    // ===========================
+    async function updateNotebookLink() {
+        const el = elements.notebookLink;
+        const textEl = elements.notebookLinkText;
+        const countEl = elements.notebookLinkCount;
+        if (!el || !textEl) return;
+
+        const url = pageContext?.url;
+        if (!url) {
+            el.hidden = true;
+            return;
+        }
+
+        try {
+            const res = await chrome.runtime.sendMessage({
+                type: "SRQ_GET_NOTEBOOK_FOR_URL",
+                url
+            });
+            if (res?.ok && res.notebookRef) {
+                // Use page title if notebook is generic "Inbox"
+                let displayName = res.notebookRef;
+                if (displayName === "Inbox" && pageContext?.title) {
+                    displayName = pageContext.title.length > 30
+                        ? pageContext.title.slice(0, 28) + '…'
+                        : pageContext.title;
+                } else if (displayName.length > 30) {
+                    displayName = displayName.slice(0, 28) + '…';
+                }
+
+                textEl.textContent = displayName;
+                if (countEl) {
+                    const label = res.count === 1 ? 'note' : 'notes';
+                    countEl.textContent = `· ${res.count} ${label}`;
+                }
+                el.hidden = false;
+                el.onclick = () => {
+                    if (res.notebookUrl) {
+                        chrome.tabs.create({ url: res.notebookUrl });
+                    }
+                };
+            } else {
+                el.hidden = true;
+            }
+        } catch {
+            el.hidden = true;
+        }
+    }
+
+    // ===========================
     // Keyboard Shortcuts
     // ===========================
     function setupKeyboardShortcuts() {
@@ -2132,13 +2083,9 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
                 return;
             }
 
-            // Ctrl/Cmd + N: New quick note (focus note input)
+            // Phase 2: Ctrl+N Notes shortcut removed (Notes tab gone)
             if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-                e.preventDefault();
-                switchMainTab('notes');
-                switchToTab('notes');
-                // Focus the note input
-                setTimeout(() => elements.noteInput?.focus(), 100);
+                // no-op: Notes tab removed in Phase 2
                 return;
             }
 
@@ -2171,12 +2118,7 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
             // Don't process navigation shortcuts if input is focused
             if (isInputFocused) return;
 
-            // Tab: Cycle through bottom tabs
-            if (e.key === 'Tab' && !e.ctrlKey && !e.metaKey) {
-                e.preventDefault();
-                cycleBottomTabs(e.shiftKey ? -1 : 1);
-                return;
-            }
+            // Phase 2: Tab cycling removed (bottom tabs gone)
 
             // Arrow Up/Down: Navigate threads
             if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -2192,9 +2134,9 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
             }
 
             // Alt+1..4: Main tab switch
-            if (e.altKey && e.key >= '1' && e.key <= '4') {
+            if (e.altKey && e.key >= '1' && e.key <= '3') {
                 e.preventDefault();
-                const tabs = ['chat', 'notes', 'cards', 'saved'];
+                const tabs = ['chat', 'cards', 'saved'];
                 const tabIndex = parseInt(e.key) - 1;
                 if (tabs[tabIndex]) {
                     switchMainTab(tabs[tabIndex]);
@@ -2205,30 +2147,12 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
     }
 
     function switchToTab(tabName) {
-        if (tabController?.switchTo) {
-            tabController.switchTo(tabName, { expandIfCollapsed: true });
-            return;
-        }
-        const tabBtn = document.querySelector(`.sp-tab-btn[data-tab="${tabName}"]`);
-        if (tabBtn) {
-            tabBtn.click();
-        }
+        // Phase 2: Bottom tabs removed. No-op.
     }
 
     function cycleBottomTabs(direction) {
-        if (tabController?.cycle) {
-            tabController.cycle(direction);
-            return;
-        }
-        const tabs = ['discussions', 'notes', 'connections'];
-        const activeTab = document.querySelector('.sp-tab-btn.active');
-        const currentIndex = tabs.indexOf(activeTab?.dataset.tab);
-        let newIndex = currentIndex + direction;
-
-        if (newIndex < 0) newIndex = tabs.length - 1;
-        if (newIndex >= tabs.length) newIndex = 0;
-
-        switchToTab(tabs[newIndex]);
+        // Phase 2: Bottom tabs removed. No-op.
+        return;
     }
 
     const DOMAIN_DISCUSSIONS_MAX = 30;
@@ -2301,30 +2225,7 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
     }
 
     function updateAllCounts() {
-        // Discussions count
-        if (elements.discussionsCount) {
-            const visibleCount = getVisibleThreads().length;
-            const prevCount = parseInt(elements.discussionsCount.textContent) || 0;
-            elements.discussionsCount.textContent = visibleCount;
-            if (visibleCount > prevCount) {
-                pulseBadge(elements.discussionsCount);
-            }
-        }
-
-        // Notes count
-        if (elements.notesCount) {
-            const prevCount = parseInt(elements.notesCount.textContent) || 0;
-            elements.notesCount.textContent = (SP.parkingLot || []).length;
-            if ((SP.parkingLot || []).length > prevCount) {
-                pulseBadge(elements.notesCount);
-            }
-        }
-
-        // Connections count
-        const connCount = threads.reduce((sum, t) => sum + (t.connections?.length || 0), 0);
-        if (elements.connectionsCount) {
-            elements.connectionsCount.textContent = connCount;
-        }
+        // Phase 2: Bottom tab badge counts removed (discussionsCount, notesCount, connectionsCount)
 
         // Insights count
         const insightCount = threads.filter(t => t.refinedInsight).length;
@@ -2428,6 +2329,10 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
             // Check for thread updates from this domain
             const storageKey = `atom_sidepanel_highlight_${currentDomain}`;
             if (changes[storageKey]?.newValue) {
+                if (_skipStorageReload) {
+                    _skipStorageReload = false;
+                    return;
+                }
                 loadThreadsFromStorage();
             }
         });
@@ -2625,53 +2530,342 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
         SP.broadcastDataUpdate?.();
     }
 
-    function renderThreadList() {
-        if (!elements.threadList) return;
+    // ===========================
+    // Conversation Digest Pipeline (Hybrid Memory Phase B)
+    // ===========================
 
-        const visibleThreads = getVisibleThreads();
+    /**
+     * Detect user tier for digest quality.
+     * Pro = user has own API key (BYOK), Free = shared quota or none.
+     */
+    async function getUserTier() {
+        const apiKey = await getApiKey();
+        return apiKey ? 'pro' : 'free';
+    }
 
-        // Render thread items in bottom tab
-        if (visibleThreads.length === 0) {
-            elements.threadList.innerHTML = `<div class="sp-note-empty">${getMessage('sp_no_discussions', 'No chats yet')}</div>`;
-        } else {
-            elements.threadList.innerHTML = visibleThreads.map(thread => {
-                const isActive = thread.id === activeThreadId;
-                const preview = (() => {
-                    const highlightText = String(thread.highlight?.text || '');
-                    const highlightTitle = String(thread.highlight?.title || '');
+    /**
+     * Check if thread qualifies for digesting.
+     */
+    function shouldDigestThread(thread) {
+        if (!thread || !thread.messages) return false;
+        const assistantCount = thread.messages.filter(m => m.role === 'assistant').length;
+        if (assistantCount < 2) return false;
+        if (thread._digested) return false;
+        return true;
+    }
 
-                    // Page discussions all share the same label; show the page title for clarity.
-                    if (thread.isPageDiscussion) {
-                        return (highlightTitle || highlightText || getMessage('sp_page_discussion', 'Page Discussion')).slice(0, 60);
-                    }
+    /**
+     * Extract topic keywords from page context.
+     */
+    function extractTopicsFromContext(ctx) {
+        const topics = [];
+        if (ctx.topicKey) {
+            const parts = ctx.topicKey.split(':');
+            if (parts.length >= 2) topics.push(parts.slice(1).join(':'));
+        }
+        if (ctx.domain) topics.push(ctx.domain);
+        if (ctx.title) {
+            const titleWords = ctx.title
+                .replace(/[^\w\sàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/gi, ' ')
+                .split(/\s+/)
+                .filter(w => w.length > 3)
+                .slice(0, 2);
+            topics.push(...titleWords);
+        }
+        return [...new Set(topics)].slice(0, 5);
+    }
 
-                    return (highlightText || highlightTitle || getMessage('sp_empty_title', 'Empty')).slice(0, 60);
-                })();
-                const statusIcon = thread.status === 'parked' ? getIcon('check') :
-                    thread.status === 'saved' ? getIcon('save') : getIcon('thread');
+    /**
+     * Rule-based digest (Free tier) — extracts Q&A directly from messages.
+     */
+    function createDigestRuleBased(thread, ctx) {
+        const userMsgs = (thread.messages || []).filter(m => m.role === 'user');
+        const aiMsgs = (thread.messages || []).filter(m => m.role === 'assistant');
+        const messageCount = thread.messages?.length || 0;
+        const topics = extractTopicsFromContext(ctx);
 
-                return `
-                    <div class="sp-thread-item ${isActive ? 'active' : ''}" data-thread-id="${thread.id}">
-                        <span class="sp-thread-status">${statusIcon}</span>
-                        <div class="sp-thread-info">
-                            <div class="sp-thread-preview">${escapeHtml(preview)}...</div>
-                            <div class="sp-thread-meta">${formatTime(thread.createdAt)}</div>
-                        </div>
-                    </div>
-                `;
-            }).reverse().join(''); // Show newest first
+        const keyQA = [];
+        for (let i = 0; i < Math.min(userMsgs.length, 3); i++) {
+            const q = userMsgs[i].content.slice(0, 200).trim();
+            const a = (aiMsgs[i]?.content || '').slice(0, 300).trim();
+            if (q && a) keyQA.push({ q, a });
         }
 
-        // Add click handlers
-        elements.threadList.querySelectorAll('.sp-thread-item').forEach(item => {
-            item.addEventListener('click', () => {
+        const firstQ = userMsgs[0]?.content?.slice(0, 100) || '';
+        const summary = firstQ
+            ? `${messageCount} messages about "${(ctx.title || 'page').slice(0, 60)}". Main question: ${firstQ}`
+            : `${messageCount} messages about "${(ctx.title || 'page').slice(0, 60)}"`;
+
+        return {
+            sessionId: activeSessionId || null,
+            threadId: thread.id,
+            domain: ctx.domain || currentDomain || '',
+            pageUrl: ctx.url || '',
+            pageTitle: (ctx.title || '').slice(0, 200),
+            summary: summary.slice(0, 300),
+            topics,
+            keyQA,
+            messageCount,
+            highlightText: (thread.highlight?.text || '').slice(0, 200),
+            digestMethod: 'rule_based'
+        };
+    }
+
+    /**
+     * LLM-based digest (Pro tier) — AI summarizes the conversation.
+     */
+    async function createDigestLLM(thread, ctx) {
+        const conversationLog = (thread.messages || [])
+            .slice(-12)
+            .map(m => `${m.role === 'user' ? 'User' : 'AI'}: ${m.content.slice(0, 500)}`)
+            .join('\n\n');
+
+        const lang = navigator.language?.startsWith('vi') ? 'Vietnamese' : 'English';
+
+        const digestPrompt = `Summarize this conversation for future reference.
+Return JSON only, no markdown:
+{
+  "summary": "2-3 sentence summary in ${lang}",
+  "topics": ["keyword1", "keyword2", "keyword3"],
+  "keyQA": [
+    {"q": "key question user asked", "a": "essential answer point (1-2 sentences)"}
+  ]
+}
+
+Page: "${(ctx.title || '').slice(0, 200)}"
+Domain: ${ctx.domain || ''}
+
+Conversation:
+${conversationLog}`;
+
+        try {
+            const systemInstr = 'Return valid JSON only. No markdown wrapping. Max 3 keyQA entries.';
+            const history = [{ role: 'user', parts: [{ text: digestPrompt }] }];
+
+            const response = await SP.callLLMAPI(systemInstr, history, {
+                priority: 'background',
+                allowFallback: true
+            });
+
+            if (!response) {
+                console.warn('[Digest] LLM returned empty, falling back to rule-based');
+                return createDigestRuleBased(thread, ctx);
+            }
+
+            const match = response.match(/\{[\s\S]*\}/);
+            if (!match) throw new Error('No JSON found in LLM response');
+            const parsed = JSON.parse(match[0]);
+
+            return {
+                sessionId: activeSessionId || null,
+                threadId: thread.id,
+                domain: ctx.domain || currentDomain || '',
+                pageUrl: ctx.url || '',
+                pageTitle: (ctx.title || '').slice(0, 200),
+                summary: (parsed.summary || '').slice(0, 300),
+                topics: Array.isArray(parsed.topics) ? parsed.topics.slice(0, 5) : [],
+                keyQA: Array.isArray(parsed.keyQA) ? parsed.keyQA.slice(0, 3).map(qa => ({
+                    q: (qa.q || '').slice(0, 200),
+                    a: (qa.a || '').slice(0, 300)
+                })) : [],
+                messageCount: thread.messages?.length || 0,
+                highlightText: (thread.highlight?.text || '').slice(0, 200),
+                digestMethod: 'llm'
+            };
+        } catch (parseErr) {
+            console.warn('[Digest] LLM digest failed, falling back:', parseErr);
+            return createDigestRuleBased(thread, ctx);
+        }
+    }
+
+    /**
+     * Embed a digest into VectorStore for semantic search.
+     */
+    async function embedDigest(digest) {
+        if (!window.EmbeddingService || !window.VectorStore) return;
+
+        const textParts = [
+            digest.pageTitle || '',
+            digest.summary || '',
+            ...(digest.topics || []),
+            ...(digest.keyQA || []).map(qa => `${qa.q} ${qa.a}`)
+        ].filter(Boolean);
+
+        const textToEmbed = textParts.join('\n').trim();
+        if (!textToEmbed) return;
+
+        try {
+            const apiKey = await getApiKey();
+            let embedding;
+
+            if (apiKey) {
+                embedding = await EmbeddingService.generateEmbedding(textToEmbed, apiKey);
+            } else {
+                // Use proxy embedding via background service worker
+                const response = await chrome.runtime.sendMessage({
+                    type: 'ATOM_PROXY_EMBED',
+                    text: textToEmbed
+                });
+                if (response?.data?.embedding?.values) {
+                    embedding = response.data.embedding.values;
+                }
+            }
+
+            if (embedding) {
+                await VectorStore.storeEmbedding(digest.digestId, embedding, {
+                    type: 'digest',
+                    domain: digest.domain,
+                    title: digest.pageTitle,
+                    summary: digest.summary
+                });
+                console.log(`[Digest] Embedded digest ${digest.digestId}`);
+            }
+        } catch (err) {
+            console.warn('[Digest] Embedding failed (non-fatal):', err);
+        }
+    }
+
+    /**
+     * Digest all qualifying threads for the current/old page.
+     * Fire-and-forget — does not block UI.
+     */
+    async function digestActiveThreads(threadsToDigest, ctx) {
+        if (!threadsToDigest?.length || !ctx) return;
+        if (!window.ConversationDigestStore) return;
+
+        for (const thread of threadsToDigest) {
+            if (!shouldDigestThread(thread)) continue;
+
+            try {
+                const tier = await getUserTier();
+                const digest = tier === 'pro'
+                    ? await createDigestLLM(thread, ctx)
+                    : createDigestRuleBased(thread, ctx);
+
+                await ConversationDigestStore.addDigest(digest);
+                await embedDigest(digest);
+
+                thread._digested = true;
+                console.log(`[Digest] Created ${digest.digestMethod} digest for thread ${thread.id}`);
+            } catch (err) {
+                console.warn('[Digest] Failed for thread:', thread.id, err);
+            }
+        }
+    }
+
+    // Visibility change: digest when sidepanel is hidden
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden && threads.length > 0 && pageContext) {
+            digestActiveThreads([...threads], { ...pageContext });
+        }
+    });
+
+    /**
+     * Reinforce digests when user revisits a page.
+     * Fire-and-forget, non-blocking.
+     */
+    async function reinforceOnPageVisit(pageUrl, domain) {
+        if (!window.ConversationDigestStore) return;
+
+        try {
+            const digests = await ConversationDigestStore.loadDigests();
+            let reinforced = 0;
+
+            for (const d of digests) {
+                const urlMatch = d.pageUrl && pageUrl && d.pageUrl === pageUrl;
+                const domainMatch = d.domain && domain && d.domain === domain;
+
+                if (urlMatch) {
+                    await ConversationDigestStore.reinforceDigest(d.digestId, 0.15);
+                    reinforced++;
+                } else if (domainMatch) {
+                    await ConversationDigestStore.reinforceDigest(d.digestId, 0.05);
+                    reinforced++;
+                }
+            }
+
+            if (reinforced > 0) {
+                console.log(`[Memory] Reinforced ${reinforced} digests on page visit`);
+            }
+        } catch (err) {
+            console.warn('[Memory] Reinforcement on page visit failed:', err);
+        }
+    }
+
+    function renderThreadList() {
+        // Phase 2: Render only the inline thread list (bottom tab path removed)
+        renderInlineThreadList();
+        updateAllCounts();
+    }
+
+    // ═══ Phase 2: Inline Thread List (replaces bottom tab) ═══
+    let _inlineThreadPanel = null;
+
+    function toggleInlineThreadList() {
+        if (_inlineThreadPanel) {
+            _inlineThreadPanel.remove();
+            _inlineThreadPanel = null;
+            return;
+        }
+        _inlineThreadPanel = document.createElement('div');
+        _inlineThreadPanel.className = 'sp-inline-threads';
+        _inlineThreadPanel.innerHTML = '<div class="sp-inline-threads__header"><span>' + getMessage('sp_inline_threads_header', 'Chat History') + '</span><button class="sp-inline-threads__close">&times;</button></div><div class="sp-inline-threads__list"></div>';
+        const chat = elements.messages;
+        if (chat) chat.parentNode.insertBefore(_inlineThreadPanel, chat);
+        _inlineThreadPanel.querySelector('.sp-inline-threads__close').addEventListener('click', () => {
+            _inlineThreadPanel?.remove();
+            _inlineThreadPanel = null;
+        });
+        renderInlineThreadList();
+    }
+
+    function renderInlineThreadList() {
+        if (!_inlineThreadPanel) return;
+        const listEl = _inlineThreadPanel.querySelector('.sp-inline-threads__list');
+        if (!listEl) return;
+        const visibleThreads = getVisibleThreads();
+        if (!visibleThreads.length) {
+            listEl.innerHTML = '<div class="sp-note-empty">' + getMessage('sp_no_discussions', 'No chats yet') + '</div>';
+            return;
+        }
+        listEl.innerHTML = visibleThreads.map(t => {
+            const isActive = t.id === activeThreadId;
+            const preview = t.isPageDiscussion
+                ? (t.highlight?.title || t.highlight?.text || getMessage('sp_thread_page_discussion', 'Page Discussion')).slice(0, 60)
+                : (t.highlight?.text || t.highlight?.title || getMessage('sp_thread_empty', 'Empty')).slice(0, 60);
+            return `<div class="sp-thread-item ${isActive ? 'active' : ''}" data-thread-id="${t.id}">
+                <div class="sp-thread-info"><div class="sp-thread-preview">${escapeHtml(preview)}...</div>
+                <div class="sp-thread-meta">${formatTime(t.createdAt)}</div></div>
+                <button class="sp-thread-delete" data-del-id="${t.id}" title="Delete">&times;</button></div>`;
+        }).reverse().join('');
+        listEl.querySelectorAll('.sp-thread-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                if (e.target.closest('.sp-thread-delete')) return;
                 activeThreadId = item.dataset.threadId;
-                renderThreadList();
+                renderInlineThreadList();
+                renderActiveThread();
+                switchMainTab('chat');
+            });
+        });
+        listEl.querySelectorAll('.sp-thread-delete').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const threadId = btn.dataset.delId;
+                const idx = threads.findIndex(t => t.id === threadId);
+                if (idx === -1) return;
+                threads.splice(idx, 1);
+                if (threadId === activeThreadId) {
+                    const remaining = getVisibleThreads();
+                    activeThreadId = remaining.length > 0 ? remaining[remaining.length - 1].id : null;
+                }
+                _skipStorageReload = true;
+                await saveThreadsToStorage();
+                renderInlineThreadList();
                 renderActiveThread();
             });
         });
-
-        updateAllCounts();
+        const badge = document.getElementById('menu-threads-count');
+        if (badge) badge.textContent = visibleThreads.length;
     }
 
     const INSIGHT_TOGGLE_ICONS = {
@@ -2978,6 +3172,12 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
 
         try {
             const previousUrl = pageContext?.url || '';
+            // Phase B: Digest old threads before loading new page (fire-and-forget)
+            if (threads.length > 0 && pageContext) {
+                const oldThreads = [...threads];
+                const oldCtx = { ...pageContext };
+                setTimeout(() => digestActiveThreads(oldThreads, oldCtx), 0);
+            }
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
             if (!tab) {
                 setContextStatus('error', 'No active tab');
@@ -3042,7 +3242,6 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
 
                 // Ensure session + mode UI + primer
                 await ensureActiveSession();
-                await initLearningModeUI();
                 await checkAndShowPrimer();
 
                 // Phase 3: Check for related memory (non-blocking)
@@ -3050,8 +3249,14 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
                     console.warn('[SidePanel] Related memory check failed:', err.message);
                 });
 
+                // Phase D: Reinforce digests when user revisits a page
+                setTimeout(() => reinforceOnPageVisit(pageContext.url, currentDomain), 2000);
+
                 // Update capture-post button visibility based on domain
                 updateCapturePostVisibility();
+
+                // Update notebook smart link (non-blocking)
+                updateNotebookLink().catch(() => { });
             } else {
                 // Log error only if all retries failed
                 if (lastError) {
@@ -3061,10 +3266,6 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
                 pageContext = null;
                 elements.primerRoot?.classList.remove('active');
                 if (elements.primerRoot) elements.primerRoot.innerHTML = '';
-                elements.modeRoot?.classList.remove('active');
-                if (elements.modeRoot) elements.modeRoot.innerHTML = '';
-                elements.memoryRoot?.classList.remove('active');
-                if (elements.memoryRoot) elements.memoryRoot.innerHTML = '';
             }
         } catch (error) {
             console.error('[SidePanel] Error:', error);
@@ -3072,10 +3273,6 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
             pageContext = null;
             elements.primerRoot?.classList.remove('active');
             if (elements.primerRoot) elements.primerRoot.innerHTML = '';
-            elements.modeRoot?.classList.remove('active');
-            if (elements.modeRoot) elements.modeRoot.innerHTML = '';
-            elements.memoryRoot?.classList.remove('active');
-            if (elements.memoryRoot) elements.memoryRoot.innerHTML = '';
         }
     }
 
@@ -3250,38 +3447,38 @@ Tráº£ lá»i ngáº¯n gá»n (2-3 cÃ¢u má»—i Ä‘iá»ƒm).`;
         const prompts = {
             'summarize': `Summarize this text concisely.
 Format:
-ðŸ“ Key phrases: [list 2-3 key phrases EXACTLY from the text]
-ðŸ“ Summary: [your summary in Vietnamese]
+[Key phrases]: list 2-3 key phrases EXACTLY from the text
+[Summary]: your summary in Vietnamese
 
 Text: "${highlightText.slice(0, promptMaxChars)}"`,
 
             'keypoints': `Extract the key points from this text.
 Format each point with evidence:
-1. ðŸ“ "quote" â†’ [your interpretation in Vietnamese]
+1. "quote" -> [your interpretation in Vietnamese]
 (Note: The quote must be EXACTLY from the original text in original language)
-2. ðŸ“ "quote" â†’ [your interpretation in Vietnamese]
+2. "quote" -> [your interpretation in Vietnamese]
 
 Text: "${highlightText.slice(0, promptMaxChars)}"`,
 
             'explain': `Explain this text simply and clearly.
 Format:
-ðŸ“ Evidence: "[EXACT QUOTE from text in ORIGINAL LANGUAGE]"
-ðŸ’¡ Explanation: [Explain key concepts. IF user_persona is set, adapt complexity and use relevant analogies. ELSE, use simple ELI5 style. Contextualize: Who/What/Why? What is the implication?]
+[Evidence]: "[EXACT QUOTE from text in ORIGINAL LANGUAGE]"
+[Explanation]: [Explain key concepts. IF user_persona is set, adapt complexity and use relevant analogies. ELSE, use simple ELI5 style. Contextualize: Who/What/Why? What is the implication?]
 
 Text: "${highlightText.slice(0, promptMaxChars)}"`,
 
             'counter': `Provide counter-arguments to this text.
 Format:
-ðŸ“ Author's claim: [EXACT QUOTE from text in ORIGINAL LANGUAGE]
-ðŸ¤” Counter-argument: [your counter-point in Vietnamese]
-âš–ï¸ Considerations: [balanced view in Vietnamese]
+[Author claim]: [EXACT QUOTE from text in ORIGINAL LANGUAGE]
+[Counter-argument]: [your counter-point in Vietnamese]
+[Considerations]: [balanced view in Vietnamese]
 
 Text: "${highlightText.slice(0, promptMaxChars)}"`,
 
             'connect': `How does this relate to the broader context?
 Format:
-ðŸ“ This passage: [EXACT QUOTE from text in ORIGINAL LANGUAGE]
-ðŸ”— Connection: [how it relates to other concepts in Vietnamese]
+[This passage]: [EXACT QUOTE from text in ORIGINAL LANGUAGE]
+[Connection]: [how it relates to other concepts in Vietnamese]
 
 Text: "${highlightText.slice(0, promptMaxChars)}"`
         };
@@ -3345,7 +3542,24 @@ Text: "${highlightText.slice(0, promptMaxChars)}"`
             // Determine context level based on action and conversation state
             const messageCount = thread.messages?.filter(m => m.role === 'assistant').length || 0;
             const contextLevel = determineContextLevel(action, messageCount);
-            const systemPrompt = buildSystemPrompt(thread, contextLevel, action);
+
+            // Phase C: Hybrid Recall — find related past conversations
+            let recalledDigests = [];
+            if (window.HybridRecallService && messageCount <= 8 && !action) {
+                try {
+                    recalledDigests = await HybridRecallService.hybridRecall(
+                        userMessage, pageContext
+                    );
+                } catch (recallErr) {
+                    console.warn('[HybridRecall] Failed:', recallErr);
+                }
+            }
+
+            // Phase 4: gather reading context (non-blocking)
+            let readingContext = null;
+            try { readingContext = await buildReadingContext(); } catch { /* proceed without */ }
+
+            const systemPrompt = buildSystemPrompt(thread, contextLevel, action, recalledDigests, readingContext);
             const conversationHistory = buildConversationHistory(thread, userMessage);
             const response = await SP.callLLMAPI(systemPrompt, conversationHistory, {
                 priority: 'vip',
@@ -3521,7 +3735,7 @@ Text: "${highlightText.slice(0, promptMaxChars)}"`
         msgDiv.innerHTML = `
             <div class="sp-message-content">${escapeHtml(message)}</div>
             <div class="sp-message-pending-indicator">
-                <span class="pending-icon">â³</span>
+                <span class="pending-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
                 <span class="pending-text">${getMessage('sp_waiting_connection', 'Waiting for connection...')}</span>
             </div>
         `;
@@ -3540,7 +3754,7 @@ Text: "${highlightText.slice(0, promptMaxChars)}"`
         errorDiv.className = 'sp-message error';
         errorDiv.innerHTML = `
             <div class="sp-error-header">
-                <span class="sp-error-icon">âš ï¸</span>
+                <span class="sp-error-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg></span>
                 <span class="sp-error-title">${escapeHtml(title)}</span>
             </div>
             <div class="sp-error-description">${escapeHtml(description)}</div>
@@ -3580,13 +3794,46 @@ Text: "${highlightText.slice(0, promptMaxChars)}"`
         }
     }
 
+    // ═══ Phase 4: Reading Context for AI ═══
+    async function buildReadingContext() {
+        const ctx = { reading: null, highlights: [], patterns: null };
+        try {
+            // Reading session stats
+            if (activeSessionId && typeof ReadingSessionService !== 'undefined') {
+                const session = await ReadingSessionService.getSessionById(activeSessionId);
+                if (session) {
+                    const elapsed = Date.now() - (session.startedAt || Date.now());
+                    ctx.reading = {
+                        duration: Math.floor(elapsed / 60000),
+                        highlightCount: session.highlights?.length || 0,
+                        insightCount: session.insights?.length || 0
+                    };
+                }
+            }
+
+            // Recent SRQ highlights for this page
+            if (pageContext?.url) {
+                const { loadCards } = await import('./storage/srq_store.js');
+                const cards = await loadCards();
+                ctx.highlights = cards
+                    .filter(c => c.sourceUrl === pageContext.url && c.selectedText)
+                    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+                    .slice(0, 3)
+                    .map(c => c.selectedText.slice(0, 120));
+            }
+        } catch (err) {
+            console.warn('[Phase4] buildReadingContext failed:', err);
+        }
+        return ctx;
+    }
+
     /**
      * Build system prompt with smart context levels
      * @param {Object} thread - Current thread
      * @param {string} contextLevel - MINIMAL, STANDARD, or FULL
      * @param {string} action - Quick action type (optional)
      */
-    function buildSystemPrompt(thread, contextLevel = CONTEXT_LEVELS.STANDARD, action = null) {
+    function buildSystemPrompt(thread, contextLevel = CONTEXT_LEVELS.STANDARD, action = null, recalledDigests = [], readingContext = null) {
         const lang = navigator.language.startsWith('vi') ? 'Vietnamese' : 'English';
         const highlight = thread?.highlight || {};
         const highlightText = highlight.text || '';
@@ -3657,14 +3904,38 @@ ${pageContext.content.slice(0, 12000)}
 `;
         }
 
+        // Phase 4: Reading context enrichment
+        if (readingContext && contextLevel !== CONTEXT_LEVELS.MINIMAL) {
+            let rcBlock = '';
+            if (readingContext.reading) {
+                rcBlock += `- Reading for: ${readingContext.reading.duration}m`;
+                if (readingContext.reading.highlightCount > 0) {
+                    rcBlock += `, ${readingContext.reading.highlightCount} highlights`;
+                }
+                if (readingContext.reading.insightCount > 0) {
+                    rcBlock += `, ${readingContext.reading.insightCount} insights`;
+                }
+                rcBlock += '\n';
+            }
+            if (readingContext.highlights?.length > 0) {
+                rcBlock += `- User saved ${readingContext.highlights.length} note(s) from this page:\n`;
+                readingContext.highlights.forEach(h => {
+                    rcBlock += `  • "${h}"\n`;
+                });
+            }
+            if (rcBlock) {
+                prompt += `\nREADING CONTEXT:\n${rcBlock}`;
+            }
+        }
+
         // Add evidence requirement for better grounding
         prompt += `
 RESPONSE REQUIREMENTS:
 - Focus on the HIGHLIGHTED TEXT when answering
 - Be clear and structured; use bullet points when appropriate
 - When explaining or analyzing, cite specific phrases from the text using:
-  ðŸ“ Evidence: "exact quote"
-  ðŸ’¡ Explanation: your analysis
+  [Evidence]: "exact quote"
+  [Explanation]: your analysis
 `;
 
         if (modePrompt) {
@@ -3677,6 +3948,14 @@ RESPONSE REQUIREMENTS:
 FULL PAGE CONTENT FOR REFERENCE:
 ${(pageContext?.content || '').slice(0, 10000)}
 `;
+        }
+
+        // Phase C: Inject conversation memory
+        if (recalledDigests.length > 0 && contextLevel !== CONTEXT_LEVELS.MINIMAL) {
+            const memoryBlock = window.HybridRecallService?.formatDigestsForPrompt(recalledDigests);
+            if (memoryBlock) {
+                prompt += memoryBlock;
+            }
         }
 
         if (commandSystemEnabled) {
@@ -3798,9 +4077,9 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
 
         container.innerHTML = `
             <div class="sp-auto-summary-header">
-                <span>ðŸ’¡</span>
+                <span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>
                 <span>${title}</span>
-                <button class="sp-auto-summary-dismiss" aria-label="${actionDismiss}">Ã—</button>
+                <button class="sp-auto-summary-dismiss" aria-label="${actionDismiss}">&times;</button>
             </div>
             <div class="sp-auto-summary-body">
                 <div class="sp-auto-summary-section">
@@ -3863,7 +4142,7 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
     function createInsightFromSummary(thread) {
         const data = thread?.autoSummaryData;
         if (!data || !data.takeaways?.length) return;
-        const insight = data.takeaways.join(' â€¢ ');
+        const insight = data.takeaways.join(' \u2022 ');
         thread.refinedInsight = insight;
         saveThreadsToStorage();
         renderAtomicThought(insight);
@@ -4399,10 +4678,47 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
     }
 
     // Listen for SRQ card changes to refresh widget (debounced)
+    // ═══ Phase 2E: Chat Nudge System ═══
+    function renderChatNudge(nudgeData) {
+        if (!elements.messages) return;
+        const bubble = document.createElement('div');
+        bubble.className = 'sp-nudge-bubble';
+        const actionsHtml = (nudgeData.actions || []).map(a =>
+            `<button class="sp-nudge-action" data-prompt="${escapeHtml(a.prompt || a.label)}">${escapeHtml(a.label)}</button>`
+        ).join('');
+        bubble.innerHTML = `<div class="sp-nudge-icon">💡</div><div class="sp-nudge-body"><div class="sp-nudge-text">${escapeHtml(nudgeData.message || '')}</div><div class="sp-nudge-actions">${actionsHtml}</div></div>`;
+        bubble.querySelectorAll('.sp-nudge-action').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const prompt = btn.dataset.prompt;
+                if (prompt && elements.userInput) {
+                    elements.userInput.value = prompt;
+                    elements.userInput.focus();
+                    bubble.remove();
+                }
+            });
+        });
+        elements.messages.appendChild(bubble);
+        elements.messages.scrollTop = elements.messages.scrollHeight;
+    }
+
     chrome.runtime.onMessage.addListener((msg) => {
+        if (msg?.type === 'CHAT_NUDGE' && msg.nudge) {
+            renderChatNudge(msg.nudge);
+            return;
+        }
         if (msg?.type === "SRQ_CARDS_UPDATED") {
             // Wave 2 P1: Optional payload (reason, changedIds) - backward compatible
             debouncedRefreshSRQWidget();
+            // Refresh notebook smart link when cards are exported
+            updateNotebookLink().catch(() => { });
+            // Invalidate review cards cache when SRQ data changes
+            if (activeMainTab === 'cards') {
+                window.ReviewCards?.refresh();
+            }
+            // Show toast when highlight is auto-exported to NLM
+            if (msg.reason === 'auto_exported') {
+                showToast(getMessage('sp_toast_auto_exported', 'Saved to Knowledge \u2713'), 'success');
+            }
         } else if (msg?.type === "SRQ_SETTINGS_CHANGED") {
             debouncedRefreshSRQWidget();
         }
@@ -4475,25 +4791,25 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
             if (status.isTrial && status.trialDaysLeft > 7) {
                 // Trial active, plenty of days left
                 className = 'trial-active';
-                icon = '🥂';
+                icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 22h8"/><path d="M12 11v11"/><path d="m19 3-7 8-7-8Z"/></svg>';
                 text = getMessage('trial_banner_active', `Early Access Pro — ${status.trialDaysLeft} days left`).replace('$1', status.trialDaysLeft);
                 usage = `${status.used}/${status.limit} ${getMessage('trial_banner_today', 'today')}`;
             } else if (status.isTrial && status.trialDaysLeft <= 7) {
                 // Trial warning
                 className = 'trial-warning';
-                icon = '⏳';
+                icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>';
                 text = getMessage('trial_banner_warning', `Trial ending soon — ${status.trialDaysLeft} days left`).replace('$1', status.trialDaysLeft);
                 usage = `${status.used}/${status.limit} ${getMessage('trial_banner_today', 'today')}`;
             } else if (!status.isTrial && !status.allowed) {
                 // Free tier, limit reached
                 className = 'trial-expired';
-                icon = '🔒';
+                icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
                 text = getMessage('trial_banner_limit_reached', 'Daily limit reached');
                 usage = `${status.used}/${status.limit}`;
             } else if (!status.isTrial) {
                 // Free tier, active
                 className = 'trial-expired';
-                icon = '💡';
+                icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>';
                 text = getMessage('trial_banner_free', 'Free tier');
                 usage = `${status.used}/${status.limit} ${getMessage('trial_banner_today', 'today')}`;
             }
@@ -4535,7 +4851,7 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
 
             banner.className = 'sp-trial-banner visible update-available';
             banner.innerHTML = `
-                <span class="sp-trial-banner__icon">🚀</span>
+                <span class="sp-trial-banner__icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09Z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2Z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></span>
                 <span class="sp-trial-banner__text">
                     ${getMessage('update_available', `v${status.latestVersion} available`)}
                     — <a class="sp-trial-banner__link" href="${status.downloadUrl}" target="_blank">${getMessage('update_download', 'Download')}</a>
@@ -4554,7 +4870,12 @@ Language: ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'English'}`;
     }
 
     // Auto-refresh Saved tab when SRQ cards are updated
-    chrome.runtime.onMessage.addListener((msg) => {
+    chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+        // Silent Brain Phase 1: PONG handler for isSidepanelOpen() detection
+        if (msg?.type === 'PING_SIDEPANEL') {
+            sendResponse({ pong: true });
+            return true;
+        }
         if (msg?.type === 'SRQ_CARDS_UPDATED') {
             console.log('[SRQ] Cards updated, refreshing Saved tab');
             const activeTab = document.querySelector('.sp-main-tab-btn.active');

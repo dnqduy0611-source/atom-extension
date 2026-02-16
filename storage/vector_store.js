@@ -235,6 +235,22 @@
         }
     }
 
+    /**
+     * Gets embeddings filtered by type.
+     * @param {string} type - 'session' | 'digest'
+     * @returns {Promise<Array>}
+     */
+    async function getEmbeddingsByType(type) {
+        if (!type) return [];
+        try {
+            const all = await getAllEmbeddings();
+            return all.filter(e => e.type === type);
+        } catch (err) {
+            console.error('[VectorStore] Get by type failed:', err);
+            return [];
+        }
+    }
+
     window.VectorStore = {
         openDatabase,
         storeEmbedding,
@@ -244,6 +260,7 @@
         getEmbeddingsByDomain,
         getEmbeddingCount,
         clearAllEmbeddings,
-        getRecentEmbeddings
+        getRecentEmbeddings,
+        getEmbeddingsByType
     };
 })();

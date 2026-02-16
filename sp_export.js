@@ -136,16 +136,21 @@
                 command: 'sidepanel_quick_save'
             };
 
-            // Send to background for NLM processing
+            // Send to background for NLM processing (also saves to local memory)
             const response = await chrome.runtime.sendMessage({
                 type: 'ATOM_SAVE_THREAD_TO_NLM',
                 payload: note
             });
 
-            if (response?.ok) {
-                // Mark as exported
-                thread.nlmExported = true;
-                thread.nlmExportedAt = Date.now();
+            // Treat as success if NLM export worked OR data was saved to local memory
+            const saved = response?.ok || response?.savedToMemory;
+
+            if (saved) {
+                // Mark thread state
+                if (response?.ok) {
+                    thread.nlmExported = true;
+                    thread.nlmExportedAt = Date.now();
+                }
                 if (SP.saveThreadsToStorage) await SP.saveThreadsToStorage();
                 if (SP.renderThreadList) SP.renderThreadList();
                 SP.checkAndShowContextualTooltip?.('first_save');
@@ -155,27 +160,28 @@
                     ? getMessage('sp_toast_saved', 'Saved to Knowledge!')
                     : getMessage('sp_toast_quick_saved', 'Highlight saved!');
                 showToast(msg, 'success');
-
-                // Also create SRQ card so Saved tab shows this highlight
-                try {
-                    const srqRes = await chrome.runtime.sendMessage({
-                        type: 'SRQ_CREATE_CARD',
-                        payload: {
-                            url: thread.highlight?.url || pageContext?.url || '',
-                            title: thread.highlight?.title || pageContext?.title || '',
-                            domain: new URL(thread.highlight?.url || pageContext?.url || 'https://unknown').hostname,
-                            selectedText: thread.highlight?.text || '',
-                            command: 'sidepanel_quick_save',
-                            atomicThought: thread.refinedInsight || ''
-                        }
-                    });
-                    console.log('[QuickSave] SRQ card result:', srqRes);
-                } catch (srqErr) {
-                    console.warn('[QuickSave] SRQ card creation failed:', srqErr);
-                }
             } else {
                 const failure = getNlmExportFailureToast(response?.reason || response?.error);
                 showToast(failure.message, failure.type);
+            }
+
+            // Always create SRQ card so Saved tab shows this highlight
+            // (independent of NLM export success)
+            try {
+                const srqRes = await chrome.runtime.sendMessage({
+                    type: 'SRQ_CREATE_CARD',
+                    payload: {
+                        url: thread.highlight?.url || pageContext?.url || '',
+                        title: thread.highlight?.title || pageContext?.title || '',
+                        domain: new URL(thread.highlight?.url || pageContext?.url || 'https://unknown').hostname,
+                        selectedText: thread.highlight?.text || '',
+                        command: 'sidepanel_quick_save',
+                        atomicThought: thread.refinedInsight || ''
+                    }
+                });
+                console.log('[QuickSave] SRQ card result:', srqRes);
+            } catch (srqErr) {
+                console.warn('[QuickSave] SRQ card creation failed:', srqErr);
             }
 
         } catch (e) {
@@ -202,7 +208,7 @@
         let discussionSummary = '';
         if (thread.messages.length > 0) {
             discussionSummary = thread.messages.map(m =>
-                `${m.role === 'user' ? '👤' : '🤖'} ${m.content.slice(0, 500)}`
+                `${m.role === 'user' ? '[User]' : '[AI]'} ${m.content.slice(0, 500)}`
             ).join('\n\n');
         }
 
@@ -239,24 +245,6 @@
                 await maybeAddInsightReviewCard(thread);
                 showToast(getMessage('sp_toast_saved', 'Saved to Knowledge!'), 'success');
                 SP.checkAndShowContextualTooltip?.('first_save');
-
-                // Also create SRQ card so Saved tab shows this highlight
-                try {
-                    const srqRes = await chrome.runtime.sendMessage({
-                        type: 'SRQ_CREATE_CARD',
-                        payload: {
-                            url: thread.highlight?.url || pageContext?.url || '',
-                            title: thread.highlight?.title || pageContext?.title || '',
-                            domain: new URL(thread.highlight?.url || pageContext?.url || 'https://unknown').hostname,
-                            selectedText: thread.highlight?.text || '',
-                            command: 'sidepanel_thread',
-                            atomicThought: thread.refinedInsight || ''
-                        }
-                    });
-                    console.log('[SaveToNLM] SRQ card result:', srqRes);
-                } catch (srqErr) {
-                    console.warn('[SaveToNLM] SRQ card creation failed:', srqErr);
-                }
             } else {
                 if (response?.savedToMemory) {
                     await maybeAddInsightReviewCard(thread);
@@ -266,6 +254,25 @@
                     const failure = getNlmExportFailureToast(response?.reason || response?.error);
                     showToast(failure.message, failure.type);
                 }
+            }
+
+            // Always create SRQ card so Saved tab shows this highlight
+            // (independent of NLM export success)
+            try {
+                const srqRes = await chrome.runtime.sendMessage({
+                    type: 'SRQ_CREATE_CARD',
+                    payload: {
+                        url: thread.highlight?.url || pageContext?.url || '',
+                        title: thread.highlight?.title || pageContext?.title || '',
+                        domain: new URL(thread.highlight?.url || pageContext?.url || 'https://unknown').hostname,
+                        selectedText: thread.highlight?.text || '',
+                        command: 'sidepanel_thread',
+                        atomicThought: thread.refinedInsight || ''
+                    }
+                });
+                console.log('[SaveToNLM] SRQ card result:', srqRes);
+            } catch (srqErr) {
+                console.warn('[SaveToNLM] SRQ card creation failed:', srqErr);
             }
         } catch (e) {
             console.error('[NLM] Save error:', e);
@@ -367,7 +374,7 @@
         if (btn) {
             btn.disabled = false;
             const saveAllLabel = getMessage('sp_btn_save_all_knowledge', 'Save All to Knowledge');
-            btn.innerHTML = `📚 ${saveAllLabel}`;
+            btn.innerHTML = saveAllLabel;
         }
     }
 
@@ -442,7 +449,7 @@ Be concise. Respond in ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'E
         dialog.innerHTML = `
             <div class="sp-export-card">
                 <div class="sp-export-header">
-                    <h3>📥 ${dialogTitle}</h3>
+                    <h3>${dialogTitle}</h3>
                 </div>
 
                 <div class="sp-export-body">
@@ -452,7 +459,7 @@ Be concise. Respond in ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'E
                             <label class="sp-format-option">
                                 <input type="radio" name="export-format" value="markdown" checked>
                                 <span class="sp-format-label">
-                                    <span class="sp-format-icon">📄</span>
+                                    <span class="sp-format-icon">MD</span>
                                     <span class="sp-format-name">Markdown</span>
                                     <span class="sp-format-ext">.md</span>
                                 </span>
@@ -460,7 +467,7 @@ Be concise. Respond in ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'E
                             <label class="sp-format-option">
                                 <input type="radio" name="export-format" value="json">
                                 <span class="sp-format-label">
-                                    <span class="sp-format-icon">📦</span>
+                                    <span class="sp-format-icon">{}</span>
                                     <span class="sp-format-name">JSON</span>
                                     <span class="sp-format-ext">.json</span>
                                 </span>
@@ -468,7 +475,7 @@ Be concise. Respond in ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'E
                             <label class="sp-format-option">
                                 <input type="radio" name="export-format" value="text">
                                 <span class="sp-format-label">
-                                    <span class="sp-format-icon">📃</span>
+                                    <span class="sp-format-icon">TXT</span>
                                     <span class="sp-format-name">Plain Text</span>
                                     <span class="sp-format-ext">.txt</span>
                                 </span>
@@ -481,19 +488,19 @@ Be concise. Respond in ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'E
                         <div class="sp-export-options">
                             <label class="sp-checkbox-option">
                                 <input type="checkbox" id="export-insights" checked>
-                                <span>💡 ${getMessage('sp_export_opt_insights', 'Key Insights')}</span>
+                                <span>${getMessage('sp_export_opt_insights', 'Key Insights')}</span>
                             </label>
                             <label class="sp-checkbox-option">
                                 <input type="checkbox" id="export-notes" checked>
-                                <span>📝 ${getMessage('sp_export_opt_notes', 'Quick Notes')}</span>
+                                <span>${getMessage('sp_export_opt_notes', 'Quick Notes')}</span>
                             </label>
                             <label class="sp-checkbox-option">
                                 <input type="checkbox" id="export-chat">
-                                <span>💬 ${getMessage('sp_export_opt_chat', 'Full Chat History')}</span>
+                                <span>${getMessage('sp_export_opt_chat', 'Full Chat History')}</span>
                             </label>
                             <label class="sp-checkbox-option">
                                 <input type="checkbox" id="export-source" checked>
-                                <span>🔗 ${getMessage('sp_export_opt_source', 'Source Info')}</span>
+                                <span>${getMessage('sp_export_opt_source', 'Source Info')}</span>
                             </label>
                         </div>
                     </div>
@@ -598,7 +605,7 @@ Be concise. Respond in ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'E
         if (options.insights) {
             const insightThreads = threads.filter(t => t.refinedInsight);
             if (insightThreads.length > 0) {
-                md += `## 💡 Key Insights\n\n`;
+                md += `## Key Insights\n\n`;
                 insightThreads.forEach((t, i) => {
                     md += `${i + 1}. ${t.refinedInsight}\n`;
                 });
@@ -608,7 +615,7 @@ Be concise. Respond in ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'E
 
         // Quick Notes
         if (options.notes && (SP.parkingLot || []).length > 0) {
-            md += `## 📝 Quick Notes\n\n`;
+            md += `## Quick Notes\n\n`;
             (SP.parkingLot || []).forEach((note, i) => {
                 md += `- ${note.text}\n`;
             });
@@ -617,7 +624,7 @@ Be concise. Respond in ${navigator.language.startsWith('vi') ? 'Vietnamese' : 'E
 
         // Full Chat History
         if (options.chat) {
-            md += `## 💬 Discussions\n\n`;
+            md += `## Discussions\n\n`;
             threads.forEach((thread, idx) => {
                 md += `### ${idx + 1}. Highlight\n\n`;
                 md += `> ${thread.highlight?.text || 'N/A'}\n\n`;
@@ -800,7 +807,7 @@ ${aiSummary}
 
         threads.forEach((thread, idx) => {
             const statusEmoji = thread.status === 'saved' ? '✔' :
-                thread.status === 'parked' ? '🅿️' : '📌';
+                thread.status === 'parked' ? 'P' : '-';
 
             markdown += `### ${idx + 1}. ${statusEmoji} Highlight
 
@@ -821,7 +828,7 @@ ${aiSummary}
                 markdown += `**Discussion:**
 `;
                 thread.messages.forEach(msg => {
-                    const role = msg.role === 'user' ? '👤 You' : '🤖 AI';
+                    const role = msg.role === 'user' ? 'You' : 'AI';
                     markdown += `\n${role}:\n${msg.content}\n`;
                 });
                 markdown += '\n';
@@ -869,7 +876,7 @@ ${aiSummary}
         if (btn) {
             btn.disabled = false;
             const downloadLabel = getMessage('sp_btn_download_notes', 'Download Notes');
-            btn.innerHTML = `📥 ${downloadLabel}`;
+            btn.innerHTML = downloadLabel;
         }
     }
 

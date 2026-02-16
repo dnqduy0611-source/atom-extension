@@ -8,35 +8,35 @@
         SUPPORTS: {
             id: 'supports',
             label: 'Supports',
-            icon: '✅',
+            icon: '✓',
             color: '#10B981',
             description: 'Provides evidence for'
         },
         CONTRADICTS: {
             id: 'contradicts',
             label: 'Contradicts',
-            icon: '⚠️',
+            icon: '⚠',
             color: '#EF4444',
             description: 'Conflicts with'
         },
         EXTENDS: {
             id: 'extends',
             label: 'Extends',
-            icon: '➕',
+            icon: '+',
             color: '#3B82F6',
             description: 'Builds upon'
         },
         SIMILAR: {
             id: 'similar',
             label: 'Similar',
-            icon: '🔄',
+            icon: '↻',
             color: '#8B5CF6',
             description: 'Covers similar topics'
         },
         APPLIES: {
             id: 'applies',
             label: 'Applies',
-            icon: '🔧',
+            icon: '⚙',
             color: '#F59E0B',
             description: 'Practical application of'
         }

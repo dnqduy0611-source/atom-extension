@@ -243,3 +243,79 @@ export async function getCardStats() {
 
     return stats;
 }
+
+// ===========================
+// Phase 2 Store Extensions
+// ===========================
+
+/**
+ * Get pending cards eligible for review reminder.
+ * @param {number} minAgeMs - Minimum card age in ms (default 4 hours)
+ * @param {number} minCount - Minimum count to trigger (default 5)
+ * @returns {Promise<{eligible: boolean, cards: Array, total: number}>}
+ */
+export async function getReviewableCards(minAgeMs = 4 * 3600000, minCount = 5) {
+    const cards = await loadCards();
+    const now = Date.now();
+    const reviewable = cards.filter(c =>
+        c?.status === "pending_review" &&
+        (now - (c.createdAt || 0)) > minAgeMs
+    );
+    return {
+        eligible: reviewable.length >= minCount,
+        cards: reviewable,
+        total: reviewable.length
+    };
+}
+
+/**
+ * Get card statistics for the current week (Monday to Sunday).
+ * @returns {Promise<Object>} { saved, reviewed, exported, weekStart }
+ */
+export async function getWeeklyStats() {
+    const cards = await loadCards();
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - diffToMonday);
+    weekStart.setHours(0, 0, 0, 0);
+    const weekStartMs = weekStart.getTime();
+
+    const stats = { saved: 0, reviewed: 0, exported: 0, weekStart: weekStartMs };
+
+    for (const card of cards) {
+        if (!card) continue;
+        const created = card.createdAt || 0;
+        if (created < weekStartMs) continue;
+
+        stats.saved++;
+        if (card.reviewedAt && card.reviewedAt >= weekStartMs) stats.reviewed++;
+        if (card.status === "exported" && card.exportedAt && card.exportedAt >= weekStartMs) stats.exported++;
+    }
+    return stats;
+}
+
+/**
+ * Mark multiple cards as reviewed (sets reviewedAt timestamp).
+ * @param {string[]} cardIds - Array of card IDs to mark
+ * @returns {Promise<number>} Number of cards updated
+ */
+export async function bulkUpdateReviewedAt(cardIds) {
+    if (!Array.isArray(cardIds) || cardIds.length === 0) return 0;
+    const cards = await loadCards();
+    const now = Date.now();
+    const idSet = new Set(cardIds);
+    let updated = 0;
+
+    for (const card of cards) {
+        if (card && idSet.has(card.cardId)) {
+            card.reviewedAt = now;
+            card.updatedAt = now;
+            updated++;
+        }
+    }
+
+    if (updated > 0) await saveCards(cards);
+    return updated;
+}

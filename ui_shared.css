@@ -1,47 +1,53 @@
-/* --- ATOM UI SHARED THEME --- */
+/* ================================================================
+   ATOM UI SHARED THEME
+   ================================================================
+   This file bridges the legacy variable names used across the app
+   to the new Design System tokens. Import design_system.css first.
+   
+   Legacy compat: Maps old var names → new Design System tokens.
+   ================================================================ */
+@import url('styles/design_system.css');
+
+/* ================================================================
+   LEGACY VARIABLE MAPPING
+   ================================================================
+   Many existing components use these old names.
+   We map them here so nothing breaks during migration.
+   ================================================================ */
 :root {
-    --background: #050505;
-    --foreground: #ffffff;
-    --primary: #10B981;
-    --primary-glow: rgba(16, 185, 129, 0.4);
-    --surface: rgba(255, 255, 255, 0.05);
-    --border: rgba(255, 255, 255, 0.1);
-    --muted: #a3a3a3;
-    --danger: #ef4444;
-    --danger-bg: rgba(239, 68, 68, 0.1);
+    /* Map legacy names to Design System */
+    --background: var(--bg);
+    --foreground: var(--text);
+    /* --primary:    already defined in design_system.css */
+    --primary-glow: rgba(var(--primary-rgb), 0.4);
+    /* --surface:    already defined in design_system.css */
+    /* --border:     already defined in design_system.css */
+    --muted: var(--text-secondary);
+    /* --danger:     already defined in design_system.css */
+    --danger-bg: var(--danger-soft);
 }
 
 body.light-mode {
-    --background: #F0FDFA;
-    --foreground: #111827;
-    --primary: #0D9488;
-    --primary-glow: rgba(13, 148, 136, 0.3);
-    --surface: #ffffff;
-    --border: #CCFBF1;
-    --muted: #4B5563;
-    --danger-bg: #FEE2E2;
+    --background: var(--bg);
+    --foreground: var(--text);
+    --primary-glow: rgba(var(--primary-rgb), 0.3);
+    --muted: var(--text-secondary);
+    --danger-bg: var(--danger-soft);
 }
 
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: var(--background);
-    color: var(--foreground);
-    margin: 0;
-    min-height: 100vh;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
+/* ================================================================
+   COMMON COMPONENTS (Legacy)
+   ================================================================ */
 
-/* --- COMMON COMPONENTS --- */
-
-/* Icon Button (Round, transparent) */
+/* Icon Button (Round, transparent) — legacy class */
 .icon-btn {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--surface);
     border: none;
-    color: var(--muted);
+    color: var(--text-secondary);
     cursor: pointer;
-    padding: 8px;
+    padding: var(--space-2);
     border-radius: 50%;
-    transition: all 0.2s;
+    transition: var(--transition-fast);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -49,18 +55,14 @@ body {
 
 .icon-btn:hover {
     color: var(--primary);
-    background: rgba(16, 185, 129, 0.1);
-}
-
-body.light-mode .icon-btn {
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--primary-wash);
 }
 
 /* Standard Header Controls Container */
 .header-controls {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: var(--space-5);
+    right: var(--space-5);
     display: flex;
-    gap: 8px;
+    gap: var(--space-2);
 }

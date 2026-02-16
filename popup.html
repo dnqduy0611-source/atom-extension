@@ -1,132 +1,117 @@
+<!-- popup.html — AmoNexus Status Dashboard -->
 <!DOCTYPE html>
 <html>
 
 <head>
     <meta charset="UTF-8">
-    <title data-i18n="popup_title">AmoNexus</title>
     <link rel="stylesheet" href="popup.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap"
-        rel="stylesheet">
 </head>
 
 <body>
-    <!-- Top bar: toggle in corner -->
-    <div class="pm-topbar">
-        <button id="btn-website" class="pm-topbar-link" aria-label="Website" title="amonexus.com">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Hero Branding — centered icon + neon title -->
+    <header class="pm-hero">
+        <button id="open-web" class="pm-web-link" title="amonexus.com">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10" />
                 <path d="M2 12h20" />
                 <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
             </svg>
         </button>
-        <label class="pm-toggle" title="Enable/Disable" data-i18n-title="popup_toggle_title">
-            <input type="checkbox" id="toggle-enabled" checked>
-            <span class="pm-toggle-slider"></span>
-        </label>
-    </div>
-
-    <!-- Centered branding -->
-    <div class="pm-hero">
         <div class="pm-logo-wrap">
-            <img src="icons/icon128.png" class="pm-logo" alt="AmoNexus">
+            <div class="pm-halo"></div>
+            <img class="pm-logo" src="icons/icon128.png" alt="Amo">
         </div>
-        <span class="pm-title" data-i18n="popup_title">AmoNexus</span>
-    </div>
+        <div class="pm-brand">
+            <span class="pm-title">AmoNexus</span>
+            <span class="pm-status" id="status-indicator">Active</span>
+        </div>
+    </header>
 
-    <!-- Active Focus State -->
-    <div id="focus-badge" class="pm-card" style="display: none;">
-        <div class="pm-focus">
-            <span id="focus-phase" class="pm-focus-label" data-i18n="popup_focus_session">FOCUS SESSION</span>
-            <span id="focus-time" class="pm-focus-time">00:00</span>
-            <div class="pm-focus-controls">
-                <button class="pm-focus-ctrl" id="popup-pause" data-i18n="btnPause">Pause</button>
-                <button class="pm-focus-ctrl pm-focus-ctrl--stop" id="popup-stop" data-i18n="btnStop">Stop</button>
+    <!-- Today's Stats -->
+    <section class="pm-stats" id="today-stats">
+        <div class="pm-stat">
+            <span class="pm-stat-value" id="stat-pages">0</span>
+            <span class="pm-stat-label">pages read</span>
+        </div>
+        <div class="pm-stat">
+            <span class="pm-stat-value" id="stat-highlights">0</span>
+            <span class="pm-stat-label">highlights saved</span>
+        </div>
+        <div class="pm-stat">
+            <span class="pm-stat-value" id="stat-connections">0</span>
+            <span class="pm-stat-label">connections found</span>
+        </div>
+    </section>
+
+    <!-- Quick Focus — idle (start) vs active (timer + stop) -->
+    <section class="pm-focus" id="focus-section">
+        <!-- Idle: show start button -->
+        <div class="pm-focus-idle" id="focus-idle">
+            <button class="pm-focus-btn" data-minutes="25">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                </svg>
+                Focus 25m
+            </button>
+        </div>
+        <!-- Active: show timer + phase + stop -->
+        <div class="pm-focus-active hidden" id="focus-active">
+            <div class="pm-focus-timer">
+                <svg class="pm-focus-ring" width="48" height="48" viewBox="0 0 48 48">
+                    <circle cx="24" cy="24" r="21" fill="none" stroke="var(--border)" stroke-width="3" />
+                    <circle id="focus-ring-progress" cx="24" cy="24" r="21" fill="none" stroke="var(--primary)"
+                        stroke-width="3" stroke-linecap="round" stroke-dasharray="131.95" stroke-dashoffset="0"
+                        transform="rotate(-90 24 24)" />
+                </svg>
+                <span class="pm-focus-time" id="focus-time">25:00</span>
+            </div>
+            <div class="pm-focus-info">
+                <span class="pm-focus-phase" id="focus-phase">Work</span>
+                <button class="pm-focus-stop" id="focus-stop">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="6" y="6" width="12" height="12" rx="1" />
+                    </svg>
+                    Stop
+                </button>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Inactive / Default State — Focus presets -->
-    <div id="no-focus" class="pm-card" style="display: block;">
-        <div class="pm-focus-presets">
-            <span class="pm-focus-presets__label" data-i18n="popup_focus_label">Start focus</span>
-            <div class="pm-focus-presets__btns">
-                <button class="pm-focus-preset" data-min="25">25m</button>
-                <button class="pm-focus-preset" data-min="40">40m</button>
-                <button class="pm-focus-preset" data-min="50">50m</button>
-            </div>
-            <div class="pm-focus-custom">
-                <input type="number" id="focus-custom-input" class="pm-focus-custom__input" min="1" max="120"
-                    placeholder="min" data-i18n-placeholder="popup_focus_custom_placeholder">
-                <button id="focus-custom-go" class="pm-focus-custom__go" data-i18n="popup_focus_custom_go">Go</button>
-            </div>
-        </div>
-    </div>
+    <!-- Primary CTA -->
+    <button id="open-panel" class="pm-cta">Open Sidepanel &rarr;</button>
 
-    <!-- Focus Recall Review Card (shown after WORK phase ends) -->
-    <div id="focus-review-card" class="pm-review" style="display:none;">
-        <div class="pm-review__header">
-            <span class="pm-review__icon">🎯</span>
-            <span class="pm-review__title" data-i18n="focus_review_title">Focus check-in</span>
-        </div>
-        <div id="review-body"></div>
-    </div>
-
-    <!-- Main Action -->
-    <button id="open-panel" class="pm-cta">
-        <span data-i18n="popup_open_panel">Open control panel</span>
+    <!-- Amo Lofi Quick Launch -->
+    <button id="open-lofi" class="pm-lofi-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18V5l12-2v13" />
+            <circle cx="6" cy="18" r="3" />
+            <circle cx="18" cy="16" r="3" />
+        </svg>
+        Amo Lofi ↗
     </button>
 
-    <!-- Safe-zone Toggle -->
-    <button id="btn-toggle-safe" class="pm-safelist-btn">
-        <span id="safelist-icon" class="pm-safelist-btn__icon"></span>
-        <span id="safelist-domain" class="pm-safelist-btn__domain"></span>
-        <span id="safelist-label" class="pm-safelist-btn__label"></span>
-    </button>
-
-    <!-- Footer Actions -->
-    <div class="pm-footer-actions">
-        <button id="btn-journal" class="pm-footer-btn" aria-label="Journal">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 20h9" />
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-            </svg>
-            <span data-i18n="popup_action_journal">Journal</span>
-        </button>
-        <button id="btn-notes" class="pm-footer-btn" aria-label="Memory">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-            </svg>
-            <span data-i18n="popup_action_notes">Memory</span>
-        </button>
-        <button id="btn-settings" class="pm-footer-btn" aria-label="Settings">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Footer -->
+    <footer class="pm-footer">
+        <button id="btn-settings" class="pm-footer-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
                 <path
-                    d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z">
-                </path>
-                <circle cx="12" cy="12" r="3"></circle>
+                    d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                <circle cx="12" cy="12" r="3" />
             </svg>
-            <span data-i18n="popup_action_settings">Settings</span>
+            Settings
         </button>
-        <button id="btn-feedback" class="pm-footer-btn" aria-label="Feedback">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path
-                    d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
-                </path>
-            </svg>
-            <span data-i18n="popup_action_feedback">Feedback</span>
-        </button>
-    </div>
+        <div class="pm-toggle">
+            <label for="master-toggle">Enabled</label>
+            <input type="checkbox" id="master-toggle" checked>
+        </div>
+    </footer>
 
-    <script src="storage/reading_session.js"></script>
-    <script src="services/timer_integration.js"></script>
-    <script src="utils_ui.js"></script>
     <script src="popup_minimal.js"></script>
 </body>
 

@@ -177,13 +177,13 @@
     "message": "Cài đặt Amo"
   },
   "opt_hero_title": {
-    "message": "⚛️ Kích hoạt Trí tuệ nhân tạo"
+    "message": "Kích hoạt Trí tuệ nhân tạo"
   },
   "opt_hero_desc": {
     "message": "Amo sử dụng Google Gemini để trò chuyện và đưa ra lời khuyên tâm lý. Kết nối Key riêng của bạn để dùng miễn phí & bảo mật."
   },
   "opt_dual_key_title": {
-    "message": "✨ 30 lượt AI miễn phí mỗi ngày"
+    "message": "30 lượt AI miễn phí mỗi ngày"
   },
   "opt_dual_key_desc": {
     "message": "Đăng nhập tài khoản để nhận <b>30 lượt AI miễn phí mỗi ngày</b> — không cần API key. Muốn dùng <b>không giới hạn</b>? Thêm API key miễn phí bên dưới. Khuyến nghị thiết lập cả 2 key để trải nghiệm tốt nhất."
@@ -201,7 +201,7 @@
     "message": "Cả 2 key đều <b>miễn phí</b> và mất khoảng <b>30 giây</b> để tạo"
   },
   "opt_btn_get_key": {
-    "message": "👉 Lấy Key Miễn Phí từ Google (30s)"
+    "message": "Lấy Key Miễn Phí từ Google (30s)"
   },
   "opt_guide_1": {
     "message": "Bấm nút xanh bên trên để mở <b>Google AI Studio</b>."
@@ -324,7 +324,7 @@
     "message": "Hướng dẫn lấy Key"
   },
   "opt_btn_get_openrouter_key": {
-    "message": "👉 Lấy Key OpenRouter"
+    "message": "Lấy Key OpenRouter"
   },
   "opt_openrouter_api_key": {
     "message": "OpenRouter API Key"
@@ -336,10 +336,10 @@
     "message": "Mẫu AI"
   },
   "opt_openrouter_model_placeholder": {
-    "message": "google/gemini-2.0-flash-exp:free"
+    "message": "stepfun/step-3.5-flash:free"
   },
   "opt_openrouter_model_hint": {
-    "message": "Model miễn phí: google/gemini-2.0-flash-exp:free, meta-llama/llama-3.3-70b-instruct:free"
+    "message": "Model miễn phí: stepfun/step-3.5-flash:free, meta-llama/llama-3.3-70b-instruct:free"
   },
   "opt_openrouter_guide_toggle": {
     "message": "Cách lấy Key OpenRouter"
@@ -792,7 +792,7 @@
     "message": "Nhấn vào đây để cài đặt phiên bản chính thức và nhận cập nhật tự động."
   },
   "bug_guide_title": {
-    "message": "📖 Hướng dẫn điền form (nhấn để mở rộng)"
+    "message": "Hướng dẫn điền form (nhấn để mở rộng)"
   },
   "bug_guide_type": {
     "message": "1. Loại lỗi:"
@@ -1074,7 +1074,7 @@
     "message": "Thông báo thất bại. Kiểm tra cài đặt."
   },
   "opt_notif_guide_title": {
-    "message": "📖 Hướng dẫn khắc phục (click để mở)"
+    "message": "Hướng dẫn khắc phục (click để mở)"
   },
   "opt_notif_guide_intro": {
     "message": "Nếu thông báo không hiển thị:"
@@ -1291,6 +1291,9 @@
   },
   "nlm_cancel": {
     "message": "Huỷ"
+  },
+  "nlm_quick_saved": {
+    "message": "Đã lưu ✓"
   },
   "nlm_copied_rich": {
     "message": "Đã copy nội dung!"
@@ -1515,6 +1518,9 @@
       }
     }
   },
+  "srq_visual_anchor_alt": {
+    "message": "Ảnh chụp trang"
+  },
   "srq_pii_warning": {
     "message": "Đoạn này có thể chứa thông tin cá nhân. Hãy xem lại trước khi lưu."
   },
@@ -1625,6 +1631,12 @@
   "popup_action_feedback": {
     "message": "Góp ý"
   },
+  "popup_action_whats_new": {
+    "message": "Có gì mới"
+  },
+  "menu_whats_new": {
+    "message": "Có gì mới"
+  },
   "popup_action_website": {
     "message": "Web"
   },
@@ -1649,14 +1661,14 @@
   "cmdCatSettings": {
     "message": "Cài đặt"
   },
-  "cmdFocus25": {
-    "message": "Tập trung 25 phút"
+  "cmdFocusLabel": {
+    "message": "Tập trung"
   },
-  "cmdFocus40": {
-    "message": "Tập trung 40 phút"
+  "cmdFocusUnit": {
+    "message": "phút"
   },
-  "cmdFocus50": {
-    "message": "Tập trung 50 phút"
+  "cmdFocusStart": {
+    "message": "Bắt đầu"
   },
   "cmdOpenDiary": {
     "message": "Nhật ký"
@@ -1838,6 +1850,9 @@
   "sp_no_discussions": {
     "message": "Chưa có cuộc trò chuyện"
   },
+  "sp_thread_delete": {
+    "message": "Xóa"
+  },
   "sp_no_connections": {
     "message": "Chưa có ý liên quan"
   },
@@ -1939,6 +1954,9 @@
   },
   "sp_toast_quick_saved": {
     "message": "Đã lưu đoạn đánh dấu!"
+  },
+  "sp_toast_auto_exported": {
+    "message": "Đã lưu vào Kiến thức \u2713"
   },
   "sp_toast_already_saved": {
     "message": "Đã lưu hôm nay"
@@ -2269,6 +2287,12 @@
   },
   "focus_review_skip": {
     "message": "Bỏ qua"
+  },
+  "focus_digest_note": {
+    "message": "ghi chú đã lưu"
+  },
+  "focus_digest_notes": {
+    "message": "ghi chú đã lưu"
   },
   "focus_review_feedback_saved": {
     "message": "Đã lưu phản hồi"
@@ -2632,6 +2656,69 @@
   "sp_cards_back_chat": {
     "message": "Quay lại Chat"
   },
+  "review_title": {
+    "message": "Ôn tập"
+  },
+  "review_empty": {
+    "message": "Tô sáng khi đọc để bắt đầu ôn tập."
+  },
+  "review_empty_cta": {
+    "message": "Về Chat"
+  },
+  "review_no_key": {
+    "message": "Thiết lập API key để sử dụng Ôn tập."
+  },
+  "review_no_key_desc": {
+    "message": "Ôn tập cần API key Gemini hoặc OpenRouter để tạo flashcard từ nội dung đã tô sáng."
+  },
+  "review_open_settings": {
+    "message": "Mở Cài đặt"
+  },
+  "review_loading": {
+    "message": "Đang tạo thẻ ôn tập..."
+  },
+  "review_error": {
+    "message": "Không thể tạo thẻ."
+  },
+  "review_retry": {
+    "message": "Thử lại"
+  },
+  "review_prev": {
+    "message": "Trước"
+  },
+  "review_next": {
+    "message": "Tiếp"
+  },
+  "review_finish": {
+    "message": "Hoàn thành"
+  },
+  "review_refresh": {
+    "message": "Thẻ mới"
+  },
+  "review_card_flip": {
+    "message": "Nhấn để xem đáp án"
+  },
+  "review_original": {
+    "message": "Đoạn tô sáng gốc:"
+  },
+  "review_type_recall": {
+    "message": "Nhớ lại"
+  },
+  "review_type_concept": {
+    "message": "Khái niệm"
+  },
+  "review_type_connect": {
+    "message": "Kết nối"
+  },
+  "review_done_title": {
+    "message": "Hoàn thành phiên ôn tập!"
+  },
+  "review_done_desc": {
+    "message": "Bạn đã ôn $1 thẻ."
+  },
+  "review_done_again": {
+    "message": "Ôn tiếp"
+  },
   "focusWorking": {
     "message": "Đang tập trung"
   },
@@ -2962,7 +3049,7 @@
     "message": "Cũng liên quan:"
   },
   "opt_free_tier_title": {
-    "message": "🎁 Tất cả tính năng đều miễn phí"
+    "message": "Tất cả tính năng đều miễn phí"
   },
   "opt_free_tier_desc": {
     "message": "Hiện tại, bạn đang được trải nghiệm toàn bộ tính năng của Amo hoàn toàn miễn phí. Chúng tôi muốn bạn có đủ thời gian khám phá và cảm nhận giá trị thực sự mà Amo mang lại."
@@ -2971,7 +3058,7 @@
     "message": "Trong các phiên bản tiếp theo, Amo sẽ tiếp tục phát triển thêm nhiều tính năng hữu ích hơn nữa. Để duy trì và nâng cao chất lượng sản phẩm, chúng tôi sẽ giới thiệu gói Pro — nhằm tạo nguồn lực phát triển bền vững, mang đến giá trị lớn hơn cho người dùng."
   },
   "opt_free_tier_thanks": {
-    "message": "Cảm ơn bạn đã đồng hành cùng Amo. Sự ủng hộ của bạn là động lực lớn nhất để chúng tôi tiếp tục. 💚"
+    "message": "Cảm ơn bạn đã đồng hành cùng Amo. Sự ủng hộ của bạn là động lực lớn nhất để chúng tôi tiếp tục."
   },
   "opt_free_tier_toast": {
     "message": "Bạn đang được trải nghiệm toàn bộ tính năng miễn phí. Hãy tận hưởng và cảm nhận giá trị mà Amo mang lại nhé!"
@@ -3008,5 +3095,20 @@
   },
   "proxy_error": {
     "message": "Dịch vụ AI tạm thời không khả dụng. Thử thêm API key riêng."
+  },
+  "sp_menu_chat_history": {
+    "message": "Lịch sử chat"
+  },
+  "sp_inline_threads_header": {
+    "message": "Lịch sử chat"
+  },
+  "sp_thread_page_discussion": {
+    "message": "Thảo luận trang"
+  },
+  "sp_thread_empty": {
+    "message": "Trống"
+  },
+  "sp_menu_memory": {
+    "message": "Bộ Nhớ"
   }
 }

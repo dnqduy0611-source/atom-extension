@@ -23,7 +23,16 @@
       "Bash(khi bạn cần giúp. Chủ động: AI chủ động hướng dẫn bạn đọc.\"\n- Accuracy: \"Cân bằng: phản hồi nhanh hơn. Cao: chính xác hơn nhưng)",
       "Bash(chậm hơn và tốn thêm credit API.\"\n\nImpact:\n- Non-tech users can now understand what each setting does\n- Hover over ⓘ icon to see detailed explanation\n- Hint text provides quick reference below dropdown\n- Helps users make informed choices about AI behavior\n\nStats:\n- EN/VI keys: 797 → 800 \\(+3 keys each\\)\n- Parity check: PASSED ✅\n- JSON validation: PASSED ✅\n\nAddresses user feedback from Wave 3 testing.\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(grep:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:ai.google.dev)",
+      "WebFetch(domain:lofi.co)",
+      "WebFetch(domain:lifeat.io)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite build:*)",
+      "Bash(curl:*)",
+      "WebFetch(domain:beeziee.com)",
+      "Bash(test:*)",
+      "Bash(wc:*)"
     ]
   }
 }

@@ -21,11 +21,17 @@ $excludes = @(
     '.gemini',
     '.claude',
     '.antigravityignore',
+    '.editorconfig',
     'node_modules',
     'supabase',
     'spec',
     'ideas',
+    'docs',
+    'tools',
+    'branding',
     'neural-memory-main',
+    'ATOM_Web',
+    'backup_*',
     'dist',
     'build',
     'build_cws.ps1',
@@ -33,6 +39,8 @@ $excludes = @(
     '*.log',
     '*.tmp',
     '*.temp',
+    '*.py',
+    '*.txt',
     'package.json',
     'package-lock.json'
 )
@@ -52,7 +60,8 @@ $allItems = Get-ChildItem -Path . -Force | Where-Object {
 foreach ($item in $allItems) {
     if ($item.PSIsContainer) {
         Copy-Item $item.FullName -Destination (Join-Path $staging $item.Name) -Recurse -Force
-    } else {
+    }
+    else {
         Copy-Item $item.FullName -Destination $staging -Force
     }
 }

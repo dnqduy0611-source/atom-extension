@@ -18,6 +18,8 @@ import { NLM_RETRY_DELAYS_MS } from './bridge/types.js';
 import { evaluateIdeaIncubator, loadIdeaSuggestions, recordIdeaDismiss, updateIdeaSuggestionStatus } from './bridge/idea_incubator.js';
 import { setPendingTopic } from './bridge/topic_registry.js';
 import { addPendingJob, buildPendingJob, isJobExpired, takePendingJob } from './bridge/pending_jobs.js';
+import { registerAlarms, handleAlarm } from './brain/scheduler.js';
+import { runKGDecay, runDigestDecay } from './pipelines/memory_maintenance.js';
 import { handleTopicRouterMessage, handleTopicRoute, handleTopicAction, handleGetRegistry } from './bridge/topic_router_handlers.js';
 import { AI_CONFIG, syncConfigToStorage, getModel } from './config/ai_config.js';
 import { ReadingSessionService } from './storage/reading_session.module.js';
@@ -27,9 +29,10 @@ import { checkForGitHubUpdate, isSideloaded, getUpdateStatus, dismissUpdate } fr
 import { isProxyAvailable, callGeminiProxy, callEmbeddingProxy } from './services/proxy_service.js';
 
 // Smart Research Queue (SRQ)
-import { addCard, getCardStats, getCardsByTopicKey, updateCard, updateCardStatus, dismissCard, getPendingCards, cleanupStaleCards, loadCards, upsertCard, findCardByIdempotencyKey } from './storage/srq_store.js';
+import { addCard, getCardStats, getCardsByTopicKey, updateCard, updateCardStatus, dismissCard, getPendingCards, cleanupStaleCards, loadCards, upsertCard, findCardByIdempotencyKey, getWeeklyStats, bulkUpdateReviewedAt } from './storage/srq_store.js';
 import { createResearchCard, buildIdempotencyKey, enrichCardAsync } from './services/srq_enricher.js';
 import { getBatchesForExport } from './services/srq_grouper.js';
+import { captureVisualAnchor, cleanupAnchors } from './services/srq_visual_anchor.js';
 import { SRQ_ERROR_CODES } from './bridge/types.js';
 
 const BUILD_FLAGS = globalThis.ATOM_BUILD_FLAGS || { DEBUG: false };
@@ -826,6 +829,22 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 
     // 9. Check GitHub update for sideloaded builds
     checkForGitHubUpdate().catch(e => console.warn('[ATOM] GitHub update check failed:', e));
+
+    // 10. What's New — auto-open on first install or version update
+    try {
+        const shouldShow =
+            details.reason === 'install' ||
+            (details.reason === 'update' && details.previousVersion !== currentVersion);
+
+        if (shouldShow) {
+            await chrome.storage.local.set({ atom_whats_new_unseen: true });
+            const wnUrl = `https://www.amonexus.com/whats-new?v=${encodeURIComponent(currentVersion)}&reason=${details.reason}`;
+            chrome.tabs.create({ url: wnUrl });
+            console.log(`[ATOM] What's New page opened (${details.reason}, v${currentVersion})`);
+        }
+    } catch (e) {
+        console.warn('[ATOM] What\'s New auto-open failed:', e);
+    }
 });
 
 // =========================
@@ -957,17 +976,59 @@ chrome.notifications.onClicked.addListener(async (notificationId) => {
     }
 });
 
-// Đặt lịch kiểm tra định kỳ (mỗi 6 giờ khi extension active)
-chrome.alarms.create('check-store-update', { periodInMinutes: 360 });
-chrome.alarms.create('atom_srq_cleanup', { periodInMinutes: 720 });
-chrome.alarms.create('atom_kg_decay_cycle', { periodInMinutes: 360 }); // Phase 3: decay every 6h
-chrome.alarms.create('atom_daily_quota_reset', { periodInMinutes: 60 }); // Phase 1: hourly quota reset check
-chrome.alarms.create('atom_github_update', { periodInMinutes: 360 }); // Phase 1: GitHub update check every 6h
-chrome.alarms.onAlarm.addListener(async (alarm) => {
-    if (alarm.name === 'check-store-update') {
-        checkForStoreUpdate();
-        return;
+// ═══ Silent Brain Phase 1: Consolidated Alarms (8 → 3) ═══
+// Old alarms replaced: check-store-update, atom_srq_cleanup, atom_kg_decay_cycle,
+//   atom_daily_quota_reset, atom_github_update, atom_srq_auto_export_retry
+// Kept: ATOM_FOCUS_PHASE_END (dynamic), NLM_QUEUE_ALARM (dynamic)
+
+registerAlarms();
+
+// Retry failed auto-exports (extracted from inline alarm handler)
+async function retryFailedExports() {
+    try {
+        const autoExport = await getSrqFlag('SRQ_AUTO_EXPORT');
+        if (!autoExport) return;
+
+        const allCards = await loadCards();
+        const stuck = allCards.filter(c => c.status === 'approved' && !c.exportedJobId);
+        if (stuck.length === 0) return;
+
+        console.log(`[SRQ AutoFlow Retry] Found ${stuck.length} approved cards to retry`);
+        let exported = 0;
+        for (const card of stuck.slice(0, 5)) { // Max 5 per cycle
+            try {
+                const notebookRef = card.suggestedNotebook || 'Inbox';
+                await handleSrqSingleExport(card.cardId, notebookRef);
+                exported++;
+            } catch (err) {
+                console.warn(`[SRQ AutoFlow Retry] Card ${card.cardId} failed:`, err.message);
+            }
+        }
+        if (exported > 0) {
+            console.log(`[SRQ AutoFlow Retry] Exported ${exported} cards`);
+            chrome.runtime.sendMessage({ type: 'SRQ_CARDS_UPDATED', reason: 'auto_retry_exported' }).catch(() => { });
+        }
+    } catch (err) {
+        console.warn('[SRQ AutoFlow Retry] Failed:', err);
     }
+}
+
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+    // Consolidated alarms — brain/scheduler.js handles routing
+    const handled = await handleAlarm(alarm.name, {
+        checkForStoreUpdate,
+        checkForGitHubUpdate,
+        runKGDecay,
+        runDigestDecay,
+        cleanupStaleCards,
+        loadNlmSettings,
+        retryFailedExports,
+        processNlmExportQueue,
+        resetDailyQuota
+    });
+    if (handled) return;
+
+    // Dynamic alarms (giữ nguyên — không gom)
     if (alarm.name === FOCUS_ALARM_NAME) {
         await focusHandlePhaseEnd();
         return;
@@ -975,54 +1036,6 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === NLM_QUEUE_ALARM) {
         await processNlmExportQueue("alarm");
         return;
-    }
-    if (alarm.name === 'atom_srq_cleanup') {
-        const settings = await loadNlmSettings();
-        const removed = await cleanupStaleCards(settings?.srqStaleCardDays || 14);
-        if (removed > 0) console.log(`[ATOM SRQ] Cleaned ${removed} stale cards`);
-    }
-    if (alarm.name === 'atom_kg_decay_cycle') {
-        // Phase 3: Knowledge Graph decay cycle
-        try {
-            const KG_KEY = 'atom_knowledge_graph_v1';
-            const { [KG_KEY]: rawEdges } = await chrome.storage.local.get([KG_KEY]);
-            const edges = Array.isArray(rawEdges) ? rawEdges : [];
-            if (edges.length === 0) return;
-
-            const now = Date.now();
-            const DEAD = 0.05;
-            const DECAY_RATE = 0.05;
-            const alive = [];
-            let dead = 0;
-
-            for (const edge of edges) {
-                const lastActive = edge.lastReinforcedAt || edge.lastActivatedAt || edge.createdAt || now;
-                const days = (now - lastActive) / 86400000;
-                const decayed = (edge.strength ?? 1.0) * Math.exp(-DECAY_RATE * Math.max(0, days));
-
-                if (decayed < DEAD) {
-                    dead++;
-                } else {
-                    edge.strength = Math.round(decayed * 100) / 100;
-                    alive.push(edge);
-                }
-            }
-
-            if (dead > 0) {
-                await chrome.storage.local.set({ [KG_KEY]: alive });
-                console.log(`[KG Decay] Updated ${alive.length}, removed ${dead} dead edges`);
-            }
-        } catch (err) {
-            console.warn('[KG Decay] Failed:', err);
-        }
-    }
-    // Phase 1 Monetization: Daily quota reset
-    if (alarm.name === 'atom_daily_quota_reset') {
-        resetDailyQuota().catch(e => console.warn('[Quota] Reset failed:', e));
-    }
-    // Phase 1 Monetization: GitHub update check for sideloaded builds
-    if (alarm.name === 'atom_github_update') {
-        checkForGitHubUpdate().catch(e => console.warn('[GitHubUpdate] Check failed:', e));
     }
 });
 
@@ -3355,6 +3368,11 @@ async function evolveCopyLibrary(logs, reactions) {
 
 // --- 3. TRUNG TÂM ĐIỀU PHỐI MESSAGE ---
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    // === SRQ Messages — route to dedicated handler ===
+    if (request?.type?.startsWith("SRQ_")) {
+        handleSrqMessage(request, sender, sendResponse);
+        return true; // async response
+    }
     // === NLM TOPIC ACTION - Special handling to also save to Memory ===
     if (request?.type === "NLM_TOPIC_ACTION") {
         (async () => {
@@ -5646,8 +5664,144 @@ async function handleSrqSingleExport(cardId, notebookRef) {
     return { exported: 1 };
 }
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (!request?.type?.startsWith("SRQ_")) return false;
+// --- SRQ Auto-Flow: Read feature flags from chrome.storage (service worker context) ---
+const SRQ_FLAG_STORAGE_KEY = 'atom_feature_flags_v1';
+const SRQ_FLAG_DEFAULTS = { SRQ_AUTO_SAVE: true, SRQ_AUTO_EXPORT: true };
+
+async function getSrqFlag(key) {
+    try {
+        const data = await chrome.storage.local.get([SRQ_FLAG_STORAGE_KEY]);
+        const stored = data[SRQ_FLAG_STORAGE_KEY] || {};
+        return Object.prototype.hasOwnProperty.call(stored, key)
+            ? !!stored[key]
+            : (SRQ_FLAG_DEFAULTS[key] ?? false);
+    } catch {
+        return SRQ_FLAG_DEFAULTS[key] ?? false;
+    }
+}
+
+// =============================================
+// S2b: Topic Similarity Helpers for Smart Suggest
+// =============================================
+
+const STOP_WORDS = new Set([
+    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+    'of', 'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been',
+    'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
+    'could', 'should', 'may', 'might', 'shall', 'can', 'this', 'that',
+    'these', 'those', 'it', 'its', 'not', 'no', 'nor', 'so', 'than',
+    'too', 'very', 'just', 'about', 'above', 'after', 'before', 'between',
+    'each', 'all', 'both', 'few', 'more', 'most', 'other', 'some', 'such',
+    'only', 'own', 'same', 'into', 'out', 'up', 'down', 'over', 'under',
+    'again', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how',
+    'các', 'của', 'và', 'là', 'trong', 'cho', 'với', 'không', 'được',
+    'một', 'những', 'này', 'đó', 'có', 'từ', 'đến', 'về', 'theo', 'như'
+]);
+
+/**
+ * Extract keywords from text — tokenize, lowercase, strip stopwords.
+ * @param {string} text - Raw text to extract from
+ * @returns {Set<string>} Set of lowercase keyword tokens
+ */
+function extractKeywordsFromText(text) {
+    if (!text) return new Set();
+    return new Set(
+        text.toLowerCase()
+            .replace(/[^\p{L}\p{N}\s]/gu, ' ')  // keep Unicode letters + numbers
+            .split(/\s+/)
+            .filter(w => w.length >= 3 && !STOP_WORDS.has(w))
+    );
+}
+
+/**
+ * Compute similarity between notebook context and a card.
+ * Returns 0.0-1.0+ score.
+ *
+ * Scoring:
+ * - Topic key exact match: 1.0
+ * - Keyword Jaccard overlap: 0.0-1.0
+ * - Source title partial match: bonus up to 0.3
+ * - Domain bonus: +0.1 if card domain appears in notebook context
+ */
+function computeTopicSimilarity(nbTitleLower, nbKeywords, nbSources, card) {
+    let score = 0;
+
+    const cardTopicKey = (card.topicKey || "").toLowerCase();
+    const cardKeywords = new Set(
+        (card.keywords || []).map(k => k.toLowerCase())
+    );
+    const cardTitle = (card.title || "").toLowerCase();
+    const cardDomain = (card.domain || "").toLowerCase();
+
+    // 1. Topic key exact match (highest signal)
+    if (cardTopicKey && nbTitleLower.includes(cardTopicKey)) {
+        score = Math.max(score, 0.8);
+    }
+    if (cardTopicKey && nbKeywords.has(cardTopicKey)) {
+        score = Math.max(score, 1.0);
+    }
+
+    // 1b. Card title word overlap with notebook title (handles sparse context)
+    if (cardTitle && nbTitleLower) {
+        const cardWords = cardTitle.split(/\s+/).filter(w => w.length >= 3);
+        if (cardWords.length > 0) {
+            let titleMatch = 0;
+            for (const w of cardWords) {
+                if (nbTitleLower.includes(w)) titleMatch++;
+            }
+            const titleOverlap = titleMatch / cardWords.length;
+            if (titleOverlap >= 0.3) {
+                score = Math.max(score, 0.3 + titleOverlap * 0.4); // 0.3-0.7 range
+            }
+        }
+    }
+
+    // 2. Keyword Jaccard overlap
+    if (cardKeywords.size > 0 && nbKeywords.size > 0) {
+        let intersection = 0;
+        for (const kw of cardKeywords) {
+            if (nbKeywords.has(kw)) intersection++;
+        }
+        const union = new Set([...cardKeywords, ...nbKeywords]).size;
+        const jaccard = union > 0 ? intersection / union : 0;
+
+        // Weighted: more overlap = higher score
+        // Also consider absolute matches (2+ keyword matches = strong signal)
+        const keywordScore = Math.max(jaccard, intersection >= 2 ? 0.5 : 0);
+        score = Math.max(score, keywordScore);
+    }
+
+    // 3. Source title matching — card title appears in any source title
+    if (nbSources.length > 0 && cardTitle) {
+        const sourcesLower = nbSources.map(s => s.toLowerCase());
+        for (const src of sourcesLower) {
+            // Partial match: if card title words appear in source
+            const cardWords = cardTitle.split(/\s+/).filter(w => w.length >= 3);
+            let matchCount = 0;
+            for (const word of cardWords) {
+                if (src.includes(word)) matchCount++;
+            }
+            if (cardWords.length > 0 && matchCount / cardWords.length >= 0.5) {
+                score = Math.max(score, 0.6);
+                break;
+            }
+        }
+    }
+
+    // 4. Domain bonus
+    if (cardDomain && nbTitleLower.includes(cardDomain)) {
+        score += 0.1;
+    }
+    // Also check if domain appears in source URLs
+    if (cardDomain && nbSources.some(s => s.toLowerCase().includes(cardDomain))) {
+        score += 0.1;
+    }
+
+    return Math.min(score, 1.5); // Cap at 1.5
+}
+
+function handleSrqMessage(request, sender, sendResponse) {
+    console.warn("[SRQ] Handling:", request.type);
 
     (async () => {
         try {
@@ -5675,10 +5829,69 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                             console.warn("[SRQ] Async enrichment failed:", err.message);
                         });
 
+                        // Visual anchor capture (non-blocking, Phase 2)
+                        // When sent from sidepanel, sender.tab is undefined — fall back to active tab
+                        let captureTabId = sender?.tab?.id;
+                        if (!captureTabId) {
+                            try {
+                                const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                                captureTabId = activeTab?.id;
+                            } catch { /* ignore */ }
+                        }
+                        if (captureTabId) {
+                            captureVisualAnchor(captureTabId)
+                                .then(thumbnail => {
+                                    if (thumbnail) {
+                                        updateCard(savedCard.cardId, { visualAnchor: thumbnail });
+                                        chrome.runtime.sendMessage({ type: "SRQ_CARDS_UPDATED", reason: "visual_anchor_added" }).catch(() => { });
+                                    }
+                                })
+                                .catch(err => {
+                                    console.warn("[SRQ] Visual anchor capture failed:", err.message);
+                                });
+                        }
+
+                        // --- Auto-Flow S1: Auto-save (auto-approve) ---
+                        const autoSave = await getSrqFlag('SRQ_AUTO_SAVE');
+                        console.warn("[SRQ AutoFlow] Flag check — autoSave:", autoSave);
+                        if (autoSave) {
+                            await updateCardStatus(savedCard.cardId, "approved");
+                            console.warn("[SRQ AutoFlow] Card auto-approved:", savedCard.cardId);
+                        }
+
                         sendResponse({ ok: true, card: savedCard });
 
                         // Notify sidepanel of change (only after successful save)
                         chrome.runtime.sendMessage({ type: "SRQ_CARDS_UPDATED" }).catch(() => { });
+
+                        // --- Auto-Flow S1: Auto-export to NLM (after response sent) ---
+                        if (autoSave) {
+                            const autoExport = await getSrqFlag('SRQ_AUTO_EXPORT');
+                            console.warn("[SRQ AutoFlow] Flag check — autoExport:", autoExport);
+                            if (autoExport) {
+                                console.warn("[SRQ AutoFlow] Waiting 3s for enrichment...");
+                                // Await delay to let enrichment finish, then export
+                                await new Promise(r => setTimeout(r, 3000));
+                                console.warn("[SRQ AutoFlow] Delay done, starting export...");
+                                try {
+                                    // Re-read card to get enriched suggestedNotebook
+                                    const freshCards = await loadCards();
+                                    const freshCard = freshCards.find(c => c?.cardId === savedCard.cardId);
+                                    const notebookRef = freshCard?.suggestedNotebook || "Inbox";
+                                    console.warn("[SRQ AutoFlow] Exporting to:", notebookRef);
+                                    await handleSrqSingleExport(savedCard.cardId, notebookRef);
+                                    console.warn("[SRQ AutoFlow] ✅ Card auto-exported:", savedCard.cardId);
+                                    chrome.runtime.sendMessage({
+                                        type: "SRQ_CARDS_UPDATED",
+                                        reason: "auto_exported",
+                                        changedIds: [savedCard.cardId]
+                                    }).catch(() => { });
+                                } catch (err) {
+                                    console.warn("[SRQ AutoFlow] ❌ Auto-export failed, will retry:", err.message);
+                                    // Card stays "approved" — retry alarm will pick it up
+                                }
+                            }
+                        }
                     } catch (err) {
                         console.error("[ATOM SRQ] CREATE_CARD error:", {
                             reason: err.message,
@@ -5730,6 +5943,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
                     try {
                         await dismissCard(cardId);
+                        cleanupAnchors([cardId]).catch(() => { });
                         sendResponse({ ok: true });
                         chrome.runtime.sendMessage({
                             type: "SRQ_CARDS_UPDATED",
@@ -5773,6 +5987,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                                 dismissedIds.push(card.cardId);
                             }
                         }
+                        if (dismissedIds.length > 0) {
+                            cleanupAnchors(dismissedIds).catch(() => { });
+                        }
                         sendResponse({ ok: true, dismissed });
                         chrome.runtime.sendMessage({
                             type: "SRQ_CARDS_UPDATED",
@@ -5804,6 +6021,25 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     }
                     break;
                 }
+                case "SRQ_GET_WEEKLY_STATS": {
+                    try {
+                        const stats = await getWeeklyStats();
+                        sendResponse({ ok: true, stats });
+                    } catch (err) {
+                        sendResponse({ ok: false, message: err.message });
+                    }
+                    break;
+                }
+                case "SRQ_MARK_REVIEWED": {
+                    try {
+                        const count = await bulkUpdateReviewedAt(request.cardIds || []);
+                        sendResponse({ ok: true, updated: count });
+                        chrome.runtime.sendMessage({ type: "SRQ_CARDS_UPDATED", reason: "cards_reviewed" }).catch(() => { });
+                    } catch (err) {
+                        sendResponse({ ok: false, message: err.message });
+                    }
+                    break;
+                }
                 case "SRQ_EXPORT_BATCH": {
                     const { topicKey, notebookRef } = request;
                     const requestId = `req_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
@@ -5820,11 +6056,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
                     try {
                         const result = await handleSrqBatchExport(topicKey, notebookRef);
+                        const exportedIds = result.cardIds || [];
+                        if (exportedIds.length > 0) {
+                            cleanupAnchors(exportedIds).catch(() => { });
+                        }
                         sendResponse({ ok: true, ...result });
                         chrome.runtime.sendMessage({
                             type: "SRQ_CARDS_UPDATED",
                             reason: "batch_exported",
-                            changedIds: result.cardIds || []
+                            changedIds: exportedIds
                         }).catch(() => { });
                     } catch (err) {
                         console.error("[SRQ] Batch export error:", err);
@@ -5854,6 +6094,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
                     try {
                         const result = await handleSrqSingleExport(cardId, notebookRef);
+                        cleanupAnchors([cardId]).catch(() => { });
                         sendResponse({ ok: true, ...result });
                         chrome.runtime.sendMessage({
                             type: "SRQ_CARDS_UPDATED",
@@ -5885,6 +6126,109 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     }
                     break;
                 }
+
+                case "SRQ_FIND_RELATED_FOR_NOTEBOOK": {
+                    // S2b: Smart Suggest — find cards matching notebook context
+                    try {
+                        const { notebookContext } = request;
+                        if (!notebookContext?.contextText) {
+                            sendResponse({ ok: true, suggestions: [] });
+                            break;
+                        }
+
+                        // Load candidate cards (include exported — they can still be suggested)
+                        // Only exclude dismissed cards
+                        const allCards = await loadCards();
+                        const candidates = allCards.filter(c =>
+                            c && c.status !== "dismissed"
+                        );
+
+                        if (candidates.length === 0) {
+                            console.warn("[SRQ Suggest] No candidate cards found");
+                            sendResponse({ ok: true, suggestions: [] });
+                            break;
+                        }
+
+                        // Extract notebook keywords from contextText
+                        const nbKeywords = extractKeywordsFromText(notebookContext.contextText);
+                        const nbTitle = (notebookContext.title || "").toLowerCase();
+
+                        // Score each card
+                        const scored = candidates.map(card => {
+                            const score = computeTopicSimilarity(
+                                nbTitle,
+                                nbKeywords,
+                                notebookContext.sources || [],
+                                card
+                            );
+                            return { ...card, _suggestScore: score };
+                        });
+
+                        // Filter & sort
+                        const suggestions = scored
+                            .filter(c => c._suggestScore >= 0.3)
+                            .sort((a, b) => b._suggestScore - a._suggestScore)
+                            .slice(0, 5)
+                            .map(c => ({
+                                cardId: c.cardId,
+                                title: c.title,
+                                domain: c.domain,
+                                selectedText: (c.selectedText || "").slice(0, 80),
+                                topicKey: c.topicKey,
+                                topicLabel: c.topicLabel,
+                                keywords: c.keywords,
+                                createdAt: c.createdAt,
+                                score: Math.round(c._suggestScore * 100) / 100
+                            }));
+
+                        console.warn("[SRQ Suggest] Found", suggestions.length,
+                            "suggestions for notebook:", notebookContext.title,
+                            "from", candidates.length, "candidates");
+
+                        sendResponse({ ok: true, suggestions });
+                    } catch (err) {
+                        console.warn("[SRQ Suggest] Error:", err.message);
+                        sendResponse({ ok: true, suggestions: [] });
+                    }
+                    break;
+                }
+                case "SRQ_GET_NOTEBOOK_FOR_URL": {
+                    try {
+                        const targetUrl = request.url;
+                        if (!targetUrl) {
+                            sendResponse({ ok: true, notebookRef: null });
+                            break;
+                        }
+                        const allCards = await loadCards();
+                        const exported = allCards.filter(c =>
+                            c && c.status === "exported" && c.url === targetUrl
+                        );
+                        if (exported.length === 0) {
+                            sendResponse({ ok: true, notebookRef: null });
+                            break;
+                        }
+                        // Find most common notebook among exported cards
+                        const nbCounts = {};
+                        for (const c of exported) {
+                            const nb = c.suggestedNotebook || "Inbox";
+                            nbCounts[nb] = (nbCounts[nb] || 0) + 1;
+                        }
+                        const topNb = Object.entries(nbCounts)
+                            .sort((a, b) => b[1] - a[1])[0];
+                        const notebookRef = topNb[0];
+                        const notebookUrl = resolveNotebookUrl(notebookRef);
+                        sendResponse({
+                            ok: true,
+                            notebookRef,
+                            notebookUrl,
+                            count: exported.length
+                        });
+                    } catch (err) {
+                        console.warn("[SRQ] GET_NOTEBOOK_FOR_URL error:", err.message);
+                        sendResponse({ ok: true, notebookRef: null });
+                    }
+                    break;
+                }
                 default:
                     sendResponse({ ok: false, errorCode: SRQ_ERROR_CODES.UNKNOWN, message: "Unknown SRQ action" });
             }
@@ -5898,7 +6242,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             });
         }
     })();
+}
 
-    return true; // async response
-});
 

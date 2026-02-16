@@ -141,13 +141,13 @@
     "message": "AmoNexus Settings"
   },
   "opt_hero_title": {
-    "message": "⚛️ Activate AmoNexus Intelligence"
+    "message": "Activate AmoNexus Intelligence"
   },
   "opt_hero_desc": {
     "message": "AmoNexus uses Google Gemini to chat and provide psychological advice. Connect your own Key for free & private use."
   },
   "opt_dual_key_title": {
-    "message": "✨ 30 free AI calls every day"
+    "message": "30 free AI calls every day"
   },
   "opt_dual_key_desc": {
     "message": "Sign in to get <b>30 free AI calls per day</b> — no API key needed. Want <b>unlimited</b> access? Add a free API key below. We recommend setting up both keys for the best experience."
@@ -165,7 +165,7 @@
     "message": "Both keys are <b>free</b> and take about <b>30 seconds</b> to create"
   },
   "opt_btn_get_key": {
-    "message": "👉 Get Free Key from Google (30s)"
+    "message": "Get Free Key from Google (30s)"
   },
   "opt_guide_1": {
     "message": "Click the green button above to open <b>Google AI Studio</b>."
@@ -288,7 +288,7 @@
     "message": "How to get API Key"
   },
   "opt_btn_get_openrouter_key": {
-    "message": "👉 Get OpenRouter Key"
+    "message": "Get OpenRouter Key"
   },
   "opt_openrouter_api_key": {
     "message": "OpenRouter API Key"
@@ -300,10 +300,10 @@
     "message": "AI Model"
   },
   "opt_openrouter_model_placeholder": {
-    "message": "google/gemini-2.0-flash-exp:free"
+    "message": "stepfun/step-3.5-flash:free"
   },
   "opt_openrouter_model_hint": {
-    "message": "Free models: google/gemini-2.0-flash-exp:free, meta-llama/llama-3.3-70b-instruct:free"
+    "message": "Free models: stepfun/step-3.5-flash:free, meta-llama/llama-3.3-70b-instruct:free"
   },
   "opt_openrouter_guide_toggle": {
     "message": "How to get OpenRouter Key"
@@ -602,6 +602,12 @@
   "popup_action_feedback": {
     "message": "Feedback"
   },
+  "popup_action_whats_new": {
+    "message": "What's New"
+  },
+  "menu_whats_new": {
+    "message": "What's New"
+  },
   "popup_action_website": {
     "message": "Web"
   },
@@ -626,14 +632,14 @@
   "cmdCatSettings": {
     "message": "Settings"
   },
-  "cmdFocus25": {
-    "message": "Focus 25 min"
+  "cmdFocusLabel": {
+    "message": "Focus"
   },
-  "cmdFocus40": {
-    "message": "Focus 40 min"
+  "cmdFocusUnit": {
+    "message": "min"
   },
-  "cmdFocus50": {
-    "message": "Focus 50 min"
+  "cmdFocusStart": {
+    "message": "Start"
   },
   "cmdOpenDiary": {
     "message": "Journal"
@@ -945,7 +951,7 @@
     "message": "Click here to install the official version for automatic updates."
   },
   "bug_guide_title": {
-    "message": "📖 How to fill this form (click to expand)"
+    "message": "How to fill this form (click to expand)"
   },
   "bug_guide_type": {
     "message": "1. Bug Type:"
@@ -1236,7 +1242,7 @@
     "message": "Notification failed. Check settings."
   },
   "opt_notif_guide_title": {
-    "message": "📖 Troubleshooting Guide (click to expand)"
+    "message": "Troubleshooting Guide (click to expand)"
   },
   "opt_notif_guide_intro": {
     "message": "If notifications aren't showing:"
@@ -1796,6 +1802,12 @@
   "focus_review_skip": {
     "message": "Skip"
   },
+  "focus_digest_note": {
+    "message": "note saved"
+  },
+  "focus_digest_notes": {
+    "message": "notes saved"
+  },
   "focus_review_feedback_saved": {
     "message": "Saved."
   },
@@ -1931,6 +1943,9 @@
   "sp_toast_quick_saved": {
     "message": "Highlight saved!"
   },
+  "sp_toast_auto_exported": {
+    "message": "Saved to Knowledge \u2713"
+  },
   "sp_toast_already_saved": {
     "message": "Already saved today"
   },
@@ -1993,6 +2008,9 @@
   },
   "sp_no_discussions": {
     "message": "No chats yet"
+  },
+  "sp_thread_delete": {
+    "message": "Delete"
   },
   "sp_no_connections": {
     "message": "No related ideas yet"
@@ -2386,6 +2404,9 @@
   "nlm_cancel": {
     "message": "Cancel"
   },
+  "nlm_quick_saved": {
+    "message": "Saved ✓"
+  },
   "nlm_copied_rich": {
     "message": "Rich content copied!"
   },
@@ -2576,6 +2597,9 @@
       }
     }
   },
+  "srq_visual_anchor_alt": {
+    "message": "Page snapshot"
+  },
   "srq_pii_warning": {
     "message": "This highlight may contain personal information. Please review before saving."
   },
@@ -2736,6 +2760,69 @@
   },
   "sp_cards_back_chat": {
     "message": "Back to Chat"
+  },
+  "review_title": {
+    "message": "Review"
+  },
+  "review_empty": {
+    "message": "Save highlights while reading to start practicing."
+  },
+  "review_empty_cta": {
+    "message": "Go to Chat"
+  },
+  "review_no_key": {
+    "message": "Set up an API key to use Review."
+  },
+  "review_no_key_desc": {
+    "message": "Review needs a Gemini or OpenRouter API key to generate flashcards from your highlights."
+  },
+  "review_open_settings": {
+    "message": "Open Settings"
+  },
+  "review_loading": {
+    "message": "Generating study cards..."
+  },
+  "review_error": {
+    "message": "Couldn't generate cards."
+  },
+  "review_retry": {
+    "message": "Try again"
+  },
+  "review_prev": {
+    "message": "Previous"
+  },
+  "review_next": {
+    "message": "Next"
+  },
+  "review_finish": {
+    "message": "Finish"
+  },
+  "review_refresh": {
+    "message": "New cards"
+  },
+  "review_card_flip": {
+    "message": "Tap to reveal"
+  },
+  "review_original": {
+    "message": "Original highlight:"
+  },
+  "review_type_recall": {
+    "message": "Recall"
+  },
+  "review_type_concept": {
+    "message": "Concept"
+  },
+  "review_type_connect": {
+    "message": "Connect"
+  },
+  "review_done_title": {
+    "message": "Session complete!"
+  },
+  "review_done_desc": {
+    "message": "You reviewed $1 cards."
+  },
+  "review_done_again": {
+    "message": "Practice again"
   },
   "focusWorking": {
     "message": "In focus"
@@ -3001,7 +3088,7 @@
     "message": "Also related:"
   },
   "opt_free_tier_title": {
-    "message": "🎁 All features are free"
+    "message": "All features are free"
   },
   "opt_free_tier_desc": {
     "message": "You currently have full access to every feature in Amo — completely free. We want you to have enough time to explore and experience the real value that Amo brings."
@@ -3010,7 +3097,7 @@
     "message": "In upcoming versions, Amo will continue to grow with even more powerful features. To sustain and improve the product, we will introduce a Pro plan — creating the resources needed to build something truly valuable for our users."
   },
   "opt_free_tier_thanks": {
-    "message": "Thank you for being part of Amo's journey. Your support means everything to us. 💚"
+    "message": "Thank you for being part of Amo's journey. Your support means everything to us."
   },
   "opt_free_tier_toast": {
     "message": "You have full access to all features for free. Enjoy and experience the value Amo brings!"
@@ -3047,5 +3134,20 @@
   },
   "proxy_error": {
     "message": "AI service temporarily unavailable. Try adding your own API key."
+  },
+  "sp_menu_chat_history": {
+    "message": "Chat History"
+  },
+  "sp_inline_threads_header": {
+    "message": "Chat History"
+  },
+  "sp_thread_page_discussion": {
+    "message": "Page Discussion"
+  },
+  "sp_thread_empty": {
+    "message": "Empty"
+  },
+  "sp_menu_memory": {
+    "message": "Memory"
   }
 }

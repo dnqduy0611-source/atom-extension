@@ -43,7 +43,7 @@
     const NUDGE_TYPES = {
         fast_scroll: {
             id: 'fast_scroll',
-            icon: '⚡',
+            icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
             titleKey: 'sp_nudge_fast_scroll_title',
             messageKey: 'sp_nudge_fast_scroll_msg',
             get title() { return getMessage(this.titleKey, 'Slow down a bit'); },
@@ -56,7 +56,7 @@
         },
         passive_reading: {
             id: 'passive_reading',
-            icon: '🧠',
+            icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a8 8 0 0 0-8 8c0 3.4 2.1 6.3 5 7.4V19a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1.6c2.9-1.1 5-4 5-7.4a8 8 0 0 0-8-8Z"/><path d="M10 22h4"/></svg>',
             titleKey: 'sp_nudge_passive_title',
             messageKey: 'sp_nudge_passive_msg',
             get title() { return getMessage(this.titleKey, 'Active recall'); },
@@ -69,7 +69,7 @@
         },
         section_end: {
             id: 'section_end',
-            icon: '📌',
+            icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="17" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>',
             titleKey: 'sp_nudge_section_title',
             messageKey: 'sp_nudge_section_msg',
             get title() { return getMessage(this.titleKey, 'Section checkpoint'); },
@@ -82,7 +82,7 @@
         },
         completion: {
             id: 'completion',
-            icon: '🏁',
+            icon: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>',
             titleKey: 'sp_nudge_completion_title',
             messageKey: 'sp_nudge_completion_msg',
             get title() { return getMessage(this.titleKey, 'Wrap-up'); },

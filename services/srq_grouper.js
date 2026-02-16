@@ -96,15 +96,15 @@ function countModes(cards) {
 export function computeBatches(cards) {
     if (!Array.isArray(cards) || cards.length === 0) return [];
 
-    // Only include actionable cards
-    const actionable = cards.filter(c =>
-        c?.status === "pending_review" || c?.status === "approved"
+    // Include actionable + exported cards (exclude dismissed)
+    const visible = cards.filter(c =>
+        c?.status === "pending_review" || c?.status === "approved" || c?.status === "exported"
     );
-    if (actionable.length === 0) return [];
+    if (visible.length === 0) return [];
 
     // Group by topicKey
     const groups = new Map();
-    for (const card of actionable) {
+    for (const card of visible) {
         const key = (card.topicKey || "uncategorized").toLowerCase();
         if (!groups.has(key)) groups.set(key, []);
         groups.get(key).push(card);
@@ -121,13 +121,16 @@ export function computeBatches(cards) {
         const stats = countModes(batchCards);
         const oldestCardAge = now - Math.min(...batchCards.map(c => c.createdAt || now));
 
+        const exportedCount = batchCards.filter(c => c.status === "exported").length;
         const batch = {
             topicKey,
             topicLabel: batchCards[0]?.topicLabel || topicKey,
             suggestedNotebook: resolveBatchNotebook(batchCards),
             cards: batchCards,
             stats,
-            oldestCardAge
+            oldestCardAge,
+            exportedCount,
+            allExported: exportedCount === batchCards.length
         };
 
         batch.priority = computeBatchPriority(batch);

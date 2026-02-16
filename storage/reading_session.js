@@ -423,6 +423,12 @@ class ReadingSessionService {
 
         sessions.splice(index, 1);
         await this.saveSessions(sessions);
+
+        // Phase D: Cascade delete associated digests
+        if (typeof window !== 'undefined' && window.ConversationDigestStore) {
+            window.ConversationDigestStore.removeDigestsForSession(sessionId).catch(() => { });
+        }
+
         return true;
     }
 
@@ -455,8 +461,8 @@ class ReadingSessionService {
 
             // Only embed sessions with meaningful content
             const hasContent = (session.insights?.length > 0) ||
-                              (session.highlights?.length > 0) ||
-                              session.card?.keyPoints?.length > 0;
+                (session.highlights?.length > 0) ||
+                session.card?.keyPoints?.length > 0;
 
             if (!hasContent) {
                 console.log('[ReadingSession] Session has no content to embed:', sessionId);

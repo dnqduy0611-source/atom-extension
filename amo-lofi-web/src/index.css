@@ -1,0 +1,417 @@
+@import "tailwindcss";
+
+/* ══════════════════════════════════════════════════════
+   AMO LOFI — Design System
+   ══════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Theme System (set dynamically by useTheme hook) ── */
+  --theme-primary: #4ade80;
+  --theme-primary-glow: rgba(74, 222, 128, 0.3);
+  --theme-secondary: #22d3ee;
+  --theme-panel-bg: rgba(10, 10, 20, 0.7);
+  --theme-panel-border: rgba(255, 255, 255, 0.08);
+  --theme-sidebar-bg: rgba(10, 10, 20, 0.8);
+  --theme-player-bg: rgba(10, 10, 20, 0.5);
+  --theme-text: #e2e8f0;
+  --theme-text-muted: #64748b;
+
+  /* ── Legacy aliases (backward compat for existing panels) ── */
+  --amo-primary: var(--theme-primary);
+  --amo-primary-dark: var(--theme-primary);
+  --amo-primary-glow: var(--theme-primary-glow);
+  --amo-accent: var(--theme-secondary);
+  --amo-accent-glow: var(--theme-primary-glow);
+
+  /* ── Surfaces (legacy — panels use these) ── */
+  --amo-bg: #0a0a14;
+  --amo-surface: var(--theme-panel-bg);
+  --amo-surface-hover: color-mix(in srgb, var(--theme-panel-bg) 80%, white 5%);
+  --amo-surface-active: color-mix(in srgb, var(--theme-panel-bg) 70%, white 8%);
+  --amo-surface-solid: #12121e;
+
+  /* ── Text (legacy) ── */
+  --amo-text: var(--theme-text);
+  --amo-text-dim: var(--theme-text-muted);
+  --amo-text-muted: var(--theme-text-muted);
+
+  /* ── Borders (legacy → theme) ── */
+  --amo-border: var(--theme-panel-border);
+  --amo-border-hover: color-mix(in srgb, var(--theme-primary) 20%, transparent);
+
+  /* ── Spacing ── */
+  --amo-radius: 16px;
+  --amo-radius-sm: 10px;
+  --amo-radius-xs: 6px;
+
+  /* ── Transitions ── */
+  --amo-transition: 0.2s ease;
+  --amo-transition-slow: 0.5s ease;
+}
+
+/* ── Global Reset ── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--amo-bg);
+  color: var(--amo-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Selection ── */
+::selection {
+  background: var(--amo-primary-glow);
+  color: var(--amo-text);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ══════════════════════════════════════════════════════
+   Glassmorphism Panels
+   ══════════════════════════════════════════════════════ */
+
+.glass-panel {
+  background: var(--amo-surface);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--amo-border);
+  border-radius: var(--amo-radius);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.glass-panel-sm {
+  background: var(--amo-surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--amo-border);
+  border-radius: var(--amo-radius-sm);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* ══════════════════════════════════════════════════════
+   Icon Buttons
+   ══════════════════════════════════════════════════════ */
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: var(--amo-radius-sm);
+  background: transparent;
+  color: var(--amo-text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--amo-transition);
+  font-size: 18px;
+}
+
+.icon-btn:hover {
+  background: var(--amo-surface-hover);
+  color: var(--amo-text);
+  transform: scale(1.05);
+}
+
+.icon-btn.active {
+  background: rgba(74, 222, 128, 0.15);
+  color: var(--amo-primary);
+}
+
+/* ══════════════════════════════════════════════════════
+   Volume Slider
+   ══════════════════════════════════════════════════════ */
+
+.volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--amo-primary);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--amo-primary-glow);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--amo-primary);
+  border-radius: 50%;
+  border: none;
+  box-shadow: 0 0 8px var(--amo-primary-glow);
+  cursor: pointer;
+}
+
+/* ══════════════════════════════════════════════════════
+   Mood Chips
+   ══════════════════════════════════════════════════════ */
+
+.mood-chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--amo-border);
+  background: var(--amo-surface);
+  color: var(--amo-text-dim);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all var(--amo-transition);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.mood-chip:hover {
+  background: var(--amo-surface-hover);
+  border-color: var(--amo-border-hover);
+  color: var(--amo-text);
+}
+
+.mood-chip.active {
+  background: rgba(74, 222, 128, 0.12);
+  border-color: rgba(74, 222, 128, 0.3);
+  color: var(--amo-primary);
+}
+
+/* ══════════════════════════════════════════════════════
+   Utility
+   ══════════════════════════════════════════════════════ */
+
+.mono {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.fade-out {
+  animation: fadeOut 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   Scene Background Transitions
+   ══════════════════════════════════════════════════════ */
+
+@keyframes bgFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes bgFadeOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.08;
+  }
+
+  33% {
+    transform: translateY(-20px) rotate(5deg);
+    opacity: 0.15;
+  }
+
+  66% {
+    transform: translateY(-10px) rotate(-3deg);
+    opacity: 0.1;
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 8px var(--amo-primary-glow);
+  }
+
+  50% {
+    box-shadow: 0 0 16px var(--amo-primary-glow);
+  }
+}
+
+@keyframes loadingBar {
+  from {
+    width: 0%;
+  }
+
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-panel-in {
+  animation: panelIn 300ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.duration-800 {
+  transition-duration: 800ms;
+}
+
+.z-35 {
+  z-index: 35;
+}
+
+@keyframes ambientPulse {
+
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes lightSway {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1.05);
+    opacity: 0.7;
+  }
+
+  33% {
+    transform: translate(2%, -1%) scale(1.08);
+    opacity: 1;
+  }
+
+  66% {
+    transform: translate(-2%, 1%) scale(1.03);
+    opacity: 0.8;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   Responsive — Mobile
+   ══════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .glass-panel {
+    border-radius: var(--amo-radius-sm);
+  }
+
+  .mood-chip {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+
+  .glass-panel,
+  .glass-panel-sm {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .mood-chip {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  .volume-slider::-webkit-slider-thumb {
+    width: 12px;
+    height: 12px;
+  }
+}

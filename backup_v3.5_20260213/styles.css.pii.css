@@ -1,0 +1,75 @@
+
+/* PII Warning Modal */
+.atom-pii-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(10, 10, 10, 0.95);
+    border: 1px solid rgba(239, 68, 68, 0.3); /* Red border for warning */
+    border-radius: 16px;
+    padding: 24px;
+    width: 400px;
+    max-width: 90vw;
+    z-index: 2147483648; /* Topmost */
+    backdrop-filter: blur(20px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    animation: pii-modal-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pii-modal-in {
+    from { opacity: 0; transform: translate(-50%, -40%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+.atom-pii-content h3 {
+    margin: 0 0 12px 0;
+    font-size: 18px;
+    color: #ef4444; /* Red warning color */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.atom-pii-content p {
+    margin: 0 0 24px 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #d1d5db;
+}
+
+.atom-pii-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.atom-pii-cancel, .atom-pii-confirm {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.atom-pii-cancel {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+.atom-pii-cancel:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.atom-pii-confirm {
+    background: rgba(239, 68, 68, 0.1); /* Red tint */
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+.atom-pii-confirm:hover {
+    background: rgba(239, 68, 68, 0.2);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.2);
+}

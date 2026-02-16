@@ -145,7 +145,9 @@
         const content = document.createElement('div');
         content.className = 'srq-state-content';
 
-        const icon = buildTextElement('span', 'srq-state-icon', '\u{1F4D6}');
+        const icon = document.createElement('span');
+        icon.className = 'srq-state-icon';
+        icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
         const text = buildTextElement('span', 'srq-state-text', msg('srq_empty_state', 'No highlights waiting to save.'));
 
         content.appendChild(icon);
@@ -229,7 +231,9 @@
         header.setAttribute('aria-expanded', 'false');
         header.setAttribute('aria-controls', 'srq-batches');
 
-        const icon = buildTextElement('span', 'srq-icon', '\u{1F4D6}');
+        const icon = document.createElement('span');
+        icon.className = 'srq-icon';
+        icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
         icon.setAttribute('aria-hidden', 'true');
 
         const title = buildTextElement('span', 'srq-title', msg('srq_widget_title', 'Saved highlights'));
@@ -381,6 +385,22 @@
         }
         el.appendChild(modesDiv);
 
+        // Visual Anchor thumbnail (Phase 2)
+        const firstCardWithAnchor = batch.cards?.find(c => c.visualAnchor);
+        if (firstCardWithAnchor) {
+            const thumbDiv = document.createElement('div');
+            thumbDiv.className = 'srq-visual-anchor';
+            const img = document.createElement('img');
+            img.src = firstCardWithAnchor.visualAnchor;
+            img.alt = msg('srq_visual_anchor_alt', 'Page snapshot');
+            img.className = 'srq-anchor-img';
+            img.loading = 'lazy';
+            // Graceful: hide if image fails to load
+            img.onerror = () => { thumbDiv.style.display = 'none'; };
+            thumbDiv.appendChild(img);
+            el.appendChild(thumbDiv);
+        }
+
         // Notebook suggestion
         if (batch.suggestedNotebook && batch.suggestedNotebook !== 'Inbox') {
             const meta = document.createElement('div');
@@ -396,25 +416,32 @@
         const actions = document.createElement('div');
         actions.className = 'srq-batch-actions';
 
-        const exportBtn = document.createElement('button');
-        exportBtn.className = 'srq-btn srq-btn-export';
-        exportBtn.textContent = cardCount > 1
-            ? msg('srq_export_all', 'Save all')
-            : msg('srq_export', 'Save');
-        // Wave 2 P1: ARIA label
-        exportBtn.setAttribute(
-            'aria-label',
-            msg('srq_batch_export_aria', 'Save $1 highlights from $2', [String(cardCount), topicLabelShort])
-        );
-        exportBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            handleBatchExport(batch, exportBtn);
-        });
+        if (batch.allExported) {
+            // All cards already exported — show "Saved" badge
+            const savedBadge = document.createElement('span');
+            savedBadge.className = 'srq-btn srq-btn-saved';
+            savedBadge.textContent = '\u2713 ' + msg('srq_saved', 'Saved');
+            actions.appendChild(savedBadge);
+        } else {
+            const exportBtn = document.createElement('button');
+            exportBtn.className = 'srq-btn srq-btn-export';
+            exportBtn.textContent = cardCount > 1
+                ? msg('srq_export_all', 'Save all')
+                : msg('srq_export', 'Save');
+            exportBtn.setAttribute(
+                'aria-label',
+                msg('srq_batch_export_aria', 'Save $1 highlights from $2', [String(cardCount), topicLabelShort])
+            );
+            exportBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                handleBatchExport(batch, exportBtn);
+            });
+            actions.appendChild(exportBtn);
+        }
 
         const reviewBtn = document.createElement('button');
         reviewBtn.className = 'srq-btn';
         reviewBtn.textContent = msg('srq_review', 'Review');
-        // Wave 2 P1: ARIA label
         reviewBtn.setAttribute(
             'aria-label',
             msg('srq_batch_review_aria', 'Review $1 highlights from $2', [String(cardCount), topicLabelShort])
@@ -423,8 +450,6 @@
             e.stopPropagation();
             openReviewModal(batch);
         });
-
-        // Wave 2 P1: Keyboard support
         reviewBtn.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
@@ -436,7 +461,6 @@
         dismissBtn.className = 'srq-btn srq-btn-dismiss';
         dismissBtn.textContent = '\u2715';
         dismissBtn.title = msg('srq_dismiss', 'Dismiss');
-        // Wave 2 P1: ARIA label
         dismissBtn.setAttribute(
             'aria-label',
             msg('srq_batch_dismiss_aria', 'Dismiss $1 batch', [topicLabelShort])
@@ -446,7 +470,6 @@
             handleBatchDismiss(batch, el);
         });
 
-        actions.appendChild(exportBtn);
         actions.appendChild(reviewBtn);
         actions.appendChild(dismissBtn);
         el.appendChild(actions);
@@ -590,8 +613,9 @@
     }
 
     function createReviewCard(card, selectedSet) {
+        const isExported = card.status === 'exported';
         const el = document.createElement('div');
-        el.className = 'srq-review-card' + (selectedSet.has(card.cardId) ? ' selected' : '');
+        el.className = 'srq-review-card' + (selectedSet.has(card.cardId) ? ' selected' : '') + (isExported ? ' exported' : '');
         el.dataset.cardId = card.cardId;
 
         // Selection text
@@ -618,6 +642,20 @@
         meta.appendChild(dot2);
         meta.appendChild(modeEl);
         el.appendChild(meta);
+
+        // Visual anchor in review card (Phase 2)
+        if (card.visualAnchor) {
+            const anchorDiv = document.createElement('div');
+            anchorDiv.className = 'srq-review-anchor';
+            const img = document.createElement('img');
+            img.src = card.visualAnchor;
+            img.alt = msg('srq_visual_anchor_alt', 'Page snapshot');
+            img.className = 'srq-review-anchor-img';
+            img.loading = 'lazy';
+            img.onerror = () => { anchorDiv.style.display = 'none'; };
+            anchorDiv.appendChild(img);
+            el.appendChild(anchorDiv);
+        }
 
         // Atomic thought (insight)
         if (card.atomicThought) {
@@ -680,7 +718,7 @@
             setTimeout(() => {
                 el.remove();
                 // Dismiss the card
-                chrome.runtime.sendMessage({ type: "SRQ_DISMISS_CARD", cardId: card.cardId }).catch(() => {});
+                chrome.runtime.sendMessage({ type: "SRQ_DISMISS_CARD", cardId: card.cardId }).catch(() => { });
                 updateModalSelectionState(selectedSet);
             }, 200);
         });
@@ -809,7 +847,7 @@
             // Mark unselected cards as dismissed first
             for (const card of batch.cards) {
                 if (!selectedSet.has(card.cardId)) {
-                    await chrome.runtime.sendMessage({ type: "SRQ_DISMISS_CARD", cardId: card.cardId }).catch(() => {});
+                    await chrome.runtime.sendMessage({ type: "SRQ_DISMISS_CARD", cardId: card.cardId }).catch(() => { });
                 }
             }
 

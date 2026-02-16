@@ -280,8 +280,9 @@ export async function enrichCardAsync(cardId) {
     const currentUpdatedAt = currentCard.updatedAt || currentCard.createdAt;
     const currentStatus = currentCard.status;
 
-    // Conflict detection
-    if (currentUpdatedAt > initialUpdatedAt) {
+    // Conflict detection — allow auto-approve (pending_review → approved)
+    const autoApproved = initialStatus === "pending_review" && currentStatus === "approved";
+    if (currentUpdatedAt > initialUpdatedAt && !autoApproved) {
         console.warn("[SRQ] Enrich skipped: card was updated during enrichment", {
             cardId,
             initialUpdatedAt,
@@ -301,7 +302,7 @@ export async function enrichCardAsync(cardId) {
             type: "SRQ_CARDS_UPDATED",
             reason: "enrichment_completed",
             changedIds: [cardId]
-        }).catch(() => {});
+        }).catch(() => { });
 
         return updated;
     }

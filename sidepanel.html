@@ -76,6 +76,37 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            /* Ambient background — synced with ATOM_Web brand */
+            background-image:
+                radial-gradient(ellipse at 20% -5%, rgba(var(--primary-rgb, 16, 185, 129), 0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 85% 105%, rgba(var(--secondary-rgb, 139, 92, 246), 0.04) 0%, transparent 55%);
+        }
+
+        /* Subtle grid pattern overlay — matches web brand */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            opacity: 0.018;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body.light-mode {
+            background-image:
+                radial-gradient(ellipse at 20% -5%, rgba(var(--primary-rgb, 13, 148, 136), 0.05) 0%, transparent 60%),
+                radial-gradient(ellipse at 85% 105%, rgba(var(--secondary-rgb, 124, 58, 237), 0.025) 0%, transparent 55%);
+        }
+
+        body.light-mode::after {
+            opacity: 0.03;
+            background-image:
+                linear-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.08) 1px, transparent 1px);
         }
 
         /* ============================================
@@ -306,6 +337,43 @@
             font-weight: 600;
         }
 
+        .sp-notebook-link {
+            font-size: 11px;
+            color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            cursor: pointer;
+            padding: 3px 10px;
+            margin-top: 3px;
+            opacity: 0.9;
+            transition: all 0.2s;
+            background: rgba(16, 185, 129, 0.08);
+            border-radius: 20px;
+            border: 1px solid rgba(16, 185, 129, 0.15);
+            font-weight: 500;
+            letter-spacing: 0.01em;
+        }
+
+        .sp-notebook-link:hover {
+            opacity: 1;
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .sp-notebook-link svg {
+            width: 13px;
+            height: 13px;
+            flex-shrink: 0;
+        }
+
+        .sp-notebook-link .sp-nb-count {
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 400;
+        }
+
         @keyframes pulse {
 
             0%,
@@ -393,6 +461,7 @@
             align-items: center;
             gap: 8px;
             border-bottom: 1px solid var(--border);
+            transition: all 0.25s ease;
         }
 
         .sp-menu-item:last-child {
@@ -400,7 +469,34 @@
         }
 
         .sp-menu-item:hover {
-            background: var(--background);
+            transition: all 0.25s ease;
+        }
+
+        /* Per-item color gradients (web brand sync) */
+        #menu-download:hover {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(59, 130, 246, 0.04));
+            color: #0EA5E9;
+        }
+
+        #menu-save-all:hover {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(20, 184, 166, 0.04));
+            color: #10B981;
+        }
+
+        #menu-new-chat:hover {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(249, 115, 22, 0.04));
+            color: #F59E0B;
+        }
+
+
+        #menu-clear:hover {
+            background: linear-gradient(135deg, rgba(100, 116, 139, 0.12), rgba(107, 114, 128, 0.04));
+            color: #94A3B8;
+        }
+
+        #menu-whats-new:hover {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(249, 115, 22, 0.04));
+            color: #F59E0B;
         }
 
         .sp-menu-item.danger {
@@ -463,7 +559,65 @@
             overflow: hidden;
             text-overflow: ellipsis;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Gradient fill on hover — per-tab color identity (web brand sync) */
+        .sp-main-tab-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            opacity: 0;
+            transition: opacity 0.35s ease;
+            pointer-events: none;
+        }
+
+        .sp-main-tab-btn:hover::before {
+            opacity: 1;
+        }
+
+        /* Chat: Cyan → Blue */
+        .sp-main-tab-btn[data-main-tab="chat"]::before {
+            background: linear-gradient(135deg,
+                    rgba(6, 182, 212, 0.14) 0%,
+                    rgba(59, 130, 246, 0.06) 100%);
+        }
+
+        .sp-main-tab-btn[data-main-tab="chat"]:hover {
+            color: #06B6D4;
+            border-color: rgba(6, 182, 212, 0.3);
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.10);
+        }
+
+        /* Phase 2: Notes tab removed — styles cleared */
+
+        /* Review: Violet → Purple */
+        .sp-main-tab-btn[data-main-tab="cards"]::before {
+            background: linear-gradient(135deg,
+                    rgba(139, 92, 246, 0.14) 0%,
+                    rgba(168, 85, 247, 0.06) 100%);
+        }
+
+        .sp-main-tab-btn[data-main-tab="cards"]:hover {
+            color: #8B5CF6;
+            border-color: rgba(139, 92, 246, 0.3);
+            box-shadow: 0 0 12px rgba(139, 92, 246, 0.10);
+        }
+
+        /* Saved: Emerald → Teal */
+        .sp-main-tab-btn[data-main-tab="saved"]::before {
+            background: linear-gradient(135deg,
+                    rgba(16, 185, 129, 0.14) 0%,
+                    rgba(20, 184, 166, 0.06) 100%);
+        }
+
+        .sp-main-tab-btn[data-main-tab="saved"]:hover {
+            color: #10B981;
+            border-color: rgba(16, 185, 129, 0.3);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.10);
         }
 
         .sp-main-tab-btn.active {
@@ -749,26 +903,84 @@
         }
 
         .sp-cmd-item__icon {
-            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             width: 20px;
-            text-align: center;
+            height: 16px;
             flex-shrink: 0;
+            color: var(--text-secondary, #888);
+            opacity: 0.8;
         }
 
-        .sp-cmd-dropdown.focus-active [data-cmd="FOCUS_25"],
-        .sp-cmd-dropdown.focus-active [data-cmd="FOCUS_40"],
-        .sp-cmd-dropdown.focus-active [data-cmd="FOCUS_50"] {
+        .sp-cmd-item:hover .sp-cmd-item__icon {
+            color: var(--primary, #10B981);
+            opacity: 1;
+        }
+
+        .sp-cmd-dropdown.focus-active #cmd-focus-row {
             display: none;
+        }
+
+        /* Focus row: inline layout */
+        .sp-cmd-focus-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+        }
+
+        .sp-cmd-focus-input {
+            width: 48px;
+            padding: 3px 4px;
+            border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+            border-radius: 5px;
+            background: var(--surface, rgba(255, 255, 255, 0.06));
+            color: var(--foreground, #e5e5e5);
+            font-size: 12px;
+            text-align: center;
+            outline: none;
+            -moz-appearance: textfield;
+        }
+
+        .sp-cmd-focus-input::-webkit-inner-spin-button,
+        .sp-cmd-focus-input::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .sp-cmd-focus-input:focus {
+            border-color: var(--primary, #10B981);
+        }
+
+        .sp-cmd-focus-unit {
+            font-size: 11px;
+            color: var(--muted, #a3a3a3);
+        }
+
+        .sp-cmd-focus-start {
+            padding: 3px 10px;
+            border-radius: 5px;
+            border: 1px solid var(--primary, #10B981);
+            background: var(--primary, #10B981);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .sp-cmd-focus-start:hover {
+            opacity: 0.85;
         }
 
         /* Main view modes */
         .sp-cards-panel {
             display: none;
             flex: 1;
-            align-items: center;
-            justify-content: center;
-            padding: 18px;
-            text-align: center;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 0;
         }
 
         .sp-cards-panel-inner {
@@ -812,31 +1024,9 @@
             display: none;
         }
 
-        body[data-main-tab="notes"] .sp-main {
-            display: none;
-        }
+        /* Phase 2: Notes layout rules removed */
 
-        body[data-main-tab="notes"] .sp-bottom-tabs {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-        }
-
-        body[data-main-tab="notes"] .sp-tab-content {
-            flex: 1;
-            max-height: none;
-        }
-
-        body[data-main-tab="notes"] .sp-tab-btn[data-tab="discussions"],
-        body[data-main-tab="notes"] .sp-tab-btn[data-tab="connections"],
-        body[data-main-tab="notes"] .sp-toggle-tabs-btn {
-            display: none;
-        }
-
-        body[data-main-tab="saved"] .sp-bottom-tabs {
-            display: none;
-        }
+        /* Phase 2: bottom tabs rules removed */
 
         body[data-main-tab="saved"] .sp-main>* {
             display: none !important;
@@ -849,9 +1039,7 @@
             animation: spMainSurfaceFade 0.18s ease;
         }
 
-        body[data-main-tab="cards"] .sp-bottom-tabs {
-            display: none;
-        }
+        /* Phase 2: bottom tabs rules removed */
 
         body[data-main-tab="cards"] .sp-main>* {
             display: none !important;
@@ -863,9 +1051,6 @@
         }
 
         /* Wave C: touch target polish */
-        .sp-tab-btn {
-            min-height: 44px;
-        }
 
         .sp-focus-widget__preset,
         .sp-focus-widget__btn,
@@ -890,7 +1075,6 @@
 
             .sp-focus-widget__bar,
             .sp-main-tab-btn,
-            .sp-tab-btn,
             .sp-cmd-chip,
             .sp-send-btn {
                 transition: none !important;
@@ -3395,75 +3579,7 @@
             cursor: not-allowed;
         }
 
-        /* ============================================
-           ZONE 3: BOTTOM TABS (Drawer)
-           ============================================ */
-        .sp-bottom-tabs {
-            border-top: 1px solid var(--border);
-            background: var(--surface);
-            flex-shrink: 0;
-        }
-
-        .sp-tabs-header {
-            display: flex;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .sp-tab-btn {
-            flex: 1;
-            padding: 10px 8px;
-            font-size: 10px;
-            color: var(--muted);
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            border-bottom: 2px solid transparent;
-            transition: all 0.15s;
-        }
-
-        .sp-tab-btn:hover {
-            color: var(--foreground);
-            background: var(--background);
-        }
-
-        .sp-tab-btn.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
-        }
-
-        .sp-tab-btn svg {
-            width: 14px;
-            height: 14px;
-            stroke-width: 2;
-        }
-
-        .sp-tab-badge {
-            background: var(--primary);
-            color: white;
-            font-size: 9px;
-            padding: 1px 5px;
-            border-radius: 8px;
-            min-width: 16px;
-            text-align: center;
-        }
-
-        .sp-tab-content {
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .sp-tab-panel {
-            display: none;
-            padding: 10px 12px;
-        }
-
-        .sp-tab-panel.active {
-            display: block;
-        }
+        /* Phase 2: Zone 3 Bottom Tabs removed — all styles cleared */
 
         /* Discussions Tab */
         .sp-thread-item {
@@ -3506,6 +3622,33 @@
         .sp-thread-meta {
             font-size: 9px;
             color: var(--muted);
+        }
+
+        .sp-thread-delete {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border: none;
+            border-radius: 4px;
+            background: transparent;
+            color: var(--muted, #a3a3a3);
+            cursor: pointer;
+            padding: 0;
+            flex-shrink: 0;
+            transition: all 0.15s;
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .sp-thread-item:hover .sp-thread-delete {
+            display: flex;
+        }
+
+        .sp-thread-delete:hover {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
         }
 
         /* Quick Notes Tab */
@@ -3794,41 +3937,7 @@
             animation: spin 0.8s linear infinite;
         }
 
-        /* Toggle Tabs Button */
-        .sp-toggle-tabs-btn {
-            background: transparent;
-            border: none;
-            color: var(--muted);
-            cursor: pointer;
-            padding: 8px 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            border-bottom: 2px solid transparent;
-        }
-
-        .sp-toggle-tabs-btn:hover {
-            color: var(--foreground);
-            background: var(--background);
-        }
-
-        .sp-toggle-tabs-btn svg {
-            transition: transform 0.3s ease;
-        }
-
-        /* Collapsed State */
-        .sp-bottom-tabs.collapsed .sp-tab-content {
-            display: none;
-        }
-
-        .sp-bottom-tabs.collapsed .sp-toggle-tabs-btn svg {
-            transform: rotate(180deg);
-        }
-
-        .sp-bottom-tabs.collapsed {
-            border-top: 1px solid var(--border);
-        }
+        /* Phase 2: Toggle tabs & collapsed state removed */
 
         /* --- Deep Angle Professional UI --- */
         #btn-deep-angle {
@@ -4165,32 +4274,7 @@
                 height: 14px;
             }
 
-            /* Bottom tabs: compact */
-            .sp-tab-btn {
-                padding: 8px 4px;
-                font-size: 9px;
-                min-height: 36px;
-                gap: 2px;
-            }
-
-            .sp-tab-btn svg {
-                width: 12px;
-                height: 12px;
-            }
-
-            .sp-tab-badge {
-                font-size: 8px;
-                padding: 1px 4px;
-                min-width: 14px;
-            }
-
-            .sp-tab-panel {
-                padding: 8px;
-            }
-
-            .sp-tab-content {
-                max-height: 160px;
-            }
+            /* Phase 2: Bottom tabs compact overrides removed */
 
             /* Thread items: compact */
             .sp-thread-item {
@@ -4289,14 +4373,7 @@
                 height: 30px;
             }
 
-            .sp-tab-btn {
-                padding: 8px 6px;
-                font-size: 9px;
-            }
-
-            .sp-tab-content {
-                max-height: 180px;
-            }
+            /* Phase 2: Bottom tabs medium overrides removed */
         }
 
         /* --- Wide: ≥500px (take advantage of extra space) --- */
@@ -4369,18 +4446,7 @@
                 height: 38px;
             }
 
-            .sp-tab-btn {
-                padding: 12px 10px;
-                font-size: 11px;
-            }
-
-            .sp-tab-content {
-                max-height: 260px;
-            }
-
-            .sp-tab-panel {
-                padding: 12px 16px;
-            }
+            /* Phase 2: Bottom tabs wide overrides removed */
 
             .sp-thread-item {
                 padding: 10px 12px;
@@ -4462,6 +4528,99 @@
             color: var(--background);
             border-color: var(--primary);
         }
+
+        /* Phase 2: Inline Thread List */
+        .sp-inline-threads {
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .sp-inline-threads__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sp-inline-threads__close {
+            border: none;
+            background: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .sp-inline-threads__close:hover {
+            color: var(--text);
+        }
+
+        .sp-inline-threads__list {
+            padding: 4px 0;
+        }
+
+        /* Phase 2E: Chat Nudge Bubbles */
+        .sp-nudge-bubble {
+            display: flex;
+            gap: 8px;
+            padding: 10px 14px;
+            margin: 8px 12px;
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.08), rgba(0, 255, 136, 0.03));
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 10px;
+            animation: nudge-fade-in 0.3s ease;
+        }
+
+        .sp-nudge-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .sp-nudge-text {
+            font-size: 13px;
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .sp-nudge-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        .sp-nudge-action {
+            border: 1px solid var(--primary, #00ff88);
+            background: transparent;
+            color: var(--primary, #00ff88);
+            border-radius: 14px;
+            padding: 3px 10px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .sp-nudge-action:hover {
+            background: var(--primary, #00ff88);
+            color: var(--background, #0a0a0a);
+        }
+
+        @keyframes nudge-fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 
@@ -4491,6 +4650,18 @@
             <div class="sp-status">
                 <span class="status-dot" id="context-status"></span>
                 <span id="context-text">Loading...</span>
+            </div>
+            <!-- Notebook Link -->
+            <div class="sp-notebook-link" id="notebook-link" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                    <line x1="12" y1="6" x2="12" y2="13" />
+                    <line x1="9" y1="10" x2="15" y2="10" />
+                </svg>
+                <span id="notebook-link-text"></span>
+                <span class="sp-nb-count" id="notebook-link-count"></span>
             </div>
             <!-- Progress Bar -->
             <div class="sp-progress-bar" id="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"
@@ -4555,28 +4726,31 @@
                         </svg>
                         <span data-i18n="sp_menu_new_chat">New Chat</span>
                     </div>
-                    <div class="sp-menu-divider"></div>
-                    <div class="sp-menu-item" id="menu-semantic-embeddings" role="menuitem" tabindex="0">
+                    <div class="sp-menu-item" id="menu-threads" role="menuitem" tabindex="0">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 2a3 3 0 0 1 3 3v2" />
-                            <path d="M12 22a3 3 0 0 0 3-3v-2" />
-                            <path d="M2 12a3 3 0 0 1 3-3h2" />
-                            <path d="M22 12a3 3 0 0 0-3-3h-2" />
-                            <circle cx="12" cy="12" r="4" />
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                         </svg>
-                        <span class="sp-menu-label" data-i18n="sp_menu_semantic_embeddings">Semantic Embeddings</span>
-                        <span class="sp-menu-badge off" id="menu-embeddings-status">OFF</span>
+                        <span data-i18n="sp_menu_chat_history">Chat History</span>
+                        <span class="sp-menu-badge" id="menu-threads-count">0</span>
                     </div>
-                    <div class="sp-menu-item" id="menu-semantic-search" role="menuitem" tabindex="0">
+                    <div class="sp-menu-item" id="menu-memory" role="menuitem" tabindex="0">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="7" />
-                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
                         </svg>
-                        <span class="sp-menu-label" data-i18n="sp_menu_semantic_search">Semantic Search</span>
-                        <span class="sp-menu-badge off" id="menu-semantic-status">OFF</span>
+                        <span data-i18n="sp_menu_memory">Memory</span>
                     </div>
+                    <div class="sp-menu-item" id="menu-whats-new" role="menuitem" tabindex="0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                        </svg>
+                        <span data-i18n="sp_menu_whats_new">What's New</span>
+                    </div>
+                    <!-- Phase 2: Semantic menu items removed (auto-managed by Silent Brain) -->
                     <div class="sp-menu-item" id="menu-clear" role="menuitem" tabindex="0">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -4624,8 +4798,7 @@
     <nav class="sp-main-tabbar" id="main-tabbar" role="tablist" aria-label="Main tabs">
         <button class="sp-main-tab-btn active" data-main-tab="chat" role="tab" aria-selected="true"
             data-i18n="tabChat">Chat</button>
-        <button class="sp-main-tab-btn" data-main-tab="notes" role="tab" aria-selected="false"
-            data-i18n="tabNotes">Notes</button>
+        <!-- Notes tab removed — Silent Brain Phase 2 -->
         <button class="sp-main-tab-btn" data-main-tab="cards" role="tab" aria-selected="false"
             data-i18n="tabCards">Review</button>
         <button class="sp-main-tab-btn" data-main-tab="saved" role="tab" aria-selected="false"
@@ -4639,25 +4812,14 @@
         <!-- Pre-reading Primer -->
         <div class="sp-primer-root" id="primer-root"></div>
 
-        <!-- Learning Mode Selector -->
-        <div class="sp-mode-root" id="mode-selector-root"></div>
-
-        <!-- Related Memory (Phase 3: Semantic Brain) -->
-        <div class="sp-memory-root" id="memory-root"></div>
+        <!-- Phase 2: Removed Mode Selector + Memory root (phantom UI) -->
 
         <!-- Smart Research Queue -->
         <div id="srq-widget-container" role="region" aria-label="Saved items"></div>
 
         <!-- Cards Placeholder Panel -->
         <section class="sp-cards-panel" id="cards-panel" aria-label="Practice cards">
-            <div class="sp-cards-panel-inner">
-                <div class="sp-cards-title">🧠</div>
-                <div class="sp-cards-desc" data-i18n="sp_cards_coming_soon">AI-powered review cards are on the way!
-                    We're crafting a smart practice experience to help you retain what you read. Stay tuned for the next
-                    update ✨</div>
-                <button class="sp-cards-btn" type="button" id="btn-cards-go-chat" data-i18n="sp_cards_back_chat">← Back
-                    to Chat</button>
-            </div>
+            <div id="review-cards-root"></div>
         </section>
 
         <!-- Insights Summary (shown when no active chat) -->
@@ -4744,78 +4906,11 @@
                 data-i18n="btnStop">Stop</button>
         </div>
 
-        <!-- Quick Diary Widget (Phase 3) -->
-        <div class="qd-widget" id="quick-diary">
-            <div class="qd-collapsed">
-                <span class="qd-icon" aria-hidden="true">📝</span>
-                <span class="qd-hint" data-i18n="quickDiaryHint">Quick diary...</span>
-            </div>
-            <div class="qd-expanded-content">
-                <div class="qd-header">
-                    <span data-i18n="quickDiaryTitle">Quick diary</span>
-                    <button class="qd-close" type="button" aria-label="Close">&times;</button>
-                </div>
-                <textarea class="qd-input" rows="2" maxlength="500" data-i18n-placeholder="quickDiaryPlaceholder"
-                    placeholder="How are you feeling today?"></textarea>
-                <div class="qd-moods" role="group" aria-label="Select mood">
-                    <button class="qd-mood" data-mood="happy" title="Happy">😊</button>
-                    <button class="qd-mood" data-mood="excited" title="Excited">🤩</button>
-                    <button class="qd-mood" data-mood="sad" title="Sad">😔</button>
-                    <button class="qd-mood" data-mood="anxious" title="Anxious">😰</button>
-                    <button class="qd-mood" data-mood="tired" title="Tired">😴</button>
-                    <button class="qd-mood" data-mood="angry" title="Angry">😤</button>
-                    <button class="qd-mood" data-mood="focused" title="Focused">🎯</button>
-                    <button class="qd-mood" data-mood="grateful" title="Grateful">🙏</button>
-                    <button class="qd-mood" data-mood="neutral" title="Neutral">😐</button>
-                </div>
-                <button class="qd-save" type="button" data-i18n="diaryBtnSave">Save to journal</button>
-            </div>
-        </div>
+        <!-- Phase 2: Removed Quick Diary widget (use /journal command instead) -->
 
         <!-- Input Area -->
         <div class="sp-input-area" role="form" aria-label="Message input">
-            <div class="sp-action-bar" id="action-bar" role="toolbar" aria-label="Discussion actions">
-                <button class="sp-action-btn" id="btn-quick-save" title="Lưu nhanh vào NotebookLM">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                        <polyline points="17 21 17 13 7 13 7 21" />
-                        <polyline points="7 3 7 8 15 8" />
-                    </svg>
-                </button>
-                <button class="sp-action-btn secondary" id="btn-key-insight" title="Create Key Insight (Ctrl+D)"
-                    aria-keyshortcuts="Control+d">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path
-                            d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
-                        <path d="M9 18h6" />
-                        <path d="M10 22h4" />
-                    </svg>
-                </button>
-                <button class="sp-action-btn" id="btn-toggle-insight" title="Hide Key Insight"
-                    aria-label="Toggle Key Insight" aria-pressed="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.77 21.77 0 0 1 5.06-6.94">
-                        </path>
-                        <path d="M1 1l22 22"></path>
-                        <path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.77 21.77 0 0 1-4.23 5.94"></path>
-                        <path d="M14.12 14.12a3 3 0 0 1-4.24-4.24"></path>
-                        <path d="M9.88 9.88a3 3 0 0 1 4.24 4.24"></path>
-                    </svg>
-                </button>
-                <button class="sp-action-btn primary" id="btn-mark-done" title="Mark as Done (Ctrl+Shift+D)"
-                    aria-keyshortcuts="Control+Shift+d">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                        <polyline points="22 4 12 14.01 9 11.01" />
-                    </svg>
-                </button>
-                <div style="flex:1"></div>
-                <div class="sp-char-count" aria-live="off"><span id="char-count">0</span>/500</div>
-            </div>
+            <!-- Phase 2: Removed action bar (4 buttons) — actions available via / commands + ≡ menu  -->
             <div class="sp-input-wrapper">
                 <!-- Command Menu -->
                 <div class="sp-cmd-menu" id="cmd-menu">
@@ -4823,67 +4918,94 @@
                         aria-haspopup="listbox" aria-expanded="false">/</button>
                     <div class="sp-cmd-dropdown" id="cmd-dropdown" role="listbox" aria-label="Commands">
                         <div class="sp-cmd-cat" data-i18n="cmdCatFocus">Focus</div>
-                        <button class="sp-cmd-item" data-cmd="FOCUS_25" role="option">
-                            <span class="sp-cmd-item__icon" aria-hidden="true">🎯</span>
-                            <span class="sp-cmd-item__label" data-i18n="cmdFocus25">Focus 25 min</span>
-                        </button>
-                        <button class="sp-cmd-item" data-cmd="FOCUS_40" role="option">
-                            <span class="sp-cmd-item__icon" aria-hidden="true">🎯</span>
-                            <span class="sp-cmd-item__label" data-i18n="cmdFocus40">Focus 40 min</span>
-                        </button>
-                        <button class="sp-cmd-item" data-cmd="FOCUS_50" role="option">
-                            <span class="sp-cmd-item__icon" aria-hidden="true">🎯</span>
-                            <span class="sp-cmd-item__label" data-i18n="cmdFocus50">Focus 50 min</span>
-                        </button>
+                        <div class="sp-cmd-focus-row" id="cmd-focus-row">
+                            <span class="sp-cmd-item__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg"
+                                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <circle cx="12" cy="12" r="6" />
+                                    <circle cx="12" cy="12" r="2" />
+                                </svg></span>
+                            <span class="sp-cmd-item__label" data-i18n="cmdFocusLabel">Focus</span>
+                            <input type="number" id="cmd-focus-minutes" class="sp-cmd-focus-input" min="1" max="180"
+                                value="25" step="5" aria-label="Minutes" />
+                            <span class="sp-cmd-focus-unit" data-i18n="cmdFocusUnit">min</span>
+                            <button class="sp-cmd-focus-start" id="cmd-focus-start"
+                                data-i18n="cmdFocusStart">Start</button>
+                        </div>
                         <div class="sp-cmd-cat" data-i18n="cmdCatAI">AI</div>
                         <button class="sp-cmd-item" data-action="summarize" role="option">
-                            <span class="sp-cmd-item__icon" aria-hidden="true">📄</span>
+                            <span class="sp-cmd-item__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg"
+                                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <polyline points="14 2 14 8 20 8" />
+                                    <line x1="16" y1="13" x2="8" y2="13" />
+                                    <line x1="16" y1="17" x2="8" y2="17" />
+                                    <polyline points="10 9 9 9 8 9" />
+                                </svg></span>
                             <span class="sp-cmd-item__label" data-i18n="sp_chip_summarize">Summarize</span>
                         </button>
-                        <button class="sp-cmd-item" data-action="keypoints" role="option">
-                            <span class="sp-cmd-item__icon" aria-hidden="true">🔑</span>
-                            <span class="sp-cmd-item__label" data-i18n="sp_chip_keypoints">Key Points</span>
-                        </button>
+                        <!-- Phase 2: Removed keypoints, counter, connect commands -->
                         <button class="sp-cmd-item" data-action="explain" role="option">
-                            <span class="sp-cmd-item__icon" aria-hidden="true">💡</span>
+                            <span class="sp-cmd-item__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg"
+                                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M9 18h6" />
+                                    <path d="M10 22h4" />
+                                    <path
+                                        d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14" />
+                                </svg></span>
                             <span class="sp-cmd-item__label" data-i18n="sp_chip_explain">Explain</span>
                         </button>
-                        <button class="sp-cmd-item" data-action="counter" role="option">
-                            <span class="sp-cmd-item__icon" aria-hidden="true">⚖️</span>
-                            <span class="sp-cmd-item__label" data-i18n="sp_chip_critique">Critique</span>
-                        </button>
-                        <button class="sp-cmd-item" data-action="connect" role="option">
-                            <span class="sp-cmd-item__icon" aria-hidden="true">🔗</span>
-                            <span class="sp-cmd-item__label" data-i18n="sp_chip_connect">Connect</span>
-                        </button>
                         <button class="sp-cmd-item" data-action="save" role="option">
-                            <span class="sp-cmd-item__icon" aria-hidden="true">📌</span>
+                            <span class="sp-cmd-item__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg"
+                                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" y1="5" x2="12" y2="19" />
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                </svg></span>
                             <span class="sp-cmd-item__label" data-i18n="sp_chip_save">Save</span>
                         </button>
                         <div class="sp-cmd-cat" data-i18n="cmdCatTools">Tools</div>
                         <button class="sp-cmd-item" data-cmd="OPEN_DIARY" role="option">
-                            <span class="sp-cmd-item__icon" aria-hidden="true">📝</span>
+                            <span class="sp-cmd-item__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg"
+                                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 20h9" />
+                                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                </svg></span>
                             <span class="sp-cmd-item__label" data-i18n="cmdOpenDiary">Journal</span>
                         </button>
-                        <button class="sp-cmd-item" data-action="quick-diary" role="option">
-                            <span class="sp-cmd-item__icon" aria-hidden="true">✍️</span>
-                            <span class="sp-cmd-item__label" data-i18n="quickDiaryHint">Quick diary</span>
-                        </button>
-                        <button class="sp-cmd-item" data-cmd="OPEN_NOTES" role="option">
-                            <span class="sp-cmd-item__icon" aria-hidden="true">📖</span>
-                            <span class="sp-cmd-item__label" data-i18n="cmdOpenNotes">Notes</span>
-                        </button>
-                        <button class="sp-cmd-item" data-cmd="OPEN_SAVED" role="option">
-                            <span class="sp-cmd-item__icon" aria-hidden="true">🔖</span>
-                            <span class="sp-cmd-item__label" data-i18n="cmdOpenSaved">Saved highlights</span>
+                        <!-- Phase 2: Removed quick-diary, notes, saved commands -->
+                        <button class="sp-cmd-item" data-cmd="OPEN_MEMORY" role="option">
+                            <span class="sp-cmd-item__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg"
+                                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                                </svg></span>
+                            <span class="sp-cmd-item__label" data-i18n="sp_menu_memory">Memory</span>
                         </button>
                         <button class="sp-cmd-item" data-cmd="EXPORT_SAVED" role="option">
-                            <span class="sp-cmd-item__icon" aria-hidden="true">💾</span>
+                            <span class="sp-cmd-item__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg"
+                                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                    <polyline points="7 10 12 15 17 10" />
+                                    <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg></span>
                             <span class="sp-cmd-item__label" data-i18n="cmdExportSaved">Export saved</span>
                         </button>
                         <div class="sp-cmd-cat" data-i18n="cmdCatSettings">Settings</div>
                         <button class="sp-cmd-item" data-cmd="OPEN_SETTINGS" role="option">
-                            <span class="sp-cmd-item__icon" aria-hidden="true">⚙️</span>
+                            <span class="sp-cmd-item__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg"
+                                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="3" />
+                                    <path
+                                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                                </svg></span>
                             <span class="sp-cmd-item__label" data-i18n="cmdOpenSettings">Settings</span>
                         </button>
                     </div>
@@ -4905,91 +5027,9 @@
     </main>
 
     <!-- ============================================
-         ZONE 3: BOTTOM TABS
+         ZONE 3: BOTTOM TABS — REMOVED (Silent Brain Phase 2)
+         Thread list accessible via ≡ menu "Chat History"
          ============================================ -->
-    <aside class="sp-bottom-tabs" role="complementary" aria-label="Additional panels">
-        <div class="sp-tabs-header" role="tablist" aria-label="Content tabs">
-            <button class="sp-tab-btn active" data-tab="discussions" role="tab" aria-selected="true"
-                aria-controls="tab-discussions" id="tab-btn-discussions">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-                <span data-i18n="sp_threads_label">Chats</span>
-                <span class="sp-tab-badge" id="discussions-count" aria-label="chat count">0</span>
-            </button>
-            <button class="sp-tab-btn" data-tab="notes" role="tab" aria-selected="false" aria-controls="tab-notes"
-                id="tab-btn-notes">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 20h9" />
-                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                </svg>
-                <span data-i18n="sp_quick_note_title">Notes</span>
-                <span class="sp-tab-badge" id="notes-count" aria-label="notes count">0</span>
-            </button>
-            <button class="sp-tab-btn" data-tab="connections" role="tab" aria-selected="false"
-                aria-controls="tab-connections" id="tab-btn-connections">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                </svg>
-                <span data-i18n="sp_connections_title">Related</span>
-                <span class="sp-tab-badge" id="connections-count" aria-label="connections count">0</span>
-            </button>
-            <button class="sp-toggle-tabs-btn" id="btn-toggle-tabs" aria-label="Toggle panel" title="Collapse/Expand">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-            </button>
-        </div>
-
-        <div class="sp-tab-content">
-            <!-- Discussions Tab -->
-            <div class="sp-tab-panel active" id="tab-discussions" role="tabpanel" aria-labelledby="tab-btn-discussions"
-                tabindex="0">
-                <div id="thread-list" role="list" aria-label="Discussion threads">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-
-            <!-- Quick Notes Tab -->
-            <div class="sp-tab-panel" id="tab-notes" role="tabpanel" aria-labelledby="tab-btn-notes" tabindex="0"
-                hidden>
-                <div class="sp-note-input-row">
-                    <label for="note-input" class="visually-hidden">Quick note input</label>
-                    <input type="text" class="sp-note-input" id="note-input"
-                        data-i18n-placeholder="sp_quick_note_placeholder" placeholder="Jot down your idea...">
-                    <button class="sp-note-add-btn" id="btn-add-note" data-i18n="sp_quick_note_add" title="Ctrl+N"
-                        aria-keyshortcuts="Control+n">+ Add</button>
-                </div>
-                <div id="notes-list" role="list" aria-label="Quick notes">
-                    <div class="sp-note-empty" data-i18n="sp_quick_note_empty" role="status">No notes yet</div>
-                </div>
-            </div>
-
-            <!-- Connections Tab -->
-            <div class="sp-tab-panel" id="tab-connections" role="tabpanel" aria-labelledby="tab-btn-connections"
-                tabindex="0" hidden>
-                <div class="sp-connections-actions">
-                    <button class="sp-action-btn" id="btn-deep-angle" data-i18n="sp_deep_angle">🧠 New angle</button>
-                    <div class="sp-deep-angle-status" id="deep-angle-status" data-i18n="sp_deep_angle_hint">
-                        See another perspective from your recent highlights.
-                    </div>
-                </div>
-                <div class="sp-deep-angle" id="deep-angle-output" hidden>
-                    <div class="sp-deep-angle-title" data-i18n="sp_deep_angle_title">A new angle</div>
-                    <div class="sp-deep-angle-text" id="deep-angle-text"></div>
-                </div>
-                <div id="connections-list" role="list" aria-label="Related ideas">
-                    <div class="sp-connection-empty" role="status" data-i18n="sp_connection_empty">No related ideas yet
-                    </div>
-                </div>
-            </div>
-        </div>
-    </aside>
 
     <script src="config/build_flags.js"></script>
     <script src="utils/console_guard.js"></script>
@@ -5006,13 +5046,14 @@
     <script src="services/comprehension_scoring.js"></script>
     <!-- Phase 3: Semantic Brain -->
     <script src="storage/vector_store.js"></script>
+    <script src="storage/conversation_digest.js"></script>
     <script src="services/embedding_service.js"></script>
     <script src="services/semantic_search.js"></script>
     <script src="services/related_memory.js"></script>
     <script src="services/connection_detector.js"></script>
     <script src="services/spreading_activation.js"></script>
+    <script src="services/hybrid_recall.js"></script>
     <script src="services/cross_domain_alerts.js"></script>
-    <script src="ui/components/mode_selector.js"></script>
     <script src="ui/components/primer.js"></script>
     <script src="ui/components/quiz.js"></script>
     <script src="ui/components/teachback.js"></script>
@@ -5021,14 +5062,14 @@
     <script src="ui/components/knowledge_graph.js"></script>
     <script src="styles/srq.css.js"></script>
     <script src="ui/components/srq_widget.js"></script>
+    <script src="styles/review_cards.css.js"></script>
+    <script src="ui/components/review_cards.js"></script>
     <script src="services/command_router.js"></script>
     <script src="services/intent_parser.js"></script>
     <script src="services/action_executor.js"></script>
     <script src="ui/controllers/toast_manager.js"></script>
-    <script src="ui/controllers/tab_controller.js"></script>
     <script src="ui/controllers/focus_bar.js"></script>
     <script src="ui/controllers/command_menu.js"></script>
-    <script src="ui/controllers/quick_diary.js"></script>
     <script src="utils/i18n_classic.js"></script>
     <script src="utils_ui.js"></script>
     <script src="sp_onboarding.js"></script>

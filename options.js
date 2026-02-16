@@ -321,7 +321,7 @@ function saveOptions() {
     // LLM Provider config (General tab)
     const llmProvider = document.getElementById('providerSelect')?.value || 'google';
     const openrouterKey = document.getElementById('openrouterKeyInput')?.value.trim() || '';
-    const openrouterModel = document.getElementById('openrouterModelInput')?.value.trim() || 'google/gemini-2.0-flash-exp:free';
+    const openrouterModel = document.getElementById('openrouterModelInput')?.value.trim() || 'stepfun/step-3.5-flash:free';
     const semanticEmbeddingsEnabled = document.getElementById('semanticEmbeddingsEnabled')?.checked || false;
     const semanticSearchEnabled = document.getElementById('semanticSearchEnabled')?.checked || false;
     const nlmEnabledEl = document.getElementById('nlmEnabled');
@@ -591,7 +591,7 @@ function restoreOptions() {
         if (openrouterKeyInput) openrouterKeyInput.value = result.atom_openrouter_key || '';
 
         const openrouterModelInput = document.getElementById('openrouterModelInput');
-        if (openrouterModelInput) openrouterModelInput.value = result.atom_openrouter_model || 'google/gemini-2.0-flash-exp:free';
+        if (openrouterModelInput) openrouterModelInput.value = result.atom_openrouter_model || 'stepfun/step-3.5-flash:free';
 
         const nlmSettings = result.atom_nlm_settings_v1 || {};
 
@@ -1265,10 +1265,10 @@ function showFreeTierNotice() {
 
     const toast = document.createElement('div');
     toast.className = 'free-tier-toast';
-    const msg = 'Bạn đang được trải nghiệm toàn bộ tính năng miễn phí. Hãy tận hưởng và cảm nhận giá trị mà Amo mang lại nhé! 💚';
+    const msg = 'B\u1EA1n \u0111ang \u0111\u01B0\u1EE3c tr\u1EA3i nghi\u1EC7m to\u00E0n b\u1ED9 t\u00EDnh n\u0103ng mi\u1EC5n ph\u00ED. H\u00E3y t\u1EADn h\u01B0\u1EDFng v\u00E0 c\u1EA3m nh\u1EADn gi\u00E1 tr\u1ECB m\u00E0 Amo mang l\u1EA1i nh\u00E9!';
     toast.innerHTML = `
         <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:22px;flex-shrink:0;">🎁</span>
+            <span style="font-size:22px;flex-shrink:0;"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" x2="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></span>
             <span>${msg}</span>
         </div>
     `;

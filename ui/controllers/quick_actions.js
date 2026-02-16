@@ -55,7 +55,7 @@
         getDefaultChips() {
             return [
                 {
-                    icon: '🎯',
+                    icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
                     label: getMessage('chipFocus25', 'Focus 25m'),
                     command: 'FOCUS_START',
                     params: { minutes: 25 },
@@ -63,12 +63,12 @@
                     undoable: true
                 },
                 {
-                    icon: '📝',
+                    icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
                     label: getMessage('chipQuickDiary', 'Quick note'),
                     command: 'OPEN_DIARY'
                 },
                 {
-                    icon: '🃏',
+                    icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>',
                     label: getMessage('chipReview', 'Saved items'),
                     command: 'OPEN_SAVED'
                 }
@@ -78,12 +78,12 @@
         getFocusActiveChips() {
             return [
                 {
-                    icon: '⏸️',
+                    icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="4" height="16" x="6" y="4"/><rect width="4" height="16" x="14" y="4"/></svg>',
                     label: getMessage('btnPause', 'Pause'),
                     command: 'FOCUS_PAUSE'
                 },
                 {
-                    icon: '⏹️',
+                    icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="4" rx="2"/></svg>',
                     label: getMessage('btnStop', 'Stop'),
                     command: 'FOCUS_STOP',
                     confirm: true

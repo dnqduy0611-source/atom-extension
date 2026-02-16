@@ -1,0 +1,3117 @@
+﻿{
+  "appName": {
+    "message": "AmoNexus"
+  },
+  "appDesc": {
+    "message": "The Neural Nexus for Your Second Brain."
+  },
+  "red_zone_1": {
+    "message": "Shall we pause for a moment?"
+  },
+  "red_zone_2": {
+    "message": "Your eyes seem a bit tired..."
+  },
+  "red_zone_3": {
+    "message": "Can we take a short silence together?"
+  },
+  "red_zone_4": {
+    "message": "You've worked hard, take a deep breath."
+  },
+  "red_zone_5": {
+    "message": "I'm here with you. Let's rest for 10 seconds."
+  },
+  "red_zone_6": {
+    "message": "The world can wait, but you need rest."
+  },
+  "yellow_zone_1": {
+    "message": "I'm still here with you..."
+  },
+  "yellow_zone_2": {
+    "message": "Take it slow."
+  },
+  "micro_copy_1": {
+    "message": "Shall we wrap up here?"
+  },
+  "micro_copy_2": {
+    "message": "Good place to stop?"
+  },
+  "micro_copy_3": {
+    "message": "Enough for now?"
+  },
+  "micro_copy_4": {
+    "message": "A small stopping point."
+  },
+  "btn_stop_session": {
+    "message": "Stop here"
+  },
+  "btn_snooze": {
+    "message": "Not now"
+  },
+  "btn_rest_short": {
+    "message": "Take a break"
+  },
+  "ui_breath_hold_start": {
+    "message": "Hold to start..."
+  },
+  "ui_breath_inhale": {
+    "message": "Inhale... (4s)"
+  },
+  "ui_breath_hold": {
+    "message": "Hold... (7s)"
+  },
+  "ui_breath_exhale": {
+    "message": "Exhale... (8s)"
+  },
+  "ui_breath_success": {
+    "message": "Wonderful."
+  },
+  "ui_breath_fail": {
+    "message": "Please hold the full inhale (4s)..."
+  },
+  "ui_tap_hold": {
+    "message": "Hold for 3 seconds to continue"
+  },
+  "ui_tap_fail": {
+    "message": "Hold longer to confirm"
+  },
+  "ui_stillness_hint": {
+    "message": "Keep mouse still for 7 seconds..."
+  },
+  "ui_stillness_success": {
+    "message": "Mind is now still."
+  },
+  "ui_stillness_warning": {
+    "message": "Don't move..."
+  },
+  "ui_stillness_fail": {
+    "message": "Ignored."
+  },
+  "journal_ask_title": {
+    "message": "Want to log your feelings?"
+  },
+  "journal_btn_skip": {
+    "message": "Skip"
+  },
+  "journal_btn_write": {
+    "message": "Journal"
+  },
+  "journal_form_title": {
+    "message": "How do you feel?"
+  },
+  "journal_btn_expand": {
+    "message": "+ Add note"
+  },
+  "journal_btn_saved": {
+    "message": "SAVED ✓"
+  },
+  "journal_btn_processing": {
+    "message": "Reading..."
+  },
+  "journal_btn_understood": {
+    "message": "Understood, thanks!"
+  },
+  "journal_placeholder": {
+    "message": "Quick note..."
+  },
+  "journal_ai_title": {
+    "message": "Message from Amo:"
+  },
+  "journal_ai_disabled": {
+    "message": "AI reply is turned off in Settings."
+  },
+  "journal_ai_error": {
+    "message": "Amo is pondering, please try again later!"
+  },
+  "tag_habit": {
+    "message": "Habit"
+  },
+  "tag_procrastinate": {
+    "message": "Procrastination"
+  },
+  "tag_stress": {
+    "message": "Stress"
+  },
+  "tag_fomo": {
+    "message": "FOMO"
+  },
+  "tag_inspiration": {
+    "message": "Inspiration"
+  },
+  "opt_title": {
+    "message": "AmoNexus Settings"
+  },
+  "opt_hero_title": {
+    "message": "Activate AmoNexus Intelligence"
+  },
+  "opt_hero_desc": {
+    "message": "AmoNexus uses Google Gemini to chat and provide psychological advice. Connect your own Key for free & private use."
+  },
+  "opt_dual_key_title": {
+    "message": "30 free AI calls every day"
+  },
+  "opt_dual_key_desc": {
+    "message": "Sign in to get <b>30 free AI calls per day</b> — no API key needed. Want <b>unlimited</b> access? Add a free API key below. We recommend setting up both keys for the best experience."
+  },
+  "opt_dual_key_benefit1": {
+    "message": "<b>Sign in</b> → 30 AI calls/day, no key needed — enough for regular use"
+  },
+  "opt_dual_key_benefit2": {
+    "message": "<b>Gemini key</b> (recommended) → unlimited, fast, best analysis quality — Amo's primary choice"
+  },
+  "opt_dual_key_benefit3": {
+    "message": "<b>OpenRouter key</b> (backup) → ~50 free calls/day, uses smaller AI models so experience may not match Gemini — auto-switches when Gemini hits quota"
+  },
+  "opt_dual_key_benefit4": {
+    "message": "Both keys are <b>free</b> and take about <b>30 seconds</b> to create"
+  },
+  "opt_btn_get_key": {
+    "message": "Get Free Key from Google (30s)"
+  },
+  "opt_guide_1": {
+    "message": "Click the green button above to open <b>Google AI Studio</b>."
+  },
+  "opt_guide_2": {
+    "message": "Log in with Gmail, click <b>Get API key</b> (Left menu)."
+  },
+  "opt_guide_3": {
+    "message": "Select <b>Create API key in new project</b>."
+  },
+  "opt_guide_4": {
+    "message": "Copy the code (starts with <code>AIza...</code>) and paste it below."
+  },
+  "opt_input_label": {
+    "message": "Paste your Key here:"
+  },
+  "opt_api_key_placeholder": {
+    "message": "AIzaSy..."
+  },
+  "opt_sens_label": {
+    "message": "Sensitivity Level:"
+  },
+  "opt_sens_gentle_title": {
+    "message": "Gentle"
+  },
+  "opt_sens_gentle_desc": {
+    "message": "Intervene after ~5 mins of scrolling"
+  },
+  "opt_sens_balanced_title": {
+    "message": "Balanced"
+  },
+  "opt_sens_balanced_desc": {
+    "message": "Intervene after ~3 mins"
+  },
+  "opt_sens_strict_title": {
+    "message": "Strict"
+  },
+  "opt_sens_strict_desc": {
+    "message": "Intervene after ~1 min"
+  },
+  "opt_lang_title": {
+    "message": "Language"
+  },
+  "opt_lang_desc": {
+    "message": "Match browser UI language or override per extension."
+  },
+  "opt_lang_auto": {
+    "message": "Auto (Chrome UI)"
+  },
+  "opt_lang_vi": {
+    "message": "Vietnamese"
+  },
+  "opt_lang_en": {
+    "message": "English"
+  },
+  "opt_btn_save": {
+    "message": "Save Settings"
+  },
+  "opt_btn_saving": {
+    "message": "Saving..."
+  },
+  "opt_btn_saved": {
+    "message": "Saved"
+  },
+  "opt_save_success": {
+    "message": "Saved successfully!"
+  },
+  "opt_tab_general": {
+    "message": "Getting Started"
+  },
+  "opt_tab_general_desc": {
+    "message": "Set up your AI provider and basic preferences"
+  },
+  "opt_tab_ai": {
+    "message": "AI Features"
+  },
+  "opt_tab_ai_desc": {
+    "message": "Enable AI-powered reading assistance"
+  },
+  "opt_tab_connections": {
+    "message": "Integrations"
+  },
+  "opt_tab_connections_desc": {
+    "message": "Connect with NotebookLM and other tools"
+  },
+  "opt_tab_advanced": {
+    "message": "Developer Tools"
+  },
+  "opt_tab_advanced_desc": {
+    "message": "Debugging and diagnostic tools"
+  },
+  "opt_tab_general_title": {
+    "message": "Getting Started"
+  },
+  "opt_tab_ai_title": {
+    "message": "AI Features"
+  },
+  "opt_tab_connections_title": {
+    "message": "Integrations"
+  },
+  "opt_tab_advanced_title": {
+    "message": "Developer Tools"
+  },
+  "opt_provider_label": {
+    "message": "AI Provider"
+  },
+  "opt_provider_google": {
+    "message": "Google Gemini"
+  },
+  "opt_provider_openrouter": {
+    "message": "OpenRouter"
+  },
+  "opt_provider_hint": {
+    "message": "OpenRouter: Access Llama 3, Mistral, DeepSeek (~50 free requests/day)"
+  },
+  "opt_gemini_api_key": {
+    "message": "AI Access Key"
+  },
+  "opt_api_guide_toggle": {
+    "message": "How to get API Key"
+  },
+  "opt_btn_get_openrouter_key": {
+    "message": "Get OpenRouter Key"
+  },
+  "opt_openrouter_api_key": {
+    "message": "OpenRouter API Key"
+  },
+  "opt_openrouter_key_placeholder": {
+    "message": "sk-or-v1-..."
+  },
+  "opt_openrouter_model": {
+    "message": "AI Model"
+  },
+  "opt_openrouter_model_placeholder": {
+    "message": "stepfun/step-3.5-flash:free"
+  },
+  "opt_openrouter_model_hint": {
+    "message": "Free models: stepfun/step-3.5-flash:free, meta-llama/llama-3.3-70b-instruct:free"
+  },
+  "opt_openrouter_guide_toggle": {
+    "message": "How to get OpenRouter Key"
+  },
+  "opt_openrouter_guide_1": {
+    "message": "Go to openrouter.ai/keys"
+  },
+  "opt_openrouter_guide_2": {
+    "message": "Sign in with Google/GitHub"
+  },
+  "opt_openrouter_guide_3": {
+    "message": "Create a new API key"
+  },
+  "opt_openrouter_guide_4": {
+    "message": "Copy and paste above"
+  },
+  "opt_semantic_section_title": {
+    "message": "AI & Semantic Features"
+  },
+  "opt_semantic_section_desc": {
+    "message": "Find related highlights by meaning, not just recency."
+  },
+  "opt_semantic_cost_warning": {
+    "message": "Enabling this will use more of your AI quota and may slow down responses slightly."
+  },
+  "opt_semantic_key_required": {
+    "message": "Add your AI Access Key to enable these toggles."
+  },
+  "opt_semantic_embeddings_title": {
+    "message": "Meaning Analysis"
+  },
+  "opt_semantic_embeddings_desc": {
+    "message": "Creates a semantic fingerprint for each highlight."
+  },
+  "opt_semantic_search_title": {
+    "message": "Find by Meaning"
+  },
+  "opt_semantic_search_desc": {
+    "message": "Uses embeddings to pick top related highlights in the same domain."
+  },
+  "opt_srq_density_label": {
+    "message": "Smart Research Queue density"
+  },
+  "opt_srq_density_comfortable": {
+    "message": "Comfortable (default)"
+  },
+  "opt_srq_density_compact": {
+    "message": "Compact (more items per screen)"
+  },
+  "opt_srq_density_hint": {
+    "message": "Comfortable mode is easier to read. Compact mode shows more highlights. Reload the sidebar after changing this setting."
+  },
+  "opt_ai_pilot_mode_shadow": {
+    "message": "Shadow Mode"
+  },
+  "opt_ai_pilot_mode_assist": {
+    "message": "Assist Mode"
+  },
+  "opt_ai_pilot_mode_primary": {
+    "message": "Primary Mode"
+  },
+  "opt_ai_pilot_mode_hint": {
+    "message": "Shadow: observation only. Assist: suggestions. Primary: autonomous action."
+  },
+  "opt_ai_advanced": {
+    "message": "Advanced AI Settings"
+  },
+  "opt_nlm_advanced": {
+    "message": "Advanced NotebookLM Settings"
+  },
+  "opt_user_persona_title": {
+    "message": "What is your role?"
+  },
+  "opt_user_persona_placeholder": {
+    "message": "e.g., Doctor, Student, Engineer..."
+  },
+  "opt_user_persona_desc": {
+    "message": "AI will adapt explanations to fit your expertise."
+  },
+  "opt_ai_pilot_title": {
+    "message": "AI Pilot"
+  },
+  "opt_ai_pilot_enable_title": {
+    "message": "Enable AI Pilot"
+  },
+  "opt_ai_pilot_enable_desc": {
+    "message": "Shadow/Assist/Primary modes"
+  },
+  "opt_ai_pilot_mode": {
+    "message": "Mode"
+  },
+  "opt_ai_pilot_accuracy_level": {
+    "message": "Accuracy Level"
+  },
+  "opt_ai_pilot_accuracy_balanced": {
+    "message": "Balanced"
+  },
+  "opt_ai_pilot_accuracy_high": {
+    "message": "High"
+  },
+  "opt_ai_pilot_mode_tooltip": {
+    "message": "Shadow: AI observes but doesn't interrupt. Assist: AI suggests when you might need help. Primary: AI actively guides your reading."
+  },
+  "opt_ai_pilot_accuracy_tooltip": {
+    "message": "Balanced: faster responses. High: more accurate but slower and costs more API credits."
+  },
+  "opt_ai_pilot_accuracy_hint": {
+    "message": "Balanced: faster. High: more accurate but slower and costs more."
+  },
+  "opt_ai_pilot_min_confidence": {
+    "message": "Minimum confidence level"
+  },
+  "opt_ai_min_confidence_placeholder": {
+    "message": "0.65"
+  },
+  "opt_ai_pilot_timeout_ms": {
+    "message": "Time limit"
+  },
+  "opt_ai_timeout_placeholder": {
+    "message": "800"
+  },
+  "opt_ai_pilot_budget_per_day": {
+    "message": "Daily quota"
+  },
+  "opt_ai_budget_placeholder": {
+    "message": "200"
+  },
+  "opt_ai_pilot_provider": {
+    "message": "Provider"
+  },
+  "opt_ai_pilot_provider_gemini": {
+    "message": "Google Gemini"
+  },
+  "opt_ai_pilot_provider_proxy": {
+    "message": "Proxy (Custom)"
+  },
+  "opt_ai_pilot_max_viewport_chars": {
+    "message": "Viewport max chars"
+  },
+  "opt_ai_max_viewport_placeholder": {
+    "message": "1200"
+  },
+  "opt_ai_pilot_max_selected_chars": {
+    "message": "Selected max chars"
+  },
+  "opt_ai_max_selected_placeholder": {
+    "message": "400"
+  },
+  "opt_ai_pilot_cache_ttl_ms": {
+    "message": "Temporary storage time"
+  },
+  "opt_ai_cache_ttl_placeholder": {
+    "message": "15000"
+  },
+  "opt_ai_pilot_proxy_url": {
+    "message": "Proxy address (advanced)"
+  },
+  "opt_ai_proxy_placeholder": {
+    "message": "https://your-proxy/decide"
+  },
+  "opt_nlm_title": {
+    "message": "NotebookLM Bridge"
+  },
+  "opt_nlm_enable_title": {
+    "message": "Enable Bridge"
+  },
+  "opt_nlm_enable_desc": {
+    "message": "Copy clip and open NotebookLM for manual paste"
+  },
+  "opt_nlm_mode": {
+    "message": "Bridge Mode"
+  },
+  "opt_nlm_mode_ui_assisted": {
+    "message": "UI-Assisted (Recommended)"
+  },
+  "opt_nlm_mode_enterprise": {
+    "message": "Enterprise API (Coming Soon)"
+  },
+  "opt_nlm_mode_hint": {
+    "message": "UI-Assisted: copies to clipboard + opens NotebookLM for manual paste"
+  },
+  "opt_nlm_default_notebook": {
+    "message": "Default notebook"
+  },
+  "opt_nlm_default_placeholder": {
+    "message": "Inbox"
+  },
+  "opt_nlm_base_url": {
+    "message": "NotebookLM base URL"
+  },
+  "opt_nlm_base_placeholder": {
+    "message": "https://notebooklm.google.com"
+  },
+  "opt_nlm_allow_cloud": {
+    "message": "Allow cloud export"
+  },
+  "opt_nlm_allow_cloud_desc": {
+    "message": "Allow sending Amo Clip to NotebookLM"
+  },
+  "opt_nlm_pii_warning": {
+    "message": "PII warning"
+  },
+  "opt_nlm_export_max_chars": {
+    "message": "Max export characters"
+  },
+  "opt_nlm_export_max_chars_hint": {
+    "message": "0 = unlimited"
+  },
+  "opt_nlm_sensitive_domains": {
+    "message": "Sensitive domains (one per line)"
+  },
+  "opt_nlm_sensitive_placeholder": {
+    "message": "*.his.*\\n*.emr.*"
+  },
+  "opt_nlm_rules": {
+    "message": "Mapping rules (JSON)"
+  },
+  "opt_nlm_rules_placeholder": {
+    "message": "{\"byTag\":[{\"tag\":\"research\",\"notebookRef\":\"Research\"}]}"
+  },
+  "offline_quote_1": {
+    "message": "Take a deep breath. The world can wait."
+  },
+  "offline_quote_2": {
+    "message": "A small pause will help you go further."
+  },
+  "offline_quote_3": {
+    "message": "Sometimes, doing nothing is the best thing to do right now."
+  },
+  "offline_quote_4": {
+    "message": "You've worked hard, relax your shoulders a bit."
+  },
+  "offline_quote_5": {
+    "message": "Have a sip of water and look into the distance?"
+  },
+  "popup_title": {
+    "message": "AmoNexus"
+  },
+  "popup_status_desc": {
+    "message": "The Neural Nexus"
+  },
+  "popup_btn_export": {
+    "message": "Export Data"
+  },
+  "popup_btn_settings": {
+    "message": "Settings"
+  },
+  "popup_btn_clear": {
+    "message": "Reset"
+  },
+  "popup_btn_journal": {
+    "message": "Journal"
+  },
+  "popup_btn_memory": {
+    "message": "Memory"
+  },
+  "popup_btn_chat_page": {
+    "message": "Chat with Amo"
+  },
+  "popup_onboarding_title": {
+    "message": "Start in 1 minute"
+  },
+  "popup_onboarding_desc": {
+    "message": "Open the side panel and follow 3 quick steps."
+  },
+  "popup_onboarding_desc_no_key": {
+    "message": "Open Settings to add your AI Access Key, then continue in the side panel."
+  },
+  "popup_onboarding_step1": {
+    "message": "1) Highlight one short paragraph"
+  },
+  "popup_onboarding_step2": {
+    "message": "2) Press Summarize"
+  },
+  "popup_onboarding_step3": {
+    "message": "3) Press Save"
+  },
+  "popup_onboarding_open_sidepanel": {
+    "message": "Open Side Panel"
+  },
+  "popup_onboarding_open_settings": {
+    "message": "Open Settings"
+  },
+  "popup_no_focus": {
+    "message": "No focus session yet"
+  },
+  "popup_open_panel": {
+    "message": "Chat with Amo"
+  },
+  "popup_action_settings": {
+    "message": "Settings"
+  },
+  "popup_action_website": {
+    "message": "Website"
+  },
+  "popup_action_feedback": {
+    "message": "Feedback"
+  },
+  "popup_action_website": {
+    "message": "Web"
+  },
+  "popup_action_journal": {
+    "message": "Journal"
+  },
+  "popup_action_notes": {
+    "message": "Memory"
+  },
+  "popup_focus_label": {
+    "message": "Start focus"
+  },
+  "cmdCatFocus": {
+    "message": "Focus"
+  },
+  "cmdCatTools": {
+    "message": "Tools"
+  },
+  "cmdCatAI": {
+    "message": "AI"
+  },
+  "cmdCatSettings": {
+    "message": "Settings"
+  },
+  "cmdFocusLabel": {
+    "message": "Focus"
+  },
+  "cmdFocusUnit": {
+    "message": "min"
+  },
+  "cmdFocusStart": {
+    "message": "Start"
+  },
+  "cmdOpenDiary": {
+    "message": "Journal"
+  },
+  "cmdOpenNotes": {
+    "message": "Notes"
+  },
+  "cmdOpenSaved": {
+    "message": "Saved highlights"
+  },
+  "cmdExportSaved": {
+    "message": "Export saved"
+  },
+  "cmdOpenSettings": {
+    "message": "Settings"
+  },
+  "cmd_onboarding_title": {
+    "message": "New: control with chat"
+  },
+  "cmd_onboarding_body": {
+    "message": "Now you can say:<br>- \"Focus 25 minutes\"<br>- \"Write a diary: feeling tired\"<br>- \"Save to notes\"<br><br>Or tap the quick buttons at the top."
+  },
+  "cmd_onboarding_dismiss": {
+    "message": "Got it"
+  },
+  "diaryNoContent": {
+    "message": "Add a short note before saving."
+  },
+  "diarySaved": {
+    "message": "Saved to Journal ✍️"
+  },
+  "diarySummaryEmpty": {
+    "message": "No entries yet for this period."
+  },
+  "diarySummaryTitle": {
+    "message": "Journal summary"
+  },
+  "diarySummaryEntries": {
+    "message": "entries"
+  },
+  "diarySummaryMood": {
+    "message": "Top mood"
+  },
+  "diarySummaryTags": {
+    "message": "Top tags"
+  },
+  "diarySummaryTagsEmpty": {
+    "message": "general"
+  },
+  "periodToday": {
+    "message": "today"
+  },
+  "periodWeek": {
+    "message": "this week"
+  },
+  "periodMonth": {
+    "message": "this month"
+  },
+  "noteNoContent": {
+    "message": "Select text or provide content first."
+  },
+  "noteSaved": {
+    "message": "Saved to Notes 📝"
+  },
+  "noteSaveFailed": {
+    "message": "Could not save note."
+  },
+  "quickDiaryHint": {
+    "message": "Quick diary..."
+  },
+  "quickDiaryTitle": {
+    "message": "Quick diary"
+  },
+  "quickDiaryPlaceholder": {
+    "message": "How are you feeling today?"
+  },
+  "diaryBtnSave": {
+    "message": "Save to journal"
+  },
+  "cmd_diary_empty": {
+    "message": "Write something after the diary command."
+  },
+  "savedExportEmpty": {
+    "message": "No saved highlights to export."
+  },
+  "savedExported": {
+    "message": "Exported $1 highlights"
+  },
+  "savedExportFailed": {
+    "message": "Export failed. Try again."
+  },
+  "ctx_chat_with_page": {
+    "message": "Amo: Chat with Amo"
+  },
+  "sidepanel_title": {
+    "message": "Chat with Amo"
+  },
+  "sidepanel_loading": {
+    "message": "Reading page content..."
+  },
+  "sidepanel_welcome": {
+    "message": "Ask Amo anything about this page"
+  },
+  "sidepanel_welcome_desc": {
+    "message": "I've read the page content. Ask me to summarize, explain, or answer questions."
+  },
+  "sidepanel_input_placeholder": {
+    "message": "Ask Amo about this page..."
+  },
+  "sidepanel_quick_summarize": {
+    "message": "Summarize"
+  },
+  "sidepanel_quick_keypoints": {
+    "message": "Key points"
+  },
+  "sidepanel_quick_explain": {
+    "message": "Explain simply"
+  },
+  "popup_msg_packing": {
+    "message": "⏳ Packing..."
+  },
+  "popup_msg_downloaded": {
+    "message": "✅ Downloaded!"
+  },
+  "popup_msg_error": {
+    "message": "❌ Error: "
+  },
+  "popup_confirm_reset": {
+    "message": "Delete all saved highlights, reading history, and AI chat logs? This action cannot be undone."
+  },
+  "pop_lbl_current_site": {
+    "message": "Current Site"
+  },
+  "pop_system_page": {
+    "message": "System Page"
+  },
+  "pop_unknown_page": {
+    "message": "Unknown Page"
+  },
+  "pop_btn_safe_add_new": {
+    "message": "Disable Amo"
+  },
+  "pop_btn_safe_remove_new": {
+    "message": "Enable Amo"
+  },
+  "pop_status_running": {
+    "message": "Amo is running"
+  },
+  "pop_status_off": {
+    "message": "Amo is off"
+  },
+  "pop_loading": {
+    "message": "Loading..."
+  },
+  "jnl_title": {
+    "message": "Mindful Journey"
+  },
+  "jnl_desc": {
+    "message": "Moments you shared with Amo"
+  },
+  "jnl_empty_title": {
+    "message": "No entries yet"
+  },
+  "jnl_empty_desc": {
+    "message": "Try journaling when Amo asks you!"
+  },
+  "jnl_label_ai": {
+    "message": "AMO RESPONSE"
+  },
+  "jnl_ai_waiting": {
+    "message": "..."
+  },
+  "jnl_no_note": {
+    "message": "No note provided"
+  },
+  "jnl_at": {
+    "message": "At:"
+  },
+  "jnl_unknown_context": {
+    "message": "Unknown"
+  },
+  "ai_thinking_error": {
+    "message": "Amo is pondering, please try again later!"
+  },
+  "fallback_location": {
+    "message": "this place"
+  },
+  "fallback_activity_work": {
+    "message": "work"
+  },
+  "fallback_activity_general": {
+    "message": "everything"
+  },
+  "opt_debug_title": {
+    "message": "Debug Mode"
+  },
+  "opt_debug_enable_title": {
+    "message": "Enable Debug Logging"
+  },
+  "opt_debug_enable_desc": {
+    "message": "Show detailed logs in browser console"
+  },
+  "opt_debug_export": {
+    "message": "Export Debug Log"
+  },
+  "opt_debug_collecting": {
+    "message": "Collecting..."
+  },
+  "opt_debug_copied": {
+    "message": "✅ Copied to Clipboard!"
+  },
+  "opt_debug_failed": {
+    "message": "❌ Failed - Check Console"
+  },
+  "popup_btn_report_bug": {
+    "message": "Bug"
+  },
+  "bug_title": {
+    "message": "Report a Bug - Amo"
+  },
+  "bug_header": {
+    "message": "Report a Bug"
+  },
+  "bug_subheader": {
+    "message": "Help us improve Amo by describing what went wrong"
+  },
+  "bug_auto_collected": {
+    "message": "Auto-collected Information"
+  },
+  "bug_type_label": {
+    "message": "Bug Type"
+  },
+  "bug_type_placeholder": {
+    "message": "-- Select type --"
+  },
+  "bug_type_intervention": {
+    "message": "Intervention not showing"
+  },
+  "bug_type_ui": {
+    "message": "UI/Display issue"
+  },
+  "bug_type_performance": {
+    "message": "Performance/Lag"
+  },
+  "bug_type_crash": {
+    "message": "Extension crash"
+  },
+  "bug_type_ai": {
+    "message": "AI/Gemini issue"
+  },
+  "bug_type_other": {
+    "message": "Other"
+  },
+  "bug_summary_label": {
+    "message": "Summary"
+  },
+  "bug_summary_placeholder": {
+    "message": "Brief description of the issue"
+  },
+  "bug_url_label": {
+    "message": "URL where bug occurred (optional)"
+  },
+  "bug_desc_label": {
+    "message": "Steps to Reproduce"
+  },
+  "bug_expected_label": {
+    "message": "Expected vs Actual Behavior"
+  },
+  "bug_include_debug": {
+    "message": "Include debug data (recommended)"
+  },
+  "bug_btn_submit": {
+    "message": "Submit to GitHub"
+  },
+  "bug_btn_copy": {
+    "message": "Copy Report (for manual submission)"
+  },
+  "bug_submitting": {
+    "message": "Opening GitHub..."
+  },
+  "bug_success": {
+    "message": "✅ GitHub opened! Please click 'Submit new issue' to complete."
+  },
+  "bug_error": {
+    "message": "❌ Error: $1"
+  },
+  "bug_copy_error": {
+    "message": "❌ Failed to copy"
+  },
+  "bug_default_title": {
+    "message": "Bug Report"
+  },
+  "bug_copied": {
+    "message": "✅ Report copied to clipboard!"
+  },
+  "bug_copied_btn": {
+    "message": "✅ Copied!"
+  },
+  "bug_footer": {
+    "message": "Your report will be submitted as a GitHub Issue."
+  },
+  "bug_privacy_link": {
+    "message": "View Privacy Policy"
+  },
+  "update_title": {
+    "message": "Amo is on Chrome Store!"
+  },
+  "update_desc": {
+    "message": "Click here to install the official version for automatic updates."
+  },
+  "bug_guide_title": {
+    "message": "How to fill this form (click to expand)"
+  },
+  "bug_guide_type": {
+    "message": "1. Bug Type:"
+  },
+  "bug_guide_type_desc": {
+    "message": "Choose the category that best describes your issue."
+  },
+  "bug_guide_summary": {
+    "message": "2. Summary:"
+  },
+  "bug_guide_summary_desc": {
+    "message": "Write a short, clear title (e.g., \"Intervention not showing on YouTube\")."
+  },
+  "bug_guide_steps": {
+    "message": "3. Steps to Reproduce:"
+  },
+  "bug_guide_steps_desc": {
+    "message": "List the exact steps to trigger the bug. Be specific!"
+  },
+  "bug_guide_expected": {
+    "message": "4. Expected vs Actual:"
+  },
+  "bug_guide_expected_desc": {
+    "message": "Explain what you expected to happen and what actually happened."
+  },
+  "bug_guide_tip": {
+    "message": "Keep \"Include debug data\" checked - it helps us fix bugs faster!"
+  },
+  "bug_guide_tip_label": {
+    "message": "💡 Tip:"
+  },
+  "bug_debug_failed": {
+    "message": "Failed to collect debug data"
+  },
+  "bug_unknown": {
+    "message": "Unknown"
+  },
+  "bug_lang_override": {
+    "message": "$1 (override)"
+  },
+  "ctx_whitelist_domain": {
+    "message": "Amo: Always ignore this site (Safe Zone)"
+  },
+  "ctx_reading_parent": {
+    "message": "Amo: Active Reading"
+  },
+  "ctx_reading_summarize": {
+    "message": "Summarize this selection (2 sentences)"
+  },
+  "ctx_reading_critique": {
+    "message": "Critique / weak points"
+  },
+  "ctx_reading_quiz": {
+    "message": "Create 3 recall questions"
+  },
+  "reading_card_title": {
+    "message": "Amo - Active Reading"
+  },
+  "reading_card_key_points": {
+    "message": "Key points"
+  },
+  "reading_card_questions": {
+    "message": "Questions"
+  },
+  "reading_card_answer_placeholder": {
+    "message": "Type your answer..."
+  },
+  "reading_card_eval_title": {
+    "message": "Evaluation"
+  },
+  "reading_card_eval_action": {
+    "message": "Evaluate answers"
+  },
+  "reading_card_eval_pending": {
+    "message": "Evaluating..."
+  },
+  "reading_card_save": {
+    "message": "Save"
+  },
+  "reading_card_saved": {
+    "message": "Saved"
+  },
+  "reading_card_open_vault": {
+    "message": "Open Vault"
+  },
+  "reading_card_quiz_action": {
+    "message": "Quiz"
+  },
+  "reading_card_teachback_action": {
+    "message": "Teach-back"
+  },
+  "reading_card_flashcard_action": {
+    "message": "Flashcards"
+  },
+  "reading_card_summary_fallback": {
+    "message": "No summary available."
+  },
+  "reading_vault_title": {
+    "message": "Amo - Reading Vault"
+  },
+  "reading_vault_empty": {
+    "message": "No reading notes yet."
+  },
+  "reading_vault_open_nlm": {
+    "message": "Open NotebookLM"
+  },
+  "reading_vault_retry_nlm": {
+    "message": "Retry export"
+  },
+  "reading_vault_copy_question": {
+    "message": "Copy question"
+  },
+  "reading_vault_generate_question": {
+    "message": "Generate question"
+  },
+  "reading_vault_generating": {
+    "message": "Generating..."
+  },
+  "reading_vault_generate_failed": {
+    "message": "Failed"
+  },
+  "reading_vault_generate_disabled": {
+    "message": "API key required"
+  },
+  "nlm_pii_title": {
+    "message": "Potential sensitive data detected"
+  },
+  "nlm_pii_desc": {
+    "message": "This clip may contain sensitive information. Export anyway?"
+  },
+  "nlm_pii_type_email": {
+    "message": "Email"
+  },
+  "nlm_pii_type_phone": {
+    "message": "Phone"
+  },
+  "nlm_pii_type_id": {
+    "message": "ID"
+  },
+  "nlm_pii_type_unknown": {
+    "message": "Sensitive data"
+  },
+  "nlm_pii_cancel": {
+    "message": "Cancel"
+  },
+  "nlm_pii_proceed": {
+    "message": "Proceed"
+  },
+  "nlm_toast_copied": {
+    "message": "Copied to clipboard"
+  },
+  "nlm_toast_opened": {
+    "message": "Opened NotebookLM"
+  },
+  "nlm_toast_failed": {
+    "message": "Action failed"
+  },
+  "nlm_toast_no_key": {
+    "message": "Missing Gemini API key"
+  },
+  "nlm_toast_generated": {
+    "message": "Question generated"
+  },
+  "nlm_retry_toast": {
+    "message": "Export pending. Click to retry."
+  },
+  "nlm_retry_cta": {
+    "message": "Retry now"
+  },
+  "nlm_idea_title": {
+    "message": "Start a new notebook?"
+  },
+  "nlm_idea_desc": {
+    "message": "You seem to be collecting ideas around this topic."
+  },
+  "nlm_idea_create": {
+    "message": "Create (Pending)"
+  },
+  "nlm_idea_open": {
+    "message": "Open NotebookLM"
+  },
+  "nlm_idea_not_now": {
+    "message": "Not now"
+  },
+  "nlm_idea_dont_ask": {
+    "message": "Don't ask again"
+  },
+  "nlm_idea_vault_title": {
+    "message": "Suggested notebooks"
+  },
+  "reading_mode_summary": {
+    "message": "Summary"
+  },
+  "reading_mode_critique": {
+    "message": "Critique"
+  },
+  "reading_mode_quiz": {
+    "message": "Quiz"
+  },
+  "reading_error_summary": {
+    "message": "Amo hit an error analyzing this selection. Please try again."
+  },
+  "reading_cooldown_summary": {
+    "message": "Rate limit reached. Active Reading pauses for $1 seconds."
+  },
+  "tag_custom": {
+    "message": "+ Other..."
+  },
+  "tag_custom_placeholder": {
+    "message": "Type feeling..."
+  },
+  "focus_title": {
+    "message": "You are in Focus"
+  },
+  "focus_sub_blocked": {
+    "message": "This page is not in Safe Zone."
+  },
+  "focus_btn_back": {
+    "message": "Go back"
+  },
+  "focus_btn_allow_60": {
+    "message": "Allow 60s"
+  },
+  "focus_btn_allow_120": {
+    "message": "Allow 120s"
+  },
+  "focus_btn_add_safe": {
+    "message": "Add Safe Zone"
+  },
+  "focus_micro_text": {
+    "message": "I see you are trying to come back 🙂 Be gentle: return to Safe Zone, or request 60s with control."
+  },
+  "focus_timer_work": {
+    "message": "WORK left $1"
+  },
+  "focus_phase_work_end_title": {
+    "message": "🎯 Focus session complete!"
+  },
+  "focus_phase_work_end_msg": {
+    "message": "Open AmoNexus to review what you just learned."
+  },
+  "focus_phase_break_end_title": {
+    "message": "Break's over!"
+  },
+  "focus_phase_break_end_msg": {
+    "message": "Ready to get back to work?"
+  },
+  "emoji_picker_more": {
+    "message": "+ More"
+  },
+  "emoji_cat_happy": {
+    "message": "Happy"
+  },
+  "emoji_cat_sad": {
+    "message": "Sad"
+  },
+  "emoji_cat_anxious": {
+    "message": "Anxious"
+  },
+  "emoji_cat_tired": {
+    "message": "Tired"
+  },
+  "emoji_cat_angry": {
+    "message": "Angry"
+  },
+  "emoji_cat_neutral": {
+    "message": "Neutral"
+  },
+  "opt_notif_title": {
+    "message": "Notifications"
+  },
+  "opt_notif_desc": {
+    "message": "Test and configure system notifications for Focus mode."
+  },
+  "opt_notif_test": {
+    "message": "Test Notification"
+  },
+  "opt_notif_chrome": {
+    "message": "Chrome Settings"
+  },
+  "opt_notif_sent": {
+    "message": "Notification sent! Check your system tray."
+  },
+  "opt_notif_error": {
+    "message": "Error sending notification"
+  },
+  "opt_notif_failed": {
+    "message": "Notification failed. Check settings."
+  },
+  "opt_notif_guide_title": {
+    "message": "Troubleshooting Guide (click to expand)"
+  },
+  "opt_notif_guide_intro": {
+    "message": "If notifications aren't showing:"
+  },
+  "opt_notif_guide_1": {
+    "message": "<b>Windows:</b> Settings → System → Notifications → Chrome → ON"
+  },
+  "opt_notif_guide_2": {
+    "message": "<b>Focus Assist:</b> Turn OFF or set to Priority only"
+  },
+  "opt_notif_guide_3": {
+    "message": "<b>Chrome:</b> Click \"Chrome Settings\" above → Allow notifications"
+  },
+  "opt_notif_guide_4": {
+    "message": "<b>Restart:</b> Close and reopen Chrome after changes"
+  },
+  "opt_notif_test_title": {
+    "message": "Amo - Test Notification"
+  },
+  "opt_notif_test_msg": {
+    "message": "If you see this, notifications are working normally!"
+  },
+  "opt_theme_toggle_title": {
+    "message": "Toggle Theme"
+  },
+  "opt_tab_general": {
+    "message": "General"
+  },
+  "opt_tab_ai": {
+    "message": "AI Pilot"
+  },
+  "opt_tab_connections": {
+    "message": "Connections"
+  },
+  "opt_tab_advanced": {
+    "message": "Advanced"
+  },
+  "opt_tab_general_title": {
+    "message": "General Settings"
+  },
+  "opt_tab_ai_title": {
+    "message": "AI Pilot"
+  },
+  "opt_tab_connections_title": {
+    "message": "Connections"
+  },
+  "opt_tab_advanced_title": {
+    "message": "Advanced"
+  },
+  "opt_api_guide_toggle": {
+    "message": "How to get your Key"
+  },
+  "opt_ai_advanced": {
+    "message": "Advanced settings"
+  },
+  "opt_nlm_advanced": {
+    "message": "Advanced settings"
+  },
+  "opt_ai_pilot_mode_hint": {
+    "message": "Shadow: observe only. Assist: suggest. Primary: auto-act."
+  },
+  "opt_nlm_pii_warning_desc": {
+    "message": "Show warning when exporting personal data"
+  },
+  "opt_gemini_api_key": {
+    "message": "AI Access Key"
+  },
+  "popup_visit_website": {
+    "message": "Visit Website"
+  },
+  "popup_subtitle": {
+    "message": "The Neural Nexus for Your Second Brain"
+  },
+  "popup_retention_title": {
+    "message": "Retention"
+  },
+  "popup_retention_due": {
+    "message": "Due"
+  },
+  "popup_retention_new": {
+    "message": "New"
+  },
+  "popup_retention_recommended": {
+    "message": "Today"
+  },
+  "popup_retention_streak": {
+    "message": "Streak"
+  },
+  "popup_retention_empty": {
+    "message": "No review cards yet"
+  },
+  "popup_loading": {
+    "message": "Loading..."
+  },
+  "popup_checking": {
+    "message": "Checking..."
+  },
+  "popup_no_active_tab": {
+    "message": "No active tab"
+  },
+  "popup_focus_session": {
+    "message": "Focus Session"
+  },
+  "popup_focus_placeholder": {
+    "message": "Focus (min)"
+  },
+  "popup_focus_custom": {
+    "message": "Custom"
+  },
+  "popup_break_label": {
+    "message": "→ Break:"
+  },
+  "popup_focus_start": {
+    "message": "Start"
+  },
+  "popup_focus_stop": {
+    "message": "Stop"
+  },
+  "popup_export_title": {
+    "message": "Export Data"
+  },
+  "popup_report_bug_title": {
+    "message": "Report Bug"
+  },
+  "popup_reset_title": {
+    "message": "Reset Data"
+  },
+  "bug_info_version": {
+    "message": "Version"
+  },
+  "bug_info_browser": {
+    "message": "Browser"
+  },
+  "bug_info_os": {
+    "message": "OS"
+  },
+  "bug_info_language": {
+    "message": "Language"
+  },
+  "bug_guide_example": {
+    "message": "1. Open YouTube<br>2. Scroll for 5 minutes<br>3. No intervention appeared"
+  },
+  "focus_btn_reset": {
+    "message": "Reset Timer"
+  },
+  "mem_title": {
+    "message": "Amo Memory"
+  },
+  "mem_desc": {
+    "message": "Your reading traces and knowledge exports"
+  },
+  "mem_stat_total": {
+    "message": "Total Notes"
+  },
+  "mem_stat_exported": {
+    "message": "Exported to NLM"
+  },
+  "mem_stat_week": {
+    "message": "This Week"
+  },
+  "mem_stat_top_category": {
+    "message": "Top Category"
+  },
+  "mem_weekly_title": {
+    "message": "Weekly Insight"
+  },
+  "mem_weekly_desc": {
+    "message": "Your topic distribution in the last 7 days"
+  },
+  "mem_weekly_empty": {
+    "message": "No notes this week yet."
+  },
+  "mem_weekly_focus": {
+    "message": "This week you focused $1% on $2."
+  },
+  "mem_weekly_focus_tags": {
+    "message": "Especially: $1"
+  },
+  "mem_search_placeholder": {
+    "message": "Search notes..."
+  },
+  "mem_filter_all": {
+    "message": "All"
+  },
+  "mem_filter_exported": {
+    "message": "Exported"
+  },
+  "mem_filter_not_exported": {
+    "message": "Not Exported"
+  },
+  "mem_empty_title": {
+    "message": "No notes found"
+  },
+  "mem_empty_desc": {
+    "message": "Start reading and saving highlights to build your memory."
+  },
+  "mem_ai_insight": {
+    "message": "AI Insight"
+  },
+  "mem_exported_to": {
+    "message": "Exported to"
+  },
+  "mem_btn_open_nlm": {
+    "message": "Open in NotebookLM"
+  },
+  "mem_btn_copy_question": {
+    "message": "Copy Question"
+  },
+  "mem_btn_copy": {
+    "message": "Copy"
+  },
+  "mem_btn_source": {
+    "message": "Source"
+  },
+  "mem_prev": {
+    "message": "Previous"
+  },
+  "mem_next": {
+    "message": "Next"
+  },
+  "mem_toast_opened_nlm": {
+    "message": "Opened NotebookLM"
+  },
+  "mem_toast_copied_question": {
+    "message": "Question copied!"
+  },
+  "mem_toast_copied": {
+    "message": "Copied to clipboard!"
+  },
+  "sp_title": {
+    "message": "Active Reading"
+  },
+  "sp_page_discussion": {
+    "message": "Page Discussion"
+  },
+  "sp_general_chat_title": {
+    "message": "General Chat"
+  },
+  "sp_threads_label": {
+    "message": "Chats"
+  },
+  "sp_highlighted_text": {
+    "message": "Discussing"
+  },
+  "sp_empty_title": {
+    "message": "Ready"
+  },
+  "sp_empty_desc": {
+    "message": "Highlight text or select a Quick Action to begin."
+  },
+  "sp_retention_quiz_title": {
+    "message": "Quiz"
+  },
+  "sp_retention_teachback_title": {
+    "message": "Teach-back"
+  },
+  "sp_retention_flashcard_title": {
+    "message": "Flashcards"
+  },
+  "sp_retention_close": {
+    "message": "Close"
+  },
+  "sp_retention_no_highlight": {
+    "message": "Please select a section you care about."
+  },
+  "sp_retention_loading": {
+    "message": "Preparing..."
+  },
+  "sp_retention_unavailable": {
+    "message": "Retention tools unavailable."
+  },
+  "sp_retention_missing_key": {
+    "message": "Missing API key."
+  },
+  "sp_retention_empty_quiz": {
+    "message": "Could not generate quiz."
+  },
+  "sp_quiz_skip": {
+    "message": "Skip"
+  },
+  "sp_quiz_submit": {
+    "message": "Submit Answer"
+  },
+  "sp_quiz_evaluating": {
+    "message": "Evaluating..."
+  },
+  "sp_quiz_continue": {
+    "message": "Continue"
+  },
+  "sp_quiz_placeholder": {
+    "message": "Type your answer here..."
+  },
+  "sp_quiz_question": {
+    "message": "Question"
+  },
+  "sp_quiz_of": {
+    "message": "of"
+  },
+  "sp_quiz_summary_title": {
+    "message": "Quiz complete"
+  },
+  "sp_quiz_add_review": {
+    "message": "Add to Review Deck"
+  },
+  "sp_quiz_done": {
+    "message": "Done"
+  },
+  "sp_quiz_correct_label": {
+    "message": "What you got right"
+  },
+  "sp_quiz_missing_label": {
+    "message": "What you missed"
+  },
+  "sp_quiz_evidence_label": {
+    "message": "From the text"
+  },
+  "sp_quiz_added_review": {
+    "message": "Added to review deck."
+  },
+  "sp_teachback_title": {
+    "message": "Teach-back"
+  },
+  "sp_teachback_prompt_label": {
+    "message": "Explain it in your own words"
+  },
+  "sp_teachback_hint": {
+    "message": "Hint"
+  },
+  "sp_teachback_submit": {
+    "message": "Evaluate"
+  },
+  "sp_teachback_retry": {
+    "message": "Try again"
+  },
+  "sp_teachback_add_review": {
+    "message": "Add to Review Deck"
+  },
+  "sp_teachback_placeholder": {
+    "message": "Type your explanation..."
+  },
+  "sp_teachback_feedback_title": {
+    "message": "Feedback"
+  },
+  "sp_teachback_suggestions_title": {
+    "message": "Suggestions"
+  },
+  "sp_teachback_misconceptions_title": {
+    "message": "Misconceptions"
+  },
+  "sp_teachback_added_review": {
+    "message": "Added to review deck."
+  },
+  "sp_flashcard_show_answer": {
+    "message": "Show Answer"
+  },
+  "sp_flashcard_rate_again": {
+    "message": "Again"
+  },
+  "sp_flashcard_rate_hard": {
+    "message": "Hard"
+  },
+  "sp_flashcard_rate_good": {
+    "message": "Good"
+  },
+  "sp_flashcard_rate_easy": {
+    "message": "Easy"
+  },
+  "sp_flashcard_review_title": {
+    "message": "Review session"
+  },
+  "sp_flashcard_review_done": {
+    "message": "Done"
+  },
+  "sp_flashcard_review_empty": {
+    "message": "No cards ready for review."
+  },
+  "sp_quick_note_title": {
+    "message": "Quick Notes"
+  },
+  "sp_quick_note_placeholder": {
+    "message": "Jot down your idea..."
+  },
+  "sp_quick_note_add": {
+    "message": "+ Add"
+  },
+  "sp_quick_note_empty": {
+    "message": "No notes yet"
+  },
+  "sp_btn_mark_done": {
+    "message": "Mark as Done"
+  },
+  "sp_btn_key_insight": {
+    "message": "Key Insight"
+  },
+  "sp_btn_download_notes": {
+    "message": "Download Notes"
+  },
+  "sp_btn_finish_reading": {
+    "message": "Finish Reading"
+  },
+  "sp_btn_save_to_knowledge": {
+    "message": "Save to Knowledge"
+  },
+  "sp_btn_save_all_knowledge": {
+    "message": "Save All to Knowledge"
+  },
+  "sp_key_insight_label": {
+    "message": "Key Insight"
+  },
+  "sp_key_insight_copy": {
+    "message": "Copy"
+  },
+  "sp_key_insight_save": {
+    "message": "Save to Knowledge"
+  },
+  "sp_key_insight_empty": {
+    "message": "No Key Insight yet"
+  },
+  "sp_key_insight_show": {
+    "message": "Show Key Insight"
+  },
+  "sp_key_insight_hide": {
+    "message": "Hide Key Insight"
+  },
+  "sp_chip_summarize": {
+    "message": "Summarize"
+  },
+  "sp_chip_keypoints": {
+    "message": "Key Points"
+  },
+  "sp_chip_explain": {
+    "message": "Explain"
+  },
+  "sp_chip_counter": {
+    "message": "Critique"
+  },
+  "sp_chip_connect": {
+    "message": "Connect"
+  },
+  "sp_chip_analyze": {
+    "message": "Analyze"
+  },
+  "sp_chip_example": {
+    "message": "Example"
+  },
+  "sp_nudge_fast_scroll_title": {
+    "message": "Slow down a bit"
+  },
+  "sp_nudge_fast_scroll_msg": {
+    "message": "You are scrolling quickly. Want to pause and capture a key idea?"
+  },
+  "sp_nudge_passive_title": {
+    "message": "Active recall"
+  },
+  "sp_nudge_passive_msg": {
+    "message": "Try to recall the main point you just read."
+  },
+  "sp_nudge_section_title": {
+    "message": "Section checkpoint"
+  },
+  "sp_nudge_section_msg": {
+    "message": "You reached \"$1\". Capture 1 takeaway?"
+  },
+  "sp_nudge_completion_title": {
+    "message": "Wrap-up"
+  },
+  "sp_nudge_completion_msg": {
+    "message": "You are near the end. Want a quick summary or next steps?"
+  },
+  "sp_nudge_action_open_panel": {
+    "message": "Open Side Panel"
+  },
+  "sp_nudge_action_ask": {
+    "message": "Ask a question"
+  },
+  "sp_nudge_action_self_check": {
+    "message": "Quick self-check"
+  },
+  "sp_nudge_action_insight": {
+    "message": "Create insight"
+  },
+  "sp_nudge_action_key_point": {
+    "message": "Key point"
+  },
+  "sp_nudge_action_next_steps": {
+    "message": "Next steps"
+  },
+  "sp_bloom_level_1": {
+    "message": "Remember"
+  },
+  "sp_bloom_level_2": {
+    "message": "Understand"
+  },
+  "sp_bloom_level_3": {
+    "message": "Apply"
+  },
+  "sp_bloom_level_4": {
+    "message": "Analyze"
+  },
+  "sp_bloom_level_5": {
+    "message": "Evaluate"
+  },
+  "sp_bloom_level_6": {
+    "message": "Create"
+  },
+  "sp_auto_summary_title": {
+    "message": "Thread Summary"
+  },
+  "sp_auto_summary_takeaways": {
+    "message": "Key takeaways"
+  },
+  "sp_auto_summary_suggestions": {
+    "message": "Suggested next questions"
+  },
+  "sp_auto_summary_create_insight": {
+    "message": "Create Insight"
+  },
+  "sp_auto_summary_ask_followup": {
+    "message": "Ask Follow-up"
+  },
+  "sp_auto_summary_dismiss": {
+    "message": "Move On"
+  },
+  "focus_review_title": {
+    "message": "Focus check-in"
+  },
+  "focus_review_subtitle": {
+    "message": "Lock in what you just learned"
+  },
+  "focus_review_read": {
+    "message": "You just read"
+  },
+  "focus_review_stats": {
+    "message": "Session snapshot"
+  },
+  "focus_review_stat_highlights": {
+    "message": "highlights"
+  },
+  "focus_review_stat_insights": {
+    "message": "insights"
+  },
+  "focus_review_stat_messages": {
+    "message": "messages"
+  },
+  "focus_review_question_label": {
+    "message": "Recall prompt"
+  },
+  "focus_review_hint": {
+    "message": "Write 1-2 sentences. Don’t check the page."
+  },
+  "focus_review_placeholder": {
+    "message": "Type your answer..."
+  },
+  "focus_review_submit": {
+    "message": "Save recall"
+  },
+  "focus_review_skip": {
+    "message": "Skip"
+  },
+  "focus_review_feedback_saved": {
+    "message": "Saved."
+  },
+  "sp_primer_title": {
+    "message": "Before you read..."
+  },
+  "sp_primer_topic_label": {
+    "message": "This article covers:"
+  },
+  "sp_primer_objectives": {
+    "message": "Reading objectives:"
+  },
+  "sp_primer_start": {
+    "message": "Start reading"
+  },
+  "sp_primer_skip": {
+    "message": "Skip"
+  },
+  "sp_primer_started": {
+    "message": "Reading objectives set!"
+  },
+  "sp_primer_skipped": {
+    "message": "Primer skipped"
+  },
+  "sp_mode_label": {
+    "message": "Reading mode"
+  },
+  "sp_mode_skim_label": {
+    "message": "Skim"
+  },
+  "sp_mode_skim_desc": {
+    "message": "Quick overview"
+  },
+  "sp_mode_deep_label": {
+    "message": "Deep"
+  },
+  "sp_mode_deep_desc": {
+    "message": "Full analysis"
+  },
+  "sp_stats_time": {
+    "message": "min"
+  },
+  "sp_stats_discussions": {
+    "message": "chats"
+  },
+  "sp_stats_done": {
+    "message": "done"
+  },
+  "sp_stats_saved": {
+    "message": "saved"
+  },
+  "sp_connections_title": {
+    "message": "Related ideas"
+  },
+  "sp_connection_contradicts": {
+    "message": "Contradicts"
+  },
+  "sp_connection_supports": {
+    "message": "Supports"
+  },
+  "sp_connection_extends": {
+    "message": "Extends"
+  },
+  "sp_menu_semantic_embeddings": {
+    "message": "Semantic Embeddings"
+  },
+  "sp_menu_semantic_search": {
+    "message": "Semantic Search"
+  },
+  "sp_toggle_on": {
+    "message": "On"
+  },
+  "sp_toggle_off": {
+    "message": "Off"
+  },
+  "sp_toggle_locked": {
+    "message": "Key"
+  },
+  "sp_semantic_cost_warning": {
+    "message": "Enabling this may increase AI usage and cost. Continue?"
+  },
+  "sp_semantic_key_required": {
+    "message": "Add your API key in Settings to enable this."
+  },
+  "sp_semantic_needs_embeddings": {
+    "message": "Semantic Search works best with Embeddings on."
+  },
+  "sp_deep_angle": {
+    "message": "New angle"
+  },
+  "sp_deep_angle_title": {
+    "message": "A new angle"
+  },
+  "sp_deep_angle_hint": {
+    "message": "See another perspective from your recent highlights."
+  },
+  "sp_deep_angle_analyzing": {
+    "message": "Looking for a fresh angle..."
+  },
+  "sp_deep_angle_loading": {
+    "message": "Generating..."
+  },
+  "sp_deep_angle_empty": {
+    "message": "Select or save more highlights to unlock this."
+  },
+  "sp_deep_angle_error": {
+    "message": "Couldn't generate a new angle."
+  },
+  "sp_btn_compare": {
+    "message": "Compare"
+  },
+  "sp_btn_merge": {
+    "message": "Merge discussions"
+  },
+  "sp_action_explain": {
+    "message": "Explain"
+  },
+  "sp_action_summarize": {
+    "message": "Summarize"
+  },
+  "sp_action_counter": {
+    "message": "Counter-argue"
+  },
+  "sp_action_connect": {
+    "message": "Connect"
+  },
+  "sp_toast_saved": {
+    "message": "Saved to Knowledge!"
+  },
+  "sp_toast_copied": {
+    "message": "Copied"
+  },
+  "sp_toast_quick_saved": {
+    "message": "Highlight saved!"
+  },
+  "sp_toast_already_saved": {
+    "message": "Already saved today"
+  },
+  "sp_toast_saved_local": {
+    "message": "Saved locally. Cloud export blocked."
+  },
+  "sp_btn_quick_save": {
+    "message": "Save"
+  },
+  "sp_chip_save": {
+    "message": "Save"
+  },
+  "sp_no_highlight": {
+    "message": "No highlight selected"
+  },
+  "sp_no_content": {
+    "message": "No content to distill."
+  },
+  "sp_error_save": {
+    "message": "Error saving"
+  },
+  "sp_nlm_disabled": {
+    "message": "NotebookLM export is disabled"
+  },
+  "sp_nlm_pii_blocked": {
+    "message": "Sensitive data detected. Export blocked."
+  },
+  "sp_from_reading_card": {
+    "message": "From Reading Card"
+  },
+  "sp_analyzing": {
+    "message": "Analyzing connections..."
+  },
+  "sp_generating": {
+    "message": "Generating insight..."
+  },
+  "sp_exporting": {
+    "message": "Exporting..."
+  },
+  "sp_confirm_end_session": {
+    "message": "Finish this reading session?"
+  },
+  "sp_confirm_export_all": {
+    "message": "Save all discussions to Knowledge?"
+  },
+  "sp_input_placeholder": {
+    "message": "Ask a question..."
+  },
+  "sp_menu_clear": {
+    "message": "Clear chat"
+  },
+  "sp_menu_new_chat": {
+    "message": "New chat"
+  },
+  "sp_confirm_new_chat": {
+    "message": "Start a new chat? This will keep your history and open a fresh thread."
+  },
+  "sp_new_chat_started": {
+    "message": "New chat started"
+  },
+  "sp_no_discussions": {
+    "message": "No chats yet"
+  },
+  "sp_thread_delete": {
+    "message": "Delete"
+  },
+  "sp_no_connections": {
+    "message": "No related ideas yet"
+  },
+  "sp_shortcut_send": {
+    "message": "Send (Ctrl+Enter)"
+  },
+  "sp_shortcut_insight": {
+    "message": "Key Insight (Ctrl+D)"
+  },
+  "sp_shortcut_done": {
+    "message": "Done (Ctrl+Shift+D)"
+  },
+  "sp_shortcut_note": {
+    "message": "New note (Ctrl+N)"
+  },
+  "sp_shortcut_search": {
+    "message": "Search (Ctrl+K)"
+  },
+  "sp_offline_message": {
+    "message": "No internet connection. Messages will be sent when online."
+  },
+  "sp_offline_mode": {
+    "message": "Offline mode"
+  },
+  "sp_network_restored": {
+    "message": "Connection restored"
+  },
+  "sp_network_lost": {
+    "message": "No internet connection"
+  },
+  "sp_still_offline": {
+    "message": "Still offline. Check your connection."
+  },
+  "sp_message_queued": {
+    "message": "Message saved. Will send when online."
+  },
+  "sp_sending_pending": {
+    "message": "Sending pending messages..."
+  },
+  "sp_pending_partial": {
+    "message": "Some messages failed to send"
+  },
+  "sp_no_active_tab": {
+    "message": "No active tab"
+  },
+  "sp_post_captured": {
+    "message": "Post captured!"
+  },
+  "sp_no_post_found": {
+    "message": "No focused post found"
+  },
+  "sp_capture_error": {
+    "message": "Could not capture post"
+  },
+  "sp_capture_post_title": {
+    "message": "Capture post (Alt+C)"
+  },
+  "sp_capture_post_label": {
+    "message": "Capture"
+  },
+  "sp_compact_on": {
+    "message": "Compact view"
+  },
+  "sp_compact_off": {
+    "message": "Full view"
+  },
+  "sp_shortcut_capture": {
+    "message": "Capture post (Alt+C)"
+  },
+  "sp_waiting_connection": {
+    "message": "Waiting for connection..."
+  },
+  "sp_retry": {
+    "message": "Try again"
+  },
+  "sp_retrying": {
+    "message": "Retrying"
+  },
+  "sp_open_settings": {
+    "message": "Open Settings"
+  },
+  "sp_report_issue": {
+    "message": "Report issue"
+  },
+  "sp_error_no_api_key": {
+    "message": "AI Access Key not set"
+  },
+  "sp_error_no_api_key_desc": {
+    "message": "Go to Settings to add your AI Access Key."
+  },
+  "sp_error_empty_response": {
+    "message": "No response received"
+  },
+  "sp_error_empty_response_desc": {
+    "message": "The AI did not return a response. Please try again."
+  },
+  "sp_error_network": {
+    "message": "Connection lost"
+  },
+  "sp_error_network_desc": {
+    "message": "Check your internet connection and try again."
+  },
+  "sp_error_unauthorized": {
+    "message": "Invalid AI Access Key"
+  },
+  "sp_error_unauthorized_desc": {
+    "message": "Your AI Access Key is invalid or expired."
+  },
+  "sp_error_rate_limit": {
+    "message": "Too many requests"
+  },
+  "sp_error_rate_limit_desc": {
+    "message": "Please wait $1 seconds before trying again.",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "sp_error_server": {
+    "message": "Server error"
+  },
+  "sp_error_server_desc": {
+    "message": "The AI service is experiencing issues."
+  },
+  "sp_error_timeout": {
+    "message": "Request timed out"
+  },
+  "sp_error_timeout_desc": {
+    "message": "The request took too long. Please try again or check your internet connection."
+  },
+  "sp_error_unknown": {
+    "message": "An error occurred"
+  },
+  "sp_error_generic_desc": {
+    "message": "Something went wrong."
+  },
+  "sp_error_bad_request": {
+    "message": "Invalid request"
+  },
+  "sp_error_forbidden": {
+    "message": "Access denied"
+  },
+  "sp_error_not_found": {
+    "message": "API endpoint not found"
+  },
+  "sp_error_unavailable": {
+    "message": "Service unavailable. Try again later."
+  },
+  "sp_undo": {
+    "message": "Undo"
+  },
+  "sp_action_undone": {
+    "message": "Action undone"
+  },
+  "sp_marked_done": {
+    "message": "Marked as done"
+  },
+  "sp_note_deleted": {
+    "message": "Note deleted"
+  },
+  "sp_chat_cleared": {
+    "message": "Chat cleared"
+  },
+  "sp_nothing_to_undo": {
+    "message": "Nothing to undo"
+  },
+  "sp_welcome_title": {
+    "message": "Start in one minute"
+  },
+  "sp_welcome_desc": {
+    "message": "Follow 3 quick steps to get your first value."
+  },
+  "sp_welcome_steps": {
+    "message": "3 quick steps"
+  },
+  "sp_welcome_start": {
+    "message": "Start now"
+  },
+  "sp_welcome_guide": {
+    "message": "See detailed guide"
+  },
+  "sp_onboard_step1": {
+    "message": "Highlight one short paragraph."
+  },
+  "sp_onboard_step2": {
+    "message": "Press Summarize."
+  },
+  "sp_onboard_step3": {
+    "message": "Press Save."
+  },
+  "sp_onboarding_progress_title": {
+    "message": "Onboarding progress"
+  },
+  "sp_onboarding_progress_step1": {
+    "message": "Step 1/3"
+  },
+  "sp_onboarding_progress_step2": {
+    "message": "Step 2/3"
+  },
+  "sp_onboarding_progress_step3": {
+    "message": "Step 3/3"
+  },
+  "sp_onboarding_skip": {
+    "message": "Skip guide"
+  },
+  "sp_onboarding_skip_confirm": {
+    "message": "Skip onboarding now? You can open it again from the menu."
+  },
+  "sp_onboarding_skipped": {
+    "message": "Guide skipped. You can reopen it from the menu."
+  },
+  "sp_onboarding_menu_item": {
+    "message": "Open onboarding guide"
+  },
+  "sp_onboarding_reopen_menu": {
+    "message": "Open onboarding again"
+  },
+  "sp_guide_title": {
+    "message": "How to use Active Reading"
+  },
+  "sp_guide_close": {
+    "message": "Got it!"
+  },
+  "sp_guide_highlight_title": {
+    "message": "Highlight Text"
+  },
+  "sp_guide_highlight_desc": {
+    "message": "Select any text on the webpage. The side panel will automatically detect your selection."
+  },
+  "sp_guide_chat_title": {
+    "message": "Ask Questions"
+  },
+  "sp_guide_chat_desc": {
+    "message": "Type your question about the highlighted text. AI will help you understand it better."
+  },
+  "sp_guide_insight_title": {
+    "message": "Create Key Insights"
+  },
+  "sp_guide_insight_desc": {
+    "message": "Click \"Key Insight\" to distill the discussion into a memorable takeaway."
+  },
+  "sp_guide_save_title": {
+    "message": "Save & Export"
+  },
+  "sp_guide_save_desc": {
+    "message": "Save insights to your knowledge base or download as markdown notes."
+  },
+  "sp_guide_shortcuts_title": {
+    "message": "Keyboard Shortcuts"
+  },
+  "sp_shortcut_undo": {
+    "message": "Undo"
+  },
+  "sp_tooltip_ok": {
+    "message": "OK, got it"
+  },
+  "sp_tooltip_first_highlight": {
+    "message": "Great. Next, press Summarize."
+  },
+  "sp_tooltip_first_chat": {
+    "message": "Great. Now press Save to keep this highlight."
+  },
+  "sp_tooltip_first_insight": {
+    "message": "Click \"Mark as Done\" to save and move to the next section."
+  },
+  "sp_onboarding_complete": {
+    "message": "You completed the basic setup."
+  },
+  "sp_search_placeholder": {
+    "message": "Search in insights and notes..."
+  },
+  "sp_search_hint": {
+    "message": "Type to search..."
+  },
+  "sp_search_no_results": {
+    "message": "No results found"
+  },
+  "sp_filter_all": {
+    "message": "All"
+  },
+  "sp_filter_today": {
+    "message": "Today"
+  },
+  "sp_filter_week": {
+    "message": "This Week"
+  },
+  "sp_filter_insights": {
+    "message": "Insights"
+  },
+  "sp_filter_notes": {
+    "message": "Notes"
+  },
+  "sp_time_just_now": {
+    "message": "Just now"
+  },
+  "sp_export_empty": {
+    "message": "Nothing to export"
+  },
+  "sp_export_title": {
+    "message": "Download Notes"
+  },
+  "sp_export_format": {
+    "message": "Format:"
+  },
+  "sp_export_content": {
+    "message": "Include:"
+  },
+  "sp_export_cancel": {
+    "message": "Cancel"
+  },
+  "sp_export_download": {
+    "message": "Download"
+  },
+  "sp_export_opt_insights": {
+    "message": "Key Insights"
+  },
+  "sp_export_opt_notes": {
+    "message": "Quick Notes"
+  },
+  "sp_export_opt_chat": {
+    "message": "Full Chat History"
+  },
+  "sp_export_opt_source": {
+    "message": "Source Info"
+  },
+  "sp_export_success": {
+    "message": "Downloaded!"
+  },
+  "sp_multitab_warning": {
+    "message": "This article is open in another tab"
+  },
+  "sp_multitab_continue": {
+    "message": "Continue here"
+  },
+  "sp_multitab_switch": {
+    "message": "Switch tab"
+  },
+  "sp_data_sync": {
+    "message": "Data updated in another tab"
+  },
+  "sp_comparison_generated": {
+    "message": "Comparison generated!"
+  },
+  "sp_comparison_failed": {
+    "message": "Failed to generate comparison"
+  },
+  "sp_loading": {
+    "message": "Loading..."
+  },
+  "sp_save_failed": {
+    "message": "Failed to save"
+  },
+  "sp_nlm_save_error": {
+    "message": "Error saving to NotebookLM"
+  },
+  "nlm_prompt_save_title": {
+    "message": "Save to NotebookLM"
+  },
+  "nlm_chars_selected": {
+    "message": "characters selected"
+  },
+  "nlm_notebook_title": {
+    "message": "Notebook Title"
+  },
+  "nlm_title_placeholder": {
+    "message": "Enter notebook name..."
+  },
+  "nlm_title_hint": {
+    "message": "Edit the title before saving"
+  },
+  "nlm_ai_suggested": {
+    "message": "AI-suggested title"
+  },
+  "nlm_suggested_notebook": {
+    "message": "Suggested Notebook"
+  },
+  "nlm_preview_label": {
+    "message": "Content Preview"
+  },
+  "nlm_use_notebook": {
+    "message": "Use This Notebook"
+  },
+  "nlm_create_new": {
+    "message": "Create New"
+  },
+  "nlm_create_notebook": {
+    "message": "Create Notebook"
+  },
+  "nlm_cancel": {
+    "message": "Cancel"
+  },
+  "nlm_copied_rich": {
+    "message": "Rich content copied!"
+  },
+  "nlm_opening": {
+    "message": "Opening notebook..."
+  },
+  "nlm_creating": {
+    "message": "Creating"
+  },
+  "sp_page_read_failed": {
+    "message": "Failed to read page"
+  },
+  "nlm_cancelled": {
+    "message": "Cancelled"
+  },
+  "nlm_extension_updated": {
+    "message": "Extension updated. Please refresh the page."
+  },
+  "nlm_error_prefix": {
+    "message": "Error: "
+  },
+  "nlm_copied": {
+    "message": "Copied!"
+  },
+  "nlm_copy_again": {
+    "message": "Copy text again"
+  },
+  "focus_updating": {
+    "message": "Updating..."
+  },
+  "quota_wait_seconds": {
+    "message": "Wait $1s"
+  },
+  "popup_focus_off": {
+    "message": "OFF"
+  },
+  "srq_widget_title": {
+    "message": "Saved highlights"
+  },
+  "srq_clips_label": {
+    "message": "items"
+  },
+  "srq_clips_count": {
+    "message": "$1 highlights",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_uncategorized": {
+    "message": "General"
+  },
+  "srq_export_all": {
+    "message": "Save all"
+  },
+  "srq_export": {
+    "message": "Save"
+  },
+  "srq_review": {
+    "message": "Review"
+  },
+  "srq_dismiss": {
+    "message": "Dismiss"
+  },
+  "srq_toggle": {
+    "message": "Show more"
+  },
+  "srq_toggle_collapse": {
+    "message": "Show less"
+  },
+  "srq_pagination_prev": {
+    "message": "Previous page"
+  },
+  "srq_pagination_next": {
+    "message": "Next page"
+  },
+  "srq_pagination_info": {
+    "message": "Page $1 of $2",
+    "placeholders": {
+      "current": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
+    }
+  },
+  "srq_batch_export_aria": {
+    "message": "Save $1 highlights from $2",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "topic": {
+        "content": "$2"
+      }
+    }
+  },
+  "srq_batch_review_aria": {
+    "message": "Review $1 highlights from $2",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "topic": {
+        "content": "$2"
+      }
+    }
+  },
+  "srq_batch_dismiss_aria": {
+    "message": "Dismiss $1 batch",
+    "placeholders": {
+      "topic": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_modal_export_aria": {
+    "message": "Save $1 selected highlights",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_review_title": {
+    "message": "Review: $1",
+    "placeholders": {
+      "topic": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_review_subtitle": {
+    "message": "$1 highlights ready to save",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_target_notebook": {
+    "message": "Save to:"
+  },
+  "srq_export_selected": {
+    "message": "Save selected ($1)",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_cancel": {
+    "message": "Cancel"
+  },
+  "srq_select": {
+    "message": "Select"
+  },
+  "srq_selected": {
+    "message": "Selected"
+  },
+  "srq_skip": {
+    "message": "Skip"
+  },
+  "srq_exporting": {
+    "message": "Saving..."
+  },
+  "srq_exported_success": {
+    "message": "Saved $1 highlights",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_export_error": {
+    "message": "Save failed. Try again."
+  },
+  "srq_in_flight": {
+    "message": "Already processing..."
+  },
+  "srq_related_to": {
+    "message": "Related to: $1",
+    "placeholders": {
+      "titles": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_pii_warning": {
+    "message": "This highlight may contain personal information. Please review before saving."
+  },
+  "srq_mode_deep": {
+    "message": "Focused"
+  },
+  "srq_mode_skim": {
+    "message": "Quick read"
+  },
+  "srq_mode_reference": {
+    "message": "For reference"
+  },
+  "srq_mode_reread": {
+    "message": "Revisited"
+  },
+  "srq_time_now": {
+    "message": "just now"
+  },
+  "srq_time_mins": {
+    "message": "$1 min ago",
+    "placeholders": {
+      "mins": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_time_hours": {
+    "message": "$1h ago",
+    "placeholders": {
+      "hours": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_time_yesterday": {
+    "message": "yesterday"
+  },
+  "srq_time_days": {
+    "message": "$1 days ago",
+    "placeholders": {
+      "days": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_nlm_banner": {
+    "message": "$1 highlights ready to save",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "srq_nlm_export_current": {
+    "message": "Save all to this notebook"
+  },
+  "srq_nlm_open_sidepanel": {
+    "message": "Open in sidebar"
+  },
+  "srq_loading": {
+    "message": "Loading..."
+  },
+  "srq_empty_state": {
+    "message": "No highlights waiting to save."
+  },
+  "srq_error_state": {
+    "message": "Failed to load. Tap 'Try again'."
+  },
+  "srq_retry": {
+    "message": "Try again"
+  },
+  "opt_ai_pilot_timeout_hint": {
+    "message": "Maximum wait time for AI response (in milliseconds)"
+  },
+  "opt_ai_pilot_budget_hint": {
+    "message": "Number of AI calls allowed per day"
+  },
+  "opt_ai_pilot_cache_ttl_hint": {
+    "message": "How long to remember recent results (in milliseconds)"
+  },
+  "opt_nlm_export_max_chars_hint": {
+    "message": "Maximum text length per export (0 = unlimited)"
+  },
+  "opt_gemini_api_key_tooltip": {
+    "message": "Your personal key to use AI features. Get it free from Google AI Studio."
+  },
+  "opt_semantic_embeddings_tooltip": {
+    "message": "AI analyzes the meaning of each highlight to find related content later."
+  },
+  "opt_semantic_search_tooltip": {
+    "message": "Find highlights by what they mean, not just by keywords."
+  },
+  "opt_ai_pilot_budget_tooltip": {
+    "message": "Limit how many times AI can be called per day to control costs."
+  },
+  "opt_ai_pilot_timeout_tooltip": {
+    "message": "How long to wait for AI before giving up (in milliseconds)."
+  },
+  "opt_advanced_settings_title": {
+    "message": "Advanced Settings"
+  },
+  "opt_advanced_badge": {
+    "message": "(For advanced users)"
+  },
+  "opt_onboarding_title": {
+    "message": "Quick Setup (4 steps)"
+  },
+  "opt_onboarding_step1": {
+    "message": "Choose your AI provider"
+  },
+  "opt_onboarding_step2": {
+    "message": "Get your free API key (click link below)"
+  },
+  "opt_onboarding_step3": {
+    "message": "Paste your key and click Save"
+  },
+  "opt_onboarding_step4": {
+    "message": "Start highlighting text on any webpage"
+  },
+  "opt_onboarding_btn_complete": {
+    "message": "Complete Setup"
+  },
+  "opt_onboarding_btn_dismiss": {
+    "message": "Dismiss"
+  },
+  "opt_onboarding_completed": {
+    "message": "Setup completed! You can now start using Amo."
+  },
+  "sp_error_cta_retry": {
+    "message": "Try Again"
+  },
+  "sp_error_cta_settings": {
+    "message": "Open Settings"
+  },
+  "popup_connecting": {
+    "message": "Connecting to AI..."
+  },
+  "tabChat": {
+    "message": "Chat"
+  },
+  "tabNotes": {
+    "message": "Notes"
+  },
+  "tabCards": {
+    "message": "Review"
+  },
+  "tabSaved": {
+    "message": "Saved"
+  },
+  "sp_cards_title": {
+    "message": "Practice"
+  },
+  "sp_cards_desc": {
+    "message": "Practice cards will appear here as you save more highlights."
+  },
+  "sp_cards_coming_soon": {
+    "message": "AI-powered review cards are on the way! We're crafting a smart practice experience to help you retain what you read. Stay tuned for the next update ✨"
+  },
+  "sp_cards_back_chat": {
+    "message": "Back to Chat"
+  },
+  "review_title": {
+    "message": "Review"
+  },
+  "review_empty": {
+    "message": "Save highlights while reading to start practicing."
+  },
+  "review_empty_cta": {
+    "message": "Go to Chat"
+  },
+  "review_no_key": {
+    "message": "Set up an API key to use Review."
+  },
+  "review_no_key_desc": {
+    "message": "Review needs a Gemini or OpenRouter API key to generate flashcards from your highlights."
+  },
+  "review_open_settings": {
+    "message": "Open Settings"
+  },
+  "review_loading": {
+    "message": "Generating study cards..."
+  },
+  "review_error": {
+    "message": "Couldn't generate cards."
+  },
+  "review_retry": {
+    "message": "Try again"
+  },
+  "review_prev": {
+    "message": "Previous"
+  },
+  "review_next": {
+    "message": "Next"
+  },
+  "review_finish": {
+    "message": "Finish"
+  },
+  "review_refresh": {
+    "message": "New cards"
+  },
+  "review_card_flip": {
+    "message": "Tap to reveal"
+  },
+  "review_original": {
+    "message": "Original highlight:"
+  },
+  "review_type_recall": {
+    "message": "Recall"
+  },
+  "review_type_concept": {
+    "message": "Concept"
+  },
+  "review_type_connect": {
+    "message": "Connect"
+  },
+  "review_done_title": {
+    "message": "Session complete!"
+  },
+  "review_done_desc": {
+    "message": "You reviewed $1 cards."
+  },
+  "review_done_again": {
+    "message": "Practice again"
+  },
+  "focusWorking": {
+    "message": "In focus"
+  },
+  "focusBreak": {
+    "message": "Break time"
+  },
+  "focusIdle": {
+    "message": "Ready to focus"
+  },
+  "btnUndo": {
+    "message": "Undo"
+  },
+  "btnStart": {
+    "message": "Start"
+  },
+  "btnStop": {
+    "message": "Stop"
+  },
+  "btnCancel": {
+    "message": "Cancel"
+  },
+  "btnContinue": {
+    "message": "Continue"
+  },
+  "cmdUnknown": {
+    "message": "I didn't catch that..."
+  },
+  "cmdError": {
+    "message": "Something went wrong..."
+  },
+  "cmdUndone": {
+    "message": "Undone!"
+  },
+  "cmdDone": {
+    "message": "Done!"
+  },
+  "cmd_confirm_action": {
+    "message": "Continue?"
+  },
+  "cmd_focus_confirm_sub": {
+    "message": "Start a {min}-min focus session?"
+  },
+  "cmd_focus_stop_confirm": {
+    "message": "Stop your current session?"
+  },
+  "cmd_focus_min_too_low": {
+    "message": "Please enter at least 1 minute."
+  },
+  "cmd_focus_min_too_high": {
+    "message": "Maximum 180 minutes allowed."
+  },
+  "confirmFocusStart": {
+    "message": "Start focusing for $1 minutes?"
+  },
+  "confirmFocusStop": {
+    "message": "Stop focus session?"
+  },
+  "confirmFocusStopHint": {
+    "message": "Your progress will be saved."
+  },
+  "confirmGeneric": {
+    "message": "Proceed?"
+  },
+  "btnPause": {
+    "message": "Pause"
+  },
+  "focusStarted": {
+    "message": "Started focus for $1 minutes."
+  },
+  "focusStopped": {
+    "message": "Focus session stopped."
+  },
+  "focusPaused": {
+    "message": "Focus paused."
+  },
+  "focusNotRunning": {
+    "message": "No focus session is currently running."
+  },
+  "diaryNoContent": {
+    "message": "Add a short note before saving."
+  },
+  "diarySaved": {
+    "message": "Saved to Journal"
+  },
+  "quickDiaryHint": {
+    "message": "Quick diary..."
+  },
+  "quickDiaryTitle": {
+    "message": "Quick diary"
+  },
+  "quickDiaryPlaceholder": {
+    "message": "What's on your mind?"
+  },
+  "diaryBtnSave": {
+    "message": "Save to journal"
+  },
+  "diarySummaryEmpty": {
+    "message": "No entries yet for this period."
+  },
+  "diarySummaryTitle": {
+    "message": "Journal summary"
+  },
+  "diarySummaryEntries": {
+    "message": "entries"
+  },
+  "diarySummaryMood": {
+    "message": "Top mood"
+  },
+  "diarySummaryTags": {
+    "message": "Top tags"
+  },
+  "diarySummaryTagsEmpty": {
+    "message": "general"
+  },
+  "periodToday": {
+    "message": "today"
+  },
+  "periodWeek": {
+    "message": "this week"
+  },
+  "periodMonth": {
+    "message": "this month"
+  },
+  "noteNoContent": {
+    "message": "Select text or provide content first."
+  },
+  "noteSaved": {
+    "message": "Saved to Notes"
+  },
+  "noteSaveFailed": {
+    "message": "Could not save note."
+  },
+  "savedExported": {
+    "message": "Exported $1 highlights",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "savedExportEmpty": {
+    "message": "No saved highlights to export."
+  },
+  "savedExportFailed": {
+    "message": "Export failed. Try again."
+  },
+  "mem_related_diary_title": {
+    "message": "Related journal"
+  },
+  "mem_related_diary_open": {
+    "message": "Open journal entry"
+  },
+  "chipFocus25": {
+    "message": "Focus 25m"
+  },
+  "chipQuickDiary": {
+    "message": "Quick note"
+  },
+  "chipReview": {
+    "message": "Saved items"
+  },
+  "cmd_unknown": {
+    "message": "I did not catch that."
+  },
+  "cmd_error": {
+    "message": "Something went wrong. Please try again."
+  },
+  "cmd_done": {
+    "message": "Done!"
+  },
+  "cmd_undo": {
+    "message": "Undo"
+  },
+  "cmd_confirm_yes": {
+    "message": "OK"
+  },
+  "cmd_confirm_no": {
+    "message": "Cancel"
+  },
+  "opt_tab_account": {
+    "message": "Account"
+  },
+  "opt_account_title": {
+    "message": "Account"
+  },
+  "opt_account_loading": {
+    "message": "Loading account info..."
+  },
+  "opt_account_signin_title": {
+    "message": "Sign in to AmoNexus"
+  },
+  "opt_account_signin_desc": {
+    "message": "Sync your settings, manage your subscription, and access premium features across devices."
+  },
+  "opt_account_signin_google": {
+    "message": "Sign in with Google"
+  },
+  "opt_account_remember_me": {
+    "message": "Remember me for 7 days"
+  },
+  "opt_account_privacy_note": {
+    "message": "We only use your email to verify your subscription status. Your reading data remains private on your device."
+  },
+  "opt_account_upgrade": {
+    "message": "Upgrade to Pro"
+  },
+  "opt_account_manage": {
+    "message": "Manage Subscription"
+  },
+  "opt_account_signout": {
+    "message": "Sign Out"
+  },
+  "opt_account_sync_info": {
+    "message": "Account status syncs automatically."
+  },
+  "opt_account_error_title": {
+    "message": "Something went wrong"
+  },
+  "opt_account_error_desc": {
+    "message": "Failed to load account information."
+  },
+  "opt_account_retry": {
+    "message": "Try Again"
+  },
+  "sp_connection_empty": {
+    "message": "No related ideas yet"
+  },
+  "popup_toggle_title": {
+    "message": "Enable/Disable"
+  },
+  "focus_review_loading": {
+    "message": "Generating recall question…"
+  },
+  "popup_focus_custom_placeholder": {
+    "message": "min"
+  },
+  "popup_focus_custom_go": {
+    "message": "Go"
+  },
+  "sp_memory_title": {
+    "message": "Related from your Memory"
+  },
+  "sp_memory_intro": {
+    "message": "This reminds me of your notes on:"
+  },
+  "sp_memory_similar": {
+    "message": "similar"
+  },
+  "sp_memory_insights": {
+    "message": "insights"
+  },
+  "sp_memory_view": {
+    "message": "View Notes"
+  },
+  "sp_memory_compare": {
+    "message": "Compare Concepts"
+  },
+  "sp_memory_dismiss": {
+    "message": "Dismiss"
+  },
+  "sp_memory_also": {
+    "message": "Also related:"
+  },
+  "opt_free_tier_title": {
+    "message": "All features are free"
+  },
+  "opt_free_tier_desc": {
+    "message": "You currently have full access to every feature in Amo — completely free. We want you to have enough time to explore and experience the real value that Amo brings."
+  },
+  "opt_free_tier_future": {
+    "message": "In upcoming versions, Amo will continue to grow with even more powerful features. To sustain and improve the product, we will introduce a Pro plan — creating the resources needed to build something truly valuable for our users."
+  },
+  "opt_free_tier_thanks": {
+    "message": "Thank you for being part of Amo's journey. Your support means everything to us."
+  },
+  "opt_free_tier_toast": {
+    "message": "You have full access to all features for free. Enjoy and experience the value Amo brings!"
+  },
+  "trial_banner_active": {
+    "message": "Early Access Pro — $1 days left"
+  },
+  "trial_banner_warning": {
+    "message": "Trial ending soon — $1 days left"
+  },
+  "trial_banner_limit_reached": {
+    "message": "Daily AI limit reached. Add your own key in Settings for unlimited use."
+  },
+  "trial_banner_free": {
+    "message": "Free tier active"
+  },
+  "trial_banner_today": {
+    "message": "today"
+  },
+  "update_available": {
+    "message": "New version available"
+  },
+  "update_download": {
+    "message": "Download"
+  },
+  "quota_exceeded": {
+    "message": "Daily limit reached. Try again tomorrow or add your own API key."
+  },
+  "quota_exceeded_toast": {
+    "message": "Daily limit reached. Add your own API key in Settings for unlimited use."
+  },
+  "proxy_signin_required": {
+    "message": "Sign in to use AI features. No API key configured."
+  },
+  "proxy_error": {
+    "message": "AI service temporarily unavailable. Try adding your own API key."
+  }
+}

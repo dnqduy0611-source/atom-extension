@@ -10,12 +10,9 @@
     }
 
     var CMD_MAP = {
-        'FOCUS_25': { command: 'FOCUS_START', params: { minutes: 25 }, confirm: true, undoable: true },
-        'FOCUS_40': { command: 'FOCUS_START', params: { minutes: 40 }, confirm: true, undoable: true },
-        'FOCUS_50': { command: 'FOCUS_START', params: { minutes: 50 }, confirm: true, undoable: true },
+        'FOCUS_CUSTOM': { command: 'FOCUS_START', params: { minutes: 25 }, confirm: true, undoable: true },
         'OPEN_DIARY': { command: 'OPEN_DIARY', params: {}, confirm: false, undoable: false },
-        'OPEN_NOTES': { command: 'OPEN_NOTES', params: {}, confirm: false, undoable: false },
-        'OPEN_SAVED': { command: 'OPEN_SAVED', params: {}, confirm: false, undoable: false },
+        'OPEN_MEMORY': { command: 'OPEN_MEMORY', params: {}, confirm: false, undoable: false },
         'EXPORT_SAVED': { command: 'EXPORT_SAVED', params: {}, confirm: false, undoable: false },
         'OPEN_SETTINGS': { command: 'OPEN_SETTINGS', params: {}, confirm: false, undoable: false }
     };
@@ -51,6 +48,22 @@
                 self.onAction(action);
             }
         });
+
+        // Custom focus start button
+        var focusStartBtn = document.getElementById('cmd-focus-start');
+        var focusMinutesInput = document.getElementById('cmd-focus-minutes');
+        if (focusStartBtn && focusMinutesInput) {
+            // Prevent input click from closing dropdown
+            focusMinutesInput.addEventListener('click', function (e) { e.stopPropagation(); });
+            focusStartBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var minutes = parseInt(focusMinutesInput.value, 10);
+                if (!minutes || minutes < 1) minutes = 25;
+                if (minutes > 180) minutes = 180;
+                CMD_MAP['FOCUS_CUSTOM'].params.minutes = minutes;
+                self._execute('FOCUS_CUSTOM');
+            });
+        }
 
         document.addEventListener('click', this._onDocClick);
         chrome.runtime.onMessage.addListener(this._onRuntimeMessage);
