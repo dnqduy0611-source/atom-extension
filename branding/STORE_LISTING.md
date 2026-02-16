@@ -28,14 +28,44 @@ Don't just read—absorb.
 Enter a state of deep flow. Start a Focus Session to:
 *   Block distracting sites automatically (customizable Whitelist).
 *   Track your "Flow State" quality.
+
+**Long Description:**
+
+**Unlock the Full Potential of Your Attention with AmoNexus.**
+
+AmoNexus (formerly ATOM) is not just a browser extension; it is the neural layer between your curiosity and your knowledge base. Designed for knowledge workers, researchers, and lifelong learners, AmoNexus transforms passive browsing into an active, intelligent workflow.
+
+**🚀 Key Features:**
+
+🧠 **AI Pilot & Attention Compass**
+Stop doomscrolling before it starts. AmoNexus analyzes your browsing patterns in real-time (locally), distinguishing between intentional research and mindless scrolling. It gently nudges you back to focus with "Soft Interventions" or blocks distractions entirely in "Hard Mode."
+
+📚 **Active Reading Vault**
+Don't just read—absorb.
+*   **High-Res Capture:** Highlight text, capture insights, and save them automatically.
+*   **Smart Nudges:** Context-aware AI prompts help you connect dots, suggesting follow-up questions or related topics based on what you're reading.
+*   **Side Panel Chat:** Chat directly with any webpage. Ask summaries, extract key points, or brainstorm ideas without leaving the tab.
+
+⚡ **Focus Sessions (Pomodoro 2.0)**
+Enter a state of deep flow. Start a Focus Session to:
+*   Block distracting sites automatically (customizable Whitelist).
+*   Track your "Flow State" quality.
 *   Review your session performance with AI-generated feedback.
 
 🔗 **Seamless Second Brain Integration**
 *   **NotebookLM Bridge:** The *only* extension designed to work seamlessly with Google NotebookLM. Export your reading highlights, chat threads, and journals directly into your creating notebooks.
 *   **Markdown Export:** Own your data. Export everything to JSON or Markdown for Obsidian, Notion, or Roam Research.
 
+🎵 **AmoLofi Sync Bridge**
+Seamlessly connect with AmoLofi (lofi.amonexus.com) — a lo-fi music & ambient web app designed to optimize your focus. Your Focus Session state syncs in real-time between the Extension and the Web App. Sign in once, use both platforms.
+
 🛡️ **Privacy-First Architecture**
 Your thoughts are yours. AmoNexus processes browsing data locally on your device. We do not track your history or sell your data.
+
+**✨ Free to Start:**
+*   Sign in → 30 AI calls/day, no API key needed
+*   Add Gemini key (recommended) → unlimited
+*   🔄 Sign in once → auto-sync between Extension and lofi.amonexus.com
 
 **Why AmoNexus?**
 In the age of information overload, attention is your most scarce resource. AmoNexus helps you reclaim it, turning the chaos of the web into a structured, interconnected nexus of knowledge.
@@ -76,8 +106,16 @@ Bước vào trạng thái "Dòng chảy" (Flow) sâu.
 *   **NotebookLM Bridge:** Tiện ích mở rộng tiên phong tích hợp sâu với Google NotebookLM. Xuất highlight, đoạn chat và nhật ký trực tiếp vào các sổ tay (notebook) của bạn.
 *   **Xuất dữ liệu mở:** Dữ liệu là của bạn. Xuất tất cả ra định dạng JSON hoặc Markdown để dùng với Obsidian, Notion, v.v.
 
+🎵 **AmoLofi Sync Bridge**
+Kết nối liền mạch với AmoLofi (lofi.amonexus.com) — ứng dụng nhạc lo-fi & ambient tối ưu hóa tập trung. Trạng thái Focus Session đồng bộ real-time giữa Extension và Web App. Đăng nhập một lần, dùng cả hai nền tảng.
+
 🛡️ **Riêng tư là trên hết**
 Suy nghĩ của bạn là tài sản của bạn. AmoNexus xử lý dữ liệu duyệt web cục bộ trên thiết bị. Chúng tôi không theo dõi lịch sử hay bán dữ liệu của bạn.
+
+**✨ Miễn phí khởi động:**
+*   Đăng nhập → 30 lượt AI/ngày, không cần API key
+*   Thêm Gemini key (khuyến nghị) → không giới hạn
+*   🔄 Đăng nhập một lần → tự động đồng bộ giữa Extension và lofi.amonexus.com
 
 **Tại sao chọn AmoNexus?**
 Trong kỷ nguyên quá tải thông tin, sự chú ý là tài nguyên khan hiếm nhất. AmoNexus giúp bạn giành lại quyền kiểm soát, biến sự hỗn loạn của internet thành một mạng lưới tri thức có cấu trúc.

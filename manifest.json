@@ -16,9 +16,7 @@
     "offscreen"
   ],
   "host_permissions": [
-    "<all_urls>",
-    "https://generativelanguage.googleapis.com/*",
-    "https://*.supabase.co/*"
+    "<all_urls>"
   ],
   "background": {
     "service_worker": "background.js",

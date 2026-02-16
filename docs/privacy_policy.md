@@ -1,8 +1,8 @@
 # Privacy Policy for AmoNexus
 
-**Last updated:** February 12, 2026
+**Last updated:** February 16, 2026
 
-**AmoNexus** ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our browser extension and related services.
+**AmoNexus** ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our browser extension, associated web applications (lofi.amonexus.com, amonexus.com), and related services.
 
 By using AmoNexus, you agree to the collection and use of information in accordance with this policy.
 
@@ -39,6 +39,7 @@ To provide the "Active Reading" and digital wellness features, the extension mon
 - **Journal Entries:** Entries you write in the Amo Journal are stored locally within the browser's storage system.
 - **Highlights and Notes:** Text you highlight and notes you create are stored locally.
 - **Focus Session Data:** Statistics about your focus sessions (duration, breaks taken) are stored locally.
+- **Focus Session Sync:** When signed in, your focus session state (timer phase, duration) may be synchronized in real-time between the browser extension and the AmoLofi web app (lofi.amonexus.com) via Supabase Realtime. No browsing content or personal data is transmitted — only timer metadata.
 
 ### D. Data Sent to AI Providers
 
@@ -47,6 +48,7 @@ When you use AI-powered features (summarize, chat, AI Pilot classification), the
 - **Page text snippets** — Excerpts of the content you are reading.
 - **Your highlighted text** — Selected text you want analyzed.
 - **Journal entries** — Only when you explicitly request AI feedback on a journal entry.
+- **Scene creation prompts** — Scene name and description you enter when creating custom AI-generated scenes in the AmoLofi web app.
 
 This data is sent only when you trigger the feature. Message content is not stored by us. When signed in, AI requests may be routed through our secure proxy server — we log only your **user ID, date, and daily call count** for quota enforcement. No message content is stored on our servers.
 
@@ -55,6 +57,7 @@ This data is sent only when you trigger the feature. Message content is not stor
 - **API Keys:** If you provide a Google Gemini or OpenRouter API Key, it is stored locally on your device using Chrome's storage APIs. We do not have access to these keys.
 - **Managed AI Access:** When signed in, AI calls may be routed through our authenticated proxy using a server-side managed key. You do not need to provide your own API key to use the free tier (30 calls/day).
 - **OAuth Tokens:** When you sign in with Google, temporary authentication tokens are handled by Chrome's built-in `chrome.identity` API and are not stored or accessible by us beyond the authentication flow.
+- **Cross-Platform Authentication:** When signed in, your authentication session may be shared between the browser extension and our web applications (lofi.amonexus.com, amonexus.com) to provide a seamless experience. Session tokens are transmitted locally between the extension and web pages on our domains only.
 
 ## 3. How We Use Your Information
 

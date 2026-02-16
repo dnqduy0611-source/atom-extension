@@ -31,6 +31,7 @@ $excludes = @(
     'branding',
     'neural-memory-main',
     'ATOM_Web',
+    'amo-lofi-web',
     'backup_*',
     'dist',
     'build',
