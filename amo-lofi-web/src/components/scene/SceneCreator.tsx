@@ -181,11 +181,19 @@ export function SceneCreator({ onSave, onClose, onShowLogin, onShowUpgrade }: Pr
                                 {balance} credits
                             </span>
                         </div>
-                        {!trialUsed && (
-                            <span className="sc-trial-badge">
-                                🎁 1 lượt thử miễn phí
-                            </span>
-                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            {!trialUsed && (
+                                <span className="sc-trial-badge">
+                                    🎁 1 lượt thử miễn phí
+                                </span>
+                            )}
+                            <button
+                                onClick={() => onShowUpgrade?.()}
+                                className="sc-buy-credits-btn"
+                            >
+                                + Buy Credits
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -526,6 +534,22 @@ export function SceneCreator({ onSave, onClose, onShowLogin, onShowUpgrade }: Pr
                     background: rgba(16,185,129,0.12);
                     color: #34d399;
                     border: 1px solid rgba(16,185,129,0.2);
+                }
+                .sc-buy-credits-btn {
+                    font-size: 11px;
+                    font-weight: 600;
+                    padding: 4px 12px;
+                    border-radius: 8px;
+                    background: linear-gradient(135deg, rgba(74,222,128,0.15), rgba(34,211,238,0.15));
+                    color: #4ade80;
+                    border: 1px solid rgba(74,222,128,0.2);
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    white-space: nowrap;
+                }
+                .sc-buy-credits-btn:hover {
+                    background: linear-gradient(135deg, rgba(74,222,128,0.25), rgba(34,211,238,0.25));
+                    transform: scale(1.03);
                 }
 
                 .sc-field {

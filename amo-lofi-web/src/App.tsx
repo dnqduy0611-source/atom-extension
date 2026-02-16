@@ -245,29 +245,27 @@ function App() {
                             </div>
                           </div>
 
-                          {/* Plan badge */}
+                          {/* Plan badge + Buy Credits */}
                           <div className="px-4 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <span className="text-xs">{isPro ? '👑' : '🎵'}</span>
                                 <span className="text-xs font-medium text-white/60">{isPro ? 'Pro Plan' : 'Free Plan'}</span>
                               </div>
-                              {!isPro && (
-                                <button
-                                  className="text-[10px] font-semibold px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-200 hover:scale-105"
-                                  style={{
-                                    background: 'linear-gradient(135deg, rgba(74,222,128,0.15), rgba(34,211,238,0.15))',
-                                    color: '#4ade80',
-                                    border: '1px solid rgba(74,222,128,0.2)',
-                                  }}
-                                  onClick={() => {
-                                    setShowUserMenu(false);
-                                    showUpsell('dropdown');
-                                  }}
-                                >
-                                  Upgrade
-                                </button>
-                              )}
+                              <button
+                                className="text-[10px] font-semibold px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-200 hover:scale-105"
+                                style={{
+                                  background: 'linear-gradient(135deg, rgba(74,222,128,0.15), rgba(34,211,238,0.15))',
+                                  color: '#4ade80',
+                                  border: '1px solid rgba(74,222,128,0.2)',
+                                }}
+                                onClick={() => {
+                                  setShowUserMenu(false);
+                                  showUpsell('dropdown');
+                                }}
+                              >
+                                Buy Credits
+                              </button>
                             </div>
                           </div>
 
