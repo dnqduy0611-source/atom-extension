@@ -14,10 +14,17 @@ import { SoundMixer } from './components/mixer/SoundMixer';
 import { FocusPanel } from './components/focus/FocusPanel';
 import { StatsDashboard } from './components/focus/StatsDashboard';
 import { TimerPill } from './components/focus/TimerPill';
+import { ClockDisplay } from './components/layout/ClockDisplay';
+import { QuickSettings } from './components/layout/QuickSettings';
+import { UserProfile } from './components/auth/UserProfile';
 import { PlayerBar } from './components/audio/PlayerBar';
 import { ProUpgradeModal } from './components/pro/ProUpgradeModal';
 import { useProGate } from './hooks/useProGate';
 import { useTranslation } from './hooks/useTranslation';
+import { useAuth } from './hooks/useAuth';
+import { LoginModal } from './components/auth/LoginModal';
+import { useState, useRef, useEffect } from 'react';
+import { useSyncBridge } from './hooks/useSyncBridge';
 
 function App() {
   useAudioEngine();
@@ -30,8 +37,29 @@ function App() {
   const zenMode = useLofiStore((s) => s.zenMode);
   const togglePanel = useLofiStore((s) => s.togglePanel);
   const toggleZenMode = useLofiStore((s) => s.toggleZenMode);
+  const showClock = useLofiStore((s) => s.showClock);
+  const showPlayerBar = useLofiStore((s) => s.showPlayerBar);
+  const showBranding = useLofiStore((s) => s.showBranding);
   const { isPro, upsellVisible, showUpsell, dismissUpsell } = useProGate();
   const { t } = useTranslation();
+  const { user, isLoading: authLoading, signOut } = useAuth();
+  useSyncBridge(user?.id); // Broadcast state to Extension via Supabase
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close user menu on outside click
+  useEffect(() => {
+    if (!showUserMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showUserMenu]);
 
 
   return (
@@ -55,7 +83,7 @@ function App() {
             </div>
 
             {/* ── AmoLofi branding — top left ── */}
-            {!zenMode && (
+            {!zenMode && showBranding && (
               <div className="pointer-events-auto absolute top-4 left-4 flex items-center gap-2 z-50">
                 {/* Logo icon */}
                 <div className="flex items-center gap-2">
@@ -105,9 +133,18 @@ function App() {
               <TimerPill />
             </div>
 
-            {/* Zen exit button */}
-            {zenMode && (
-              <div className="pointer-events-auto absolute top-4 right-4">
+            {/* Clock Display — centered */}
+            {!zenMode && showClock && (
+              <div className="pointer-events-none">
+                <ClockDisplay />
+              </div>
+            )}
+
+            {/* ── Top-right: Auth + Zen exit ── */}
+            <div className="pointer-events-auto absolute top-4 right-4 flex items-center gap-3 z-50">
+              {/* Quick Settings gear */}
+              {!zenMode && <QuickSettings />}
+              {zenMode && (
                 <button
                   className="px-3 py-1.5 rounded-xl bg-black/40 backdrop-blur-xl border border-white/10
                     text-xs text-white/40 hover:text-white hover:bg-black/60 transition-all cursor-pointer"
@@ -115,8 +152,121 @@ function App() {
                 >
                   Exit Zen
                 </button>
-              </div>
-            )}
+              )}
+
+              {/* Auth button */}
+              {!zenMode && !authLoading && (
+                <>
+                  {user ? (
+                    <div ref={userMenuRef} className="relative">
+                      <button
+                        className="flex items-center gap-2 px-2 py-1.5 rounded-xl transition-all duration-200 cursor-pointer hover:bg-white/10"
+                        style={{
+                          background: 'rgba(0,0,0,0.35)',
+                          backdropFilter: 'blur(16px)',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                        }}
+                        onClick={() => setShowUserMenu(prev => !prev)}
+                        title={user.email || ''}
+                      >
+                        {user.user_metadata?.avatar_url ? (
+                          <img
+                            src={user.user_metadata.avatar_url}
+                            alt=""
+                            width={26}
+                            height={26}
+                            className="rounded-full"
+                            style={{ border: '2px solid rgba(74,222,128,0.4)' }}
+                          />
+                        ) : (
+                          <div
+                            className="flex items-center justify-center rounded-full text-xs font-bold"
+                            style={{
+                              width: 26, height: 26,
+                              background: 'linear-gradient(135deg, #4ade80, #22d3ee)',
+                              color: '#0a0a0a',
+                            }}
+                          >
+                            {(user.email?.[0] || 'U').toUpperCase()}
+                          </div>
+                        )}
+                        <span className="text-xs text-white/70 max-w-[100px] truncate hidden sm:block">
+                          {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0]}
+                        </span>
+                      </button>
+
+                      {/* Dropdown menu */}
+                      {showUserMenu && (
+                        <div
+                          className="absolute right-0 top-full mt-2 w-48 rounded-xl overflow-hidden"
+                          style={{
+                            background: 'rgba(18,18,24,0.95)',
+                            backdropFilter: 'blur(20px)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                          }}
+                        >
+                          <div className="px-4 py-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                            <p className="text-xs text-white/50 truncate">{user.email}</p>
+                          </div>
+                          <button
+                            className="w-full px-4 py-3 text-left text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors cursor-pointer flex items-center gap-2"
+                            onClick={() => {
+                              setShowUserMenu(false);
+                              setShowProfile(true);
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                              <circle cx="12" cy="7" r="4" />
+                            </svg>
+                            {t('profile.myProfile')}
+                          </button>
+                          <button
+                            className="w-full px-4 py-3 text-left text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors cursor-pointer flex items-center gap-2"
+                            onClick={async () => {
+                              setShowUserMenu(false);
+                              await signOut();
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                              <polyline points="16 17 21 12 16 7" />
+                              <line x1="21" y1="12" x2="9" y2="12" />
+                            </svg>
+                            {t('auth.signOut')}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      className="flex items-center gap-2.5 px-5 py-2.5 rounded-2xl transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-lg"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(74,222,128,0.2), rgba(34,211,238,0.2))',
+                        backdropFilter: 'blur(16px)',
+                        border: '1px solid rgba(74,222,128,0.3)',
+                        boxShadow: '0 0 20px rgba(74,222,128,0.1), inset 0 1px 0 rgba(255,255,255,0.1)',
+                      }}
+                      onClick={() => setShowLoginModal(true)}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(74,222,128,0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                      </svg>
+                      <span
+                        className="text-sm font-semibold"
+                        style={{
+                          background: 'linear-gradient(135deg, #4ade80, #22d3ee)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                        }}
+                      >{t('auth.signIn')}</span>
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
 
           {/* ═══ Floating Panels ═══ */}
@@ -162,13 +312,15 @@ function App() {
           )}
 
           {/* ═══ Player Bar — bottom, always slightly visible ═══ */}
-          <div className={`
-            absolute bottom-0 left-0 right-0 z-20
-            transition-opacity duration-800
-            ${zenMode ? 'opacity-0 pointer-events-none' : hudVisible ? 'opacity-100' : 'opacity-30 hover:opacity-100'}
-          `}>
-            <PlayerBar />
-          </div>
+          {showPlayerBar && (
+            <div className={`
+              absolute bottom-0 left-0 right-0 z-20
+              transition-opacity duration-800
+              ${zenMode ? 'opacity-0 pointer-events-none' : hudVisible ? 'opacity-100' : 'opacity-30 hover:opacity-100'}
+            `}>
+              <PlayerBar />
+            </div>
+          )}
 
           {/* ═══ Playing indicator (always visible tiny dot) ═══ */}
           {!zenMode && !hudVisible && (
@@ -181,6 +333,12 @@ function App() {
 
       {/* ═══ Pro Upgrade Modal (global) ═══ */}
       {upsellVisible && <ProUpgradeModal onClose={dismissUpsell} />}
+
+      {/* ═══ Login Modal ═══ */}
+      {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
+
+      {/* ═══ User Profile Modal ═══ */}
+      {showProfile && <UserProfile onClose={() => setShowProfile(false)} onUpgrade={() => showUpsell('profile')} />}
     </>
   );
 }

@@ -194,6 +194,22 @@
                 sendResponse({ ok: !!post, post });
                 return true;
             }
+            // ===== AUTH SYNC: Extension → Web =====
+            if (message?.type === "AMO_AUTH_SYNC") {
+                window.postMessage({
+                    type: "AMO_AUTH_SYNC",
+                    payload: message.payload
+                }, window.location.origin);
+                sendResponse({ ok: true });
+                return true;
+            }
+            if (message?.type === "AMO_AUTH_LOGOUT") {
+                window.postMessage({
+                    type: "AMO_AUTH_LOGOUT"
+                }, window.location.origin);
+                sendResponse({ ok: true });
+                return true;
+            }
         });
     }
 
@@ -203,6 +219,29 @@
         return;
     }
     window.__ATOM_CONTENT_STARTED__ = true;
+
+    // ===== AUTH SYNC: Web → Extension =====
+    // On *.amonexus.com pages, read Supabase session from localStorage
+    // and send it to the extension background if found
+    if (location.hostname.endsWith('amonexus.com')) {
+        try {
+            const sbKey = 'sb-zdvbjuxcithcrvsdzumj-auth-token';
+            const raw = localStorage.getItem(sbKey);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                const token = parsed?.access_token;
+                const refresh = parsed?.refresh_token;
+                if (token && refresh) {
+                    chrome.runtime.sendMessage({
+                        type: 'WEB_AUTH_DETECTED',
+                        payload: { access_token: token, refresh_token: refresh }
+                    }).catch(() => { });
+                }
+            }
+        } catch (e) {
+            // Silently fail — not critical
+        }
+    }
 
     let atomMsg = (key, substitutions, fallback) =>
         chrome.i18n.getMessage(key, substitutions) || fallback || key;
@@ -2180,6 +2219,10 @@
         const activeAudio = getActiveAudio();
         if (activeAudio) activeAudio.muted = isMuted;
 
+        // [LOFI MIRROR] Also mute/unmute lofi audio
+        lofiAudioInstances.forEach(a => { a.muted = isMuted; });
+        if (lofiMusicInstance) lofiMusicInstance.muted = isMuted;
+
         // Save preference
         localStorage.setItem("atom_focus_muted", isMuted ? "1" : "0");
     }
@@ -2234,6 +2277,23 @@
 
     function toggleFocusAtmosphere(active) {
         if (active) {
+            // [LOFI MIRROR] If lofi mirror is active, use lofi audio instead
+            if (lofiMirrorActive) {
+                chrome.storage.local.get('atom_lofi_config', (data) => {
+                    if (data.atom_lofi_config?.active &&
+                        (data.atom_lofi_config.audio_layers?.length || data.atom_lofi_config.music)) {
+                        applyLofiAudio(data.atom_lofi_config);
+                    } else {
+                        // Lofi has no audio config, fall back to default
+                        initFocusAudio();
+                        const activeAudio = getActiveAudio();
+                        if (activeAudio && !isMuted) activeAudio.play().catch(() => { });
+                    }
+                });
+                return;
+            }
+
+            // Default behavior (no Lofi)
             initFocusAudio();
             const activeAudio = getActiveAudio();
             if (activeAudio && !isMuted) {
@@ -2243,7 +2303,8 @@
                 activeAudio.muted = true;
             }
         } else {
-            // Stop both tracks (for BREAK phase)
+            // Stop ALL audio (default + lofi)
+            stopLofiAudio();
             if (focusAudioRain) {
                 focusAudioRain.pause();
                 focusAudioRain.currentTime = 0;
@@ -2260,6 +2321,8 @@
     // Mirrors AmoLofi Web visual scene into #atom-focus-block
     // Config synced via chrome.storage.local key: atom_lofi_config
     let lofiMirrorActive = false;
+    let lofiAudioInstances = [];   // multi-track ambience from AmoLofi
+    let lofiMusicInstance = null;   // music track from AmoLofi
 
     const LOFI_BASE = 'https://lofi.amonexus.com';
     const SCENE_REGISTRY = {
@@ -2362,6 +2425,100 @@
         }
 
         console.log('[ATOM Lofi Mirror] Scene applied:', config.scene_id, config.variant);
+
+        // [MILESTONE B] Apply audio if focus block is active and not muted
+        if (isFocusBlockActive && config.audio_layers?.length || config.music) {
+            applyLofiAudio(config);
+        }
+    }
+
+    // ── Lofi Audio Engine ──
+    function applyLofiAudio(config) {
+        // Stop any existing lofi audio first
+        stopLofiAudio();
+
+        // Stop default extension audio (Rain/Forest)
+        if (focusAudioRain) { focusAudioRain.pause(); focusAudioRain.currentTime = 0; }
+        if (focusAudioForest) { focusAudioForest.pause(); focusAudioForest.currentTime = 0; }
+
+        const masterVol = config.master_volume ?? 0.7;
+
+        // Ambience layers (up to 3)
+        (config.audio_layers || []).forEach(layer => {
+            try {
+                const src = layer.src?.startsWith('http') ? layer.src : `${LOFI_BASE}${layer.src}`;
+                const audio = new Audio(src);
+                audio.crossOrigin = 'anonymous';
+                audio.loop = true;
+                audio.volume = Math.min(1, (layer.volume || 0.5) * masterVol);
+                audio.muted = isMuted;
+                audio.play().catch(e => console.warn('[ATOM Lofi] Ambience autoplay blocked:', layer.id, e));
+                lofiAudioInstances.push(audio);
+            } catch (e) {
+                console.warn('[ATOM Lofi] Audio load failed:', layer.id, e);
+            }
+        });
+
+        // Music track
+        if (config.music?.src) {
+            try {
+                const src = config.music.src.startsWith('http') ? config.music.src : `${LOFI_BASE}${config.music.src}`;
+                lofiMusicInstance = new Audio(src);
+                lofiMusicInstance.crossOrigin = 'anonymous';
+                lofiMusicInstance.loop = true;
+                lofiMusicInstance.volume = Math.min(1, (config.music.volume || 0.4) * masterVol);
+                lofiMusicInstance.muted = isMuted;
+                lofiMusicInstance.play().catch(e => console.warn('[ATOM Lofi] Music autoplay blocked:', e));
+            } catch (e) {
+                console.warn('[ATOM Lofi] Music load failed:', e);
+            }
+        }
+
+        // Update sound selector UI
+        updateSoundSelectorForLofi(config);
+
+        console.log('[ATOM Lofi Mirror] Audio applied:',
+            (config.audio_layers || []).map(a => a.id).join('+'),
+            config.music?.id || 'no music');
+    }
+
+    function stopLofiAudio() {
+        lofiAudioInstances.forEach(a => { try { a.pause(); a.src = ''; } catch (e) { } });
+        lofiAudioInstances = [];
+        if (lofiMusicInstance) {
+            try { lofiMusicInstance.pause(); lofiMusicInstance.src = ''; } catch (e) { }
+            lofiMusicInstance = null;
+        }
+    }
+
+    function updateSoundSelectorForLofi(config) {
+        const select = shadow.getElementById('atom-focus-sound-select');
+        if (!select) return;
+
+        if (config?.active && (config.audio_layers?.length || config.music)) {
+            // Show lofi tracks in selector (read-only)
+            select.innerHTML = '';
+            (config.audio_layers || []).forEach(layer => {
+                const opt = document.createElement('option');
+                opt.value = layer.id;
+                opt.textContent = (layer.id || 'sound').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                select.appendChild(opt);
+            });
+            if (config.music?.id) {
+                const opt = document.createElement('option');
+                opt.value = config.music.id;
+                opt.textContent = '\u266B ' + (config.music.name || config.music.id).replace(/_/g, ' ');
+                select.appendChild(opt);
+            }
+            select.disabled = true;
+            select.title = 'Controlled by Amo Lofi';
+        } else {
+            // Restore defaults
+            select.innerHTML = '<option value="rain">Rain</option><option value="forest">Forest</option>';
+            select.disabled = false;
+            select.value = selectedSound;
+            select.title = '';
+        }
     }
 
     function clearLofiMirror() {
@@ -2376,6 +2533,18 @@
         // Remove style overrides
         shadow.getElementById('lofi-tint-override')?.remove();
         shadow.getElementById('lofi-rain-override')?.remove();
+
+        // [MILESTONE B] Stop lofi audio and restore default selector
+        stopLofiAudio();
+        updateSoundSelectorForLofi(null);
+
+        // Restart default audio if focus is still active
+        if (isFocusBlockActive && !isMuted) {
+            initFocusAudio();
+            const activeAudio = getActiveAudio();
+            if (activeAudio) activeAudio.play().catch(() => { });
+        }
+
         console.log('[ATOM Lofi Mirror] Cleared, restored defaults.');
     }
 

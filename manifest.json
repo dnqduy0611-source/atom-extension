@@ -2,7 +2,7 @@
   "default_locale": "vi",
   "manifest_version": 3,
   "name": "AmoNexus",
-  "version": "3.6",
+  "version": "4.0",
   "description": "The Neural Nexus for Your Second Brain.",
   "permissions": [
     "storage",

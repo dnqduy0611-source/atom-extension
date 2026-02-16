@@ -2,6 +2,10 @@ import { useLofiStore } from '../../store/useLofiStore';
 import { useSceneIcons } from '../../hooks/useSceneIcons';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useProGate } from '../../hooks/useProGate';
+import { useState, useEffect } from 'react';
+import type { ClockStyle } from '../../store/useLofiStore';
+import type { TranslationKey } from '../../i18n/en';
 
 /**
  * ThemeCustomizer — Appearance panel, visually consistent with SceneSelector.
@@ -21,6 +25,15 @@ const ACCENT_PRESETS = [
     { color: '#a78bfa', name: 'Lavender' },
 ];
 
+const CLOCK_STYLES: { id: ClockStyle; labelKey: TranslationKey; fontFamily: string; fontWeight: number }[] = [
+    { id: 'classic', labelKey: 'clock.classic', fontFamily: "'Inter', sans-serif", fontWeight: 300 },
+    { id: 'serif', labelKey: 'clock.serif', fontFamily: "'Playfair Display', serif", fontWeight: 400 },
+    { id: 'bold', labelKey: 'clock.bold', fontFamily: "'Inter', sans-serif", fontWeight: 800 },
+    { id: 'soft', labelKey: 'clock.soft', fontFamily: "'Quicksand', sans-serif", fontWeight: 400 },
+    { id: 'creative', labelKey: 'clock.creative', fontFamily: "'Caveat', cursive", fontWeight: 400 },
+    { id: 'mono', labelKey: 'clock.mono', fontFamily: "'JetBrains Mono', monospace", fontWeight: 400 },
+];
+
 interface Props {
     onClose: () => void;
 }
@@ -36,9 +49,20 @@ export function ThemeCustomizer({ onClose }: Props) {
     const setVignetteEnabled = useLofiStore((s) => s.setVignetteEnabled);
     const accentGlowEnabled = useLofiStore((s) => s.accentGlowEnabled);
     const setAccentGlowEnabled = useLofiStore((s) => s.setAccentGlowEnabled);
+    const clockStyle = useLofiStore((s) => s.clockStyle);
+    const setClockStyle = useLofiStore((s) => s.setClockStyle);
     const icons = useSceneIcons();
     const sceneTheme = useTheme();
     const { t } = useTranslation();
+    const { isPro, showUpsell } = useProGate();
+
+    // Live clock preview
+    const [now, setNow] = useState(new Date());
+    useEffect(() => {
+        const timer = setInterval(() => setNow(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+    const previewTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
     // Build swatches: scene primary first (if different from presets), then presets
     const scenePrimary = sceneTheme.primary;
@@ -48,6 +72,16 @@ export function ThemeCustomizer({ onClose }: Props) {
         : [{ color: scenePrimary, name: t('theme.sceneColor') }, ...ACCENT_PRESETS];
 
     const tintPercent = Math.round(tintOpacity * 100);
+
+    const handleClockStyleClick = (styleId: ClockStyle) => {
+        if (styleId === 'classic') {
+            setClockStyle(styleId);
+        } else if (isPro) {
+            setClockStyle(styleId);
+        } else {
+            showUpsell('clock_style');
+        }
+    };
 
     return (
         <div className="fixed inset-0 z-50" onClick={onClose}>
@@ -86,6 +120,36 @@ export function ThemeCustomizer({ onClose }: Props) {
                                         : <icons.ui.moon size={15} style={{ color: 'inherit' }} />
                                     }
                                     <span>{v === 'day' ? t('theme.day') : t('theme.night')}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* ── Clock Style ── */}
+                    <div className="tc-section">
+                        <span className="tc-label" style={{ color: 'var(--theme-text-muted)' }}>{t('theme.clockStyle')}</span>
+                        <div className="tc-clock-grid">
+                            {CLOCK_STYLES.map((style) => (
+                                <button
+                                    key={style.id}
+                                    className={`tc-clock-card ${clockStyle === style.id ? 'tc-clock-active' : ''}`}
+                                    onClick={() => handleClockStyleClick(style.id)}
+                                >
+                                    <span
+                                        className="tc-clock-preview"
+                                        style={{
+                                            fontFamily: style.fontFamily,
+                                            fontWeight: style.fontWeight,
+                                        }}
+                                    >
+                                        {previewTime}
+                                    </span>
+                                    <span className="tc-clock-label">
+                                        {t(style.labelKey)}
+                                        {style.id !== 'classic' && !isPro && (
+                                            <span className="tc-clock-crown">👑</span>
+                                        )}
+                                    </span>
                                 </button>
                             ))}
                         </div>
@@ -168,12 +232,16 @@ export function ThemeCustomizer({ onClose }: Props) {
                     left: 68px;
                     bottom: 60px;
                     width: 340px;
+                    max-height: calc(100vh - 80px);
+                    overflow-y: auto;
                     border-radius: 16px;
                     backdrop-filter: blur(24px) saturate(1.4);
-                    overflow: hidden;
                     animation: tcIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
                     font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
                 }
+                .tc-panel::-webkit-scrollbar { width: 4px; }
+                .tc-panel::-webkit-scrollbar-track { background: transparent; }
+                .tc-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
                 @keyframes tcIn {
                     from { opacity: 0; transform: translateY(8px) scale(0.97); }
                     to   { opacity: 1; transform: translateY(0) scale(1); }
@@ -268,6 +336,56 @@ export function ThemeCustomizer({ onClose }: Props) {
                 .tc-seg-active {
                     background: rgba(255, 255, 255, 0.08) !important;
                     color: var(--theme-primary) !important;
+                }
+
+                /* ── Clock Style Grid ── */
+                .tc-clock-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 8px;
+                    margin-top: 10px;
+                }
+                .tc-clock-card {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 12px 4px 8px;
+                    border-radius: 10px;
+                    background: rgba(255, 255, 255, 0.04);
+                    border: 1.5px solid transparent;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .tc-clock-card:hover {
+                    background: rgba(255, 255, 255, 0.07);
+                    border-color: rgba(255, 255, 255, 0.1);
+                }
+                .tc-clock-active {
+                    border-color: var(--theme-primary) !important;
+                    background: rgba(255, 255, 255, 0.06) !important;
+                    box-shadow: 0 0 12px color-mix(in srgb, var(--theme-primary) 25%, transparent);
+                }
+                .tc-clock-preview {
+                    font-size: 18px;
+                    color: rgba(255, 255, 255, 0.85);
+                    line-height: 1;
+                    letter-spacing: 1px;
+                }
+                .tc-clock-label {
+                    font-size: 10px;
+                    font-weight: 500;
+                    color: rgba(255, 255, 255, 0.4);
+                    display: flex;
+                    align-items: center;
+                    gap: 3px;
+                }
+                .tc-clock-active .tc-clock-label {
+                    color: var(--theme-primary);
+                }
+                .tc-clock-crown {
+                    font-size: 9px;
+                    filter: grayscale(0.3);
                 }
 
                 /* Color swatches */

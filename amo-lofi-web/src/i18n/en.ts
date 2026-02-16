@@ -110,6 +110,28 @@ export const en = {
     'theme.vignetteDesc': 'Dark edges around screen',
     'theme.accentGlow': 'Accent Glow',
     'theme.accentGlowDesc': 'Colored light effects',
+    'theme.clockStyle': 'Clock Style',
+
+    // ── Clock Styles ──
+    'clock.classic': 'Classic',
+    'clock.serif': 'Serif',
+    'clock.bold': 'Bold',
+    'clock.soft': 'Soft',
+    'clock.creative': 'Creative',
+    'clock.mono': 'Mono',
+
+    // ── Quick Settings ──
+    'qs.title': 'Quick Settings',
+    'qs.clock': 'Clock',
+    'qs.clockDesc': 'Show clock on screen',
+    'qs.format24h': '24h Format',
+    'qs.format24hDesc': 'Use 24-hour time format',
+    'qs.showDate': 'Show Date',
+    'qs.showDateDesc': 'Display date below clock',
+    'qs.playerBar': 'Player Bar',
+    'qs.playerBarDesc': 'Show music controls at bottom',
+    'qs.branding': 'Branding',
+    'qs.brandingDesc': 'Show AmoLofi logo',
 
     // ── Scene Selector ──
     'scene.scenes': 'Scenes',
@@ -122,6 +144,57 @@ export const en = {
     'scene.hiddenScenes': '{0} hidden scene',
     'scene.hiddenScenesPlural': '{0} hidden scenes',
     'scene.show': 'Show',
+
+    // ── Pro Upgrade Modal ──
+    'pro.title': 'Upgrade AmoLofi',
+    'pro.subtitle': 'Unlock the full power of focus or buy credits to create AI scenes.',
+    'pro.balance': 'Balance:',
+    'pro.credits': 'credits',
+    'pro.favorite': '⭐ Most Popular',
+    'pro.premium': 'Premium',
+    'pro.monthly': 'Monthly',
+    'pro.yearly': 'Yearly',
+    'pro.perMonth': '/month',
+    'pro.billedYearly': 'Billed annually ({0})',
+    'pro.billedMonthly': 'Billed monthly',
+    'pro.startFreeTrial': 'Start Free Trial',
+    'pro.feat.freeTrial': 'Includes 7-day free trial',
+    'pro.feat.allScenes': 'Unlock all scenes',
+    'pro.feat.allSounds': 'Unlock all sounds',
+    'pro.feat.aiCreate': 'Create scenes with AI',
+    'pro.feat.monthlyCredits': '+30 credits per month',
+    'pro.feat.stats': 'Detailed statistics',
+    'pro.feat.wallpaper': 'Custom wallpapers',
+    'pro.buyCredits': 'Buy Credits',
+    'pro.creditsDesc': 'Each AI scene costs <strong>10 credits</strong>. Buy in packs — no recurring fees.',
+    'pro.popular': 'Popular',
+    'pro.creditsNote': 'Credits never expire. Secure payment via LemonSqueezy.',
+    'pro.save': '-37%',
+    // Credit pack scene estimates
+    'pro.scenes5': '~5 scenes',
+    'pro.scenes15': '~15 scenes',
+    'pro.scenes50': '~50 scenes',
+
+    // ── Profile ──
+    'profile.myProfile': 'My Profile',
+    'profile.welcome': 'Welcome back',
+    'profile.subtitle': 'Ready to focus? Let\u0027s make today productive.',
+    'profile.freePlan': 'Free Plan',
+    'profile.freeDesc': 'Basic features included',
+    'profile.proDesc': 'All features unlocked',
+    'profile.upgradePro': 'Upgrade Pro',
+    'profile.userInfo': 'User Information',
+    'profile.displayName': 'Display Name',
+    'profile.displayNameDesc': 'Your name in the system',
+    'profile.emailDesc': 'Google account email',
+    'profile.linkedAccounts': 'Linked Accounts',
+    'profile.googleDesc': 'Sign in with Google',
+    'profile.connected': 'Connected',
+    'profile.notConnected': 'Not connected',
+
+    // ── Auth ──
+    'auth.signIn': 'Sign In',
+    'auth.signOut': 'Sign Out',
 } as const;
 
 export type TranslationKey = keyof typeof en;

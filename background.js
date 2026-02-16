@@ -35,12 +35,18 @@ import { getBatchesForExport } from './services/srq_grouper.js';
 import { captureVisualAnchor, cleanupAnchors } from './services/srq_visual_anchor.js';
 import { SRQ_ERROR_CODES } from './bridge/types.js';
 
+// Lofi Sync (AmoLofi Web → Extension bridge)
+import { initLofiSync, disconnectLofiSync, tryAutoInitLofiSync, isLofiSyncActive } from './services/lofi_sync.js';
+
 const BUILD_FLAGS = globalThis.ATOM_BUILD_FLAGS || { DEBUG: false };
 const DEBUG_BUILD_ENABLED = !!BUILD_FLAGS.DEBUG;
 console.log('[ATOM] Topic Router imported, type:', typeof handleTopicRouterMessage);
 
 // Sync AI config to storage for sidepanel.js access
 syncConfigToStorage().catch(err => console.error('[ATOM] Failed to sync AI config:', err));
+
+// Auto-init Lofi Sync if user is authenticated
+tryAutoInitLofiSync().catch(err => console.warn('[ATOM] Lofi sync auto-init skipped:', err));
 
 // Global test functions for debugging
 if (DEBUG_BUILD_ENABLED) {
@@ -5362,6 +5368,29 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // ===========================
+// Lofi Sync Message Handlers
+// ===========================
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.type === 'LOFI_SYNC_INIT' && request.userId) {
+        initLofiSync(request.userId).then(() => {
+            sendResponse({ success: true, status: 'connected' });
+        }).catch(err => {
+            sendResponse({ success: false, error: err.message });
+        });
+        return true; // async response
+    }
+    if (request.type === 'LOFI_SYNC_DISCONNECT') {
+        disconnectLofiSync();
+        sendResponse({ success: true });
+        return false;
+    }
+    if (request.type === 'LOFI_SYNC_STATUS') {
+        sendResponse({ active: isLofiSyncActive() });
+        return false;
+    }
+});
+
+// ===========================
 // Smart Research Queue (SRQ)
 // ===========================
 
@@ -6245,3 +6274,58 @@ function handleSrqMessage(request, sender, sendResponse) {
 }
 
 
+
+// ===========================
+// Auth Sync: Web → Extension
+// ===========================
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type !== 'WEB_AUTH_DETECTED') return;
+
+    (async () => {
+        try {
+            const { access_token, refresh_token } = message.payload || {};
+            if (!access_token || !refresh_token) {
+                sendResponse({ ok: false, reason: 'missing tokens' });
+                return;
+            }
+
+            // Skip if already authenticated
+            const { data: { session: existing } } = await getSupabaseClient().auth.getSession();
+            if (existing?.user) {
+                sendResponse({ ok: true, reason: 'already authenticated' });
+                return;
+            }
+
+            // Set session from web tokens
+            const { data, error } = await getSupabaseClient().auth.setSession({
+                access_token,
+                refresh_token,
+            });
+
+            if (error) {
+                console.warn('[Auth Sync] Failed to set session from web:', error.message);
+                sendResponse({ ok: false, reason: error.message });
+                return;
+            }
+
+            // Cache for proxy usage
+            if (data?.session) {
+                await chrome.storage.local.set({
+                    atom_proxy_session: {
+                        access_token: data.session.access_token,
+                        refresh_token: data.session.refresh_token,
+                        expires_at: data.session.expires_at,
+                        user_id: data.session.user?.id
+                    }
+                });
+            }
+
+            console.log('[Auth Sync] Session synced from web successfully');
+            sendResponse({ ok: true });
+        } catch (err) {
+            console.warn('[Auth Sync] Error:', err.message);
+            sendResponse({ ok: false, reason: err.message });
+        }
+    })();
+    return true; // async response
+});

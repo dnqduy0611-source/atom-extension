@@ -47,7 +47,33 @@ export function useAuth(): AuthState {
             },
         );
 
-        return () => subscription.unsubscribe();
+        // 3. Listen for Extension auth sync via postMessage
+        const handleAuthMessage = async (event: MessageEvent) => {
+            // Only accept messages from same origin
+            if (event.origin !== window.location.origin) return;
+
+            if (event.data?.type === 'AMO_AUTH_SYNC') {
+                const { access_token, refresh_token } = event.data.payload || {};
+                if (access_token && refresh_token) {
+                    console.log('[Auth] Received session from Extension');
+                    await supabase.auth.setSession({ access_token, refresh_token });
+                }
+            }
+
+            if (event.data?.type === 'AMO_AUTH_LOGOUT') {
+                console.log('[Auth] Received logout from Extension');
+                await supabase.auth.signOut();
+                setUser(null);
+                setSession(null);
+            }
+        };
+
+        window.addEventListener('message', handleAuthMessage);
+
+        return () => {
+            subscription.unsubscribe();
+            window.removeEventListener('message', handleAuthMessage);
+        };
     }, []);
 
     const signIn = useCallback(async () => {

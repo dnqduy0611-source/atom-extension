@@ -15,6 +15,43 @@ function getClient() {
 }
 
 /**
+ * Broadcast auth session to any open *.amonexus.com tabs
+ * Content script relays via postMessage → web app picks up
+ */
+async function broadcastAuthToWebTabs(session) {
+    try {
+        const tabs = await chrome.tabs.query({ url: '*://*.amonexus.com/*' });
+        for (const tab of tabs) {
+            if (!tab.id) continue;
+            chrome.tabs.sendMessage(tab.id, {
+                type: 'AMO_AUTH_SYNC',
+                payload: {
+                    access_token: session.access_token,
+                    refresh_token: session.refresh_token,
+                }
+            }).catch(() => { }); // Tab may not have content script ready
+        }
+        if (DEBUG_MODE && tabs.length) console.log(`[Auth] Broadcast auth to ${tabs.length} web tab(s)`);
+    } catch (e) {
+        if (DEBUG_MODE) console.warn('[Auth] Broadcast failed:', e.message);
+    }
+}
+
+/** Broadcast logout to any open *.amonexus.com tabs */
+async function broadcastLogoutToWebTabs() {
+    try {
+        const tabs = await chrome.tabs.query({ url: '*://*.amonexus.com/*' });
+        for (const tab of tabs) {
+            if (!tab.id) continue;
+            chrome.tabs.sendMessage(tab.id, { type: 'AMO_AUTH_LOGOUT' }).catch(() => { });
+        }
+        if (DEBUG_MODE && tabs.length) console.log(`[Auth] Broadcast logout to ${tabs.length} web tab(s)`);
+    } catch (e) {
+        if (DEBUG_MODE) console.warn('[Auth] Logout broadcast failed:', e.message);
+    }
+}
+
+/**
  * Sign in with Google OAuth
  * Uses chrome.identity.launchWebAuthFlow to get Google ID Token directly,
  * then signs into Supabase using signInWithIdToken.
@@ -115,6 +152,11 @@ export async function signInWithGoogle(rememberMe = true) {
         const authState = await getAuthState();
         await cacheAuthState(authState, rememberMe);
 
+        // Step 7: Broadcast session to AmoLofi / Landing web tabs
+        if (sessionData?.session) {
+            broadcastAuthToWebTabs(sessionData.session);
+        }
+
         return { success: true, authState };
 
     } catch (error) {
@@ -153,6 +195,10 @@ export async function signOut() {
         await chrome.storage.local.remove('atom_proxy_session');
 
         if (DEBUG_MODE) console.log('[Auth] Sign-out complete');
+
+        // Broadcast logout to AmoLofi / Landing web tabs
+        broadcastLogoutToWebTabs();
+
         return { success: true };
 
     } catch (error) {

@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { Locale } from '../i18n';
 
+export type ClockStyle = 'classic' | 'serif' | 'bold' | 'soft' | 'creative' | 'mono';
+
 // ══════════════════════════════════════════════════════
 //  Shared Config Type
 //  Both manual UI sliders and future AI (Phase 2) output this shape.
@@ -51,6 +53,14 @@ interface LofiState {
     tintOpacity: number;
     vignetteEnabled: boolean;
     accentGlowEnabled: boolean;
+    clockStyle: ClockStyle;
+
+    // ── Quick Settings: Visibility ──
+    showClock: boolean;
+    use24hFormat: boolean;
+    showDate: boolean;
+    showPlayerBar: boolean;
+    showBranding: boolean;
 
     // ── Scene Preferences ──
     hiddenSceneIds: string[];
@@ -99,6 +109,14 @@ interface LofiState {
     setTintOpacity: (opacity: number) => void;
     setVignetteEnabled: (enabled: boolean) => void;
     setAccentGlowEnabled: (enabled: boolean) => void;
+    setClockStyle: (style: ClockStyle) => void;
+
+    // ── Actions: Quick Settings ──
+    setShowClock: (v: boolean) => void;
+    setUse24hFormat: (v: boolean) => void;
+    setShowDate: (v: boolean) => void;
+    setShowPlayerBar: (v: boolean) => void;
+    setShowBranding: (v: boolean) => void;
 
     // ── Actions: Scene Preferences ──
     hideScene: (sceneId: string) => void;
@@ -156,6 +174,12 @@ export const useLofiStore = create<LofiState>((set, get) => ({
     tintOpacity: 1.0,
     vignetteEnabled: true,
     accentGlowEnabled: true,
+    clockStyle: 'classic' as ClockStyle,
+    showClock: true,
+    use24hFormat: true,
+    showDate: false,
+    showPlayerBar: true,
+    showBranding: true,
     hiddenSceneIds: [],
     locale: (typeof window !== 'undefined'
         ? (localStorage.getItem('amo-lofi-locale') as Locale) || 'en'
@@ -317,6 +341,16 @@ export const useLofiStore = create<LofiState>((set, get) => ({
 
     setAccentGlowEnabled: (enabled) =>
         set({ accentGlowEnabled: enabled, lastChangeTimestamp: Date.now() }),
+
+    setClockStyle: (style) =>
+        set({ clockStyle: style, lastChangeTimestamp: Date.now() }),
+
+    // ── Quick Settings ──
+    setShowClock: (v) => set({ showClock: v, lastChangeTimestamp: Date.now() }),
+    setUse24hFormat: (v) => set({ use24hFormat: v, lastChangeTimestamp: Date.now() }),
+    setShowDate: (v) => set({ showDate: v, lastChangeTimestamp: Date.now() }),
+    setShowPlayerBar: (v) => set({ showPlayerBar: v, lastChangeTimestamp: Date.now() }),
+    setShowBranding: (v) => set({ showBranding: v, lastChangeTimestamp: Date.now() }),
 
     // ── Scene Preferences ──
     hideScene: (sceneId) =>

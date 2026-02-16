@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useCredits } from '../../hooks/useCredits';
 import { useAuth } from '../../hooks/useAuth';
+import { useTranslation } from '../../hooks/useTranslation';
 
 /**
  * ProUpgradeModal — Premium subscription + Credit Packs.
@@ -33,26 +34,27 @@ interface Props {
     onSelectPlan?: (plan: string) => void;
 }
 
-const PREMIUM_FEATURES = [
-    { text: 'Bao gồm dùng thử 7 ngày miễn phí', highlight: true },
-    { text: 'Mở khóa tất cả cảnh', highlight: false },
-    { text: 'Mở khóa tất cả âm thanh', highlight: false },
-    { text: 'Tạo cảnh bằng AI', highlight: true },
-    { text: '+30 credits mỗi tháng', highlight: true },
-    { text: 'Bảng thống kê chi tiết', highlight: false },
-    { text: 'Hình nền tùy chỉnh', highlight: false },
+const PREMIUM_FEATURE_KEYS = [
+    { key: 'pro.feat.freeTrial', highlight: true },
+    { key: 'pro.feat.allScenes', highlight: false },
+    { key: 'pro.feat.allSounds', highlight: false },
+    { key: 'pro.feat.aiCreate', highlight: true },
+    { key: 'pro.feat.monthlyCredits', highlight: true },
+    { key: 'pro.feat.stats', highlight: false },
+    { key: 'pro.feat.wallpaper', highlight: false },
 ];
 
 const CREDIT_PACKS = [
-    { id: 'credits_50', amount: 50, price: '$0.99', perScene: '~5 scenes', popular: false },
-    { id: 'credits_150', amount: 150, price: '$1.99', perScene: '~15 scenes', popular: true },
-    { id: 'credits_500', amount: 500, price: '$4.99', perScene: '~50 scenes', popular: false },
+    { id: 'credits_50', amount: 50, price: '$0.99', perSceneKey: 'pro.scenes5', popular: false },
+    { id: 'credits_150', amount: 150, price: '$1.99', perSceneKey: 'pro.scenes15', popular: true },
+    { id: 'credits_500', amount: 500, price: '$4.99', perSceneKey: 'pro.scenes50', popular: false },
 ];
 
 export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
     const [billing, setBilling] = useState<'monthly' | 'yearly'>('yearly');
     const { user } = useAuth();
     const { balance } = useCredits();
+    const { t } = useTranslation();
 
     const monthlyPrice = '$1.99';
     const yearlyPrice = '$1.25';
@@ -89,11 +91,11 @@ export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
 
                 {/* Header */}
                 <div className="pum-header">
-                    <h2 className="pum-title">Nâng cấp AmoLofi</h2>
-                    <p className="pum-subtitle">Mở khóa toàn bộ sức mạnh tập trung hoặc mua credits để tạo cảnh AI.</p>
+                    <h2 className="pum-title">{t('pro.title')}</h2>
+                    <p className="pum-subtitle">{t('pro.subtitle')}</p>
                     {user && (
                         <div className="pum-balance-pill">
-                            💎 Số dư: <strong>{balance}</strong> credits
+                            💎 {t('pro.balance')} <strong>{balance}</strong> {t('pro.credits')}
                         </div>
                     )}
                 </div>
@@ -103,8 +105,8 @@ export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
                     {/* ── Left: Premium Subscription ── */}
                     <div className="pum-plan featured">
                         <div className="pum-plan-header">
-                            <div className="pum-plan-badge">⭐ Được yêu thích</div>
-                            <h3 className="pum-plan-name">Premium</h3>
+                            <div className="pum-plan-badge">{t('pro.favorite')}</div>
+                            <h3 className="pum-plan-name">{t('pro.premium')}</h3>
 
                             {/* Billing toggle */}
                             <div className="pum-toggle-row">
@@ -112,33 +114,33 @@ export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
                                     className={`pum-toggle-btn ${billing === 'monthly' ? 'active' : ''}`}
                                     onClick={() => setBilling('monthly')}
                                 >
-                                    Tháng
+                                    {t('pro.monthly')}
                                 </button>
                                 <button
                                     className={`pum-toggle-btn highlight ${billing === 'yearly' ? 'active' : ''}`}
                                     onClick={() => setBilling('yearly')}
                                 >
-                                    Năm <span className="pum-save-badge">-37%</span>
+                                    {t('pro.yearly')} <span className="pum-save-badge">{t('pro.save')}</span>
                                 </button>
                             </div>
 
                             <div className="pum-price-row">
                                 <span className="pum-price">{billing === 'yearly' ? yearlyPrice : monthlyPrice}</span>
-                                <span className="pum-price-period">/tháng</span>
+                                <span className="pum-price-period">{t('pro.perMonth')}</span>
                             </div>
                             <p className="pum-price-note">
                                 {billing === 'yearly'
-                                    ? `Thanh toán hàng năm (${yearlyTotal})`
-                                    : 'Thanh toán hàng tháng'
+                                    ? t('pro.billedYearly', yearlyTotal)
+                                    : t('pro.billedMonthly')
                                 }
                             </p>
                         </div>
 
                         <ul className="pum-features">
-                            {PREMIUM_FEATURES.map((f) => (
-                                <li key={f.text} className="pum-feature">
+                            {PREMIUM_FEATURE_KEYS.map((f) => (
+                                <li key={f.key} className="pum-feature">
                                     <span className={`pum-check ${f.highlight ? 'green' : ''}`}>✓</span>
-                                    <span className={f.highlight ? 'bold' : ''}>{f.text}</span>
+                                    <span className={f.highlight ? 'bold' : ''}>{t(f.key as any)}</span>
                                 </li>
                             ))}
                         </ul>
@@ -147,17 +149,15 @@ export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
                             className="pum-plan-btn premium"
                             onClick={() => handleCheckout(billing === 'yearly' ? 'premium_yearly' : 'premium_monthly')}
                         >
-                            Bắt đầu dùng thử miễn phí
+                            {t('pro.startFreeTrial')}
                         </button>
                     </div>
 
                     {/* ── Right: Credit Packs ── */}
                     <div className="pum-plan">
                         <div className="pum-plan-header">
-                            <h3 className="pum-plan-name">Mua Credits</h3>
-                            <p className="pum-credits-desc">
-                                Mỗi cảnh AI tốn <strong>10 credits</strong>. Mua theo gói — không cần trả phí định kỳ.
-                            </p>
+                            <h3 className="pum-plan-name">{t('pro.buyCredits')}</h3>
+                            <p className="pum-credits-desc" dangerouslySetInnerHTML={{ __html: t('pro.creditsDesc') }} />
                         </div>
 
                         <div className="pum-packs">
@@ -169,18 +169,18 @@ export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
                                 >
                                     <div className="pum-pack-left">
                                         <span className="pum-pack-amount">💎 {pack.amount}</span>
-                                        <span className="pum-pack-scenes">{pack.perScene}</span>
+                                        <span className="pum-pack-scenes">{t(pack.perSceneKey as any)}</span>
                                     </div>
                                     <div className="pum-pack-right">
                                         <span className="pum-pack-price">{pack.price}</span>
-                                        {pack.popular && <span className="pum-popular-tag">Phổ biến</span>}
+                                        {pack.popular && <span className="pum-popular-tag">{t('pro.popular')}</span>}
                                     </div>
                                 </button>
                             ))}
                         </div>
 
                         <p className="pum-packs-note">
-                            Credits không bao giờ hết hạn. Thanh toán an toàn qua LemonSqueezy.
+                            {t('pro.creditsNote')}
                         </p>
                     </div>
                 </div>
