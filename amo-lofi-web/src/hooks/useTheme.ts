@@ -60,7 +60,16 @@ export function useTheme() {
         }
         // Accent glow toggle — components use this to show/hide colored borders
         root.style.setProperty('--theme-glow-opacity', accentGlowEnabled ? '1' : '0');
-    }, [theme, customAccent, accentGlowEnabled]);
+
+        // ── Day/Night variant-specific tuning ──
+        const isNight = activeVariant === 'night';
+        root.style.setProperty('--variant-overlay-opacity', isNight ? '0.45' : '0.15');
+        root.style.setProperty('--variant-glass-opacity', isNight ? '0.85' : '0.65');
+        root.style.setProperty('--variant-glow-strength', isNight ? '1.4' : '0.8');
+        root.style.setProperty('--variant-glow-spread', isNight ? '24px' : '12px');
+        root.style.setProperty('--variant-text-shadow', isNight ? '0 0 20px rgba(0,0,0,0.8)' : '0 0 12px rgba(0,0,0,0.4)');
+        root.style.setProperty('--variant-ambient-saturation', isNight ? '1.6' : '1.0');
+    }, [theme, customAccent, accentGlowEnabled, activeVariant]);
 
     return theme;
 }

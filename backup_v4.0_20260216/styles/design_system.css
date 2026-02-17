@@ -1,0 +1,974 @@
+/* ================================================================
+   AmoNexus — Neural Dark Design System v1.0
+   ================================================================
+   Central source of truth for all design tokens.
+   Import this file FIRST in every HTML page.
+   
+   Palette: "Neural Dark" (Dark) / "Clean Teal" (Light)
+   Accent : Emerald (#10B981) + Cyan (#06B6D4) + Violet (#8B5CF6)
+   ================================================================ */
+
+/* ============================
+   1. COLOR TOKENS
+   ============================ */
+:root {
+    /* — Core surfaces — */
+    --bg: #050505;
+    --bg-elevated: #0A0A0A;
+    --surface: rgba(255, 255, 255, 0.04);
+    --surface-hover: rgba(255, 255, 255, 0.08);
+    --surface-active: rgba(255, 255, 255, 0.12);
+
+    /* — Text — */
+    --text: #FFFFFF;
+    --text-secondary: #A3A3A3;
+    --text-muted: #666666;
+    --text-inverse: #050505;
+
+    /* — Borders — */
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.14);
+    --border-focus: rgba(16, 185, 129, 0.5);
+
+    /* — Accent: Primary (Emerald) — */
+    --primary: #10B981;
+    --primary-rgb: 16, 185, 129;
+    --primary-hover: #059669;
+    --primary-soft: rgba(16, 185, 129, 0.15);
+    --primary-wash: rgba(16, 185, 129, 0.06);
+
+    /* — Accent: Secondary (Violet) — */
+    --secondary: #8B5CF6;
+    --secondary-rgb: 139, 92, 246;
+    --secondary-soft: rgba(139, 92, 246, 0.15);
+
+    /* — Accent: Tertiary (Cyan) — */
+    --tertiary: #06B6D4;
+    --tertiary-rgb: 6, 182, 212;
+    --tertiary-soft: rgba(6, 182, 212, 0.15);
+
+    /* — Semantic — */
+    --danger: #EF4444;
+    --danger-rgb: 239, 68, 68;
+    --danger-soft: rgba(239, 68, 68, 0.12);
+    --warning: #F59E0B;
+    --warning-rgb: 245, 158, 11;
+    --warning-soft: rgba(245, 158, 11, 0.12);
+    --info: #3B82F6;
+    --info-rgb: 59, 130, 246;
+    --info-soft: rgba(59, 130, 246, 0.12);
+    --success: #34D399;
+    --success-rgb: 52, 211, 153;
+
+    /* ============================
+       2. GLOW SYSTEM
+       ============================ */
+    --glow-xs: 0 0 6px rgba(var(--primary-rgb), 0.20);
+    --glow-sm: 0 0 12px rgba(var(--primary-rgb), 0.25);
+    --glow-md: 0 0 20px rgba(var(--primary-rgb), 0.35);
+    --glow-lg: 0 0 32px rgba(var(--primary-rgb), 0.40),
+        0 0 64px rgba(var(--primary-rgb), 0.15);
+    --glow-xl: 0 0 40px rgba(var(--primary-rgb), 0.50),
+        0 0 80px rgba(var(--primary-rgb), 0.20),
+        0 0 120px rgba(var(--primary-rgb), 0.08);
+
+    /* Semantic glows */
+    --glow-secondary: 0 0 20px rgba(var(--secondary-rgb), 0.3);
+    --glow-danger: 0 0 12px rgba(var(--danger-rgb), 0.3);
+    --glow-warning: 0 0 12px rgba(var(--warning-rgb), 0.3);
+
+    /* ============================
+       3. ELEVATION (Shadows)
+       ============================ */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+    /* ============================
+       4. TYPOGRAPHY
+       ============================ */
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+
+    --text-xs: 10px;
+    --text-sm: 11px;
+    --text-base: 12px;
+    --text-md: 13px;
+    --text-lg: 14px;
+    --text-xl: 16px;
+    --text-2xl: 20px;
+    --text-3xl: 24px;
+
+    --weight-normal: 400;
+    --weight-medium: 500;
+    --weight-semi: 600;
+    --weight-bold: 700;
+
+    --leading-tight: 1.25;
+    --leading-normal: 1.5;
+    --leading-relaxed: 1.625;
+
+    /* ============================
+       5. SPACING
+       ============================ */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+
+    /* ============================
+       6. BORDER RADIUS
+       ============================ */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+    --radius-full: 9999px;
+
+    /* ============================
+       7. TRANSITIONS
+       ============================ */
+    --ease-default: cubic-bezier(0.25, 0.8, 0.25, 1);
+    --ease-bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+
+    --duration-fast: 0.15s;
+    --duration-normal: 0.25s;
+    --duration-slow: 0.4s;
+
+    --transition-fast: all var(--duration-fast) var(--ease-default);
+    --transition-normal: all var(--duration-normal) var(--ease-default);
+    --transition-slow: all var(--duration-slow) var(--ease-default);
+
+    /* ============================
+       8. Z-INDEX SCALE
+       ============================ */
+    --z-dropdown: 100;
+    --z-sticky: 200;
+    --z-modal: 1000;
+    --z-overlay: 2000;
+    --z-toast: 3000;
+}
+
+/* ================================================================
+   LIGHT MODE OVERRIDES
+   ================================================================ */
+body.light-mode,
+:root.light-mode {
+    --bg: #F7FDFB;
+    --bg-elevated: #FFFFFF;
+    --surface: rgba(0, 0, 0, 0.03);
+    --surface-hover: rgba(0, 0, 0, 0.06);
+    --surface-active: rgba(0, 0, 0, 0.09);
+
+    --text: #111827;
+    --text-secondary: #4B5563;
+    --text-muted: #9CA3AF;
+    --text-inverse: #FFFFFF;
+
+    --border: rgba(0, 0, 0, 0.08);
+    --border-strong: rgba(0, 0, 0, 0.14);
+    --border-focus: rgba(13, 148, 136, 0.5);
+
+    --primary: #0D9488;
+    --primary-rgb: 13, 148, 136;
+    --primary-hover: #0F766E;
+    --primary-soft: rgba(13, 148, 136, 0.12);
+    --primary-wash: rgba(13, 148, 136, 0.04);
+
+    --secondary: #7C3AED;
+    --secondary-rgb: 124, 58, 237;
+    --secondary-soft: rgba(124, 58, 237, 0.10);
+
+    --tertiary: #0891B2;
+    --tertiary-rgb: 8, 145, 178;
+
+    /* Light: softer glows, more shadow */
+    --glow-xs: 0 0 4px rgba(var(--primary-rgb), 0.10);
+    --glow-sm: 0 1px 6px rgba(var(--primary-rgb), 0.12);
+    --glow-md: 0 2px 10px rgba(var(--primary-rgb), 0.15);
+    --glow-lg: 0 2px 16px rgba(var(--primary-rgb), 0.18);
+    --glow-xl: 0 4px 24px rgba(var(--primary-rgb), 0.20);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
+}
+
+/* ================================================================
+   BASE RESET & DEFAULTS
+   ================================================================ */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--bg);
+    color: var(--text);
+    margin: 0;
+    line-height: var(--leading-normal);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ================================================================
+   ACCESSIBILITY
+   ================================================================ */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* ================================================================
+   COMPONENT: BUTTONS
+   ================================================================ */
+
+/* — Primary Filled Button — */
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    background: var(--primary);
+    color: var(--text-inverse);
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: var(--text-md);
+    font-weight: var(--weight-semi);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-spring);
+    box-shadow: var(--glow-sm);
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+    box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.35),
+        0 0 40px rgba(var(--primary-rgb), 0.12);
+    transform: translateY(-2px);
+}
+
+.btn-primary:active {
+    transform: scale(0.97);
+    box-shadow: var(--glow-xs);
+}
+
+/* — Neon Outline Button — */
+.btn-neon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    background: transparent;
+    color: var(--primary);
+    border: 1px solid rgba(var(--primary-rgb), 0.35);
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    font-weight: var(--weight-semi);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-spring);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Green gradient fill on hover — web card style */
+.btn-neon::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg,
+            rgba(var(--primary-rgb), 0.12) 0%,
+            rgba(var(--tertiary-rgb), 0.06) 100%);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+}
+
+.btn-neon:hover::before {
+    opacity: 1;
+}
+
+.btn-neon:hover {
+    border-color: var(--primary);
+    box-shadow: var(--glow-sm);
+    transform: translateY(-1px);
+}
+
+.btn-neon:active {
+    transform: scale(0.96);
+}
+
+/* — Ghost Button — */
+.btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    font-weight: var(--weight-medium);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.btn-ghost:hover {
+    color: var(--text);
+    border-color: var(--border-strong);
+    background: var(--surface-hover);
+}
+
+/* — Danger Button — */
+.btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid rgba(var(--danger-rgb), 0.3);
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+    font-weight: var(--weight-semi);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.btn-danger:hover {
+    background: var(--danger-soft);
+    box-shadow: var(--glow-danger);
+}
+
+/* — Icon Button — */
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.btn-icon:hover {
+    color: var(--primary);
+    border-color: rgba(var(--primary-rgb), 0.4);
+    background: var(--primary-wash);
+    box-shadow: var(--glow-xs);
+}
+
+/* ================================================================
+   COMPONENT: CARDS
+   ================================================================ */
+.card-glass {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: var(--shadow-md);
+    transition: all var(--duration-normal) var(--ease-spring);
+}
+
+.card-glass:hover {
+    border-color: rgba(var(--primary-rgb), 0.2);
+    box-shadow: var(--shadow-lg), var(--glow-xs);
+    transform: translateY(-1px);
+}
+
+/* Card with glow border on hover */
+.card-glow {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    transition: all var(--duration-normal) var(--ease-spring);
+}
+
+.card-glow:hover {
+    border-color: rgba(var(--primary-rgb), 0.3);
+    box-shadow: var(--glow-sm);
+    transform: translateY(-1px);
+}
+
+/* ================================================================
+   COMPONENT: NEON ICON SYSTEM
+   ================================================================ */
+
+/* — Neon Icon utility — */
+.icon-neon svg,
+svg.icon-neon {
+    color: var(--primary, #10B981);
+    filter: drop-shadow(0 0 4px rgba(var(--primary-rgb), 0.45));
+    transition: filter 0.2s ease, color 0.2s ease;
+}
+
+.icon-neon:hover svg,
+svg.icon-neon:hover {
+    filter: drop-shadow(0 0 8px rgba(var(--primary-rgb), 0.6)) drop-shadow(0 0 16px rgba(var(--primary-rgb), 0.25));
+}
+
+/* — Global: All inline SVG icons in sidepanel — */
+#sp-container svg,
+.sidepanel svg,
+[class*="sp-"] svg,
+[class*="srq-"] svg {
+    color: var(--primary, #10B981);
+    filter: drop-shadow(0 0 3px rgba(var(--primary-rgb), 0.4));
+}
+
+/* Avoid coloring SVGs inside buttons that have their own color */
+.sp-send-btn svg,
+[class*="btn-primary"] svg,
+[class*="btn-neon"] svg {
+    color: inherit;
+    filter: none;
+}
+
+/* — Focus widget icons — */
+.sp-focus-widget__icon svg {
+    color: var(--primary, #10B981);
+    filter: drop-shadow(0 0 6px rgba(var(--primary-rgb), 0.5));
+}
+
+/* — SRQ state & header icons — */
+.srq-state-icon svg,
+.srq-icon svg {
+    color: var(--primary, #10B981);
+    filter: drop-shadow(0 0 5px rgba(var(--primary-rgb), 0.45));
+}
+
+/* — Light mode: softer neon — */
+@media (prefers-color-scheme: light) {
+
+    .icon-neon svg,
+    svg.icon-neon,
+    #sp-container svg,
+    .sidepanel svg,
+    [class*="sp-"] svg,
+    [class*="srq-"] svg,
+    .sp-focus-widget__icon svg,
+    .srq-state-icon svg,
+    .srq-icon svg {
+        color: var(--primary-hover, #059669);
+        filter: drop-shadow(0 0 2px rgba(var(--primary-rgb), 0.25));
+    }
+}
+
+.light-mode .icon-neon svg,
+.light-mode svg.icon-neon,
+.light-mode #sp-container svg,
+.light-mode .sidepanel svg,
+.light-mode [class*="sp-"] svg,
+.light-mode [class*="srq-"] svg,
+.light-mode .sp-focus-widget__icon svg,
+.light-mode .srq-state-icon svg,
+.light-mode .srq-icon svg {
+    color: var(--primary-hover, #059669);
+    filter: drop-shadow(0 0 2px rgba(var(--primary-rgb), 0.25));
+}
+
+/* ================================================================
+   COMPONENT: INPUTS
+   ================================================================ */
+.input-std {
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: var(--text-lg);
+    transition: var(--transition-fast);
+    outline: none;
+}
+
+.input-std::placeholder {
+    color: var(--text-muted);
+}
+
+.input-std:focus {
+    border-color: var(--border-focus);
+    box-shadow: var(--glow-sm);
+    background: var(--primary-wash);
+}
+
+/* ================================================================
+   COMPONENT: TOGGLE SWITCH
+   ================================================================ */
+.toggle-neural {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.toggle-neural input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-neural__track {
+    position: absolute;
+    inset: 0;
+    background: var(--surface-active);
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border);
+    transition: var(--transition-fast);
+}
+
+.toggle-neural__track::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 2px;
+    bottom: 2px;
+    background: var(--text-secondary);
+    border-radius: 50%;
+    transition: var(--transition-fast);
+}
+
+.toggle-neural input:checked+.toggle-neural__track {
+    background: var(--primary-soft);
+    border-color: rgba(var(--primary-rgb), 0.4);
+}
+
+.toggle-neural input:checked+.toggle-neural__track::before {
+    transform: translateX(20px);
+    background: var(--primary);
+    box-shadow: var(--glow-xs);
+}
+
+/* ================================================================
+   COMPONENT: BADGES / TAGS
+   ================================================================ */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semi);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.badge-primary {
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.badge-secondary {
+    background: var(--secondary-soft);
+    color: var(--secondary);
+}
+
+.badge-danger {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.badge-warning {
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+.badge-muted {
+    background: var(--surface-active);
+    color: var(--text-secondary);
+}
+
+/* ================================================================
+   COMPONENT: STATUS DOT
+   ================================================================ */
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    transition: var(--transition-fast);
+}
+
+.status-dot--active {
+    background: var(--primary);
+    box-shadow: var(--glow-sm);
+    animation: statusPulse 2.5s ease-in-out infinite;
+}
+
+.status-dot--warning {
+    background: var(--warning);
+    box-shadow: var(--glow-warning);
+}
+
+.status-dot--danger {
+    background: var(--danger);
+    box-shadow: var(--glow-danger);
+}
+
+@keyframes statusPulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        box-shadow: var(--glow-sm);
+    }
+
+    50% {
+        opacity: 0.7;
+        box-shadow: var(--glow-md);
+    }
+}
+
+/* ================================================================
+   COMPONENT: TOOLTIP
+   ================================================================ */
+.tooltip-neural {
+    position: absolute;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--text);
+    box-shadow: var(--shadow-lg);
+    z-index: var(--z-toast);
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+/* ================================================================
+   UTILITY: ANIMATIONS
+   ================================================================ */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes glowPulse {
+
+    0%,
+    100% {
+        box-shadow: var(--glow-sm);
+    }
+
+    50% {
+        box-shadow: var(--glow-md);
+    }
+}
+
+@keyframes neonBreath {
+
+    0%,
+    100% {
+        box-shadow: 0 0 12px rgba(var(--primary-rgb), 0.2),
+            0 0 24px rgba(var(--primary-rgb), 0.1);
+    }
+
+    50% {
+        box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.4),
+            0 0 40px rgba(var(--primary-rgb), 0.15);
+    }
+}
+
+/* Utility classes */
+.animate-fade-in {
+    animation: fadeIn var(--duration-normal) var(--ease-default);
+}
+
+.animate-slide-up {
+    animation: slideUp var(--duration-normal) var(--ease-default);
+}
+
+.animate-slide-down {
+    animation: slideDown var(--duration-normal) var(--ease-default);
+}
+
+.animate-scale-in {
+    animation: scaleIn var(--duration-normal) var(--ease-bounce);
+}
+
+.animate-glow {
+    animation: glowPulse 3s ease-in-out infinite;
+}
+
+.animate-neon {
+    animation: neonBreath 4s ease-in-out infinite;
+}
+
+/* ================================================================
+   SMOOTH ENTRANCE ANIMATIONS (Web ↔ Extension Brand Sync)
+   ================================================================
+   Framer Motion-like spring entrance with opacity + transform.
+   Use with .stagger-N for sequential reveal.
+   ================================================================ */
+
+@keyframes smoothFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes smoothScaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes smoothFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Entrance utility classes — use --ease-spring for Framer Motion feel */
+.enter-fade-up {
+    animation: smoothFadeUp 0.5s var(--ease-spring) both;
+}
+
+.enter-scale {
+    animation: smoothScaleIn 0.4s var(--ease-spring) both;
+}
+
+.enter-fade {
+    animation: smoothFadeIn 0.4s var(--ease-spring) both;
+}
+
+/* Stagger delays — add alongside .enter-* for sequential entrance */
+.stagger-1 {
+    animation-delay: 0.05s;
+}
+
+.stagger-2 {
+    animation-delay: 0.12s;
+}
+
+.stagger-3 {
+    animation-delay: 0.20s;
+}
+
+.stagger-4 {
+    animation-delay: 0.28s;
+}
+
+.stagger-5 {
+    animation-delay: 0.36s;
+}
+
+/* ================================================================
+   UTILITY: LAYOUT HELPERS
+   ================================================================ */
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.flex-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.gap-1 {
+    gap: var(--space-1);
+}
+
+.gap-2 {
+    gap: var(--space-2);
+}
+
+.gap-3 {
+    gap: var(--space-3);
+}
+
+.gap-4 {
+    gap: var(--space-4);
+}
+
+/* ================================================================
+   UTILITY: TEXT
+   ================================================================ */
+.text-primary {
+    color: var(--primary);
+}
+
+.text-secondary {
+    color: var(--text-secondary);
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+.text-danger {
+    color: var(--danger);
+}
+
+.text-warning {
+    color: var(--warning);
+}
+
+.text-mono {
+    font-family: var(--font-mono);
+}
+
+.text-tabular {
+    font-variant-numeric: tabular-nums;
+}
+
+.truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ================================================================
+   UTILITY: AMBIENT BACKGROUND (Web ↔ Extension Brand Sync)
+   ================================================================
+   Matches the radial gradient + grid pattern from ATOM_Web.
+   Use on body or container elements for branded depth.
+   ================================================================ */
+
+/* Radial gradient ambient glow — emerald top-left, violet bottom-right */
+.bg-ambient {
+    background-image:
+        radial-gradient(ellipse at 20% -5%, rgba(var(--primary-rgb), 0.10) 0%, transparent 60%),
+        radial-gradient(ellipse at 85% 105%, rgba(var(--secondary-rgb), 0.05) 0%, transparent 55%);
+}
+
+/* Subtle grid pattern overlay — matches web's 50px grid */
+.bg-grid-pattern::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    opacity: 0.018;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Light mode: softer ambient */
+body.light-mode .bg-ambient,
+:root.light-mode .bg-ambient {
+    background-image:
+        radial-gradient(ellipse at 20% -5%, rgba(var(--primary-rgb), 0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at 85% 105%, rgba(var(--secondary-rgb), 0.03) 0%, transparent 55%);
+}
+
+body.light-mode .bg-grid-pattern::before,
+:root.light-mode .bg-grid-pattern::before {
+    opacity: 0.035;
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.08) 1px, transparent 1px);
+}

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { Locale } from '../i18n';
 
-export type ClockStyle = 'classic' | 'serif' | 'bold' | 'soft' | 'creative' | 'mono';
+export type HeroStyle = 'minimal' | 'glassmorphism' | 'neon' | 'floating' | 'analog' | 'dashboard';
 
 // ══════════════════════════════════════════════════════
 //  Shared Config Type
@@ -51,9 +51,10 @@ interface LofiState {
     // ── Theme Customization ──
     customAccent: string | null;
     tintOpacity: number;
+    backgroundDarken: number;
     vignetteEnabled: boolean;
     accentGlowEnabled: boolean;
-    clockStyle: ClockStyle;
+    heroStyle: HeroStyle;
 
     // ── Quick Settings: Visibility ──
     showClock: boolean;
@@ -107,9 +108,10 @@ interface LofiState {
     // ── Actions: Theme Customization ──
     setCustomAccent: (color: string | null) => void;
     setTintOpacity: (opacity: number) => void;
+    setBackgroundDarken: (value: number) => void;
     setVignetteEnabled: (enabled: boolean) => void;
     setAccentGlowEnabled: (enabled: boolean) => void;
-    setClockStyle: (style: ClockStyle) => void;
+    setHeroStyle: (style: HeroStyle) => void;
 
     // ── Actions: Quick Settings ──
     setShowClock: (v: boolean) => void;
@@ -172,9 +174,10 @@ export const useLofiStore = create<LofiState>((set, get) => ({
     binauralMode: 'focus' as const,
     customAccent: null,
     tintOpacity: 1.0,
+    backgroundDarken: 0.15,
     vignetteEnabled: true,
     accentGlowEnabled: true,
-    clockStyle: 'classic' as ClockStyle,
+    heroStyle: 'minimal' as HeroStyle,
     showClock: true,
     use24hFormat: true,
     showDate: false,
@@ -336,14 +339,17 @@ export const useLofiStore = create<LofiState>((set, get) => ({
     setTintOpacity: (opacity) =>
         set({ tintOpacity: Math.max(0, Math.min(1, opacity)), lastChangeTimestamp: Date.now() }),
 
+    setBackgroundDarken: (value) =>
+        set({ backgroundDarken: Math.max(0, Math.min(0.6, value)), lastChangeTimestamp: Date.now() }),
+
     setVignetteEnabled: (enabled) =>
         set({ vignetteEnabled: enabled, lastChangeTimestamp: Date.now() }),
 
     setAccentGlowEnabled: (enabled) =>
         set({ accentGlowEnabled: enabled, lastChangeTimestamp: Date.now() }),
 
-    setClockStyle: (style) =>
-        set({ clockStyle: style, lastChangeTimestamp: Date.now() }),
+    setHeroStyle: (style) =>
+        set({ heroStyle: style, lastChangeTimestamp: Date.now() }),
 
     // ── Quick Settings ──
     setShowClock: (v) => set({ showClock: v, lastChangeTimestamp: Date.now() }),

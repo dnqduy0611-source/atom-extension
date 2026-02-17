@@ -116,6 +116,76 @@ body,
 }
 
 /* ══════════════════════════════════════════════════════
+   Dashboard — Futuristic Glassmorphism
+   ══════════════════════════════════════════════════════ */
+
+.dash-card {
+  background: rgba(18, 14, 46, 0.4);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 12%, transparent);
+  border-radius: 24px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    0 0 40px color-mix(in srgb, var(--theme-primary) 4%, transparent);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dash-card:hover {
+  border-color: color-mix(in srgb, var(--theme-primary) 20%, transparent);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    0 0 60px color-mix(in srgb, var(--theme-primary) 8%, transparent);
+}
+
+@keyframes neonPulse {
+
+  0%,
+  100% {
+    opacity: 0.04;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.08;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes dashSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-dash-in {
+  animation: dashSlideIn 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Staggered children animation */
+.dash-stagger> :nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.dash-stagger> :nth-child(2) {
+  animation-delay: 60ms;
+}
+
+.dash-stagger> :nth-child(3) {
+  animation-delay: 120ms;
+}
+
+.dash-stagger> :nth-child(4) {
+  animation-delay: 180ms;
+}
+
+/* ══════════════════════════════════════════════════════
    Icon Buttons
    ══════════════════════════════════════════════════════ */
 
@@ -334,7 +404,21 @@ body,
 }
 
 .animate-panel-in {
-  animation: panelIn 300ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation: panelIn 400ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.animate-panel-backdrop {
+  animation: backdropFadeIn 300ms ease both;
+}
+
+@keyframes backdropFadeIn {
+  from {
+    background: transparent;
+  }
+
+  to {
+    background: rgba(0, 0, 0, 0.2);
+  }
 }
 
 .duration-800 {
@@ -377,6 +461,57 @@ body,
 }
 
 /* ══════════════════════════════════════════════════════
+   Hero Timer Animations
+   ══════════════════════════════════════════════════════ */
+
+.hero-timer-glow {
+  animation: heroTimerGlow 2s ease-in-out infinite;
+}
+
+.hero-timer-dot-pulse {
+  animation: heroTimerDotPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes heroTimerGlow {
+
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes heroTimerDotPulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.4);
+    opacity: 0.7;
+  }
+}
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+
+  .hero-timer-glow,
+  .hero-timer-dot-pulse {
+    animation: none;
+  }
+
+  .hero-timer-ring circle {
+    transition: none !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
    Responsive — Mobile
    ══════════════════════════════════════════════════════ */
 
@@ -413,5 +548,180 @@ body,
   .volume-slider::-webkit-slider-thumb {
     width: 12px;
     height: 12px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   Keyframe Animations
+   ══════════════════════════════════════════════════════ */
+
+@keyframes playingPulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+
+@keyframes bgFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes bgFadeOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+/* Timer complete flash */
+@keyframes timerFlash {
+  0% {
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes timerFlashScale {
+  0% {
+    transform: scale(0.8);
+  }
+
+  10% {
+    transform: scale(1.05);
+  }
+
+  20% {
+    transform: scale(1);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Bottom sheet slide-up */
+@keyframes bottomSheetIn {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  /* Disable all decorative animations */
+  .hero-timer-glow,
+  .animate-pulse,
+  .animate-panel-in,
+  .animate-panel-backdrop {
+    animation: none !important;
+  }
+
+  /* Instant transitions instead of animated */
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* ═══ Mobile Responsive ═══ */
+
+/* Tablet (≤1024px) — slightly smaller panels */
+@media (max-width: 1024px) {
+  .ss-panel {
+    width: 340px !important;
+  }
+}
+
+/* Mobile (≤640px) — complete layout shift */
+@media (max-width: 640px) {
+
+  /* Hide desktop hover sidebar */
+  .desktop-sidebar {
+    display: none !important;
+  }
+
+  /* Show mobile menu button */
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+
+  /* Panels become bottom sheets */
+  .mobile-panel-container {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    transform: none !important;
+    z-index: 50 !important;
+    max-height: 75vh;
+  }
+
+  .mobile-panel-container>div {
+    width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 75vh;
+    overflow-y: auto;
+  }
+
+  .ss-panel {
+    width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 70vh;
+  }
+
+  .ss-gallery {
+    max-height: 50vh !important;
+  }
+
+  /* Timer adjustments */
+  .hero-timer-ring {
+    width: 180px !important;
+    height: 180px !important;
+  }
+
+  /* Touch targets — minimum 44px */
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Player bar — full width, no side padding */
+  .mobile-player {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
   }
 }

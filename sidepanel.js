@@ -1827,6 +1827,46 @@ Trả lời ngắn gọn (2-3 câu mỗi điểm).`;
 
         // Setup network status listeners
         setupNetworkListeners();
+
+        // ── Key Insight & Action buttons (moved from setupActionBar which has early return) ──
+
+        // Insight Hide Button
+        if (elements.insightHideBtn) {
+            elements.insightHideBtn.addEventListener('click', () => {
+                setInsightDisplayHidden(true);
+            });
+        }
+
+        // Insight Toggle Button (show/hide)
+        if (elements.insightToggleBtn) {
+            elements.insightToggleBtn.addEventListener('click', () => {
+                const thread = threads.find(t => t.id === activeThreadId);
+                const hasInsight = !!getThreadInsightText(thread);
+                if (!hasInsight) {
+                    showToast(getMessage('sp_key_insight_empty', 'No Key Insight yet'), 'info');
+                    return;
+                }
+                setInsightDisplayHidden(!isInsightDisplayHidden);
+            });
+        }
+
+        // Key Insight button
+        document.getElementById('btn-key-insight')?.addEventListener('click', makeAtomicThought);
+
+        // Mark as Done button
+        document.getElementById('btn-mark-done')?.addEventListener('click', () => SP.parkCurrentThread?.());
+
+        // Copy insight
+        document.getElementById('btn-copy-insight')?.addEventListener('click', () => {
+            const text = elements.insightText?.textContent;
+            if (text) {
+                navigator.clipboard.writeText(text);
+                showToast(getMessage('sp_toast_copied', 'Copied'), 'success');
+            }
+        });
+
+        // Save insight
+        document.getElementById('btn-save-insight')?.addEventListener('click', () => SP.saveThreadToNLM?.());
     }
 
     // ===========================
@@ -3378,6 +3418,18 @@ ${conversationLog}`;
 
     async function handleQuickAction(type) {
         if (isLoading) return;
+
+        // Handle key_insight action — generate atomic thought and save to memory
+        if (type === 'key_insight') {
+            makeAtomicThought();
+            return;
+        }
+
+        // Handle deep_angle action — 2-step retrieval + deep analysis
+        if (type === 'deep_angle') {
+            SP.generateDeepAngle?.();
+            return;
+        }
 
         // Handle save action separately (doesn't need AI)
         if (type === 'save') {

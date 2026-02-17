@@ -1,0 +1,47 @@
+# AmoNexus Extension - Git Ignore
+
+# Credentials (NEVER commit these)
+config/supabase_config.js
+
+# Supabase local config & Edge Functions (contains server-side secrets)
+supabase/
+
+# Internal planning docs (private)
+spec/
+ideas/
+
+# Agent workflows
+.agent/
+
+# External libraries / repos
+neural-memory-main/
+
+# AI assistant config
+.claude/
+.gemini/
+
+# Build outputs
+dist/
+build/
+*.zip
+
+# Dependencies
+node_modules/
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp

@@ -158,7 +158,41 @@ const trash = M([
     'M10 11v5', 'M14 11v5',
 ]);
 
-// ── Ambience Icons ──
+// ── Dashboard Nav Icons ──
+
+// Overview — rolling hills chart
+const dashOverview = M([
+    'M2 18c3-6 5-12 8-12s4 3 6 3 3-3 6-6',
+    'M2 20h20', 'M2 4v16',
+]);
+
+// Weekly — cloud trend line
+const dashWeekly = M([
+    'M3 16l4-5 3 3 4-7 4 4 3-5',
+    'M3 20h18', 'M3 3v17',
+]);
+
+// Hours — acorn clock
+const dashHours = M([
+    'M12 5a7 7 0 100 14 7 7 0 000-14z',
+    'M12 8v4l3 2',
+    'M10 2c1-.5 3-.5 4 0', 'M12 2v3',
+]);
+
+// Today — sprout energy
+const dashToday = M([
+    'M12 22v-8',
+    'M8 14c0-4 4-8 4-12 0 4 4 8 4 12',
+    'M6 18c2-2 4-3 6-4', 'M18 18c-2-2-4-3-6-4',
+]);
+
+// Activity — flower petal grid
+const dashActivity = M([
+    'M5 5a2 2 0 100 0', 'M12 5a2 2 0 100 0', 'M19 5a2 2 0 100 0',
+    'M5 12a2 2 0 100 0', 'M12 12a2 2 0 100 0', 'M19 12a2 2 0 100 0',
+    'M5 19a2 2 0 100 0', 'M12 19a2 2 0 100 0', 'M19 19a2 2 0 100 0',
+]);
+
 
 // Rain — soft drizzle with cloud
 const rain = M([
@@ -242,6 +276,7 @@ export const ghibliPack: SceneIconPack = {
         volumeHigh, volumeLow, volumeMute,
         sun, moon, fullscreen, zen, close, check,
         timer, tasks, stats, add, trash,
+        dashOverview, dashWeekly, dashHours, dashToday, dashActivity,
     },
     ambience: { rain, thunder, wind, fire, coffee_shop, ocean, white_noise },
     genre: { lofi, synthwave, classical, ambient },

@@ -222,6 +222,74 @@ const GardenTrash = ({ size = 24, ...p }: IconProps) => (
 );
 
 // ═══════════════════════════════
+//  Dashboard Nav Icons
+// ═══════════════════════════════
+
+/** Zen rock garden with rake — overview */
+const GardenDashOverview = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <ellipse cx="8" cy="14" rx="3" ry="1.5" />
+        <path d="M2 18c5 0 8 -2 20 0" opacity={0.4} />
+        <path d="M2 21c5 -1 8 -2 20 0" opacity={0.3} />
+        <path d="M11 10c3 -1 5 -1 8 0" opacity={0.4} />
+        <ellipse cx="17" cy="8" rx="2" ry="1" />
+    </svg>
+);
+
+/** Bamboo scroll — weekly */
+const GardenDashWeekly = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <path d="M6 3c-1 0 -2 1 -2 2v14c0 1 1 2 2 2" />
+        <path d="M6 3h12c1 0 2 1 2 2v14c0 1 -1 2 -2 2H6" />
+        <line x1="9" y1="8" x2="17" y2="8" opacity={0.4} />
+        <line x1="9" y1="11" x2="15" y2="11" opacity={0.4} />
+        <line x1="9" y1="14" x2="13" y2="14" opacity={0.4} />
+        <path d="M9 17l2 -3 2 2 3 -4" opacity={0.6} />
+    </svg>
+);
+
+/** Water clock — hours */
+const GardenDashHours = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <circle cx="12" cy="13" r="8" />
+        <path d="M12 9v4l2.5 2.5" />
+        <path d="M10 2h4" />
+        <path d="M12 2v3" />
+        <path d="M12 17c0 -1 1 -2 2 -2" opacity={0.3} />
+    </svg>
+);
+
+/** Cherry blossom — today */
+const GardenDashToday = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <circle cx="12" cy="12" r="2" fill="currentColor" opacity={0.2} stroke="none" />
+        <path d="M12 4c-1 2 -1 4 0 6" />
+        <path d="M12 4c1 2 1 4 0 6" />
+        <path d="M6 9c2 0 4 1 5 3" />
+        <path d="M6 9c1 1 2 3 5 3" opacity={0.5} />
+        <path d="M18 9c-2 0 -4 1 -5 3" />
+        <path d="M18 9c-1 1 -2 3 -5 3" opacity={0.5} />
+        <path d="M8 18c1 -2 2 -3 4 -4" opacity={0.5} />
+        <path d="M16 18c-1 -2 -2 -3 -4 -4" opacity={0.5} />
+    </svg>
+);
+
+/** Stone garden grid — activity */
+const GardenDashActivity = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <ellipse cx="6" cy="6" rx="2.5" ry="1.2" opacity={0.3} />
+        <ellipse cx="12" cy="6" rx="2.5" ry="1.2" opacity={0.7} />
+        <ellipse cx="18" cy="6" rx="2.5" ry="1.2" />
+        <ellipse cx="6" cy="12" rx="2.5" ry="1.2" opacity={0.5} />
+        <ellipse cx="12" cy="12" rx="2.5" ry="1.2" />
+        <ellipse cx="18" cy="12" rx="2.5" ry="1.2" opacity={0.4} />
+        <ellipse cx="6" cy="18" rx="2.5" ry="1.2" opacity={0.8} />
+        <ellipse cx="12" cy="18" rx="2.5" ry="1.2" opacity={0.2} />
+        <ellipse cx="18" cy="18" rx="2.5" ry="1.2" opacity={0.6} />
+    </svg>
+);
+
+// ═══════════════════════════════
 //  Ambience Icons
 // ═══════════════════════════════
 
@@ -379,6 +447,11 @@ export const gardenPack: SceneIconPack = {
         stats: GardenStats,
         add: GardenAdd,
         trash: GardenTrash,
+        dashOverview: GardenDashOverview,
+        dashWeekly: GardenDashWeekly,
+        dashHours: GardenDashHours,
+        dashToday: GardenDashToday,
+        dashActivity: GardenDashActivity,
     },
     ambience: {
         rain: GardenRain,

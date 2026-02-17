@@ -39,6 +39,7 @@ interface FocusStats {
 
 const STORAGE_KEY = 'amo-lofi-focus-stats';
 const NOTES_KEY = 'amo-lofi-focus-notes';
+const TASK_LABEL_KEY = 'amo-lofi-task-label';
 
 function loadNotes(): string {
     try { return localStorage.getItem(NOTES_KEY) ?? ''; } catch { return ''; }
@@ -164,6 +165,9 @@ interface FocusState {
     // ── Stats ──
     stats: FocusStats;
 
+    // ── Task Label ──
+    taskLabel: string;
+
     // ── Notes ──
     focusNotes: string;
 
@@ -181,8 +185,14 @@ interface FocusState {
     removeTask: (id: string) => void;
     clearCompletedTasks: () => void;
 
+    // ── Task Label Actions ──
+    setTaskLabel: (text: string) => void;
+
     // ── Notes Actions ──
     setFocusNotes: (text: string) => void;
+
+    // ── Timer complete flash ──
+    timerJustCompleted: TimerMode | null;
 }
 
 function getNextMode(current: TimerMode, pomodoroCount: number): TimerMode {
@@ -211,7 +221,9 @@ export const useFocusStore = create<FocusState>((set, get) => ({
     pomodoroCount: 0,
     tasks: [],
     stats: loadStats(),
+    taskLabel: (() => { try { return localStorage.getItem(TASK_LABEL_KEY) ?? ''; } catch { return ''; } })(),
     focusNotes: loadNotes(),
+    timerJustCompleted: null,
 
     // ── Pomodoro ──
     startTimer: () => set({ isTimerRunning: true }),
@@ -303,7 +315,10 @@ export const useFocusStore = create<FocusState>((set, get) => ({
                 isTimerRunning: false,
                 pomodoroCount: newCount,
                 stats: newStats,
+                timerJustCompleted: state.timerMode,
             });
+            // Auto-clear flash after 3s
+            setTimeout(() => set({ timerJustCompleted: null }), 3000);
         } else {
             set({ timeRemaining: state.timeRemaining - 1 });
         }
@@ -352,6 +367,12 @@ export const useFocusStore = create<FocusState>((set, get) => ({
         set((state) => ({
             tasks: state.tasks.filter((t) => !t.completed),
         })),
+
+    // ── Task Label ──
+    setTaskLabel: (text) => {
+        try { localStorage.setItem(TASK_LABEL_KEY, text); } catch { /* ignore */ }
+        set({ taskLabel: text });
+    },
 
     // ── Notes ──
     setFocusNotes: (text) => {

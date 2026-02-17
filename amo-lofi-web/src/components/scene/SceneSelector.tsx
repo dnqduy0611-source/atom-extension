@@ -322,7 +322,7 @@ export function SceneSelector({ onClose }: Props) {
                 {/* ── Create Scene button (Pro-gated) ── */}
                 {isPro ? (
                     <button
-                        className="w-full py-3.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-300 cursor-pointer hover:shadow-lg hover:scale-[1.01]"
+                        className="w-full py-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2.5 transition-all duration-300 cursor-pointer hover:shadow-lg hover:scale-[1.01]"
                         style={{
                             background: `linear-gradient(135deg, var(--theme-primary), var(--theme-secondary))`,
                             color: 'white',
@@ -330,24 +330,24 @@ export function SceneSelector({ onClose }: Props) {
                         }}
                         onClick={() => setShowCreator(true)}
                     >
-                        <span>✨</span>
+                        <span style={{ fontSize: '16px' }}>✨</span>
                         <span>{t('scene.createScene')}</span>
                     </button>
                 ) : (
                     <button
                         className="group/create w-full rounded-xl overflow-hidden transition-all duration-300 cursor-pointer hover:scale-[1.01]"
-                        style={{ padding: '1px', background: 'linear-gradient(135deg, #f59e0b, #ec4899, #8b5cf6)' }}
+                        style={{ padding: '2px', background: 'linear-gradient(135deg, #f59e0b, #ec4899, #8b5cf6)' }}
                         onClick={() => showUpsell('create_scene')}
                     >
                         <div
-                            className="flex items-center justify-center gap-2 py-3.5 rounded-[11px] transition-all duration-300 group-hover/create:bg-black/60"
+                            className="flex items-center justify-center gap-2.5 py-4 rounded-[10px] transition-all duration-300 group-hover/create:bg-black/60"
                             style={{ background: 'rgba(0,0,0,0.75)' }}
                         >
-                            <span className="text-sm transition-transform duration-300 group-hover/create:scale-110">👑</span>
-                            <span className="text-xs font-semibold bg-gradient-to-r from-amber-400 via-pink-400 to-violet-400 bg-clip-text text-transparent">
+                            <span className="text-base transition-transform duration-300 group-hover/create:scale-110">👑</span>
+                            <span className="text-sm font-semibold bg-gradient-to-r from-amber-400 via-pink-400 to-violet-400 bg-clip-text text-transparent">
                                 {t('scene.createScene')}
                             </span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium">PRO</span>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium">PRO</span>
                         </div>
                     </button>
                 )}

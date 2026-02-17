@@ -153,7 +153,40 @@ const trash = M([
     'M10 10v7', 'M14 10v7',
 ]);
 
-// ── Ambience Icons ──
+// ── Dashboard Nav Icons ──
+
+// Overview — HUD bar graph
+const dashOverview = M([
+    'M4 20V14', 'M8 20V8', 'M12 20V11', 'M16 20V5', 'M20 20V9',
+    'M2 20h20',
+]);
+
+// Weekly — data trend line
+const dashWeekly = M([
+    'M3 17l4-7 4 5 4-9 4 6',
+    'M3 20h18', 'M3 3v17',
+]);
+
+// Hours — countdown ring
+const dashHours = M([
+    'M12 2a10 10 0 100 20 10 10 0 000-20z',
+    'M12 6v6l4 2',
+    'M10 1h4', 'M12 1v2',
+]);
+
+// Today — energy spike
+const dashToday = M([
+    'M13 2L5 14h6l-2 8 8-12h-6z',
+    'M18 4h3', 'M19 8h2',
+]);
+
+// Activity — data matrix grid
+const dashActivity = M([
+    'M4 4h3v3H4z', 'M10.5 4h3v3h-3z', 'M17 4h3v3h-3z',
+    'M4 10.5h3v3H4z', 'M10.5 10.5h3v3h-3z', 'M17 10.5h3v3h-3z',
+    'M4 17h3v3H4z', 'M10.5 17h3v3h-3z', 'M17 17h3v3h-3z',
+]);
+
 
 // Rain — glitch rain drops
 const rain = M([
@@ -234,6 +267,7 @@ export const cyberpunkPack: SceneIconPack = {
         volumeHigh, volumeLow, volumeMute,
         sun, moon, fullscreen, zen, close, check,
         timer, tasks, stats, add, trash,
+        dashOverview, dashWeekly, dashHours, dashToday, dashActivity,
     },
     ambience: { rain, thunder, wind, fire, coffee_shop, ocean, white_noise },
     genre: { lofi, synthwave, classical, ambient },

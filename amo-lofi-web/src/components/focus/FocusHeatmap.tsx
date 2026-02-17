@@ -11,7 +11,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 
 const WEEKS = 13;
 const DAYS = WEEKS * 7;
-const DAY_LABELS = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
+const DAY_LABELS = ['Mon', '', 'Wed', '', 'Fri', '', ''];
 
 function generateDates(): string[] {
     const dates: string[] = [];

@@ -16,6 +16,8 @@ import {
     X, Check,
     // Focus
     Clock, ListTodo, BarChart3, Plus, Trash2,
+    // Dashboard nav
+    LayoutDashboard, TrendingUp, Clock3, Zap, CalendarDays,
     // Ambience
     CloudRain, CloudLightning, Wind, Flame, Coffee, Waves, Radio,
     // Genre
@@ -56,6 +58,13 @@ export const defaultPack: SceneIconPack = {
         stats: BarChart3,
         add: Plus,
         trash: Trash2,
+
+        // Dashboard
+        dashOverview: LayoutDashboard,
+        dashWeekly: TrendingUp,
+        dashHours: Clock3,
+        dashToday: Zap,
+        dashActivity: CalendarDays,
     },
 
     ambience: {

@@ -1,0 +1,233 @@
+Dưới đây là **“Prompt chuẩn” (System + User template)** cho LLM teacher + bộ **reason_codes** (Rule & AI) để bạn log disagreement rõ ràng, dễ distill sau này.
+
+---
+
+## 1) Prompt chuẩn cho LLM Teacher
+
+### 1.1 System prompt (cố định)
+
+```text
+You are ATOM AI-Pilot (teacher). Your job is to classify user engagement mode and recommend an intervention.
+
+Return ONLY valid JSON, no markdown, no extra commentary, no trailing commas.
+Use exactly the keys and types defined in the schema below.
+All scores must be numbers in [0,1]. confidence must reflect uncertainty.
+cooldown_s must be an integer in [0,120].
+why_short must be <= 140 characters.
+
+If the input text is too short or ambiguous, return low confidence and recommend "none" or "presence".
+Never include any personally identifying information in why_short.
+
+Schema:
+{
+  "intent_score": number,
+  "compulsion_score": number,
+  "mode": "intentional"|"mixed"|"doomscroll",
+  "confidence": number,
+  "recommend": "none"|"presence"|"micro"|"gentle"|"hard",
+  "hard_mode": "BREATH"|"TAP"|"STILLNESS"|null,
+  "cooldown_s": integer,
+  "why_short": string,
+  "ai_reason_codes": string[]
+}
+
+ai_reason_codes must be chosen from the allowed list provided in the user message.
+```
+
+> Lưu ý: mình thêm `ai_reason_codes` vào output để bạn debug và đối chiếu “rule vs AI” dễ hơn, không cần LLM viết dài dòng.
+
+---
+
+### 1.2 User template (điền frame vào)
+
+Bạn gửi cho model theo template sau (từ proxy server):
+
+```text
+Task:
+Classify whether the user is intentionally engaged (reading with curiosity/learning/goal), mixed, or doomscrolling.
+Use BOTH behavior signals and content context (title/headings/viewport snippet).
+Return JSON strictly following the schema.
+
+Definitions:
+- intent_score (0..1): Higher when user shows purposeful reading/curiosity/learning/goal-oriented exploration.
+  Signals: long dwell on paragraphs, scroll-back to reread, select/copy/find, opening related links, text-dense analytical content.
+- compulsion_score (0..1): Higher when user shows compulsive consumption.
+  Signals: continuous scrolling, short dwell repeated, feed/shorts/infinite scroll, rapid topic switching, few active signals.
+- mode rules:
+  - doomscroll: compulsion high AND intent low
+  - intentional: intent high AND compulsion low/moderate
+  - mixed: both moderate/high (user may enjoy content but is being pulled by feed)
+
+Recommendation policy:
+- intentional: recommend "none" or "presence"
+- mixed: recommend "presence" or "gentle"
+- doomscroll: recommend "micro" or "hard" (hard only if strong compulsion, and not recently interrupted)
+
+Allowed ai_reason_codes:
+AI_PAGE_FEED_INFINITE
+AI_PAGE_VIDEO_SHORTS
+AI_PAGE_ARTICLE_DENSE
+AI_PAGE_FORUM_THREAD
+AI_TEXT_ANALYTICAL_GUIDE
+AI_TEXT_ENTERTAINMENT_BUT_STRUCTURED
+AI_TEXT_LOW_SIGNAL_NO_CONTEXT
+AI_BEHAVIOR_CONTINUOUS_SCROLL_HIGH
+AI_BEHAVIOR_DWELL_DEEP
+AI_BEHAVIOR_SCROLL_BACK_REREAD
+AI_ACTION_FIND_USED
+AI_ACTION_SELECT_COPY_USED
+AI_ACTION_OPEN_RELATED_LINKS
+AI_ACTION_NAV_BACK_FORWARD
+AI_INTENT_HIGH_TOPIC_COHERENCE
+AI_COMPULSION_HIGH_FAST_REFRESH
+AI_MIXED_ENJOYMENT_WITH_PULL
+AI_LOW_CONFIDENCE_AMBIGUOUS
+
+Input frame:
+<JSON_FRAME_HERE>
+
+Output: JSON only.
+```
+
+> `JSON_FRAME_HERE` là `observation_frame_v2` bạn đã define.
+
+---
+
+## 2) Reason codes cho Rule (để log disagreement rõ)
+
+### 2.1 Guardrails / Hard overrides
+
+* `RULE_GUARD_FOCUS_HARD_BLOCK`
+  Focus WORK + domain bị block + allow hết hạn → block ngay
+* `RULE_GUARD_SYSTEM_URL_SKIP`
+* `RULE_GUARD_WHITELIST_SKIP`
+* `RULE_GUARD_SNOOZE_ACTIVE`
+* `RULE_GUARD_COOLDOWN_ACTIVE_HARD`
+* `RULE_GUARD_COOLDOWN_ACTIVE_ANY`
+* `RULE_GUARD_BUDGET_EXHAUSTED_AI` (không gọi AI nữa)
+* `RULE_GUARD_PRIVACY_SENSITIVE_DOMAIN` (nếu bạn có danh sách domain nhạy cảm)
+
+### 2.2 Zone / Doomscroll heuristics (rule-based)
+
+* `RULE_ZONE_GREEN_SAFE`
+* `RULE_ZONE_YELLOW_SUSPECT`
+* `RULE_ZONE_RED_SCROLL`
+* `RULE_RED_ZONE_CONTINUOUS_SCROLL` (continuousScrollSec vượt ngưỡng theo sensitivity)
+* `RULE_RED_ZONE_HIGH_SCROLL_VELOCITY`
+* `RULE_RED_ZONE_LOW_IDLE`
+* `RULE_YELLOW_ZONE_MEDIUM_PATTERN`
+
+### 2.3 Escalation / Resistance / Attempts
+
+* `RULE_HIGH_RESISTANCE_SCORE`
+* `RULE_IGNORED_STREAK_HIGH`
+* `RULE_TRIGGER_COUNT_HIGH_30M`
+* `RULE_ATTEMPT_COOLDOWN_OK`
+* `RULE_HARD_ELIGIBLE_COOLDOWN_OK`
+* `RULE_HARD_BLOCKED_BY_COOLDOWN`
+* `RULE_DOWNGRADE_DUE_TO_GENTLE_PROFILE`
+
+### 2.4 Page-type heuristics (nếu rule có/hoặc bạn bổ sung)
+
+* `RULE_PAGE_FEED_LIKELY`
+* `RULE_PAGE_ARTICLE_LIKELY`
+* `RULE_PAGE_FORUM_LIKELY`
+* `RULE_PAGE_VIDEO_LIKELY`
+* `RULE_PAGE_PDF_LIKELY`
+* `RULE_PAGE_UNKNOWN`
+
+### 2.5 Focus subsystem specific
+
+* `RULE_FOCUS_PHASE_WORK`
+* `RULE_FOCUS_PHASE_BREAK`
+* `RULE_FOCUS_ALLOW_ACTIVE`
+* `RULE_FOCUS_ALLOW_EXPIRED`
+* `RULE_FOCUS_ATTEMPT_RECORDED`
+
+---
+
+## 3) AI reason codes (chuẩn hoá để so với Rule)
+
+Bạn đã thấy list trong prompt. Mình gợi ý thêm cách nhóm lại để nhìn log là hiểu ngay:
+
+### 3.1 Nhóm “Page / Content”
+
+* `AI_PAGE_FEED_INFINITE`
+* `AI_PAGE_VIDEO_SHORTS`
+* `AI_PAGE_ARTICLE_DENSE`
+* `AI_PAGE_FORUM_THREAD`
+* `AI_TEXT_ANALYTICAL_GUIDE`
+* `AI_TEXT_ENTERTAINMENT_BUT_STRUCTURED`
+* `AI_TEXT_LOW_SIGNAL_NO_CONTEXT`
+
+### 3.2 Nhóm “Behavior”
+
+* `AI_BEHAVIOR_CONTINUOUS_SCROLL_HIGH`
+* `AI_BEHAVIOR_DWELL_DEEP`
+* `AI_BEHAVIOR_SCROLL_BACK_REREAD`
+
+### 3.3 Nhóm “Actions”
+
+* `AI_ACTION_FIND_USED`
+* `AI_ACTION_SELECT_COPY_USED`
+* `AI_ACTION_OPEN_RELATED_LINKS`
+* `AI_ACTION_NAV_BACK_FORWARD`
+
+### 3.4 Nhóm “Meta inference”
+
+* `AI_INTENT_HIGH_TOPIC_COHERENCE` (nội dung nhất quán, đọc theo mạch)
+* `AI_COMPULSION_HIGH_FAST_REFRESH` (kiểu lướt/refresh liên tục)
+* `AI_MIXED_ENJOYMENT_WITH_PULL`
+* `AI_LOW_CONFIDENCE_AMBIGUOUS`
+
+---
+
+## 4) Log disagreement: format khuyến nghị
+
+Khi log, bạn nên tách rõ:
+
+* **rule_suggest**
+* **ai_suggest**
+* **final**
+* **disagreement_type**
+
+Ví dụ:
+
+```json
+{
+  "rule": {
+    "zone": "red",
+    "suggest": "hard",
+    "reason_codes": ["RULE_ZONE_RED_SCROLL", "RULE_HIGH_RESISTANCE_SCORE", "RULE_HARD_ELIGIBLE_COOLDOWN_OK"]
+  },
+  "ai": {
+    "mode": "mixed",
+    "intent_score": 0.72,
+    "compulsion_score": 0.66,
+    "recommend": "gentle",
+    "confidence": 0.78,
+    "ai_reason_codes": ["AI_PAGE_FORUM_THREAD", "AI_BEHAVIOR_CONTINUOUS_SCROLL_HIGH", "AI_ACTION_FIND_USED", "AI_MIXED_ENJOYMENT_WITH_PULL"]
+  },
+  "final": {
+    "intervention": "gentle",
+    "source": "ai"
+  },
+  "disagreement": {
+    "type": "RULE_ESCALATE_BUT_AI_DOWNGRADE",
+    "notes": "rule wants hard due to resistance; ai sees mixed intent signals"
+  }
+}
+```
+
+### 4.1 Danh sách disagreement_type (để thống kê)
+
+* `AI_AND_RULE_AGREE`
+* `RULE_ESCALATE_BUT_AI_DOWNGRADE`
+* `RULE_BLOCK_BUT_AI_ALLOW` (thường final vẫn rule nếu guardrail)
+* `AI_DOOMSCROLL_BUT_RULE_SAFE`
+* `AI_INTENTIONAL_BUT_RULE_SUSPECT`
+* `AI_LOW_CONFIDENCE_FALLBACK_RULE`
+* `AI_TIMEOUT_FALLBACK_RULE`
+* `AI_INVALID_JSON_FALLBACK_RULE`
+* `GUARDRAIL_OVERRIDE_AI`
+

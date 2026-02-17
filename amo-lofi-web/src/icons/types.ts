@@ -50,6 +50,13 @@ export interface SceneIconPack {
         stats: FC<IconProps>;        // Statistics tab
         add: FC<IconProps>;          // Add task
         trash: FC<IconProps>;        // Delete task
+
+        // Dashboard navigation (optional — defaults to lucide if missing)
+        dashOverview?: FC<IconProps>;  // Overview tab
+        dashWeekly?: FC<IconProps>;    // Weekly chart tab
+        dashHours?: FC<IconProps>;     // Peak hours tab
+        dashToday?: FC<IconProps>;     // Today tab
+        dashActivity?: FC<IconProps>;  // Activity / heatmap tab
     };
 
     /** Ambience sound icons — keyed by sound ID */

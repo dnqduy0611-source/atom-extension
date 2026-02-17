@@ -1,0 +1,757 @@
+/* popup.css — AmoNexus Neural Dark (Phase 3)
+   Uses Design System tokens via ui_shared.css */
+@import url('ui_shared.css');
+
+/* ============================================
+   BASE
+   ============================================ */
+body {
+    width: 340px;
+    margin: 0;
+    padding: var(--space-5) var(--space-5) var(--space-4);
+    background-color: var(--bg);
+    background-image:
+        radial-gradient(ellipse at 50% -20%, rgba(var(--primary-rgb), 0.12) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 110%, rgba(var(--secondary-rgb), 0.05) 0%, transparent 50%);
+    color: var(--text);
+    font-family: var(--font-sans);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    box-sizing: border-box;
+    position: relative;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    opacity: 0.018;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+body.light-mode {
+    background-image:
+        radial-gradient(ellipse at 50% -20%, rgba(var(--primary-rgb), 0.07) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 110%, rgba(var(--secondary-rgb), 0.03) 0%, transparent 50%);
+}
+
+body.light-mode::after {
+    opacity: 0.03;
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.08) 1px, transparent 1px);
+}
+
+/* ============================================
+   ENTRANCE ANIMATIONS
+   ============================================ */
+.pm-hero {
+    animation: smoothScaleIn 0.5s var(--ease-spring) both;
+    animation-delay: 0.02s;
+}
+
+.pm-stats {
+    animation: smoothFadeUp 0.5s var(--ease-spring) both;
+    animation-delay: 0.10s;
+}
+
+.pm-focus {
+    animation: smoothScaleIn 0.45s var(--ease-spring) both;
+    animation-delay: 0.16s;
+}
+
+.pm-cta {
+    animation: smoothScaleIn 0.45s var(--ease-spring) both;
+    animation-delay: 0.22s;
+}
+
+.pm-footer {
+    animation: smoothFadeUp 0.5s var(--ease-spring) both;
+    animation-delay: 0.28s;
+}
+
+@keyframes smoothFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes smoothScaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ============================================
+   HERO — centered icon128 + halo + neon title
+   ============================================ */
+.pm-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) 0 var(--space-1);
+    position: relative;
+}
+
+/* Web link — top-right corner */
+.pm-web-link {
+    position: absolute;
+    top: 4px;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-full);
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-spring);
+    padding: 0;
+}
+
+.pm-web-link:hover {
+    color: var(--primary);
+    background: var(--surface-hover);
+    border-color: rgba(var(--primary-rgb), 0.2);
+}
+
+.pm-web-link:hover svg {
+    filter: drop-shadow(0 0 4px rgba(var(--primary-rgb), 0.4));
+}
+
+/* Icon wrapper with breathing halo */
+.pm-logo-wrap {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pm-halo {
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(var(--primary-rgb), 0.18) 0%, transparent 70%);
+    box-shadow:
+        0 0 24px rgba(var(--primary-rgb), 0.25),
+        0 0 48px rgba(var(--primary-rgb), 0.10);
+    animation: halo-breathe 3.5s ease-in-out infinite;
+}
+
+/* Conic ring overlay */
+.pm-halo::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg,
+            transparent,
+            rgba(var(--primary-rgb), 0.35),
+            transparent 35%,
+            rgba(var(--secondary-rgb), 0.20),
+            transparent 65%,
+            rgba(var(--tertiary-rgb), 0.15),
+            transparent);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px));
+    animation: ring-spin 10s linear infinite;
+    opacity: 0.6;
+}
+
+@keyframes halo-breathe {
+
+    0%,
+    100% {
+        box-shadow:
+            0 0 24px rgba(var(--primary-rgb), 0.25),
+            0 0 48px rgba(var(--primary-rgb), 0.10);
+        transform: scale(1);
+    }
+
+    50% {
+        box-shadow:
+            0 0 36px rgba(var(--primary-rgb), 0.38),
+            0 0 64px rgba(var(--primary-rgb), 0.15);
+        transform: scale(1.06);
+    }
+}
+
+@keyframes ring-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.pm-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 0 8px rgba(var(--primary-rgb), 0.3));
+}
+
+/* Brand text + status */
+.pm-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.pm-title {
+    font-weight: var(--weight-bold);
+    font-size: 18px;
+    letter-spacing: 0.10em;
+    background: linear-gradient(135deg, var(--primary), var(--tertiary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    position: relative;
+}
+
+/* Neon glow behind text — uses pseudo because text-fill is transparent */
+.pm-title::after {
+    content: 'AmoNexus';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--primary), var(--tertiary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: blur(12px);
+    opacity: 0.5;
+    z-index: -1;
+    animation: neon-pulse 3s ease-in-out infinite;
+}
+
+@keyframes neon-pulse {
+
+    0%,
+    100% {
+        opacity: 0.4;
+        filter: blur(12px);
+    }
+
+    50% {
+        opacity: 0.65;
+        filter: blur(16px);
+    }
+}
+
+body.light-mode .pm-title {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+body.light-mode .pm-title::after {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    opacity: 0.25;
+    filter: blur(10px);
+}
+
+body.light-mode .pm-halo {
+    background: radial-gradient(circle, rgba(var(--primary-rgb), 0.10) 0%, transparent 70%);
+    box-shadow:
+        0 0 20px rgba(var(--primary-rgb), 0.15),
+        0 0 40px rgba(var(--primary-rgb), 0.06);
+}
+
+body.light-mode .pm-logo {
+    filter: drop-shadow(0 0 6px rgba(var(--primary-rgb), 0.2));
+}
+
+/* Status badge */
+.pm-status {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semi);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--primary);
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-full);
+    background: var(--primary-soft);
+}
+
+.pm-status.disabled {
+    color: var(--text-muted);
+    background: var(--surface-active);
+}
+
+/* ============================================
+   TODAY'S STATS — 3-column grid
+   ============================================ */
+.pm-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-2);
+}
+
+.pm-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: var(--space-3) var(--space-2);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: all var(--duration-normal) var(--ease-spring);
+}
+
+.pm-stat:hover {
+    border-color: rgba(var(--primary-rgb), 0.2);
+    box-shadow: var(--glow-xs);
+    transform: translateY(-1px);
+}
+
+.pm-stat-value {
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-bold);
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+    line-height: 1;
+}
+
+.pm-stat-label {
+    font-size: 9px;
+    font-weight: var(--weight-semi);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: center;
+}
+
+body.light-mode .pm-stat {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.06);
+}
+
+/* ============================================
+   FOCUS — idle (start btn) + active (timer)
+   ============================================ */
+.pm-focus {
+    display: flex;
+    justify-content: center;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* — Idle: start button — */
+.pm-focus-idle {
+    display: flex;
+    justify-content: center;
+}
+
+.pm-focus-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-6);
+    background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.06), rgba(var(--primary-rgb), 0.02));
+    color: var(--primary);
+    border: 1px solid rgba(var(--primary-rgb), 0.30);
+    border-radius: var(--radius-full);
+    font-family: var(--font-sans);
+    font-size: var(--text-md);
+    font-weight: var(--weight-semi);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-spring);
+    letter-spacing: 0.02em;
+}
+
+.pm-focus-btn svg {
+    color: var(--primary);
+    filter: drop-shadow(0 0 3px rgba(var(--primary-rgb), 0.4));
+    flex-shrink: 0;
+}
+
+.pm-focus-btn:hover {
+    background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.14), rgba(var(--primary-rgb), 0.06));
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--glow-sm);
+}
+
+.pm-focus-btn:hover svg {
+    filter: drop-shadow(0 0 6px rgba(var(--primary-rgb), 0.6));
+}
+
+.pm-focus-btn:active {
+    transform: scale(0.96);
+    box-shadow: var(--glow-xs);
+}
+
+body.light-mode .pm-focus-btn {
+    background: rgba(var(--primary-rgb), 0.06);
+    border-color: rgba(var(--primary-rgb), 0.18);
+}
+
+body.light-mode .pm-focus-btn svg {
+    filter: drop-shadow(0 0 2px rgba(var(--primary-rgb), 0.25));
+}
+
+/* — Active: timer ring + time + phase + stop — */
+.pm-focus-active {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    background: var(--surface);
+    border: 1px solid rgba(var(--primary-rgb), 0.20);
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    animation: smoothScaleIn 0.35s var(--ease-spring) both;
+}
+
+.pm-focus-timer {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+}
+
+.pm-focus-ring {
+    display: block;
+}
+
+#focus-ring-progress {
+    transition: stroke-dashoffset 1s linear;
+}
+
+.pm-focus-time {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-bold);
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+}
+
+.pm-focus-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    flex: 1;
+}
+
+.pm-focus-phase {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semi);
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.10em;
+}
+
+.pm-focus-phase.break {
+    color: var(--tertiary);
+}
+
+.pm-focus-stop {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 3px var(--space-3);
+    background: transparent;
+    border: 1px solid rgba(var(--danger-rgb), 0.30);
+    border-radius: var(--radius-full);
+    color: var(--danger);
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semi);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    width: fit-content;
+}
+
+.pm-focus-stop svg {
+    flex-shrink: 0;
+    color: var(--danger);
+    filter: none;
+}
+
+.pm-focus-stop:hover {
+    background: var(--danger-soft);
+    border-color: var(--danger);
+    box-shadow: var(--glow-danger);
+}
+
+body.light-mode .pm-focus-active {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(var(--primary-rgb), 0.12);
+}
+
+/* ============================================
+   PRIMARY CTA — Open Sidepanel
+   ============================================ */
+.pm-cta {
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+    color: var(--text-inverse);
+    border: none;
+    border-radius: var(--radius-lg);
+    font-family: var(--font-sans);
+    font-weight: var(--weight-bold);
+    font-size: var(--text-md);
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-spring);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px -4px rgba(var(--primary-rgb), 0.35);
+}
+
+.pm-cta::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+            transparent,
+            rgba(255, 255, 255, 0.15),
+            transparent);
+    transition: none;
+}
+
+.pm-cta:hover::before {
+    animation: shimmer 1.2s ease;
+}
+
+@keyframes shimmer {
+    to {
+        left: 100%;
+    }
+}
+
+.pm-cta:hover {
+    box-shadow:
+        0 0 24px rgba(var(--primary-rgb), 0.4),
+        0 0 48px rgba(var(--primary-rgb), 0.15),
+        0 8px 24px -4px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
+    filter: brightness(1.08);
+}
+
+.pm-cta:active {
+    transform: scale(0.97);
+    filter: brightness(0.95);
+    box-shadow: var(--glow-sm);
+}
+
+body.light-mode .pm-cta {
+    color: #fff;
+    box-shadow: 0 4px 20px -4px rgba(var(--primary-rgb), 0.25);
+}
+
+/* ============================================
+   AMO LOFI — secondary launch button
+   ============================================ */
+.pm-lofi-btn {
+    animation: smoothScaleIn 0.45s var(--ease-spring) both;
+    animation-delay: 0.25s;
+}
+
+.pm-lofi-btn {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.06), rgba(236, 72, 153, 0.04));
+    color: var(--text-secondary);
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    border-radius: var(--radius-lg);
+    font-family: var(--font-sans);
+    font-weight: var(--weight-semi);
+    font-size: var(--text-sm);
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-spring);
+    position: relative;
+    overflow: hidden;
+}
+
+.pm-lofi-btn svg {
+    color: rgba(139, 92, 246, 0.8);
+    filter: drop-shadow(0 0 3px rgba(139, 92, 246, 0.3));
+    flex-shrink: 0;
+    transition: var(--transition-fast);
+}
+
+.pm-lofi-btn:hover {
+    color: var(--text);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(236, 72, 153, 0.08));
+    border-color: rgba(139, 92, 246, 0.5);
+    transform: translateY(-2px);
+    box-shadow:
+        0 0 20px rgba(139, 92, 246, 0.15),
+        0 4px 16px -4px rgba(0, 0, 0, 0.2);
+}
+
+.pm-lofi-btn:hover svg {
+    color: rgb(139, 92, 246);
+    filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.5));
+}
+
+.pm-lofi-btn:active {
+    transform: scale(0.97);
+}
+
+body.light-mode .pm-lofi-btn {
+    background: rgba(139, 92, 246, 0.04);
+    border-color: rgba(139, 92, 246, 0.15);
+}
+
+/* ============================================
+   FOOTER — settings + toggle
+   ============================================ */
+.pm-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: var(--space-1);
+}
+
+.pm-footer-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: var(--space-1) var(--space-2);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    letter-spacing: 0.02em;
+}
+
+.pm-footer-link svg {
+    color: var(--text-muted);
+    transition: var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.pm-footer-link:hover {
+    color: var(--text);
+    background: var(--surface-hover);
+}
+
+.pm-footer-link:hover svg {
+    color: var(--primary);
+    filter: drop-shadow(0 0 4px rgba(var(--primary-rgb), 0.4));
+}
+
+/* Toggle container */
+.pm-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.pm-toggle label {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    font-weight: var(--weight-medium);
+    cursor: pointer;
+    user-select: none;
+}
+
+.pm-toggle input[type="checkbox"] {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--surface-active);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.pm-toggle input[type="checkbox"]::before {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    left: 2px;
+    top: 2px;
+    background: var(--text-secondary);
+    border-radius: 50%;
+    transition: var(--transition-fast);
+}
+
+.pm-toggle input[type="checkbox"]:checked {
+    background: var(--primary-soft);
+    border-color: rgba(var(--primary-rgb), 0.4);
+}
+
+.pm-toggle input[type="checkbox"]:checked::before {
+    transform: translateX(16px);
+    background: var(--primary);
+    box-shadow: var(--glow-xs);
+}
+
+body.light-mode .pm-toggle input[type="checkbox"] {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+/* ============================================
+   DISABLED STATE
+   ============================================ */
+body.disabled .pm-stats,
+body.disabled .pm-focus,
+body.disabled .pm-cta {
+    opacity: 0.35;
+    pointer-events: none;
+}

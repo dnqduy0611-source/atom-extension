@@ -221,6 +221,69 @@ const ForestTrash = ({ size = 24, ...p }: IconProps) => (
 );
 
 // ═══════════════════════════════
+//  Dashboard Nav Icons
+// ═══════════════════════════════
+
+/** Stacked logs chart — overview */
+const ForestDashOverview = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <ellipse cx="7" cy="19" rx="4" ry="2" />
+        <ellipse cx="17" cy="19" rx="4" ry="2" />
+        <ellipse cx="12" cy="15" rx="4" ry="2" />
+        <ellipse cx="12" cy="11" rx="3" ry="1.5" opacity={0.5} />
+        <ellipse cx="12" cy="8" rx="2" ry="1" opacity={0.3} />
+    </svg>
+);
+
+/** Tree ring chart — weekly */
+const ForestDashWeekly = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <circle cx="12" cy="12" r="9" />
+        <circle cx="12" cy="12" r="6" opacity={0.5} />
+        <circle cx="12" cy="12" r="3" opacity={0.3} />
+        <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" opacity={0.2} />
+        <line x1="12" y1="3" x2="12" y2="21" opacity={0.15} />
+        <line x1="3" y1="12" x2="21" y2="12" opacity={0.15} />
+    </svg>
+);
+
+/** Sundial — hours */
+const ForestDashHours = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <circle cx="12" cy="14" r="7" />
+        <line x1="12" y1="14" x2="12" y2="9" strokeWidth={1.8} />
+        <line x1="12" y1="14" x2="15" y2="12" />
+        <path d="M9 3h6" />
+        <line x1="12" y1="3" x2="12" y2="7" />
+    </svg>
+);
+
+/** Acorn — today */
+const ForestDashToday = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <path d="M12 6c-3 0 -6 3 -6 7a6 6 0 0 0 12 0c0 -4 -3 -7 -6 -7z" />
+        <path d="M8 6c0 -2 2 -4 4 -4s4 2 4 4" />
+        <line x1="12" y1="2" x2="12" y2="6" opacity={0.4} />
+        <path d="M10 11c1 1 3 1 4 0" opacity={0.3} />
+    </svg>
+);
+
+/** Leaf grid — activity */
+const ForestDashActivity = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <circle cx="5" cy="5" r="2" opacity={0.3} />
+        <circle cx="12" cy="5" r="2" opacity={0.7} />
+        <circle cx="19" cy="5" r="2" />
+        <circle cx="5" cy="12" r="2" opacity={0.5} />
+        <circle cx="12" cy="12" r="2" />
+        <circle cx="19" cy="12" r="2" opacity={0.4} />
+        <circle cx="5" cy="19" r="2" opacity={0.8} />
+        <circle cx="12" cy="19" r="2" opacity={0.2} />
+        <circle cx="19" cy="19" r="2" opacity={0.6} />
+    </svg>
+);
+
+// ═══════════════════════════════
 //  Ambience Icons
 // ═══════════════════════════════
 
@@ -366,6 +429,11 @@ export const forestPack: SceneIconPack = {
         stats: ForestStats,
         add: ForestAdd,
         trash: ForestTrash,
+        dashOverview: ForestDashOverview,
+        dashWeekly: ForestDashWeekly,
+        dashHours: ForestDashHours,
+        dashToday: ForestDashToday,
+        dashActivity: ForestDashActivity,
     },
     ambience: {
         rain: ForestRain,

@@ -229,6 +229,66 @@ const CityTrash = ({ size = 24, ...p }: IconProps) => (
 );
 
 // ═══════════════════════════════
+//  Dashboard Nav Icons
+// ═══════════════════════════════
+
+/** Neon skyline dashboard — overview */
+const CityDashOverview = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <rect x="3" y="12" width="4" height="9" rx="0.5" />
+        <rect x="8" y="6" width="4" height="15" rx="0.5" />
+        <rect x="13" y="9" width="4" height="12" rx="0.5" />
+        <rect x="18" y="3" width="3" height="18" rx="0.5" />
+        <line x1="3" y1="21" x2="21" y2="21" opacity={0.3} />
+    </svg>
+);
+
+/** Equalizer chart — weekly */
+const CityDashWeekly = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <polyline points="3,17 6,10 9,14 12,6 15,10 18,4 21,8" fill="none" />
+        <line x1="3" y1="20" x2="21" y2="20" opacity={0.3} />
+        <line x1="3" y1="3" x2="3" y2="20" opacity={0.3} />
+    </svg>
+);
+
+/** Digital stopwatch — hours */
+const CityDashHours = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <circle cx="12" cy="13" r="8" />
+        <line x1="12" y1="9" x2="12" y2="13" />
+        <line x1="12" y1="13" x2="15" y2="15" />
+        <line x1="10" y1="2" x2="14" y2="2" />
+        <line x1="12" y1="2" x2="12" y2="5" />
+        <line x1="19" y1="6" x2="20.5" y2="4.5" />
+    </svg>
+);
+
+/** Lightning bolt — today */
+const CityDashToday = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <polyline points="14,2 8,12 14,12 8,22" strokeWidth={2} />
+        <line x1="17" y1="8" x2="22" y2="8" opacity={0.3} />
+        <line x1="18" y1="14" x2="22" y2="14" opacity={0.2} />
+    </svg>
+);
+
+/** Pixel grid — activity */
+const CityDashActivity = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <rect x="3" y="3" width="4" height="4" rx="0.5" opacity={0.3} />
+        <rect x="10" y="3" width="4" height="4" rx="0.5" opacity={0.8} />
+        <rect x="17" y="3" width="4" height="4" rx="0.5" />
+        <rect x="3" y="10" width="4" height="4" rx="0.5" />
+        <rect x="10" y="10" width="4" height="4" rx="0.5" opacity={0.4} />
+        <rect x="17" y="10" width="4" height="4" rx="0.5" opacity={0.7} />
+        <rect x="3" y="17" width="4" height="4" rx="0.5" opacity={0.5} />
+        <rect x="10" y="17" width="4" height="4" rx="0.5" />
+        <rect x="17" y="17" width="4" height="4" rx="0.5" opacity={0.2} />
+    </svg>
+);
+
+// ═══════════════════════════════
 //  Ambience Icons
 // ═══════════════════════════════
 
@@ -377,6 +437,11 @@ export const cityPack: SceneIconPack = {
         stats: CityStats,
         add: CityAdd,
         trash: CityTrash,
+        dashOverview: CityDashOverview,
+        dashWeekly: CityDashWeekly,
+        dashHours: CityDashHours,
+        dashToday: CityDashToday,
+        dashActivity: CityDashActivity,
     },
     ambience: {
         rain: CityRain,

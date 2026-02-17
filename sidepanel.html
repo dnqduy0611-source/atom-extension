@@ -4946,7 +4946,19 @@
                                 </svg></span>
                             <span class="sp-cmd-item__label" data-i18n="sp_chip_summarize">Summarize</span>
                         </button>
-                        <!-- Phase 2: Removed keypoints, counter, connect commands -->
+                        <button class="sp-cmd-item" data-action="keypoints" role="option">
+                            <span class="sp-cmd-item__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg"
+                                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="8" y1="6" x2="21" y2="6" />
+                                    <line x1="8" y1="12" x2="21" y2="12" />
+                                    <line x1="8" y1="18" x2="21" y2="18" />
+                                    <line x1="3" y1="6" x2="3.01" y2="6" />
+                                    <line x1="3" y1="12" x2="3.01" y2="12" />
+                                    <line x1="3" y1="18" x2="3.01" y2="18" />
+                                </svg></span>
+                            <span class="sp-cmd-item__label" data-i18n="sp_chip_keypoints">Key Points</span>
+                        </button>
                         <button class="sp-cmd-item" data-action="explain" role="option">
                             <span class="sp-cmd-item__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg"
                                     width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -4958,6 +4970,27 @@
                                 </svg></span>
                             <span class="sp-cmd-item__label" data-i18n="sp_chip_explain">Explain</span>
                         </button>
+                        <button class="sp-cmd-item" data-action="counter" role="option">
+                            <span class="sp-cmd-item__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg"
+                                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z" />
+                                    <path d="m17 3 4 4" />
+                                    <path d="M3 21h18" />
+                                </svg></span>
+                            <span class="sp-cmd-item__label" data-i18n="sp_chip_critique">Critique</span>
+                        </button>
+                        <button class="sp-cmd-item" data-action="connect" role="option">
+                            <span class="sp-cmd-item__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg"
+                                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                                </svg></span>
+                            <span class="sp-cmd-item__label" data-i18n="sp_chip_connect">Connect</span>
+                        </button>
+
+
                         <button class="sp-cmd-item" data-action="save" role="option">
                             <span class="sp-cmd-item__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg"
                                     width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -4966,6 +4999,30 @@
                                     <line x1="5" y1="12" x2="19" y2="12" />
                                 </svg></span>
                             <span class="sp-cmd-item__label" data-i18n="sp_chip_save">Save</span>
+                        </button>
+                        <button class="sp-cmd-item" id="btn-key-insight" data-action="key_insight" role="option">
+                            <span class="sp-cmd-item__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg"
+                                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+                                    <path d="M9 18h6" />
+                                    <path d="M10 22h4" />
+                                </svg></span>
+                            <span class="sp-cmd-item__label" data-i18n="sp_chip_key_insight">Key Insight</span>
+                        </button>
+                        <button class="sp-cmd-item" id="btn-deep-angle" data-action="deep_angle" role="option">
+                            <span class="sp-cmd-item__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg"
+                                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M12 2a7 7 0 0 0-7 7c0 3 2 5.5 4 7.5.5.5 1 1.5 1 2.5h4c0-1 .5-2 1-2.5 2-2 4-4.5 4-7.5a7 7 0 0 0-7-7z" />
+                                    <path d="M9 22h6" />
+                                    <path d="M12 2v3" />
+                                    <path d="M4.2 5.8l2.1 2.1" />
+                                    <path d="M19.8 5.8l-2.1 2.1" />
+                                </svg></span>
+                            <span class="sp-cmd-item__label" data-i18n="sp_deep_angle">Deep Angle</span>
                         </button>
                         <div class="sp-cmd-cat" data-i18n="cmdCatTools">Tools</div>
                         <button class="sp-cmd-item" data-cmd="OPEN_DIARY" role="option">
@@ -5078,6 +5135,11 @@
     <script src="sp_search.js"></script>
     <script src="sp_retention.js"></script>
     <script src="sp_parking.js"></script>
+    <!-- Phase 4: AI Provider Modules & Router -->
+    <script src="ai/providers/gemini.js"></script>
+    <script src="ai/providers/openrouter.js"></script>
+    <script src="ai/providers/proxy.js"></script>
+    <script src="ai/router.js"></script>
     <script src="sp_llm.js"></script>
     <script src="sp_smartlink.js"></script>
     <script src="sp_export.js"></script>

@@ -3,8 +3,8 @@ import { useSceneIcons } from '../../hooks/useSceneIcons';
 import { useTheme } from '../../hooks/useTheme';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useProGate } from '../../hooks/useProGate';
-import { useState, useEffect } from 'react';
-import type { ClockStyle } from '../../store/useLofiStore';
+
+import type { HeroStyle } from '../../store/useLofiStore';
 import type { TranslationKey } from '../../i18n/en';
 
 /**
@@ -25,14 +25,99 @@ const ACCENT_PRESETS = [
     { color: '#a78bfa', name: 'Lavender' },
 ];
 
-const CLOCK_STYLES: { id: ClockStyle; labelKey: TranslationKey; fontFamily: string; fontWeight: number }[] = [
-    { id: 'classic', labelKey: 'clock.classic', fontFamily: "'Inter', sans-serif", fontWeight: 300 },
-    { id: 'serif', labelKey: 'clock.serif', fontFamily: "'Playfair Display', serif", fontWeight: 400 },
-    { id: 'bold', labelKey: 'clock.bold', fontFamily: "'Inter', sans-serif", fontWeight: 800 },
-    { id: 'soft', labelKey: 'clock.soft', fontFamily: "'Quicksand', sans-serif", fontWeight: 400 },
-    { id: 'creative', labelKey: 'clock.creative', fontFamily: "'Caveat', cursive", fontWeight: 400 },
-    { id: 'mono', labelKey: 'clock.mono', fontFamily: "'JetBrains Mono', monospace", fontWeight: 400 },
+const HERO_STYLES: { id: HeroStyle; labelKey: TranslationKey; icon: string }[] = [
+    { id: 'minimal', labelKey: 'hero.minimal', icon: 'minimal' },
+    { id: 'glassmorphism', labelKey: 'hero.glassmorphism', icon: 'glass' },
+    { id: 'neon', labelKey: 'hero.neon', icon: 'neon' },
+    { id: 'floating', labelKey: 'hero.floating', icon: 'floating' },
+    { id: 'analog', labelKey: 'hero.analog', icon: 'analog' },
+    { id: 'dashboard', labelKey: 'hero.dashboard', icon: 'dashboard' },
 ];
+
+/** Mini SVG icon preview for each hero style */
+function HeroStyleIcon({ icon, isActive }: { icon: string; isActive: boolean }) {
+    const accent = isActive ? 'var(--theme-primary)' : 'rgba(255,255,255,0.5)';
+    const dim = 'rgba(255,255,255,0.15)';
+    const size = 40;
+
+    switch (icon) {
+        case 'minimal':
+            return (
+                <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="16" stroke={dim} strokeWidth="1.5" />
+                    <circle cx="20" cy="20" r="16" stroke={accent} strokeWidth="1.5"
+                        strokeDasharray="100.5" strokeDashoffset="30" strokeLinecap="round"
+                        style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }} />
+                    <text x="20" y="23" textAnchor="middle" fill={accent} fontSize="9" fontWeight="300" fontFamily="Inter, sans-serif">25:00</text>
+                </svg>
+            );
+        case 'glass':
+            return (
+                <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+                    <rect x="4" y="6" width="32" height="28" rx="8" fill="rgba(255,255,255,0.06)" stroke={dim} strokeWidth="1" />
+                    <rect x="4" y="6" width="32" height="28" rx="8" stroke={accent} strokeWidth="0.5" opacity="0.5" />
+                    <circle cx="20" cy="20" r="10" stroke={accent} strokeWidth="1" opacity="0.4" />
+                    <text x="20" y="23" textAnchor="middle" fill={accent} fontSize="8" fontWeight="300" fontFamily="Inter, sans-serif">25:00</text>
+                </svg>
+            );
+        case 'neon':
+            return (
+                <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="16" stroke={accent} strokeWidth="2" opacity="0.4" />
+                    <circle cx="20" cy="20" r="16" stroke={accent} strokeWidth="2"
+                        strokeDasharray="100.5" strokeDashoffset="25" strokeLinecap="round"
+                        style={{ transform: 'rotate(-90deg)', transformOrigin: 'center', filter: `drop-shadow(0 0 4px ${accent})` }} />
+                    <text x="20" y="23" textAnchor="middle" fill={accent} fontSize="9" fontWeight="300" fontFamily="Inter, sans-serif"
+                        style={{ filter: `drop-shadow(0 0 3px ${accent})` }}>25:00</text>
+                </svg>
+            );
+        case 'floating':
+            return (
+                <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="16" fill="rgba(255,255,255,0.06)" />
+                    <ellipse cx="20" cy="37" rx="12" ry="2" fill="rgba(0,0,0,0.2)" />
+                    <text x="20" y="23" textAnchor="middle" fill={accent} fontSize="9" fontWeight="300" fontFamily="Inter, sans-serif">25:00</text>
+                </svg>
+            );
+        case 'analog':
+            return (
+                <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+                    {/* Outer rings */}
+                    <circle cx="20" cy="20" r="18" stroke={accent} strokeWidth="0.4" opacity="0.2" />
+                    <circle cx="20" cy="20" r="16" stroke={accent} strokeWidth="0.6" strokeDasharray="2 4" opacity="0.3" />
+                    <circle cx="20" cy="20" r="14" stroke={accent} strokeWidth="1" opacity="0.5" />
+                    {/* Roman numerals at 12, 3, 6, 9 */}
+                    <text x="20" y="10" textAnchor="middle" fill={accent} fontSize="5" fontFamily="serif" opacity="0.7">XII</text>
+                    <text x="31" y="22" textAnchor="middle" fill={accent} fontSize="4" fontFamily="serif" opacity="0.5">III</text>
+                    <text x="20" y="33" textAnchor="middle" fill={accent} fontSize="4" fontFamily="serif" opacity="0.5">VI</text>
+                    <text x="9" y="22" textAnchor="middle" fill={accent} fontSize="4" fontFamily="serif" opacity="0.5">IX</text>
+                    {/* Hands */}
+                    <line x1="20" y1="20" x2="20" y2="11" stroke="rgba(255,255,255,0.6)" strokeWidth="1" strokeLinecap="round" />
+                    <line x1="20" y1="20" x2="27" y2="17" stroke={accent} strokeWidth="0.8" strokeLinecap="round" />
+                    <circle cx="20" cy="20" r="1.2" fill={accent} />
+                    {/* Circuit decoration */}
+                    <line x1="2" y1="20" x2="5" y2="20" stroke={accent} strokeWidth="0.4" opacity="0.3" />
+                    <circle cx="1" cy="20" r="1" fill="none" stroke={accent} strokeWidth="0.4" opacity="0.3" />
+                </svg>
+            );
+        case 'dashboard':
+            return (
+                <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+                    <rect x="2" y="10" width="36" height="20" rx="6" fill="rgba(255,255,255,0.06)" stroke={dim} strokeWidth="0.8" />
+                    {/* 3 columns */}
+                    <line x1="14" y1="14" x2="14" y2="26" stroke={dim} strokeWidth="0.5" />
+                    <line x1="26" y1="14" x2="26" y2="26" stroke={dim} strokeWidth="0.5" />
+                    <text x="8" y="22" textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="6" fontFamily="Inter, sans-serif">01:12</text>
+                    <text x="20" y="22" textAnchor="middle" fill={accent} fontSize="7" fontWeight="600" fontFamily="Inter, sans-serif">25:00</text>
+                    <circle cx="32" cy="19" r="1" fill={accent} />
+                    <circle cx="35" cy="19" r="1" fill={dim} />
+                    <circle cx="29" cy="19" r="1" fill={accent} />
+                </svg>
+            );
+        default:
+            return null;
+    }
+}
 
 interface Props {
     onClose: () => void;
@@ -45,24 +130,18 @@ export function ThemeCustomizer({ onClose }: Props) {
     const setCustomAccent = useLofiStore((s) => s.setCustomAccent);
     const tintOpacity = useLofiStore((s) => s.tintOpacity);
     const setTintOpacity = useLofiStore((s) => s.setTintOpacity);
+    const backgroundDarken = useLofiStore((s) => s.backgroundDarken);
+    const setBackgroundDarken = useLofiStore((s) => s.setBackgroundDarken);
     const vignetteEnabled = useLofiStore((s) => s.vignetteEnabled);
     const setVignetteEnabled = useLofiStore((s) => s.setVignetteEnabled);
     const accentGlowEnabled = useLofiStore((s) => s.accentGlowEnabled);
     const setAccentGlowEnabled = useLofiStore((s) => s.setAccentGlowEnabled);
-    const clockStyle = useLofiStore((s) => s.clockStyle);
-    const setClockStyle = useLofiStore((s) => s.setClockStyle);
+    const heroStyle = useLofiStore((s) => s.heroStyle);
+    const setHeroStyle = useLofiStore((s) => s.setHeroStyle);
     const icons = useSceneIcons();
     const sceneTheme = useTheme();
     const { t } = useTranslation();
     const { isPro, showUpsell } = useProGate();
-
-    // Live clock preview
-    const [now, setNow] = useState(new Date());
-    useEffect(() => {
-        const timer = setInterval(() => setNow(new Date()), 1000);
-        return () => clearInterval(timer);
-    }, []);
-    const previewTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
     // Build swatches: scene primary first (if different from presets), then presets
     const scenePrimary = sceneTheme.primary;
@@ -72,14 +151,15 @@ export function ThemeCustomizer({ onClose }: Props) {
         : [{ color: scenePrimary, name: t('theme.sceneColor') }, ...ACCENT_PRESETS];
 
     const tintPercent = Math.round(tintOpacity * 100);
+    const darkenPercent = Math.round(backgroundDarken * 100);
 
-    const handleClockStyleClick = (styleId: ClockStyle) => {
-        if (styleId === 'classic') {
-            setClockStyle(styleId);
+    const handleHeroStyleClick = (styleId: HeroStyle) => {
+        if (styleId === 'minimal') {
+            setHeroStyle(styleId);
         } else if (isPro) {
-            setClockStyle(styleId);
+            setHeroStyle(styleId);
         } else {
-            showUpsell('clock_style');
+            showUpsell('hero_style');
         }
     };
 
@@ -125,28 +205,20 @@ export function ThemeCustomizer({ onClose }: Props) {
                         </div>
                     </div>
 
-                    {/* ── Clock Style ── */}
+                    {/* ── Hero Style ── */}
                     <div className="tc-section">
-                        <span className="tc-label" style={{ color: 'var(--theme-text-muted)' }}>{t('theme.clockStyle')}</span>
+                        <span className="tc-label" style={{ color: 'var(--theme-text-muted)' }}>{t('theme.heroStyle')}</span>
                         <div className="tc-clock-grid">
-                            {CLOCK_STYLES.map((style) => (
+                            {HERO_STYLES.map((style) => (
                                 <button
                                     key={style.id}
-                                    className={`tc-clock-card ${clockStyle === style.id ? 'tc-clock-active' : ''}`}
-                                    onClick={() => handleClockStyleClick(style.id)}
+                                    className={`tc-clock-card ${heroStyle === style.id ? 'tc-clock-active' : ''}`}
+                                    onClick={() => handleHeroStyleClick(style.id)}
                                 >
-                                    <span
-                                        className="tc-clock-preview"
-                                        style={{
-                                            fontFamily: style.fontFamily,
-                                            fontWeight: style.fontWeight,
-                                        }}
-                                    >
-                                        {previewTime}
-                                    </span>
+                                    <HeroStyleIcon icon={style.icon} isActive={heroStyle === style.id} />
                                     <span className="tc-clock-label">
                                         {t(style.labelKey)}
-                                        {style.id !== 'classic' && !isPro && (
+                                        {style.id !== 'minimal' && !isPro && (
                                             <span className="tc-clock-crown">👑</span>
                                         )}
                                     </span>
@@ -192,6 +264,23 @@ export function ThemeCustomizer({ onClose }: Props) {
                             onChange={(e) => setTintOpacity(Number(e.target.value) / 100)}
                             className="tc-slider"
                             style={{ '--fill': `${tintPercent}%` } as React.CSSProperties}
+                        />
+                    </div>
+
+                    {/* ── Background Darken ── */}
+                    <div className="tc-section">
+                        <div className="tc-label-row">
+                            <span className="tc-label" style={{ color: 'var(--theme-text-muted)' }}>{t('theme.bgDarken')}</span>
+                            <span className="tc-value" style={{ color: 'var(--theme-text-muted)' }}>{darkenPercent}%</span>
+                        </div>
+                        <input
+                            type="range"
+                            min="0"
+                            max="60"
+                            value={darkenPercent}
+                            onChange={(e) => setBackgroundDarken(Number(e.target.value) / 100)}
+                            className="tc-slider"
+                            style={{ '--fill': `${Math.round((darkenPercent / 60) * 100)}%` } as React.CSSProperties}
                         />
                     </div>
 

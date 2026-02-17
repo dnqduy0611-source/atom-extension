@@ -1,39 +1,34 @@
-import { useState } from 'react';
-import { PomodoroTimer } from './PomodoroTimer';
 import { TaskList } from './TaskList';
-import { Target } from 'lucide-react';
+import { Target, PenLine } from 'lucide-react';
+import { useFocusStore } from '../../store/useFocusStore';
 import { useSceneIcons } from '../../hooks/useSceneIcons';
 import { useTranslation } from '../../hooks/useTranslation';
-import type { FC } from 'react';
-import type { IconProps } from '../../icons/types';
-
-type Tab = 'timer' | 'tasks';
 
 interface Props {
     onClose: () => void;
 }
 
+/**
+ * FocusPanel — Tasks + Quick Notes only.
+ * Timer controls are now on the HeroTimer (external clock).
+ */
 export function FocusPanel({ onClose }: Props) {
-    const [activeTab, setActiveTab] = useState<Tab>('timer');
     const icons = useSceneIcons();
     const { t } = useTranslation();
-
-    const TABS: { id: Tab; label: string; Icon: FC<IconProps> }[] = [
-        { id: 'timer', label: t('focus.timer'), Icon: icons.ui.timer },
-        { id: 'tasks', label: t('focus.tasks'), Icon: icons.ui.tasks },
-    ];
+    const focusNotes = useFocusStore((s) => s.focusNotes);
+    const setFocusNotes = useFocusStore((s) => s.setFocusNotes);
 
     return (
         <div
-            className="w-[480px] h-full rounded-2xl backdrop-blur-xl fade-in overflow-hidden flex flex-col"
+            className="w-[520px] h-full rounded-2xl backdrop-blur-xl fade-in overflow-hidden flex flex-col"
             style={{
-                background: 'var(--theme-panel-bg)',
-                border: `1px solid var(--theme-panel-border)`,
-                boxShadow: '0 12px 48px rgba(0,0,0,0.5)',
+                background: `linear-gradient(160deg, color-mix(in srgb, var(--theme-primary) 12%, rgba(10,10,20,0.55)) 0%, color-mix(in srgb, var(--theme-primary) 6%, rgba(10,10,20,0.6)) 50%, rgba(8,6,15,0.65) 100%)`,
+                border: `1px solid color-mix(in srgb, var(--theme-primary) 12%, rgba(255,255,255,0.08))`,
+                boxShadow: '0 16px 64px rgba(0,0,0,0.5), 0 0 1px rgba(255,255,255,0.1)',
             }}
         >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 pt-5 pb-3">
+            <div className="flex items-center justify-between px-7 pt-6 pb-4">
                 <div className="w-7" />
                 <div className="flex items-center gap-3">
                     <Target size={22} style={{ color: 'var(--theme-primary)' }} />
@@ -49,36 +44,38 @@ export function FocusPanel({ onClose }: Props) {
                 </button>
             </div>
 
-            {/* Tabs */}
-            <div
-                className="flex mx-5 mb-4 rounded-xl p-1.5"
-                style={{ background: 'rgba(255,255,255,0.04)' }}
-            >
-                {TABS.map((tab) => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg
-                            text-[14px] font-medium cursor-pointer transition-all duration-200"
-                        style={{
-                            background: activeTab === tab.id
-                                ? 'color-mix(in srgb, var(--theme-primary) 15%, transparent)'
-                                : 'transparent',
-                            color: activeTab === tab.id
-                                ? 'var(--theme-primary)'
-                                : 'var(--theme-text-muted)',
-                        }}
-                    >
-                        <tab.Icon size={16} />
-                        <span>{tab.label}</span>
-                    </button>
-                ))}
+            {/* Tasks — scrollable */}
+            <div className="flex-1 overflow-y-auto px-6 pb-4 fade-in custom-scrollbar">
+                <TaskList />
             </div>
 
-            {/* Tab content — scrollable */}
-            <div className="flex-1 overflow-y-auto px-5 pb-5 fade-in custom-scrollbar">
-                {activeTab === 'timer' && <PomodoroTimer />}
-                {activeTab === 'tasks' && <TaskList />}
+            {/* ═══ Quick Notes ═══ */}
+            <div
+                className="flex flex-col mx-6 mb-6 rounded-xl overflow-hidden"
+                style={{
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    minHeight: '120px',
+                    maxHeight: '200px',
+                }}
+            >
+                <div
+                    className="flex items-center gap-2 px-4 py-3"
+                    style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+                >
+                    <PenLine size={13} style={{ color: 'var(--theme-primary)', opacity: 0.8 }} />
+                    <span className="text-[12px] font-medium" style={{ color: 'var(--theme-text-muted)' }}>
+                        {t('timer.quickNotes')}
+                    </span>
+                </div>
+                <textarea
+                    className="flex-1 w-full bg-transparent resize-none px-4 py-3 text-[13px] leading-relaxed outline-none placeholder:text-white/15"
+                    style={{ color: 'var(--theme-text)', minHeight: '80px' }}
+                    placeholder={t('timer.notesPlaceholder')}
+                    value={focusNotes}
+                    onChange={(e) => setFocusNotes(e.target.value)}
+                    spellCheck={false}
+                />
             </div>
         </div>
     );

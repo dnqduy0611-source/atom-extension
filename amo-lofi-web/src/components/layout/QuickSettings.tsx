@@ -13,13 +13,11 @@ export function QuickSettings() {
 
     const showClock = useLofiStore((s) => s.showClock);
     const use24hFormat = useLofiStore((s) => s.use24hFormat);
-    const showDate = useLofiStore((s) => s.showDate);
     const showPlayerBar = useLofiStore((s) => s.showPlayerBar);
     const showBranding = useLofiStore((s) => s.showBranding);
 
     const setShowClock = useLofiStore((s) => s.setShowClock);
     const setUse24hFormat = useLofiStore((s) => s.setUse24hFormat);
-    const setShowDate = useLofiStore((s) => s.setShowDate);
     const setShowPlayerBar = useLofiStore((s) => s.setShowPlayerBar);
     const setShowBranding = useLofiStore((s) => s.setShowBranding);
 
@@ -38,7 +36,6 @@ export function QuickSettings() {
     const toggles = [
         { label: t('qs.clock'), desc: t('qs.clockDesc'), value: showClock, set: setShowClock },
         { label: t('qs.format24h'), desc: t('qs.format24hDesc'), value: use24hFormat, set: setUse24hFormat },
-        { label: t('qs.showDate'), desc: t('qs.showDateDesc'), value: showDate, set: setShowDate },
         { label: t('qs.playerBar'), desc: t('qs.playerBarDesc'), value: showPlayerBar, set: setShowPlayerBar },
         { label: t('qs.branding'), desc: t('qs.brandingDesc'), value: showBranding, set: setShowBranding },
     ];

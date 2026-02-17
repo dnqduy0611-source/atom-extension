@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title data-i18n="bug_title">Report a Bug - ATOM</title>
+    <link rel="stylesheet" href="ui_shared.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            width: 100%;
+            max-width: 550px;
+            padding: 30px;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .header h2 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .header p {
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        .info-card {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 20px;
+        }
+
+        .info-card h4 {
+            margin: 0 0 8px 0;
+            font-size: 12px;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 10px;
+            background: var(--background);
+            border-radius: 8px;
+        }
+
+        .info-item .label {
+            color: var(--muted);
+        }
+
+        .info-item .value {
+            color: var(--foreground);
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 8px;
+            color: var(--foreground);
+        }
+
+        .form-group label .required {
+            color: var(--danger);
+        }
+
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 14px;
+            box-sizing: border-box;
+            background: var(--background);
+            color: var(--foreground);
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 40px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .checkbox-group:hover {
+            border-color: var(--primary);
+        }
+
+        .checkbox-group input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        .checkbox-group span {
+            font-size: 13px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: var(--foreground);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .footer-note a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* Status messages */
+        .status-msg {
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 16px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .status-msg.success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .status-msg.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+        <button class="icon-btn" id="btn-theme-toggle" data-i18n-title="opt_theme_toggle_title" title="Toggle Theme"
+                style="position: absolute; top: 20px; right: 20px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                </svg>
+            </button>
+            <h2>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m8 2 1.88 1.88" />
+                    <path d="M14.12 3.88 16 2" />
+                    <path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1" />
+                    <path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6" />
+                    <path d="M12 20v-9" />
+                    <path d="M6.53 9C4.6 8.8 3 7.1 3 5" />
+                    <path d="M6 13H2" />
+                    <path d="M3 21c0-2.1 1.7-3.9 3.8-4" />
+                    <path d="M20.97 5c0 2.1-1.6 3.8-3.5 4" />
+                    <path d="M22 13h-4" />
+                    <path d="M17.2 17c2.1.1 3.8 1.9 3.8 4" />
+                </svg>
+                <span data-i18n="bug_header">Report a Bug</span>
+            </h2>
+            <p data-i18n="bug_subheader">Help us improve ATOM by describing what went wrong</p>
+        </div>
+
+        <!-- Auto-collected Info -->
+        <div class="info-card">
+            <h4 data-i18n="bug_auto_collected">Auto-collected Information</h4>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="label" data-i18n="bug_info_version">Version</span>
+                    <span class="value" id="info-version">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label" data-i18n="bug_info_browser">Browser</span>
+                    <span class="value" id="info-browser">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label" data-i18n="bug_info_os">OS</span>
+                    <span class="value" id="info-os">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="label" data-i18n="bug_info_language">Language</span>
+                    <span class="value" id="info-lang">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Guide (Collapsible) -->
+        <details
+            style="margin-bottom: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden;">
+            <summary
+                style="padding: 14px 16px; cursor: pointer; font-weight: 600; font-size: 13px; color: var(--foreground); display: flex; align-items: center; gap: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <path d="M12 17h.01" />
+                </svg>
+                <span data-i18n="bug_guide_title">📖 How to fill this form (click to expand)</span>
+            </summary>
+            <div style="padding: 0 16px 16px 16px; font-size: 12px; color: var(--muted); line-height: 1.6;">
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: var(--foreground);" data-i18n="bug_guide_type">1. Bug Type:</strong>
+                    <span data-i18n="bug_guide_type_desc">Choose the category that best describes your issue.</span>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: var(--foreground);" data-i18n="bug_guide_summary">2. Summary:</strong>
+                    <span data-i18n="bug_guide_summary_desc">Write a short, clear title (e.g., "Intervention not showing
+                        on YouTube").</span>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: var(--foreground);" data-i18n="bug_guide_steps">3. Steps to
+                        Reproduce:</strong>
+                    <span data-i18n="bug_guide_steps_desc">List the exact steps to trigger the bug. Be specific!</span>
+                    <div data-i18n="bug_guide_example"
+                        style="margin-top: 6px; padding: 8px 12px; background: var(--background); border-radius: 8px; font-family: monospace; font-size: 11px;">
+                        1. Open YouTube<br>
+                        2. Scroll for 5 minutes<br>
+                        3. No intervention appeared
+                    </div>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <strong style="color: var(--foreground);" data-i18n="bug_guide_expected">4. Expected vs
+                        Actual:</strong>
+                    <span data-i18n="bug_guide_expected_desc">Explain what you expected to happen and what actually
+                        happened.</span>
+                </div>
+                <div
+                    style="padding: 10px 12px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border-left: 3px solid var(--primary);">
+                    <strong style="color: var(--primary);" data-i18n="bug_guide_tip_label">💡 Tip:</strong>
+                    <span data-i18n="bug_guide_tip">Keep "Include debug data" checked - it helps us fix bugs
+                        faster!</span>
+                </div>
+            </div>
+        </details>
+
+
+        <!-- Bug Report Form -->
+        <form id="bug-form">
+            <!-- Bug Type -->
+            <div class="form-group">
+                <label data-i18n="bug_type_label">Bug Type <span class="required">*</span></label>
+                <select id="bug-type" required>
+                    <option value="" data-i18n="bug_type_placeholder">-- Select type --</option>
+                    <option value="intervention" data-i18n="bug_type_intervention">Intervention not showing</option>
+                    <option value="ui" data-i18n="bug_type_ui">UI/Display issue</option>
+                    <option value="performance" data-i18n="bug_type_performance">Performance/Lag</option>
+                    <option value="crash" data-i18n="bug_type_crash">Extension crash</option>
+                    <option value="ai" data-i18n="bug_type_ai">AI/Gemini issue</option>
+                    <option value="other" data-i18n="bug_type_other">Other</option>
+                </select>
+            </div>
+
+            <!-- Title -->
+            <div class="form-group">
+                <label data-i18n="bug_summary_label">Summary <span class="required">*</span></label>
+                <input type="text" id="bug-title" placeholder="Brief description of the issue"
+                    data-i18n-placeholder="bug_summary_placeholder" required maxlength="100">
+            </div>
+
+            <!-- URL (optional) -->
+            <div class="form-group">
+                <label data-i18n="bug_url_label">URL where bug occurred (optional)</label>
+                <input type="text" id="bug-url" placeholder="https://example.com"
+                    data-i18n-placeholder="bug_url_placeholder">
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+                <label data-i18n="bug_desc_label">Steps to Reproduce <span class="required">*</span></label>
+                <textarea id="bug-description"
+                    placeholder="1. Go to...&#10;2. Scroll for...&#10;3. Click on...&#10;4. Bug appears"
+                    data-i18n-placeholder="bug_desc_placeholder" required></textarea>
+            </div>
+
+            <!-- Expected vs Actual -->
+            <div class="form-group">
+                <label data-i18n="bug_expected_label">Expected vs Actual Behavior</label>
+                <textarea id="bug-expected"
+                    placeholder="Expected: Intervention should appear after 3 minutes&#10;Actual: Nothing happened"
+                    data-i18n-placeholder="bug_expected_placeholder"></textarea>
+            </div>
+
+            <!-- Include Debug Data -->
+            <div class="form-group">
+                <label class="checkbox-group">
+                    <input type="checkbox" id="include-debug" checked>
+                    <span data-i18n="bug_include_debug">Include debug data (recommended)</span>
+                </label>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn-submit" id="btn-submit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+                    <path d="M9 18c-4.51 2-5-2-7-2" />
+                </svg>
+                <span data-i18n="bug_btn_submit">Submit to GitHub</span>
+            </button>
+
+            <!-- Copy alternative -->
+            <button type="button" class="btn-secondary" id="btn-copy">
+                <span data-i18n="bug_btn_copy">Copy Report (for manual submission)</span>
+            </button>
+        </form>
+
+        <!-- Status Message -->
+        <div id="status-msg" class="status-msg"></div>
+
+        <!-- Footer -->
+        <p class="footer-note">
+            <span data-i18n="bug_footer">Your report will be submitted as a GitHub Issue.</span>
+            <br>
+            <a href="#" id="privacy-link" data-i18n="bug_privacy_link">View Privacy Policy</a>
+        </p>
+    </div>
+
+    <script src="config/build_flags.js"></script>
+    <script src="utils/console_guard.js"></script>
+    <script src="utils_ui.js"></script>
+    <script src="bug_report.js"></script>
+</body>
+
+</html>

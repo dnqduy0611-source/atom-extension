@@ -40,6 +40,9 @@ export const vi: Record<string, string> = {
     'timerPill.break': 'Nghỉ',
     'timerPill.rest': 'Nghỉ ngơi',
 
+    // ── Hero Timer ──
+    'heroTimer.placeholder': 'Bạn đang làm gì?',
+
     // ── Sound Mixer ──
     'mixer.title': 'Trộn Âm thanh',
     'mixer.tracks': 'Nhạc',
@@ -106,24 +109,25 @@ export const vi: Record<string, string> = {
     'theme.reset': 'Đặt lại',
     'theme.sceneColor': 'Màu cảnh',
     'theme.overlayTint': 'Lớp phủ',
+    'theme.bgDarken': 'Nền tối',
     'theme.vignette': 'Viền tối',
     'theme.vignetteDesc': 'Viền tối xung quanh màn hình',
     'theme.accentGlow': 'Phát sáng',
     'theme.accentGlowDesc': 'Hiệu ứng ánh sáng màu',
-    'theme.clockStyle': 'Kiểu đồng hồ',
+    'theme.heroStyle': 'Kiểu hiển thị',
 
-    // ── Clock Styles ──
-    'clock.classic': 'Cổ điển',
-    'clock.serif': 'Thanh lịch',
-    'clock.bold': 'Tập trung',
-    'clock.soft': 'Nhẹ nhàng',
-    'clock.creative': 'Sáng tạo',
-    'clock.mono': 'Công nghệ',
+    // ── Hero Styles ──
+    'hero.minimal': 'Tối giản',
+    'hero.glassmorphism': 'Kính mờ',
+    'hero.neon': 'Neon',
+    'hero.floating': 'Trôi nổi',
+    'hero.analog': 'Cổ điển',
+    'hero.dashboard': 'Bảng điều khiển',
 
     // ── Quick Settings ──
     'qs.title': 'Cài đặt nhanh',
-    'qs.clock': 'Đồng hồ',
-    'qs.clockDesc': 'Hiện đồng hồ trên màn hình',
+    'qs.clock': 'Ngày giờ',
+    'qs.clockDesc': 'Hiện ngày giờ trên màn hình',
     'qs.format24h': 'Định dạng 24h',
     'qs.format24hDesc': 'Sử dụng định dạng 24 giờ',
     'qs.showDate': 'Hiện ngày',
@@ -195,4 +199,9 @@ export const vi: Record<string, string> = {
     // ── Auth ──
     'auth.signIn': 'Đăng nhập',
     'auth.signOut': 'Đăng xuất',
+    'auth.loginTitle': 'Đăng nhập vào AmoLofi',
+    'auth.loginSubtitle': 'Đăng nhập để dùng thử tạo cảnh miễn phí và mở khóa tính năng Pro.',
+    'auth.signInWithGoogle': 'Đăng nhập bằng Google',
+    'auth.processing': 'Đang xử lý...',
+    'auth.trialHint': 'Dùng thử miễn phí — Tạo 1 cảnh AI miễn phí sau khi đăng nhập',
 };

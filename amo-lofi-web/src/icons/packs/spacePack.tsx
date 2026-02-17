@@ -231,6 +231,70 @@ const SpaceTrash = ({ size = 24, ...p }: IconProps) => (
 );
 
 // ═══════════════════════════════
+//  Dashboard Nav Icons
+// ═══════════════════════════════
+
+/** HUD grid — overview */
+const SpaceDashOverview = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <rect x="3" y="3" width="8" height="8" rx="1" />
+        <rect x="13" y="3" width="8" height="4" rx="1" />
+        <rect x="13" y="9" width="8" height="2" rx="0.5" opacity={0.5} />
+        <rect x="3" y="13" width="18" height="8" rx="1" opacity={0.5} />
+        <line x1="6" y1="16" x2="10" y2="16" opacity={0.3} />
+        <line x1="6" y1="18" x2="14" y2="18" opacity={0.3} />
+    </svg>
+);
+
+/** Data graph with nodes — weekly */
+const SpaceDashWeekly = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <polyline points="3,16 7,10 11,13 15,6 19,9 21,4" fill="none" />
+        <circle cx="7" cy="10" r="1.5" />
+        <circle cx="11" cy="13" r="1.5" />
+        <circle cx="15" cy="6" r="1.5" />
+        <circle cx="19" cy="9" r="1.5" />
+        <line x1="3" y1="20" x2="21" y2="20" opacity={0.3} />
+    </svg>
+);
+
+/** Digital segments — hours */
+const SpaceDashHours = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <rect x="3" y="5" width="18" height="14" rx="1" />
+        <path d="M8 9v2h3" strokeLinejoin="round" />
+        <path d="M8 11v2h3" strokeLinejoin="round" />
+        <circle cx="15" cy="10" r="0.5" fill="currentColor" stroke="none" />
+        <circle cx="15" cy="12" r="0.5" fill="currentColor" stroke="none" />
+        <line x1="3" y1="5" x2="5" y2="3" opacity={0.3} />
+        <line x1="21" y1="5" x2="19" y2="3" opacity={0.3} />
+    </svg>
+);
+
+/** Signal pulse — today */
+const SpaceDashToday = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <polyline points="2,12 6,12 8,6 10,18 12,8 14,14 16,12 22,12" />
+        <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" opacity={0.4} />
+    </svg>
+);
+
+/** Data matrix — activity */
+const SpaceDashActivity = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <rect x="3" y="3" width="4" height="4" rx="0.5" opacity={0.2} />
+        <rect x="10" y="3" width="4" height="4" rx="0.5" opacity={0.5} />
+        <rect x="17" y="3" width="4" height="4" rx="0.5" />
+        <rect x="3" y="10" width="4" height="4" rx="0.5" opacity={0.7} />
+        <rect x="10" y="10" width="4" height="4" rx="0.5" opacity={0.3} />
+        <rect x="17" y="10" width="4" height="4" rx="0.5" opacity={0.6} />
+        <rect x="3" y="17" width="4" height="4" rx="0.5" opacity={0.4} />
+        <rect x="10" y="17" width="4" height="4" rx="0.5" />
+        <rect x="17" y="17" width="4" height="4" rx="0.5" opacity={0.2} />
+    </svg>
+);
+
+// ═══════════════════════════════
 //  Ambience Icons
 // ═══════════════════════════════
 
@@ -394,6 +458,11 @@ export const spacePack: SceneIconPack = {
         stats: SpaceStats,
         add: SpaceAdd,
         trash: SpaceTrash,
+        dashOverview: SpaceDashOverview,
+        dashWeekly: SpaceDashWeekly,
+        dashHours: SpaceDashHours,
+        dashToday: SpaceDashToday,
+        dashActivity: SpaceDashActivity,
     },
     ambience: {
         rain: SpaceRain,

@@ -59,6 +59,9 @@ export function Sidebar() {
                         borderWidth: 1,
                         borderStyle: 'solid',
                         borderColor: hovered || activePanel ? 'var(--theme-panel-border)' : 'transparent',
+                        boxShadow: hovered || activePanel
+                            ? '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)'
+                            : 'none',
                     }}
                 >
                     {/* Logo */}
@@ -77,12 +80,15 @@ export function Sidebar() {
                                 transition-all duration-200 cursor-pointer
                                 ${activePanel === item.id
                                     ? ''
-                                    : 'hover:bg-white/10'
+                                    : 'hover:bg-white/10 hover:scale-[1.08]'
                                 }
                             `}
                             style={activePanel === item.id ? {
                                 background: 'color-mix(in srgb, var(--theme-primary) 20%, transparent)',
-                                boxShadow: accentGlowEnabled ? `0 0 14px var(--theme-primary-glow)` : 'none',
+                                boxShadow: accentGlowEnabled
+                                    ? `0 0 16px var(--theme-primary-glow), inset 0 0 8px color-mix(in srgb, var(--theme-primary) 10%, transparent)`
+                                    : 'none',
+                                transform: 'scale(1.05)',
                             } : undefined}
                             onClick={() => {
                                 if (item.proOnly && !isPro) {
@@ -127,10 +133,13 @@ export function Sidebar() {
 
                     {/* Theme Customizer button */}
                     <button
-                        className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all duration-200 cursor-pointer group relative ${showCustomizer ? '' : 'hover:bg-white/10'}`}
+                        className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all duration-200 cursor-pointer group relative ${showCustomizer ? '' : 'hover:bg-white/10 hover:scale-[1.08]'}`}
                         style={showCustomizer ? {
                             background: 'color-mix(in srgb, var(--theme-primary) 20%, transparent)',
-                            boxShadow: accentGlowEnabled ? `0 0 14px var(--theme-primary-glow)` : 'none',
+                            boxShadow: accentGlowEnabled
+                                ? `0 0 16px var(--theme-primary-glow), inset 0 0 8px color-mix(in srgb, var(--theme-primary) 10%, transparent)`
+                                : 'none',
+                            transform: 'scale(1.05)',
                         } : undefined}
                         onClick={() => setShowCustomizer(!showCustomizer)}
                         title={`${t('sidebar.customize')} (D)`}
@@ -154,7 +163,7 @@ export function Sidebar() {
 
                     {/* Zen mode */}
                     <button
-                        className="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-white/10 transition-all duration-200 cursor-pointer group relative"
+                        className="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-white/10 hover:scale-[1.08] transition-all duration-200 cursor-pointer group relative"
                         onClick={toggleZenMode}
                         title={`${t('sidebar.zen')} (Z)`}
                     >
@@ -174,7 +183,7 @@ export function Sidebar() {
 
                     {/* Fullscreen */}
                     <button
-                        className="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-white/10 transition-all duration-200 cursor-pointer group relative"
+                        className="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-white/10 hover:scale-[1.08] transition-all duration-200 cursor-pointer group relative"
                         onClick={() => {
                             if (document.fullscreenElement) {
                                 document.exitFullscreen();
@@ -200,7 +209,7 @@ export function Sidebar() {
 
                     {/* ── Language Switcher ── */}
                     <button
-                        className="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-white/10 transition-all duration-200 cursor-pointer group relative"
+                        className="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-white/10 hover:scale-[1.08] transition-all duration-200 cursor-pointer group relative"
                         onClick={cycleLocale}
                         title={`${t('sidebar.language')} — ${localeInfo.label}`}
                     >
@@ -218,12 +227,14 @@ export function Sidebar() {
                         </span>
                     </button>
                 </div>
-            </div>
+            </div >
 
             {/* Theme Customizer Popover */}
-            {showCustomizer && (
-                <ThemeCustomizer onClose={() => setShowCustomizer(false)} />
-            )}
+            {
+                showCustomizer && (
+                    <ThemeCustomizer onClose={() => setShowCustomizer(false)} />
+                )
+            }
         </>
     );
 }

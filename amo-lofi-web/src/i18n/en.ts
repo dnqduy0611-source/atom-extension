@@ -40,6 +40,9 @@ export const en = {
     'timerPill.break': 'Break',
     'timerPill.rest': 'Rest',
 
+    // ── Hero Timer ──
+    'heroTimer.placeholder': 'What are you working on?',
+
     // ── Sound Mixer ──
     'mixer.title': 'Sound Mixer',
     'mixer.tracks': 'Tracks',
@@ -106,24 +109,25 @@ export const en = {
     'theme.reset': 'Reset',
     'theme.sceneColor': 'Scene color',
     'theme.overlayTint': 'Overlay Tint',
+    'theme.bgDarken': 'Background Darken',
     'theme.vignette': 'Vignette',
     'theme.vignetteDesc': 'Dark edges around screen',
     'theme.accentGlow': 'Accent Glow',
     'theme.accentGlowDesc': 'Colored light effects',
-    'theme.clockStyle': 'Clock Style',
+    'theme.heroStyle': 'Hero Style',
 
-    // ── Clock Styles ──
-    'clock.classic': 'Classic',
-    'clock.serif': 'Serif',
-    'clock.bold': 'Bold',
-    'clock.soft': 'Soft',
-    'clock.creative': 'Creative',
-    'clock.mono': 'Mono',
+    // ── Hero Styles ──
+    'hero.minimal': 'Minimal',
+    'hero.glassmorphism': 'Glass',
+    'hero.neon': 'Neon',
+    'hero.floating': 'Floating',
+    'hero.analog': 'Analog',
+    'hero.dashboard': 'Dashboard',
 
     // ── Quick Settings ──
     'qs.title': 'Quick Settings',
-    'qs.clock': 'Clock',
-    'qs.clockDesc': 'Show clock on screen',
+    'qs.clock': 'DateTime',
+    'qs.clockDesc': 'Show date & time on screen',
     'qs.format24h': '24h Format',
     'qs.format24hDesc': 'Use 24-hour time format',
     'qs.showDate': 'Show Date',
@@ -195,6 +199,11 @@ export const en = {
     // ── Auth ──
     'auth.signIn': 'Sign In',
     'auth.signOut': 'Sign Out',
+    'auth.loginTitle': 'Sign in to AmoLofi',
+    'auth.loginSubtitle': 'Sign in to try free scene creation and unlock Pro features.',
+    'auth.signInWithGoogle': 'Sign in with Google',
+    'auth.processing': 'Processing...',
+    'auth.trialHint': 'Free trial — Create 1 AI scene free after signing in',
 } as const;
 
 export type TranslationKey = keyof typeof en;

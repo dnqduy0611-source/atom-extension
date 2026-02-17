@@ -219,6 +219,71 @@ const OceanTrash = ({ size = 24, ...p }: IconProps) => (
 );
 
 // ═══════════════════════════════
+//  Dashboard Nav Icons
+// ═══════════════════════════════
+
+/** Wave tide chart — overview */
+const OceanDashOverview = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <path d="M3 17c3 -4 5 -7 7 -9c2 -2 4 -1 5 2c1 3 3 3 6 -1" />
+        <line x1="3" y1="20" x2="21" y2="20" opacity={0.3} />
+        <line x1="3" y1="3" x2="3" y2="20" opacity={0.3} />
+        <path d="M3 20c3 -1 5 -1 8 0s5 1 8 0" opacity={0.2} />
+    </svg>
+);
+
+/** Tide line — weekly */
+const OceanDashWeekly = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <path d="M2 8c3 -3 5 -3 8 0s5 3 8 0" />
+        <path d="M2 13c3 -2 5 -2 8 0s5 2 8 0" opacity={0.5} />
+        <path d="M2 18c3 -1 5 -1 8 0s5 1 8 0" opacity={0.3} />
+        <line x1="6" y1="3" x2="6" y2="6" opacity={0.3} />
+        <line x1="12" y1="2" x2="12" y2="5" opacity={0.3} />
+        <line x1="18" y1="3" x2="18" y2="6" opacity={0.3} />
+    </svg>
+);
+
+/** Ship's clock — hours */
+const OceanDashHours = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <circle cx="12" cy="12" r="9" />
+        <circle cx="12" cy="12" r="7" opacity={0.15} />
+        <path d="M12 8v4l3 2" />
+        <line x1="12" y1="3" x2="12" y2="5" opacity={0.4} />
+        <line x1="21" y1="12" x2="19" y2="12" opacity={0.4} />
+        <line x1="3" y1="12" x2="5" y2="12" opacity={0.4} />
+        <line x1="12" y1="19" x2="12" y2="21" opacity={0.4} />
+    </svg>
+);
+
+/** Anchor — today */
+const OceanDashToday = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <circle cx="12" cy="5" r="2" />
+        <line x1="12" y1="7" x2="12" y2="21" />
+        <path d="M6 15c0 4 3 6 6 6s6 -2 6 -6" />
+        <line x1="5" y1="12" x2="12" y2="12" />
+        <line x1="12" y1="12" x2="19" y2="12" />
+    </svg>
+);
+
+/** Shell grid — activity */
+const OceanDashActivity = ({ size = 24, ...p }: IconProps) => (
+    <svg {...svg(size, p)}>
+        <path d="M4 4c1 1 3 1 4 0" opacity={0.3} />
+        <path d="M10 4c1 1 3 1 4 0" opacity={0.7} />
+        <path d="M16 4c1 1 3 1 4 0" />
+        <path d="M4 10c1 1 3 1 4 0" opacity={0.6} />
+        <path d="M10 10c1 1 3 1 4 0" />
+        <path d="M16 10c1 1 3 1 4 0" opacity={0.4} />
+        <path d="M4 16c1 1 3 1 4 0" opacity={0.8} />
+        <path d="M10 16c1 1 3 1 4 0" opacity={0.2} />
+        <path d="M16 16c1 1 3 1 4 0" opacity={0.5} />
+    </svg>
+);
+
+// ═══════════════════════════════
 //  Ambience Icons
 // ═══════════════════════════════
 
@@ -363,6 +428,11 @@ export const oceanPack: SceneIconPack = {
         stats: OceanStats,
         add: OceanAdd,
         trash: OceanTrash,
+        dashOverview: OceanDashOverview,
+        dashWeekly: OceanDashWeekly,
+        dashHours: OceanDashHours,
+        dashToday: OceanDashToday,
+        dashActivity: OceanDashActivity,
     },
     ambience: {
         rain: OceanRain,

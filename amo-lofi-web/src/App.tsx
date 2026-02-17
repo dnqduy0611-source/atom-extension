@@ -7,13 +7,15 @@ import { useBinauralBeats } from './hooks/useBinauralBeats';
 import { SceneBackground } from './components/scene/SceneBackground';
 import { SceneSelector } from './components/scene/SceneSelector';
 import { Sidebar } from './components/layout/Sidebar';
+import { MobileMenu } from './components/layout/MobileMenu';
 import { LoadingScreen } from './components/layout/LoadingScreen';
 import { OverlayEffects } from './components/effects/OverlayEffects';
 import { AmbientGlow } from './components/effects/AmbientGlow';
 import { SoundMixer } from './components/mixer/SoundMixer';
 import { FocusPanel } from './components/focus/FocusPanel';
 import { StatsDashboard } from './components/focus/StatsDashboard';
-import { TimerPill } from './components/focus/TimerPill';
+import { HeroTimer } from './components/focus/HeroTimer';
+
 import { ClockDisplay } from './components/layout/ClockDisplay';
 import { QuickSettings } from './components/layout/QuickSettings';
 import { UserProfile } from './components/auth/UserProfile';
@@ -37,9 +39,10 @@ function App() {
   const zenMode = useLofiStore((s) => s.zenMode);
   const togglePanel = useLofiStore((s) => s.togglePanel);
   const toggleZenMode = useLofiStore((s) => s.toggleZenMode);
-  const showClock = useLofiStore((s) => s.showClock);
+
   const showPlayerBar = useLofiStore((s) => s.showPlayerBar);
   const showBranding = useLofiStore((s) => s.showBranding);
+  const isPlaying = useLofiStore((s) => s.isPlaying);
   const { isPro, upsellVisible, showUpsell, dismissUpsell } = useProGate();
   const { t } = useTranslation();
   const { user, isLoading: authLoading, signOut } = useAuth();
@@ -61,6 +64,16 @@ function App() {
     return () => document.removeEventListener('mousedown', handler);
   }, [showUserMenu]);
 
+  // ── Escape key closes active panel ──
+  useEffect(() => {
+    if (!activePanel) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') togglePanel(activePanel);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [activePanel, togglePanel]);
+
 
   return (
     <>
@@ -72,15 +85,23 @@ function App() {
           <OverlayEffects />
           <AmbientGlow />
 
+          {/* ═══ Hero Timer — centered, always visible (including Zen) ═══ */}
+          <HeroTimer />
+
           {/* ═══ HUD Layer — auto-hides after idle ═══ */}
           <div
             className={`absolute inset-0 z-30 pointer-events-none transition-opacity duration-800
               ${hudVisible ? 'opacity-100' : 'opacity-0'}`}
           >
-            {/* Hover Sidebar */}
-            <div className="pointer-events-auto">
-              <Sidebar />
-            </div>
+            {/* Hover Sidebar — hidden in Zen, hidden on mobile (replaced by MobileMenu) */}
+            {!zenMode && (
+              <div className="pointer-events-auto desktop-sidebar">
+                <Sidebar />
+              </div>
+            )}
+
+            {/* Mobile hamburger menu — shown on mobile, hidden on desktop */}
+            {!zenMode && <MobileMenu />}
 
             {/* ── AmoLofi branding — top left ── */}
             {!zenMode && showBranding && (
@@ -128,17 +149,8 @@ function App() {
               </div>
             )}
 
-            {/* Timer Pill — top center */}
-            <div className="pointer-events-auto">
-              <TimerPill />
-            </div>
-
-            {/* Clock Display — centered */}
-            {!zenMode && showClock && (
-              <div className="pointer-events-none">
-                <ClockDisplay />
-              </div>
-            )}
+            {/* Date display — top center, controlled by showDate toggle */}
+            <ClockDisplay />
 
             {/* ── Top-right: Auth + Zen exit ── */}
             <div className="pointer-events-auto absolute top-4 right-4 flex items-center gap-3 z-50">
@@ -147,10 +159,10 @@ function App() {
               {zenMode && (
                 <button
                   className="px-3 py-1.5 rounded-xl bg-black/40 backdrop-blur-xl border border-white/10
-                    text-xs text-white/40 hover:text-white hover:bg-black/60 transition-all cursor-pointer"
+                    text-xs text-white/40 hover:text-white hover:bg-black/60 transition-all duration-300 cursor-pointer"
                   onClick={toggleZenMode}
                 >
-                  Exit Zen
+                  {t('app.exitZen')}
                 </button>
               )}
 
@@ -341,15 +353,15 @@ function App() {
           {/* ═══ Floating Panels ═══ */}
           {activePanel && (
             <>
-              {/* Click-outside overlay */}
+              {/* Click-outside overlay with subtle dim */}
               <div
-                className="absolute inset-0 z-35"
+                className="absolute inset-0 z-35 animate-panel-backdrop"
                 onClick={() => togglePanel(activePanel)}
               />
 
               {/* Panel container — Scenes (centered) */}
               {activePanel === 'scenes' && (
-                <div className="absolute z-40 top-1/2 left-20 -translate-y-1/2">
+                <div className="absolute z-40 top-1/2 left-20 -translate-y-1/2 mobile-panel-container">
                   <div className="animate-panel-in">
                     <SceneSelector onClose={() => togglePanel('scenes')} />
                   </div>
@@ -358,14 +370,14 @@ function App() {
 
               {/* Panel container — Focus (full-height) */}
               {activePanel === 'focus' && (
-                <div className="absolute z-40 top-3 bottom-16 left-20 flex flex-col">
+                <div className="absolute z-40 top-3 bottom-16 left-20 flex flex-col mobile-panel-container">
                   <div className="animate-panel-in h-full">
                     <FocusPanel onClose={() => togglePanel('focus')} />
                   </div>
                 </div>
               )}
 
-              <div className="absolute z-40 top-3 bottom-16 right-4 flex flex-col">
+              <div className="absolute z-40 top-3 bottom-16 right-4 flex flex-col mobile-panel-container">
                 <div className="animate-panel-in h-full">
                   {activePanel === 'mixer' && (
                     <SoundMixer onClose={() => togglePanel('mixer')} />
@@ -391,10 +403,17 @@ function App() {
             </div>
           )}
 
-          {/* ═══ Playing indicator (always visible tiny dot) ═══ */}
-          {!zenMode && !hudVisible && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20">
-              <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--theme-primary)' }} />
+          {/* ═══ Playing indicator — visible when HUD hidden & music playing ═══ */}
+          {isPlaying && !hudVisible && (
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 transition-opacity duration-500">
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{
+                  background: 'var(--theme-primary, #4ade80)',
+                  boxShadow: '0 0 8px var(--theme-primary-glow, rgba(74,222,128,0.4))',
+                  animation: 'playingPulse 2s ease-in-out infinite',
+                }}
+              />
             </div>
           )}
         </SceneBackground>

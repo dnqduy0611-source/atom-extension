@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title data-i18n="jnl_title">Amo Journal</title>
+    <link rel="stylesheet" href="ui_shared.css">
+    <style>
+        body {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin: 0;
+            font-size: 28px;
+            text-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        p {
+            color: var(--muted);
+            margin-top: 8px;
+        }
+
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+        }
+
+        /* Timeline line */
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--primary), transparent);
+            opacity: 0.3;
+        }
+
+        .journal-card {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            margin-left: 40px;
+            /* Space for timeline line */
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .journal-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .journal-card.focused {
+            border-color: var(--primary);
+            box-shadow: 0 0 24px rgba(16, 185, 129, 0.35);
+        }
+
+        /* Timeline Dot */
+        .journal-card::before {
+            content: '';
+            position: absolute;
+            left: -46px;
+            /* Adjust to align with line */
+            top: 24px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--background);
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
+            z-index: 10;
+        }
+
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .date {
+            font-size: 13px;
+            color: var(--muted);
+            font-weight: 600;
+            font-family: monospace;
+        }
+
+        .mood {
+            font-size: 20px;
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
+        }
+
+        .content-box {
+            margin-bottom: 20px;
+        }
+
+        .tags {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .user-note {
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--foreground);
+            background: rgba(var(--primary-rgb), 0.05);
+            /* Adjusted to be dynamic if needed, or keeping similar bg but ensuring text is visible */
+            background: rgba(0, 0, 0, 0.03);
+            /* Default for dark mode */
+            padding: 16px;
+            border-radius: 12px;
+            font-style: italic;
+            border-left: 3px solid var(--primary);
+        }
+
+        /* Light mode override for user-note background if needed handled by variables, but text color is key */
+        body.light-mode .user-note {
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .ai-reply-box {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+            color: var(--foreground);
+            padding: 20px;
+            border-radius: 16px;
+            position: relative;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .ai-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--primary);
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .ai-text {
+            font-size: 14px;
+            line-height: 1.6;
+            letter-spacing: 0.3px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--muted);
+            margin-top: 50px;
+            background: var(--surface);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px dashed var(--border);
+        }
+
+        .journal-compose {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            margin-bottom: 28px;
+        }
+
+        .compose-title {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            color: var(--foreground);
+        }
+
+        .emoji-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 12px 0;
+        }
+
+        .emoji-btn {
+            font-size: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            padding: 6px 10px;
+            color: var(--foreground);
+            transition: all 0.2s ease;
+        }
+
+        body.light-mode .emoji-btn {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .emoji-btn.selected {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--primary);
+        }
+
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .journal-tag {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--muted);
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        body.light-mode .journal-tag {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .journal-tag.selected {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--primary);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        /* Emoji Picker Styles */
+        .emoji-picker-trigger {
+            font-size: 18px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            padding: 6px 12px;
+            color: var(--muted);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        body.light-mode .emoji-picker-trigger {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .emoji-picker-trigger:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .emoji-picker-trigger.selected {
+            background: rgba(16, 185, 129, 0.15);
+            border-style: solid;
+            border-color: var(--primary);
+            color: var(--foreground);
+        }
+
+        .emoji-picker-popup {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            max-height: 220px;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Custom scrollbar for emoji picker */
+        .emoji-picker-popup::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .emoji-picker-popup::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .emoji-picker-popup::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        .emoji-picker-popup::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        .emoji-picker-popup.show {
+            display: block;
+            animation: fadeInScale 0.2s ease;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(-5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .emoji-category {
+            margin-bottom: 12px;
+        }
+
+        .emoji-category:last-child {
+            margin-bottom: 0;
+        }
+
+        .emoji-category-label {
+            font-size: 10px;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            padding: 4px 10px;
+            font-weight: 700;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+            display: inline-block;
+        }
+
+        .emoji-category-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .emoji-option {
+            font-size: 18px;
+            padding: 4px;
+            cursor: pointer;
+            border-radius: 6px;
+            background: transparent;
+            border: none;
+            transition: all 0.15s ease;
+        }
+
+        .emoji-option:hover {
+            background: rgba(16, 185, 129, 0.15);
+            transform: scale(1.15);
+        }
+
+        .emoji-row-wrapper {
+            position: relative;
+        }
+
+        /* Custom Tag Styles */
+        .custom-tag-trigger {
+            border: 1px dashed var(--border);
+            color: var(--muted);
+        }
+
+        .custom-tag-trigger:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .custom-tag-input-wrap {
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .custom-tag-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            background: rgba(16, 185, 129, 0.05);
+            color: var(--foreground);
+            font-size: 13px;
+            outline: none;
+            transition: all 0.2s;
+            box-sizing: border-box;
+        }
+
+        .custom-tag-input:focus {
+            border-color: var(--primary);
+            background: rgba(16, 185, 129, 0.1);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .custom-tag-input::placeholder {
+            color: var(--muted);
+        }
+
+        body.light-mode .custom-tag-input {
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .journal-input {
+            width: 100%;
+            min-height: 110px;
+            resize: vertical;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--foreground);
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        body.light-mode .journal-input {
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .compose-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 12px;
+        }
+
+        .btn-save-journal {
+            font-size: 13px;
+            font-weight: 700;
+            color: #000;
+            background: #10B981;
+            padding: 8px 18px;
+            border-radius: 18px;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .btn-save-journal:hover {
+            background: #34d399;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-save-journal:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+            box-shadow: none;
+        }
+
+        .compose-ai {
+            display: none;
+            margin-top: 12px;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.04) 100%);
+            color: var(--foreground);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+
+<body>
+    <button class="icon-btn" id="btn-theme-toggle" data-i18n-title="opt_theme_toggle_title" title="Toggle Theme">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+        </svg>
+    </button>
+    <div class="header">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                style="color: var(--primary);">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+            </svg>
+            <h1 data-i18n="jnl_title" style="margin: 0;">Amo Journal</h1>
+        </div>
+        <p data-i18n="jnl_desc">Your moments shared with Amo</p>
+    </div>
+
+    <div class="journal-compose">
+        <h2 class="compose-title" data-i18n="journal_form_title">How do you feel?</h2>
+        <div class="emoji-row-wrapper">
+            <div class="emoji-row" id="compose-emoji">
+                <button class="emoji-btn" data-val="focused">😌</button>
+                <button class="emoji-btn" data-val="bored">😐</button>
+                <button class="emoji-btn" data-val="anxious">😰</button>
+                <button class="emoji-btn" data-val="tired">😴</button>
+                <button class="emoji-btn" data-val="angry">😤</button>
+                <button class="emoji-picker-trigger" id="emoji-picker-btn" data-i18n="emoji_picker_more">+ Khác</button>
+            </div>
+            <div class="emoji-picker-popup" id="emoji-picker-popup">
+                <div class="emoji-category">
+                    <div class="emoji-category-label" data-i18n="emoji_cat_happy">Vui vẻ</div>
+                    <div class="emoji-category-items">
+                        <span class="emoji-option" data-val="happy" data-emoji="😊">😊</span>
+                        <span class="emoji-option" data-val="laughing" data-emoji="😄">😄</span>
+                        <span class="emoji-option" data-val="loving" data-emoji="🥰">🥰</span>
+                        <span class="emoji-option" data-val="heart_eyes" data-emoji="😍">😍</span>
+                        <span class="emoji-option" data-val="excited" data-emoji="🤩">🤩</span>
+                        <span class="emoji-option" data-val="celebrating" data-emoji="🎉">🎉</span>
+                    </div>
+                </div>
+                <div class="emoji-category">
+                    <div class="emoji-category-label" data-i18n="emoji_cat_sad">Buồn</div>
+                    <div class="emoji-category-items">
+                        <span class="emoji-option" data-val="crying" data-emoji="😢">😢</span>
+                        <span class="emoji-option" data-val="sobbing" data-emoji="😭">😭</span>
+                        <span class="emoji-option" data-val="pleading" data-emoji="🥺">🥺</span>
+                        <span class="emoji-option" data-val="disappointed" data-emoji="😞">😞</span>
+                        <span class="emoji-option" data-val="pensive" data-emoji="😔">😔</span>
+                        <span class="emoji-option" data-val="heartbroken" data-emoji="💔">💔</span>
+                    </div>
+                </div>
+                <div class="emoji-category">
+                    <div class="emoji-category-label" data-i18n="emoji_cat_anxious">Lo lắng</div>
+                    <div class="emoji-category-items">
+                        <span class="emoji-option" data-val="anxious_face" data-emoji="😰">😰</span>
+                        <span class="emoji-option" data-val="fearful" data-emoji="😨">😨</span>
+                        <span class="emoji-option" data-val="screaming" data-emoji="😱">😱</span>
+                        <span class="emoji-option" data-val="exploding" data-emoji="🤯">🤯</span>
+                        <span class="emoji-option" data-val="dizzy" data-emoji="😵‍💫">😵‍💫</span>
+                    </div>
+                </div>
+                <div class="emoji-category">
+                    <div class="emoji-category-label" data-i18n="emoji_cat_tired">Mệt mỏi</div>
+                    <div class="emoji-category-items">
+                        <span class="emoji-option" data-val="sleeping" data-emoji="😴">😴</span>
+                        <span class="emoji-option" data-val="sleepy" data-emoji="😪">😪</span>
+                        <span class="emoji-option" data-val="yawning" data-emoji="🥱">🥱</span>
+                        <span class="emoji-option" data-val="weary" data-emoji="😩">😩</span>
+                        <span class="emoji-option" data-val="exhausted" data-emoji="😫">😫</span>
+                    </div>
+                </div>
+                <div class="emoji-category">
+                    <div class="emoji-category-label" data-i18n="emoji_cat_angry">Tức giận</div>
+                    <div class="emoji-category-items">
+                        <span class="emoji-option" data-val="huffing" data-emoji="😤">😤</span>
+                        <span class="emoji-option" data-val="angry_face" data-emoji="😡">😡</span>
+                        <span class="emoji-option" data-val="cursing" data-emoji="🤬">🤬</span>
+                        <span class="emoji-option" data-val="pouting" data-emoji="😠">😠</span>
+                        <span class="emoji-option" data-val="rage" data-emoji="💢">💢</span>
+                    </div>
+                </div>
+                <div class="emoji-category">
+                    <div class="emoji-category-label" data-i18n="emoji_cat_neutral">Trung tính</div>
+                    <div class="emoji-category-items">
+                        <span class="emoji-option" data-val="neutral_face" data-emoji="😐">😐</span>
+                        <span class="emoji-option" data-val="thinking" data-emoji="🤔">🤔</span>
+                        <span class="emoji-option" data-val="rolling_eyes" data-emoji="🙄">🙄</span>
+                        <span class="emoji-option" data-val="no_mouth" data-emoji="😶">😶</span>
+                        <span class="emoji-option" data-val="meh" data-emoji="🫤">🫤</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tag-container" id="compose-tags">
+            <span class="journal-tag" data-val="habit" data-i18n="tag_habit">Habit</span>
+            <span class="journal-tag" data-val="procrastinate" data-i18n="tag_procrastinate">Procrastinate</span>
+            <span class="journal-tag" data-val="stress" data-i18n="tag_stress">Stress</span>
+            <span class="journal-tag" data-val="fomo" data-i18n="tag_fomo">FOMO</span>
+            <span class="journal-tag" data-val="inspiration" data-i18n="tag_inspiration">Inspiration</span>
+            <span class="journal-tag custom-tag-trigger" data-val="custom" data-i18n="tag_custom">+ Other...</span>
+            <div class="custom-tag-input-wrap" id="custom-tag-wrap" style="display:none;">
+                <input type="text" class="custom-tag-input" id="custom-tag-input"
+                    data-i18n-placeholder="tag_custom_placeholder" placeholder="Type feeling..." maxlength="20">
+            </div>
+        </div>
+
+        <textarea class="journal-input" id="compose-text" rows="4"></textarea>
+
+        <div class="compose-actions">
+            <button class="btn-save-journal" id="compose-save" data-i18n="journal_btn_saved">Saved</button>
+        </div>
+
+        <div class="compose-ai" id="compose-ai"></div>
+    </div>
+
+    <div id="timeline-container" class="timeline">
+        <!-- Content will be injected here -->
+    </div>
+
+    <script src="config/build_flags.js"></script>
+    <script src="utils/console_guard.js"></script>
+    <script src="utils_ui.js"></script>
+    <script src="journal.js"></script>
+</body>
+
+</html>

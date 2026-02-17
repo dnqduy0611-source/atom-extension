@@ -5,7 +5,9 @@ import { useEffect, useState, useRef } from 'react';
 import { useSceneIcons } from '../../hooks/useSceneIcons';
 
 /**
- * PlayerBar — Beeziee-style: track info left, controls center, time right.
+ * PlayerBar — Slim 40px bar.
+ * Glass-on-hover: transparent when idle, backdrop-blur on hover.
+ * Full-width 2px progress line at top edge.
  */
 export function PlayerBar() {
     const accentGlowEnabled = useLofiStore((s) => s.accentGlowEnabled);
@@ -19,6 +21,7 @@ export function PlayerBar() {
         prevTrack,
     } = useLofiStore();
     const icons = useSceneIcons();
+    const [hovered, setHovered] = useState(false);
 
     const track = musicTracks.find((t) => t.id === musicTrack?.id);
 
@@ -49,9 +52,13 @@ export function PlayerBar() {
     const VolumeIcon = masterVolume === 0 ? icons.ui.volumeMute : masterVolume < 0.5 ? icons.ui.volumeLow : icons.ui.volumeHigh;
 
     return (
-        <div className="relative">
-            {/* ── Progress bar ── */}
-            <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: 'rgba(255,255,255,0.08)' }}>
+        <div
+            className="relative group"
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+        >
+            {/* ── Full-width progress line (2px, top edge) ── */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] z-10" style={{ background: 'rgba(255,255,255,0.06)' }}>
                 <div
                     className="h-full transition-[width] duration-1000 ease-linear"
                     style={{
@@ -62,13 +69,19 @@ export function PlayerBar() {
                 />
             </div>
 
-            {/* ── Player content ── */}
+            {/* ── Player content — 40px slim ── */}
             <div
-                className="grid h-14 px-6 backdrop-blur-xl items-center"
+                className="grid items-center transition-all duration-300"
                 style={{
+                    height: 56,
+                    padding: '0 24px',
                     gridTemplateColumns: '1fr auto 1fr',
-                    background: 'var(--theme-player-bg)',
-                    borderTop: '1px solid rgba(255,255,255,0.06)',
+                    background: hovered
+                        ? 'var(--theme-player-bg)'
+                        : 'transparent',
+                    backdropFilter: hovered ? 'blur(20px) saturate(1.3)' : 'none',
+                    WebkitBackdropFilter: hovered ? 'blur(20px) saturate(1.3)' : 'none',
+                    borderTop: hovered ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
                 }}
             >
                 {/* Left: Track info */}
@@ -88,7 +101,7 @@ export function PlayerBar() {
                     </div>
                 </div>
 
-                {/* Center: Controls */}
+                {/* Center: Controls — compact */}
                 <div className="flex items-center gap-2">
                     <button
                         className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors cursor-pointer"
