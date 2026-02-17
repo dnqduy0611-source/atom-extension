@@ -210,24 +210,27 @@ function App() {
                       {/* Dropdown menu */}
                       {showUserMenu && (
                         <div
-                          className="absolute right-0 top-full mt-2 rounded-2xl overflow-hidden"
+                          className="absolute right-0 top-full mt-2 overflow-hidden"
                           style={{
-                            width: 260,
-                            background: 'rgba(12,12,18,0.97)',
-                            backdropFilter: 'blur(24px)',
-                            border: '1px solid rgba(255,255,255,0.08)',
-                            boxShadow: '0 12px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)',
+                            width: 280,
+                            borderRadius: 16,
+                            background: 'rgba(18, 18, 24, 0.92)',
+                            backdropFilter: 'blur(24px) saturate(1.4)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            boxShadow: '0 12px 48px rgba(0, 0, 0, 0.5)',
+                            animation: 'qsIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                            fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', sans-serif",
                           }}
                         >
-                          {/* Gradient accent line */}
-                          <div style={{
-                            height: 2,
-                            background: 'linear-gradient(90deg, #4ade80, #22d3ee, #8b5cf6)',
-                            borderRadius: '2px 2px 0 0',
-                          }} />
+                          {/* Header — matches QuickSettings header */}
+                          <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255, 255, 255, 0.9)', letterSpacing: 0.2 }}>
+                              Account
+                            </span>
+                          </div>
 
-                          {/* User header */}
-                          <div className="flex items-center gap-3 px-4 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                          {/* User info row — matches qs-row style */}
+                          <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
                             {user.user_metadata?.avatar_url ? (
                               <img
                                 src={user.user_metadata.avatar_url}
@@ -250,58 +253,102 @@ function App() {
                               </div>
                             )}
                             <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold text-white/90 truncate">
+                              <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: 'rgba(255, 255, 255, 0.85)' }} className="truncate">
                                 {user.user_metadata?.full_name || user.email?.split('@')[0]}
                               </p>
-                              <p className="text-[11px] text-white/40 truncate">{user.email}</p>
+                              <p style={{ margin: '1px 0 0', fontSize: 11, color: 'rgba(255, 255, 255, 0.35)' }} className="truncate">
+                                {user.email}
+                              </p>
                             </div>
                           </div>
 
-                          {/* Plan badge + Buy Credits */}
-                          <div className="px-4 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs">{isPro ? '👑' : '🎵'}</span>
-                                <span className="text-xs font-medium text-white/60">{isPro ? 'Pro Plan' : 'Free Plan'}</span>
-                              </div>
-                              <button
-                                className="text-[10px] font-semibold px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-200 hover:scale-105"
-                                style={{
-                                  background: 'linear-gradient(135deg, rgba(74,222,128,0.15), rgba(34,211,238,0.15))',
-                                  color: '#4ade80',
-                                  border: '1px solid rgba(74,222,128,0.2)',
-                                }}
-                                onClick={() => {
-                                  setShowUserMenu(false);
-                                  showUpsell('dropdown');
-                                }}
-                              >
-                                Buy Credits
-                              </button>
-                            </div>
-                          </div>
+                          {/* Separator */}
+                          <div style={{ height: 1, margin: '0 16px', background: 'rgba(255, 255, 255, 0.04)' }} />
 
-                          {/* Menu items */}
-                          <div className="py-1.5">
+                          {/* Plan row — matches qs-row */}
+                          <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                              <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255, 255, 255, 0.85)' }}>
+                                {isPro ? '👑 Pro Plan' : '🎵 Free Plan'}
+                              </span>
+                              <span style={{ fontSize: 11, color: 'rgba(255, 255, 255, 0.35)' }}>
+                                {isPro ? 'All features unlocked' : 'Upgrade for more'}
+                              </span>
+                            </div>
                             <button
-                              className="w-full px-4 py-2.5 text-left text-[13px] text-white/65 hover:bg-white/[0.04] hover:text-white transition-all duration-150 cursor-pointer flex items-center gap-3"
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 600,
+                                padding: '5px 12px',
+                                borderRadius: 8,
+                                background: 'linear-gradient(135deg, rgba(74,222,128,0.15), rgba(34,211,238,0.15))',
+                                color: '#4ade80',
+                                border: '1px solid rgba(74,222,128,0.2)',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(74,222,128,0.25), rgba(34,211,238,0.25))'; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(74,222,128,0.15), rgba(34,211,238,0.15))'; }}
+                              onClick={() => {
+                                setShowUserMenu(false);
+                                showUpsell('dropdown');
+                              }}
+                            >
+                              {isPro ? 'Buy Credits' : 'Upgrade'}
+                            </button>
+                          </div>
+
+                          {/* Separator */}
+                          <div style={{ height: 1, margin: '0 16px', background: 'rgba(255, 255, 255, 0.04)' }} />
+
+                          {/* Menu items — matches qs-row click style */}
+                          <div style={{ padding: '6px 0' }}>
+                            <button
+                              style={{
+                                width: '100%',
+                                padding: '10px 16px',
+                                background: 'transparent',
+                                border: 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 10,
+                                fontSize: 13,
+                                fontWeight: 500,
+                                color: 'rgba(255, 255, 255, 0.85)',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s',
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
                               onClick={() => {
                                 setShowUserMenu(false);
                                 setShowProfile(true);
                               }}
                             >
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                                 <circle cx="12" cy="7" r="4" />
                               </svg>
                               {t('profile.myProfile')}
                             </button>
 
-                            <div style={{ height: 1, margin: '2px 16px', background: 'rgba(255,255,255,0.04)' }} />
+                            <div style={{ height: 1, margin: '0 16px', background: 'rgba(255, 255, 255, 0.04)' }} />
 
                             <button
-                              className="w-full px-4 py-2.5 text-left text-[13px] flex items-center gap-3 transition-all duration-150 cursor-pointer"
-                              style={{ color: 'rgba(255,120,120,0.7)' }}
+                              style={{
+                                width: '100%',
+                                padding: '10px 16px',
+                                background: 'transparent',
+                                border: 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 10,
+                                fontSize: 13,
+                                fontWeight: 500,
+                                color: 'rgba(255, 120, 120, 0.7)',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s',
+                              }}
                               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,80,80,0.06)'; e.currentTarget.style.color = '#ff6b6b'; }}
                               onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,120,120,0.7)'; }}
                               onClick={async () => {
@@ -309,7 +356,7 @@ function App() {
                                 await signOut();
                               }}
                             >
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
                                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                                 <polyline points="16 17 21 12 16 7" />
                                 <line x1="21" y1="12" x2="9" y2="12" />
