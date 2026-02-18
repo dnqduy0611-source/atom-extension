@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCredits } from '../../hooks/useCredits';
 import { useAuth } from '../../hooks/useAuth';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useLofiStore } from '../../store/useLofiStore';
 
 /**
  * ProUpgradeModal — Premium subscription + Credit Packs.
@@ -52,18 +53,15 @@ const CREDIT_PACKS = [
 // PayOS checkout URL for Vietnamese users
 const PAYOS_CHECKOUT_URL = 'https://lofi.amonexus.com/checkout';
 
-function isVietnamese(): boolean {
-    if (typeof navigator === 'undefined') return false;
-    const lang = navigator.language || (navigator as any).userLanguage || '';
-    return lang.startsWith('vi');
-}
+// isVietnamese is now determined inside the component using app locale
 
 export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
     const [billing, setBilling] = useState<'monthly' | 'yearly'>('yearly');
     const { user } = useAuth();
     const { balance } = useCredits();
     const { t } = useTranslation();
-    const isVN = isVietnamese();
+    const appLocale = useLofiStore((s) => s.locale);
+    const isVN = appLocale === 'vi';
 
     const monthlyPrice = isVN ? '49.000₫' : '$1.99';
     const yearlyPrice = isVN ? '29.000₫' : '$1.25';
