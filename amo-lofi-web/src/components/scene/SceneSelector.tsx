@@ -387,30 +387,52 @@ export function SceneSelector({ onClose }: Props) {
                                     </button>
                                 </div>
 
-                                {/* Add menu — outside overflow container */}
+                                {/* Add menu — cinematic style */}
                                 {showAddMenu && isPro && (
-                                    <div
-                                        className="flex gap-1.5 mt-1.5"
-                                    >
+                                    <div style={{
+                                        display: 'flex',
+                                        gap: '6px',
+                                        marginTop: '6px',
+                                    }}>
                                         <button
-                                            className="flex-1 py-2 rounded-lg text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer hover:scale-[1.01]"
+                                            className="transition-all duration-200 cursor-pointer"
                                             style={{
-                                                background: 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(59,130,246,0.12))',
-                                                border: '1px solid rgba(139,92,246,0.2)',
-                                                color: 'rgba(196,181,253,0.9)',
+                                                flex: 1,
+                                                padding: '8px 6px',
+                                                borderRadius: '8px',
+                                                background: 'rgba(255,255,255,0.04)',
+                                                border: '1px solid rgba(255,255,255,0.06)',
+                                                color: 'rgba(255,255,255,0.7)',
+                                                fontSize: '10px',
+                                                fontWeight: 500,
+                                                letterSpacing: '0.3px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '5px',
                                             }}
                                             onClick={() => { setShowAddMenu(false); setShowAIBgGen(true); }}
                                         >
-                                            <span>🤖</span>
+                                            <span style={{ fontSize: '11px', opacity: 0.7 }}>✦</span>
                                             <span>AI Generate</span>
-                                            <span style={{ opacity: 0.4, fontSize: '10px' }}>10 cr</span>
+                                            <span style={{ opacity: 0.3, fontSize: '9px' }}>10 cr</span>
                                         </button>
                                         <button
-                                            className="flex-1 py-2 rounded-lg text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer hover:scale-[1.01]"
+                                            className="transition-all duration-200 cursor-pointer"
                                             style={{
-                                                background: 'rgba(59,130,246,0.08)',
-                                                border: '1px solid rgba(59,130,246,0.2)',
-                                                color: 'rgba(96,165,250,0.9)',
+                                                flex: 1,
+                                                padding: '8px 6px',
+                                                borderRadius: '8px',
+                                                background: 'rgba(255,255,255,0.04)',
+                                                border: '1px solid rgba(255,255,255,0.06)',
+                                                color: 'rgba(255,255,255,0.7)',
+                                                fontSize: '10px',
+                                                fontWeight: 500,
+                                                letterSpacing: '0.3px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '5px',
                                                 opacity: bgFull ? 0.3 : 1,
                                             }}
                                             onClick={() => {
@@ -419,9 +441,9 @@ export function SceneSelector({ onClose }: Props) {
                                                 cloudFileRef.current?.click();
                                             }}
                                         >
-                                            <span>📤</span>
+                                            <span style={{ fontSize: '11px', opacity: 0.7 }}>↑</span>
                                             <span>Upload</span>
-                                            <span style={{ opacity: 0.4, fontSize: '10px' }}>1 cr</span>
+                                            <span style={{ opacity: 0.3, fontSize: '9px' }}>1 cr</span>
                                         </button>
                                     </div>
                                 )}
