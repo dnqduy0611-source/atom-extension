@@ -421,8 +421,8 @@ function App() {
 
               {/* Panel container — Scenes (centered) */}
               {activePanel === 'scenes' && (
-                <div className="absolute z-40 top-1/2 left-20 -translate-y-1/2 mobile-panel-container">
-                  <div className="animate-panel-in">
+                <div className="absolute z-40 top-4 bottom-16 left-20 flex flex-col mobile-panel-container">
+                  <div className="animate-panel-in flex flex-col max-h-full my-auto">
                     <SceneSelector onClose={() => togglePanel('scenes')} />
                   </div>
                 </div>
