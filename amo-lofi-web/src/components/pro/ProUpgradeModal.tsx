@@ -55,7 +55,6 @@ const CREDIT_PACKS = [
 
 export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
     const [billing, setBilling] = useState<'monthly' | 'yearly'>('yearly');
-    const [phoneNumber, setPhoneNumber] = useState('');
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [checkoutError, setCheckoutError] = useState('');
     const { user } = useAuth();
@@ -79,8 +78,9 @@ export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
     const handleCheckout = async (planId: string) => {
         // Vietnamese users → PayOS via create-order Edge Function
         if (isVN) {
-            if (!phoneNumber || !/^0\d{9}$/.test(phoneNumber)) {
-                setCheckoutError('Vui lòng nhập số điện thoại hợp lệ (10 số, bắt đầu bằng 0)');
+            const userPhone = profile?.phone || '';
+            if (!userPhone || !/^0\d{9}$/.test(userPhone)) {
+                setCheckoutError('Vui lòng cập nhật số điện thoại trong hồ sơ trước khi thanh toán.');
                 return;
             }
             setCheckoutLoading(true);
@@ -93,7 +93,7 @@ export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${session?.access_token}`,
                     },
-                    body: JSON.stringify({ product_type: planId, phone_number: phoneNumber }),
+                    body: JSON.stringify({ product_type: planId, phone_number: userPhone }),
                 });
                 const data = await res.json();
                 if (!res.ok || !data.success) {
@@ -196,34 +196,9 @@ export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
                             ))}
                         </ul>
 
-                        {/* Phone number input for VN users (PayOS requirement) */}
-                        {isVN && (
-                            <div style={{ marginBottom: 12 }}>
-                                <input
-                                    type="tel"
-                                    placeholder="Số điện thoại (VD: 0912345678)"
-                                    value={phoneNumber}
-                                    onChange={(e) => { setPhoneNumber(e.target.value); setCheckoutError(''); }}
-                                    maxLength={10}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px 14px',
-                                        borderRadius: 10,
-                                        border: checkoutError ? '1px solid rgba(255,80,80,0.5)' : '1px solid rgba(255,255,255,0.1)',
-                                        background: 'rgba(255,255,255,0.04)',
-                                        color: 'white',
-                                        fontSize: 13,
-                                        outline: 'none',
-                                        boxSizing: 'border-box',
-                                        transition: 'border 0.2s',
-                                    }}
-                                    onFocus={(e) => { e.target.style.borderColor = 'rgba(16,185,129,0.4)'; }}
-                                    onBlur={(e) => { e.target.style.borderColor = checkoutError ? 'rgba(255,80,80,0.5)' : 'rgba(255,255,255,0.1)'; }}
-                                />
-                                {checkoutError && (
-                                    <p style={{ fontSize: 11, color: '#ff6b6b', margin: '6px 0 0', lineHeight: 1.3 }}>{checkoutError}</p>
-                                )}
-                            </div>
+                        {/* Checkout error display */}
+                        {checkoutError && (
+                            <p style={{ fontSize: 11, color: '#ff6b6b', margin: '0 0 8px', lineHeight: 1.3 }}>{checkoutError}</p>
                         )}
 
                         <button
