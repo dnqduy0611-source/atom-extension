@@ -24,9 +24,11 @@ CREATE TABLE IF NOT EXISTS orders (
 -- RLS: Users can only see their own orders
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own orders" ON orders;
 CREATE POLICY "Users can view own orders" ON orders
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own orders" ON orders;
 CREATE POLICY "Users can insert own orders" ON orders
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
