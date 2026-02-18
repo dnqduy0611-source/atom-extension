@@ -85,6 +85,7 @@ export function AIBackgroundGenerator({ sceneName, sceneDescription, sceneId, on
                 maxHeight: 'calc(100vh - 80px)',
                 display: 'flex',
                 flexDirection: 'column' as const,
+                overflow: 'hidden',
             }}
         >
             {/* Header */}

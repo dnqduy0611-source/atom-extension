@@ -39,7 +39,7 @@ export function SceneSelector({ onClose }: Props) {
     // Custom data
     const { wallpapers: customWallpapers, removeWallpaper } = useCustomWallpapers(activeSceneId);
     const { customScenes, addCustomScene, removeCustomScene } = useCustomScenes();
-    const { backgrounds: cloudBgs, upload: uploadCloudBg, remove: removeCloudBg, isFull: bgFull } = useBackgrounds();
+    const { backgrounds: cloudBgs, upload: uploadCloudBg, remove: removeCloudBg, isFull: bgFull, refresh: refreshBgs } = useBackgrounds();
     const { refresh: refreshCredits } = useCredits();
     const [showCreator, setShowCreator] = useState(false);
     const [showAIBgGen, setShowAIBgGen] = useState(false);
@@ -108,6 +108,7 @@ export function SceneSelector({ onClose }: Props) {
                 onClose={() => setShowAIBgGen(false)}
                 onGenerated={async () => {
                     await refreshCredits();
+                    await refreshBgs();
                 }}
             />
         );
