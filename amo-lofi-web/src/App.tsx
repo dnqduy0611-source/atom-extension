@@ -24,7 +24,9 @@ import { ProUpgradeModal } from './components/pro/ProUpgradeModal';
 import { useProGate } from './hooks/useProGate';
 import { useTranslation } from './hooks/useTranslation';
 import { useAuth } from './hooks/useAuth';
+import { useProfile } from './hooks/useProfile';
 import { LoginModal } from './components/auth/LoginModal';
+import { OnboardingModal } from './components/auth/OnboardingModal';
 import { useState, useRef, useEffect } from 'react';
 import { useSyncBridge } from './hooks/useSyncBridge';
 
@@ -46,11 +48,22 @@ function App() {
   const { isPro, upsellVisible, showUpsell, dismissUpsell } = useProGate();
   const { t } = useTranslation();
   const { user, isLoading: authLoading, signOut } = useAuth();
+  const { profile, isLoading: profileLoading, refresh: refreshProfile } = useProfile();
   useSyncBridge(user?.id); // Broadcast state to Extension via Supabase
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [onboardingDone, setOnboardingDone] = useState(true); // default true to avoid flash
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Show onboarding for new users who haven't completed it
+  useEffect(() => {
+    if (user && !profileLoading && profile) {
+      setOnboardingDone(profile.onboarding_completed);
+    } else if (!user) {
+      setOnboardingDone(true);
+    }
+  }, [user, profile, profileLoading]);
 
   // Close user menu on outside click
   useEffect(() => {
@@ -474,6 +487,11 @@ function App() {
 
       {/* ═══ User Profile Modal ═══ */}
       {showProfile && <UserProfile onClose={() => setShowProfile(false)} onUpgrade={() => showUpsell('profile')} />}
+
+      {/* ═══ Onboarding Modal — shown once for new users ═══ */}
+      {user && !onboardingDone && !profileLoading && (
+        <OnboardingModal onComplete={() => { setOnboardingDone(true); refreshProfile(); }} />
+      )}
     </>
   );
 }
