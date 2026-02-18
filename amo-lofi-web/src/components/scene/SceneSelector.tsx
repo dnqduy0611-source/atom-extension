@@ -37,15 +37,16 @@ export function SceneSelector({ onClose }: Props) {
     const [showHidden, setShowHidden] = useState(false);
 
     // Custom data
-    const { wallpapers: customWallpapers, addWallpaper, removeWallpaper, isFull } = useCustomWallpapers(activeSceneId);
+    const { wallpapers: customWallpapers, removeWallpaper } = useCustomWallpapers(activeSceneId);
     const { customScenes, addCustomScene, removeCustomScene } = useCustomScenes();
-    const { backgrounds: cloudBgs, upload: uploadCloudBg, remove: removeCloudBg, count: bgCount, isFull: bgFull } = useBackgrounds();
+    const { backgrounds: cloudBgs, upload: uploadCloudBg, remove: removeCloudBg, isFull: bgFull } = useBackgrounds();
     const { refresh: refreshCredits } = useCredits();
     const [showCreator, setShowCreator] = useState(false);
     const [showAIBgGen, setShowAIBgGen] = useState(false);
+    const [showAddMenu, setShowAddMenu] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const cloudFileRef = useRef<HTMLInputElement>(null);
 
     // Merge built-in + custom scenes
@@ -62,19 +63,7 @@ export function SceneSelector({ onClose }: Props) {
         (s) => hiddenSceneIds.includes(s.id)
     );
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        setUploadError(null);
-        try {
-            await addWallpaper(file);
-        } catch (err) {
-            setUploadError((err as Error).message);
-            setTimeout(() => setUploadError(null), 3000);
-        }
-        // Reset input so the same file can be re-selected
-        if (fileInputRef.current) fileInputRef.current.value = '';
-    };
+
 
     // Cloud background upload (Pro, costs 1 credit)
     const handleCloudUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -161,14 +150,7 @@ export function SceneSelector({ onClose }: Props) {
                 )
             }
 
-            {/* Hidden file inputs */}
-            <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={handleFileUpload}
-                className="hidden"
-            />
+
             <input
                 ref={cloudFileRef}
                 type="file"
@@ -375,76 +357,75 @@ export function SceneSelector({ onClose }: Props) {
                                         );
                                     })}
 
-                                    {/* Upload local wallpaper button (existing) */}
-                                    <button
-                                        className="shrink-0 w-16 h-10 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer group/add"
-                                        style={{
-                                            border: !isPro
-                                                ? '2px solid rgba(245,158,11,0.25)'
-                                                : '2px dashed rgba(255,255,255,0.2)',
-                                            background: !isPro
-                                                ? 'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(236,72,153,0.08))'
-                                                : 'rgba(255,255,255,0.03)',
-                                            opacity: isFull && isPro ? 0.3 : 1,
-                                        }}
-                                        onClick={() => {
-                                            if (!isPro) {
-                                                showUpsell('custom_wallpaper');
-                                                return;
-                                            }
-                                            if (isFull) return;
-                                            fileInputRef.current?.click();
-                                        }}
-                                        title={!isPro ? t('scene.proFeature') : isFull ? t('scene.maxWallpapers') : t('scene.addWallpaper')}
-                                    >
-                                        <span className="text-xs transition-transform group-hover/add:scale-110" style={{ color: !isPro ? '#f59e0b' : 'var(--theme-text-muted)' }}>
-                                            {!isPro ? '👑' : '+'}
-                                        </span>
-                                    </button>
-
-                                    {/* Cloud upload button (Pro, 1 credit) */}
-                                    {isPro && (
+                                    {/* Add background button (single + button with dropdown) */}
+                                    <div className="shrink-0 relative">
                                         <button
-                                            className="shrink-0 w-16 h-10 rounded-lg flex flex-col items-center justify-center transition-all duration-200 cursor-pointer group/cloud"
+                                            className="w-16 h-10 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer group/add"
                                             style={{
-                                                border: '2px dashed rgba(59,130,246,0.3)',
-                                                background: 'rgba(59,130,246,0.06)',
-                                                opacity: bgFull ? 0.3 : 1,
+                                                border: !isPro
+                                                    ? '2px solid rgba(245,158,11,0.25)'
+                                                    : '2px dashed rgba(255,255,255,0.2)',
+                                                background: !isPro
+                                                    ? 'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(236,72,153,0.08))'
+                                                    : 'rgba(255,255,255,0.03)',
                                             }}
                                             onClick={() => {
-                                                if (bgFull) return;
-                                                cloudFileRef.current?.click();
+                                                if (!isPro) {
+                                                    showUpsell('custom_wallpaper');
+                                                    return;
+                                                }
+                                                setShowAddMenu((v) => !v);
                                             }}
-                                            title={bgFull ? `Max ${50} backgrounds` : `Upload to cloud (1 credit) • ${bgCount}/50`}
+                                            title={!isPro ? t('scene.proFeature') : t('scene.addWallpaper')}
                                         >
                                             {isUploading ? (
-                                                <span className="w-3 h-3 border border-blue-400/50 border-t-blue-400 rounded-full animate-spin" />
+                                                <span className="w-3 h-3 border border-white/40 border-t-white rounded-full animate-spin" />
                                             ) : (
-                                                <>
-                                                    <span className="text-[9px] transition-transform group-hover/cloud:scale-110" style={{ color: 'rgba(96,165,250,0.8)' }}>☁️</span>
-                                                    <span className="text-[7px] font-medium" style={{ color: 'rgba(96,165,250,0.6)' }}>1cr</span>
-                                                </>
+                                                <span className="text-xs transition-transform group-hover/add:scale-110" style={{ color: !isPro ? '#f59e0b' : 'var(--theme-text-muted)' }}>
+                                                    {!isPro ? '👑' : '+'}
+                                                </span>
                                             )}
                                         </button>
-                                    )}
-                                </div>
 
-                                {/* AI Background generate button */}
-                                {isPro && (
-                                    <button
-                                        className="w-full mt-1.5 py-1.5 rounded-lg text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer hover:scale-[1.01]"
-                                        style={{
-                                            background: 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(59,130,246,0.12))',
-                                            border: '1px solid rgba(139,92,246,0.2)',
-                                            color: 'rgba(196,181,253,0.9)',
-                                        }}
-                                        onClick={() => setShowAIBgGen(true)}
-                                    >
-                                        <span>🤖</span>
-                                        <span>AI Background</span>
-                                        <span style={{ opacity: 0.5, fontSize: '10px' }}>10 cr</span>
-                                    </button>
-                                )}
+                                        {/* Dropdown menu */}
+                                        {showAddMenu && isPro && (
+                                            <div
+                                                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 rounded-xl overflow-hidden z-50"
+                                                style={{
+                                                    background: 'rgba(22,22,28,0.95)',
+                                                    border: '1px solid rgba(255,255,255,0.1)',
+                                                    boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                                                    backdropFilter: 'blur(12px)',
+                                                    minWidth: 160,
+                                                }}
+                                            >
+                                                <button
+                                                    className="w-full px-3 py-2.5 flex items-center gap-2 text-[11px] font-medium transition-colors hover:bg-white/8 cursor-pointer"
+                                                    style={{ color: 'rgba(196,181,253,0.9)' }}
+                                                    onClick={() => { setShowAddMenu(false); setShowAIBgGen(true); }}
+                                                >
+                                                    <span>🤖</span>
+                                                    <span>AI Generate</span>
+                                                    <span style={{ opacity: 0.4, fontSize: '10px', marginLeft: 'auto' }}>10 cr</span>
+                                                </button>
+                                                <div style={{ height: 1, background: 'rgba(255,255,255,0.06)' }} />
+                                                <button
+                                                    className="w-full px-3 py-2.5 flex items-center gap-2 text-[11px] font-medium transition-colors hover:bg-white/8 cursor-pointer"
+                                                    style={{ color: 'rgba(96,165,250,0.9)', opacity: bgFull ? 0.3 : 1 }}
+                                                    onClick={() => {
+                                                        setShowAddMenu(false);
+                                                        if (bgFull) return;
+                                                        cloudFileRef.current?.click();
+                                                    }}
+                                                >
+                                                    <span>📤</span>
+                                                    <span>Upload</span>
+                                                    <span style={{ opacity: 0.4, fontSize: '10px', marginLeft: 'auto' }}>1 cr</span>
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </>)}
                         </div>
                     );
