@@ -105,7 +105,7 @@ export function SceneSelector({ onClose }: Props) {
                 sceneDescription={''}
 
                 sceneId={activeSceneId}
-                onClose={() => setShowAIBgGen(false)}
+                onClose={() => { setShowAIBgGen(false); refreshBgs(); }}
                 onGenerated={async () => {
                     await refreshCredits();
                     await refreshBgs();

@@ -49,7 +49,7 @@ export function AIBackgroundGenerator({ sceneName, sceneDescription, sceneId, on
             const result = await generate(sceneName, description, style, sceneId);
             setLastPrompt(result.imagePrompt);
             await refreshBgs();
-            onGenerated?.();
+            await onGenerated?.();
             setSaved(true);
         } catch {
             // Error already set in hook
