@@ -44,22 +44,42 @@ const PREMIUM_FEATURE_KEYS = [
 ];
 
 const CREDIT_PACKS = [
-    { id: 'credits_50', amount: 50, price: '$0.99', perSceneKey: 'pro.scenes5', popular: false },
-    { id: 'credits_150', amount: 150, price: '$1.99', perSceneKey: 'pro.scenes15', popular: true },
-    { id: 'credits_500', amount: 500, price: '$4.99', perSceneKey: 'pro.scenes50', popular: false },
+    { id: 'credits_50', amount: 50, price: '$0.99', priceVN: '25.000₫', perSceneKey: 'pro.scenes5', popular: false },
+    { id: 'credits_150', amount: 150, price: '$1.99', priceVN: '49.000₫', perSceneKey: 'pro.scenes15', popular: true },
+    { id: 'credits_500', amount: 500, price: '$4.99', priceVN: '119.000₫', perSceneKey: 'pro.scenes50', popular: false },
 ];
+
+// PayOS checkout URL for Vietnamese users
+const PAYOS_CHECKOUT_URL = 'https://lofi.amonexus.com/checkout';
+
+function isVietnamese(): boolean {
+    if (typeof navigator === 'undefined') return false;
+    const lang = navigator.language || (navigator as any).userLanguage || '';
+    return lang.startsWith('vi');
+}
 
 export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
     const [billing, setBilling] = useState<'monthly' | 'yearly'>('yearly');
     const { user } = useAuth();
     const { balance } = useCredits();
     const { t } = useTranslation();
+    const isVN = isVietnamese();
 
-    const monthlyPrice = '$1.99';
-    const yearlyPrice = '$1.25';
-    const yearlyTotal = '$14.99';
+    const monthlyPrice = isVN ? '49.000₫' : '$1.99';
+    const yearlyPrice = isVN ? '29.000₫' : '$1.25';
+    const yearlyTotal = isVN ? '349.000₫' : '$14.99';
 
     const handleCheckout = (planId: string) => {
+        // Vietnamese users → PayOS checkout
+        if (isVN) {
+            const payosUrl = new URL(PAYOS_CHECKOUT_URL);
+            payosUrl.searchParams.set('plan', planId);
+            window.open(payosUrl.toString(), '_blank');
+            onSelectPlan?.(planId);
+            return;
+        }
+
+        // International users → LemonSqueezy
         const url = CHECKOUT_URLS[planId];
         if (!url || url.includes('TODO')) {
             onSelectPlan?.(planId);
@@ -67,7 +87,6 @@ export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
             return;
         }
 
-        // Append user_id as custom data for webhook to identify user
         const checkoutUrl = new URL(url);
         if (user) {
             checkoutUrl.searchParams.set('checkout[custom][user_id]', user.id);
@@ -171,7 +190,7 @@ export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
                                         <span className="pum-pack-scenes">{t(pack.perSceneKey as any)}</span>
                                     </div>
                                     <div className="pum-pack-right">
-                                        <span className="pum-pack-price">{pack.price}</span>
+                                        <span className="pum-pack-price">{isVN ? pack.priceVN : pack.price}</span>
                                         {pack.popular && <span className="pum-popular-tag">{t('pro.popular')}</span>}
                                     </div>
                                 </button>
