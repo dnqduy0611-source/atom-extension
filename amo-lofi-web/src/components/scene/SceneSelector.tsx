@@ -548,7 +548,6 @@ export function SceneSelector({ onClose }: Props) {
                     width: 380px;
                     border-radius: 16px;
                     backdrop-filter: blur(24px) saturate(1.4);
-                    overflow: hidden;
                     font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
                 }
                 .ss-header {
