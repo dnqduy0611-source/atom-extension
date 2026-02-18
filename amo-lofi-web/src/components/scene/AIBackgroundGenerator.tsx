@@ -82,6 +82,9 @@ export function AIBackgroundGenerator({ sceneName, sceneDescription, sceneId, on
                 backdropFilter: 'blur(24px) saturate(1.2)',
                 border: '1px solid rgba(255,255,255,0.06)',
                 boxShadow: '0 24px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)',
+                maxHeight: 'calc(100vh - 80px)',
+                display: 'flex',
+                flexDirection: 'column' as const,
             }}
         >
             {/* Header */}
@@ -140,7 +143,7 @@ export function AIBackgroundGenerator({ sceneName, sceneDescription, sceneId, on
                 </button>
             </div>
 
-            <div style={{ padding: '14px 16px 16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ padding: '14px 16px 16px', display: 'flex', flexDirection: 'column', gap: '14px', overflowY: 'auto' as const, flex: 1, minHeight: 0 }}>
                 {/* Scene badge */}
                 <div style={{
                     padding: '10px 14px',
@@ -286,7 +289,7 @@ export function AIBackgroundGenerator({ sceneName, sceneDescription, sceneId, on
                     <div style={{
                         borderRadius: '12px',
                         overflow: 'hidden',
-                        aspectRatio: '16/9',
+                        maxHeight: '180px',
                         background: 'rgba(0,0,0,0.4)',
                         position: 'relative' as const,
                         border: '1px solid rgba(255,255,255,0.06)',
