@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useCredits } from '../../hooks/useCredits';
 import { useAuth } from '../../hooks/useAuth';
+import { useProfile } from '../../hooks/useProfile';
 import { useTranslation } from '../../hooks/useTranslation';
-import { useLofiStore } from '../../store/useLofiStore';
 import { supabase, SUPABASE_URL } from '../../lib/supabaseClient';
 
 /**
@@ -59,10 +59,18 @@ export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [checkoutError, setCheckoutError] = useState('');
     const { user } = useAuth();
+    const { profile } = useProfile();
     const { balance } = useCredits();
     const { t } = useTranslation();
-    const appLocale = useLofiStore((s) => s.locale);
-    const isVN = appLocale === 'vi';
+
+    // Detect VN user by country (from profile DB) + timezone fallback
+    const isVN = useMemo(() => {
+        // Priority 1: Country from profile (set during onboarding)
+        if (profile?.country) return profile.country === 'VN';
+        // Priority 2: Timezone fallback (before onboarding completes)
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        return tz === 'Asia/Ho_Chi_Minh' || tz === 'Asia/Saigon';
+    }, [profile?.country]);
 
     const monthlyPrice = isVN ? '49.000₫' : '$1.99';
     const yearlyPrice = isVN ? '29.000₫' : '$1.25';

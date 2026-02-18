@@ -39,9 +39,9 @@ export function OnboardingModal({ onComplete }: Props) {
         user?.user_metadata?.full_name || ''
     );
     const [country, setCountry] = useState(() => {
-        // Auto-detect: timezone Asia/Ho_Chi_Minh or language vi → VN
+        // Auto-detect: timezone Asia/Ho_Chi_Minh → VN (no longer uses browser language)
         const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        if (tz === 'Asia/Ho_Chi_Minh' || tz === 'Asia/Saigon' || isVi) return 'VN';
+        if (tz === 'Asia/Ho_Chi_Minh' || tz === 'Asia/Saigon') return 'VN';
         return '';
     });
     const [phone, setPhone] = useState('');

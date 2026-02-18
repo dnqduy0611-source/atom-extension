@@ -7,7 +7,10 @@ import { useCustomWallpapers } from '../../hooks/useCustomWallpapers';
 import { useCustomScenes } from '../../hooks/useCustomScenes';
 import { useProGate } from '../../hooks/useProGate';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useBackgrounds } from '../../hooks/useBackgrounds';
+import { useCredits } from '../../hooks/useCredits';
 import { SceneCreator } from './SceneCreator';
+import { AIBackgroundGenerator } from './AIBackgroundGenerator';
 
 /**
  * SceneSelector — Beeziee-inspired vertical gallery.
@@ -36,9 +39,14 @@ export function SceneSelector({ onClose }: Props) {
     // Custom data
     const { wallpapers: customWallpapers, addWallpaper, removeWallpaper, isFull } = useCustomWallpapers(activeSceneId);
     const { customScenes, addCustomScene, removeCustomScene } = useCustomScenes();
+    const { backgrounds: cloudBgs, upload: uploadCloudBg, remove: removeCloudBg, count: bgCount, isFull: bgFull } = useBackgrounds();
+    const { refresh: refreshCredits } = useCredits();
     const [showCreator, setShowCreator] = useState(false);
+    const [showAIBgGen, setShowAIBgGen] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const cloudFileRef = useRef<HTMLInputElement>(null);
 
     // Merge built-in + custom scenes
     const allScenes: (Scene & { isCustom?: boolean })[] = [
@@ -68,11 +76,50 @@ export function SceneSelector({ onClose }: Props) {
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
+    // Cloud background upload (Pro, costs 1 credit)
+    const handleCloudUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploadError(null);
+        setIsUploading(true);
+        try {
+            await uploadCloudBg(file, undefined, activeSceneId);
+            await refreshCredits();
+        } catch (err) {
+            const code = (err as { code?: string }).code;
+            if (code === 'NOT_PRO') {
+                showUpsell('cloud_background');
+            } else {
+                setUploadError((err as Error).message);
+                setTimeout(() => setUploadError(null), 4000);
+            }
+        } finally {
+            setIsUploading(false);
+            if (cloudFileRef.current) cloudFileRef.current.value = '';
+        }
+    };
+
     if (showCreator) {
         return (
             <SceneCreator
                 onSave={addCustomScene}
                 onClose={() => setShowCreator(false)}
+            />
+        );
+    }
+
+    if (showAIBgGen) {
+        const activeScene = allScenes.find((s) => s.id === activeSceneId);
+        return (
+            <AIBackgroundGenerator
+                sceneName={activeScene?.name || ''}
+                sceneDescription={''}
+
+                sceneId={activeSceneId}
+                onClose={() => setShowAIBgGen(false)}
+                onGenerated={async () => {
+                    await refreshCredits();
+                }}
             />
         );
     }
@@ -114,12 +161,19 @@ export function SceneSelector({ onClose }: Props) {
                 )
             }
 
-            {/* Hidden file input */}
+            {/* Hidden file inputs */}
             <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 onChange={handleFileUpload}
+                className="hidden"
+            />
+            <input
+                ref={cloudFileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleCloudUpload}
                 className="hidden"
             />
 
@@ -220,7 +274,7 @@ export function SceneSelector({ onClose }: Props) {
                             </button>
 
                             {/* ── Wallpaper thumbnail strip (built-in + custom) ── */}
-                            {isActive && (
+                            {isActive && (<>
                                 <div
                                     className="flex gap-1.5 px-2 py-2 overflow-x-auto custom-scrollbar rounded-xl mt-1.5"
                                     style={{ background: 'rgba(0,0,0,0.25)' }}
@@ -284,7 +338,44 @@ export function SceneSelector({ onClose }: Props) {
                                         );
                                     })}
 
-                                    {/* Upload button (Pro-gated) */}
+                                    {/* Cloud backgrounds for this scene */}
+                                    {cloudBgs.filter(bg => bg.signedUrl).map((bg) => {
+                                        const isSelected = activeWallpaperId === `cloud_${bg.id}`;
+                                        return (
+                                            <div key={`cloud_${bg.id}`} className="shrink-0 relative group/cb">
+                                                <button
+                                                    onClick={() => setWallpaper(`cloud_${bg.id}`)}
+                                                    className="w-16 h-10 rounded-lg overflow-hidden bg-cover bg-center transition-all duration-200 cursor-pointer hover:opacity-100"
+                                                    style={{
+                                                        backgroundImage: `url(${bg.signedUrl})`,
+                                                        border: isSelected
+                                                            ? `2px solid ${sceneAccent}`
+                                                            : '2px solid rgba(255,255,255,0.1)',
+                                                        opacity: isSelected ? 1 : 0.55,
+                                                        boxShadow: isSelected
+                                                            ? `0 0 8px color-mix(in srgb, ${sceneAccent} 40%, transparent)`
+                                                            : 'none',
+                                                    }}
+                                                    title={bg.name}
+                                                />
+                                                {/* Cloud badge */}
+                                                <span className="absolute bottom-0.5 right-0.5 text-[8px] opacity-60">☁️</span>
+                                                {/* Delete */}
+                                                <button
+                                                    className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-black/70 flex items-center justify-center opacity-0 group-hover/cb:opacity-100 transition-opacity hover:bg-red-500 cursor-pointer z-10"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        removeCloudBg(bg.id);
+                                                        if (activeWallpaperId === `cloud_${bg.id}`) setWallpaper(null);
+                                                    }}
+                                                >
+                                                    <icons.ui.close size={8} color="white" />
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+
+                                    {/* Upload local wallpaper button (existing) */}
                                     <button
                                         className="shrink-0 w-16 h-10 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer group/add"
                                         style={{
@@ -310,8 +401,51 @@ export function SceneSelector({ onClose }: Props) {
                                             {!isPro ? '👑' : '+'}
                                         </span>
                                     </button>
+
+                                    {/* Cloud upload button (Pro, 1 credit) */}
+                                    {isPro && (
+                                        <button
+                                            className="shrink-0 w-16 h-10 rounded-lg flex flex-col items-center justify-center transition-all duration-200 cursor-pointer group/cloud"
+                                            style={{
+                                                border: '2px dashed rgba(59,130,246,0.3)',
+                                                background: 'rgba(59,130,246,0.06)',
+                                                opacity: bgFull ? 0.3 : 1,
+                                            }}
+                                            onClick={() => {
+                                                if (bgFull) return;
+                                                cloudFileRef.current?.click();
+                                            }}
+                                            title={bgFull ? `Max ${50} backgrounds` : `Upload to cloud (1 credit) • ${bgCount}/50`}
+                                        >
+                                            {isUploading ? (
+                                                <span className="w-3 h-3 border border-blue-400/50 border-t-blue-400 rounded-full animate-spin" />
+                                            ) : (
+                                                <>
+                                                    <span className="text-[9px] transition-transform group-hover/cloud:scale-110" style={{ color: 'rgba(96,165,250,0.8)' }}>☁️</span>
+                                                    <span className="text-[7px] font-medium" style={{ color: 'rgba(96,165,250,0.6)' }}>1cr</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
                                 </div>
-                            )}
+
+                                {/* AI Background generate button */}
+                                {isPro && (
+                                    <button
+                                        className="w-full mt-1.5 py-1.5 rounded-lg text-[11px] font-medium flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer hover:scale-[1.01]"
+                                        style={{
+                                            background: 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(59,130,246,0.12))',
+                                            border: '1px solid rgba(139,92,246,0.2)',
+                                            color: 'rgba(196,181,253,0.9)',
+                                        }}
+                                        onClick={() => setShowAIBgGen(true)}
+                                    >
+                                        <span>🤖</span>
+                                        <span>AI Background</span>
+                                        <span style={{ opacity: 0.5, fontSize: '10px' }}>10 cr</span>
+                                    </button>
+                                )}
+                            </>)}
                         </div>
                     );
                 })}
