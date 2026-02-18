@@ -1,31 +1,111 @@
 /**
- * UserProfile — Beeziee-style profile modal
+ * UserProfile — Profile modal with editable fields
  *
  * Shows user avatar, welcome message, plan status,
- * user info, linked Google account, and sign out.
+ * editable user info (name, country, phone), linked accounts, and sign out.
+ * Email is read-only (from Google account).
  */
 
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useProGate } from '../../hooks/useProGate';
+import { useProfile } from '../../hooks/useProfile';
 import { useTranslation } from '../../hooks/useTranslation';
+import { supabase } from '../../lib/supabaseClient';
 
 interface Props {
     onClose: () => void;
     onUpgrade: () => void;
 }
 
+const COUNTRIES = [
+    { code: 'VN', label: '🇻🇳 Việt Nam' },
+    { code: 'US', label: '🇺🇸 United States' },
+    { code: 'GB', label: '🇬🇧 United Kingdom' },
+    { code: 'JP', label: '🇯🇵 Japan' },
+    { code: 'KR', label: '🇰🇷 South Korea' },
+    { code: 'SG', label: '🇸🇬 Singapore' },
+    { code: 'AU', label: '🇦🇺 Australia' },
+    { code: 'DE', label: '🇩🇪 Germany' },
+    { code: 'FR', label: '🇫🇷 France' },
+    { code: 'CA', label: '🇨🇦 Canada' },
+    { code: 'TH', label: '🇹🇭 Thailand' },
+    { code: 'ID', label: '🇮🇩 Indonesia' },
+    { code: 'MY', label: '🇲🇾 Malaysia' },
+    { code: 'PH', label: '🇵🇭 Philippines' },
+    { code: 'IN', label: '🇮🇳 India' },
+    { code: 'OTHER', label: '🌍 Other' },
+];
+
+function countryLabel(code: string | null) {
+    if (!code) return '—';
+    return COUNTRIES.find(c => c.code === code)?.label || code;
+}
+
 export function UserProfile({ onClose, onUpgrade }: Props) {
     const { user, signOut } = useAuth();
     const { isPro } = useProGate();
+    const { profile, refresh: refreshProfile } = useProfile();
     const { t } = useTranslation();
+    const isVi = (navigator.language || '').startsWith('vi');
+
+    const [editing, setEditing] = useState(false);
+    const [editName, setEditName] = useState('');
+    const [editCountry, setEditCountry] = useState('');
+    const [editPhone, setEditPhone] = useState('');
+    const [saving, setSaving] = useState(false);
+    const [saveMsg, setSaveMsg] = useState('');
+
+    // Populate edit fields when profile loads
+    useEffect(() => {
+        if (profile) {
+            setEditName(profile.display_name || '');
+            setEditCountry(profile.country || '');
+            setEditPhone(profile.phone || '');
+        }
+    }, [profile]);
 
     if (!user) return null;
 
-    const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+    const displayName = profile?.display_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
     const avatarUrl = user.user_metadata?.avatar_url;
     const email = user.email || '';
     const initial = (displayName[0] || 'U').toUpperCase();
     const provider = user.app_metadata?.provider || 'google';
+
+    const handleSave = async () => {
+        setSaving(true);
+        setSaveMsg('');
+
+        const { error } = await supabase
+            .from('profiles')
+            .update({
+                display_name: editName || displayName,
+                country: editCountry || null,
+                phone: editPhone || null,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', user.id);
+
+        if (error) {
+            setSaveMsg(isVi ? '❌ Lỗi lưu thông tin' : '❌ Failed to save');
+        } else {
+            setSaveMsg(isVi ? '✅ Đã lưu' : '✅ Saved');
+            await refreshProfile();
+            setTimeout(() => { setSaveMsg(''); setEditing(false); }, 1200);
+        }
+        setSaving(false);
+    };
+
+    const handleCancel = () => {
+        setEditing(false);
+        if (profile) {
+            setEditName(profile.display_name || '');
+            setEditCountry(profile.country || '');
+            setEditPhone(profile.phone || '');
+        }
+        setSaveMsg('');
+    };
 
     const handleSignOut = async () => {
         await signOut();
@@ -80,18 +160,50 @@ export function UserProfile({ onClose, onUpgrade }: Props) {
 
                 {/* ── User Info Section ── */}
                 <div className="up-section">
-                    <h3 className="up-section-title">{t('profile.userInfo')}</h3>
+                    <div className="up-section-header">
+                        <h3 className="up-section-title">{t('profile.userInfo')}</h3>
+                        {!editing ? (
+                            <button className="up-edit-btn" onClick={() => setEditing(true)}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                                    <path d="m15 5 4 4" />
+                                </svg>
+                                {isVi ? 'Chỉnh sửa' : 'Edit'}
+                            </button>
+                        ) : (
+                            <div className="up-edit-actions">
+                                {saveMsg && <span className="up-save-msg">{saveMsg}</span>}
+                                <button className="up-save-btn" onClick={handleSave} disabled={saving}>
+                                    {saving ? '...' : (isVi ? 'Lưu' : 'Save')}
+                                </button>
+                                <button className="up-cancel-btn" onClick={handleCancel}>
+                                    {isVi ? 'Hủy' : 'Cancel'}
+                                </button>
+                            </div>
+                        )}
+                    </div>
 
+                    {/* Display Name */}
                     <div className="up-info-row">
                         <div className="up-info-left">
                             <span className="up-info-label">{t('profile.displayName')}</span>
                             <span className="up-info-desc">{t('profile.displayNameDesc')}</span>
                         </div>
-                        <span className="up-info-value">{displayName}</span>
+                        {editing ? (
+                            <input
+                                className="up-edit-input"
+                                value={editName}
+                                onChange={(e) => setEditName(e.target.value)}
+                                placeholder={isVi ? 'Nhập tên' : 'Enter name'}
+                            />
+                        ) : (
+                            <span className="up-info-value">{displayName}</span>
+                        )}
                     </div>
 
                     <div className="up-divider" />
 
+                    {/* Email — always read-only */}
                     <div className="up-info-row">
                         <div className="up-info-left">
                             <span className="up-info-label">Email</span>
@@ -99,15 +211,62 @@ export function UserProfile({ onClose, onUpgrade }: Props) {
                         </div>
                         <span className="up-info-value">{email}</span>
                     </div>
+
+                    <div className="up-divider" />
+
+                    {/* Country */}
+                    <div className="up-info-row">
+                        <div className="up-info-left">
+                            <span className="up-info-label">{isVi ? 'Quốc gia' : 'Country'}</span>
+                            <span className="up-info-desc">{isVi ? 'Xác định cổng thanh toán' : 'Determines payment gateway'}</span>
+                        </div>
+                        {editing ? (
+                            <select
+                                className="up-edit-select"
+                                value={editCountry}
+                                onChange={(e) => setEditCountry(e.target.value)}
+                            >
+                                <option value="">{isVi ? '— Chọn —' : '— Select —'}</option>
+                                {COUNTRIES.map(c => (
+                                    <option key={c.code} value={c.code}>{c.label}</option>
+                                ))}
+                            </select>
+                        ) : (
+                            <span className="up-info-value">{countryLabel(profile?.country ?? null)}</span>
+                        )}
+                    </div>
+
+                    <div className="up-divider" />
+
+                    {/* Phone */}
+                    <div className="up-info-row">
+                        <div className="up-info-left">
+                            <span className="up-info-label">{isVi ? 'Số điện thoại' : 'Phone'}</span>
+                            <span className="up-info-desc">{isVi ? 'Dùng cho thanh toán PayOS' : 'Used for PayOS checkout'}</span>
+                        </div>
+                        {editing ? (
+                            <input
+                                className="up-edit-input"
+                                type="tel"
+                                value={editPhone}
+                                onChange={(e) => setEditPhone(e.target.value)}
+                                placeholder="0912 345 678"
+                                maxLength={10}
+                            />
+                        ) : (
+                            <span className="up-info-value">{profile?.phone || '—'}</span>
+                        )}
+                    </div>
                 </div>
 
                 {/* ── Linked Accounts ── */}
                 <div className="up-section">
-                    <h3 className="up-section-title">{t('profile.linkedAccounts')}</h3>
+                    <div className="up-section-header">
+                        <h3 className="up-section-title">{t('profile.linkedAccounts')}</h3>
+                    </div>
 
                     <div className="up-info-row">
                         <div className="up-info-left" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                            {/* Google icon */}
                             <svg width="20" height="20" viewBox="0 0 24 24">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
                                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -280,13 +439,117 @@ export function UserProfile({ onClose, onUpgrade }: Props) {
                     padding: 20px 28px;
                     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
                 }
+                .up-section-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin-bottom: 14px;
+                }
                 .up-section-title {
-                    margin: 0 0 14px;
+                    margin: 0;
                     font-size: 11px;
                     font-weight: 600;
                     text-transform: uppercase;
                     letter-spacing: 1.5px;
                     color: rgba(255, 255, 255, 0.35);
+                }
+
+                /* ── Edit button ── */
+                .up-edit-btn {
+                    display: flex;
+                    align-items: center;
+                    gap: 5px;
+                    padding: 5px 12px;
+                    border-radius: 8px;
+                    border: 1px solid rgba(255,255,255,0.1);
+                    background: rgba(255,255,255,0.04);
+                    color: rgba(255,255,255,0.6);
+                    font-size: 12px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    font-family: inherit;
+                }
+                .up-edit-btn:hover {
+                    background: rgba(255,255,255,0.08);
+                    color: rgba(255,255,255,0.9);
+                    border-color: rgba(255,255,255,0.2);
+                }
+
+                .up-edit-actions {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+                .up-save-msg {
+                    font-size: 12px;
+                    color: rgba(255,255,255,0.6);
+                    margin-right: 4px;
+                }
+                .up-save-btn {
+                    padding: 5px 14px;
+                    border-radius: 8px;
+                    border: none;
+                    background: linear-gradient(135deg, #10b981, #059669);
+                    color: white;
+                    font-size: 12px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    font-family: inherit;
+                }
+                .up-save-btn:hover { box-shadow: 0 2px 12px rgba(16,185,129,0.3); }
+                .up-save-btn:disabled { opacity: 0.6; cursor: wait; }
+                .up-cancel-btn {
+                    padding: 5px 12px;
+                    border-radius: 8px;
+                    border: 1px solid rgba(255,255,255,0.1);
+                    background: transparent;
+                    color: rgba(255,255,255,0.5);
+                    font-size: 12px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    font-family: inherit;
+                }
+                .up-cancel-btn:hover {
+                    color: rgba(255,255,255,0.8);
+                    border-color: rgba(255,255,255,0.2);
+                }
+
+                /* ── Edit inputs ── */
+                .up-edit-input, .up-edit-select {
+                    padding: 8px 12px;
+                    border-radius: 8px;
+                    border: 1px solid rgba(255,255,255,0.12);
+                    background: rgba(255,255,255,0.05);
+                    color: white;
+                    font-size: 13px;
+                    outline: none;
+                    width: 180px;
+                    text-align: right;
+                    transition: all 0.2s;
+                    font-family: inherit;
+                    box-sizing: border-box;
+                }
+                .up-edit-input:focus, .up-edit-select:focus {
+                    border-color: rgba(16,185,129,0.5);
+                    box-shadow: 0 0 0 2px rgba(16,185,129,0.1);
+                }
+                .up-edit-input::placeholder {
+                    color: rgba(255,255,255,0.25);
+                }
+                .up-edit-select {
+                    appearance: none;
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+                    background-repeat: no-repeat;
+                    background-position: right 10px center;
+                    padding-right: 28px;
+                    cursor: pointer;
+                }
+                .up-edit-select option {
+                    background: #1a1a24;
+                    color: white;
                 }
 
                 /* ── Info Rows ── */
