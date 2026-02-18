@@ -3,6 +3,7 @@ import { useCredits } from '../../hooks/useCredits';
 import { useAuth } from '../../hooks/useAuth';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useLofiStore } from '../../store/useLofiStore';
+import { supabase, SUPABASE_URL } from '../../lib/supabaseClient';
 
 /**
  * ProUpgradeModal — Premium subscription + Credit Packs.
@@ -50,13 +51,13 @@ const CREDIT_PACKS = [
     { id: 'credits_500', amount: 500, price: '$4.99', priceVN: '119.000₫', perSceneKey: 'pro.scenes50', popular: false },
 ];
 
-// PayOS checkout URL for Vietnamese users
-const PAYOS_CHECKOUT_URL = 'https://lofi.amonexus.com/checkout';
-
-// isVietnamese is now determined inside the component using app locale
+// PayOS is handled via create-order Edge Function
 
 export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
     const [billing, setBilling] = useState<'monthly' | 'yearly'>('yearly');
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [checkoutLoading, setCheckoutLoading] = useState(false);
+    const [checkoutError, setCheckoutError] = useState('');
     const { user } = useAuth();
     const { balance } = useCredits();
     const { t } = useTranslation();
@@ -67,13 +68,39 @@ export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
     const yearlyPrice = isVN ? '29.000₫' : '$1.25';
     const yearlyTotal = isVN ? '349.000₫' : '$14.99';
 
-    const handleCheckout = (planId: string) => {
-        // Vietnamese users → PayOS checkout
+    const handleCheckout = async (planId: string) => {
+        // Vietnamese users → PayOS via create-order Edge Function
         if (isVN) {
-            const payosUrl = new URL(PAYOS_CHECKOUT_URL);
-            payosUrl.searchParams.set('plan', planId);
-            window.open(payosUrl.toString(), '_blank');
-            onSelectPlan?.(planId);
+            if (!phoneNumber || !/^0\d{9}$/.test(phoneNumber)) {
+                setCheckoutError('Vui lòng nhập số điện thoại hợp lệ (10 số, bắt đầu bằng 0)');
+                return;
+            }
+            setCheckoutLoading(true);
+            setCheckoutError('');
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                const res = await fetch(`${SUPABASE_URL}/functions/v1/create-order`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session?.access_token}`,
+                    },
+                    body: JSON.stringify({ product_type: planId, phone_number: phoneNumber }),
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    setCheckoutError(data.error || 'Không thể tạo đơn hàng. Vui lòng thử lại.');
+                    return;
+                }
+                // Redirect to PayOS checkout URL
+                window.open(data.order.checkoutUrl, '_blank');
+                onSelectPlan?.(planId);
+            } catch (err) {
+                console.error('[Checkout] PayOS error:', err);
+                setCheckoutError('Lỗi kết nối. Vui lòng thử lại.');
+            } finally {
+                setCheckoutLoading(false);
+            }
             return;
         }
 
@@ -161,11 +188,43 @@ export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
                             ))}
                         </ul>
 
+                        {/* Phone number input for VN users (PayOS requirement) */}
+                        {isVN && (
+                            <div style={{ marginBottom: 12 }}>
+                                <input
+                                    type="tel"
+                                    placeholder="Số điện thoại (VD: 0912345678)"
+                                    value={phoneNumber}
+                                    onChange={(e) => { setPhoneNumber(e.target.value); setCheckoutError(''); }}
+                                    maxLength={10}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 14px',
+                                        borderRadius: 10,
+                                        border: checkoutError ? '1px solid rgba(255,80,80,0.5)' : '1px solid rgba(255,255,255,0.1)',
+                                        background: 'rgba(255,255,255,0.04)',
+                                        color: 'white',
+                                        fontSize: 13,
+                                        outline: 'none',
+                                        boxSizing: 'border-box',
+                                        transition: 'border 0.2s',
+                                    }}
+                                    onFocus={(e) => { e.target.style.borderColor = 'rgba(16,185,129,0.4)'; }}
+                                    onBlur={(e) => { e.target.style.borderColor = checkoutError ? 'rgba(255,80,80,0.5)' : 'rgba(255,255,255,0.1)'; }}
+                                />
+                                {checkoutError && (
+                                    <p style={{ fontSize: 11, color: '#ff6b6b', margin: '6px 0 0', lineHeight: 1.3 }}>{checkoutError}</p>
+                                )}
+                            </div>
+                        )}
+
                         <button
                             className="pum-plan-btn premium"
                             onClick={() => handleCheckout(billing === 'yearly' ? 'premium_yearly' : 'premium_monthly')}
+                            disabled={checkoutLoading}
+                            style={checkoutLoading ? { opacity: 0.6, cursor: 'wait' } : undefined}
                         >
-                            {t('pro.startFreeTrial')}
+                            {checkoutLoading ? (isVN ? 'Đang tạo đơn...' : 'Loading...') : t('pro.startFreeTrial')}
                         </button>
                     </div>
 
