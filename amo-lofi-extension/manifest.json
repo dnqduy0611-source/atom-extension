@@ -1,0 +1,32 @@
+{
+    "manifest_version": 3,
+    "name": "Amo Lofi — Cinematic Focus",
+    "version": "1.0.0",
+    "description": "Turn your New Tab into a cinematic focus sanctuary. Pomodoro timer, gentle site blocker, and beautiful scenes.",
+    "permissions": [
+        "tabs",
+        "storage",
+        "alarms",
+        "notifications"
+    ],
+    "chrome_url_overrides": {
+        "newtab": "src/newtab/index.html"
+    },
+    "background": {
+        "service_worker": "src/background/index.ts",
+        "type": "module"
+    },
+    "action": {
+        "default_popup": "src/popup/index.html",
+        "default_icon": {
+            "16": "public/icons/icon-16.png",
+            "48": "public/icons/icon-48.png",
+            "128": "public/icons/icon-128.png"
+        }
+    },
+    "icons": {
+        "16": "public/icons/icon-16.png",
+        "48": "public/icons/icon-48.png",
+        "128": "public/icons/icon-128.png"
+    }
+}

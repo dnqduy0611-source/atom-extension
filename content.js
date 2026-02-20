@@ -221,27 +221,8 @@
     window.__ATOM_CONTENT_STARTED__ = true;
 
     // ===== AUTH SYNC: Web → Extension =====
-    // On *.amonexus.com pages, read Supabase session from localStorage
-    // and send it to the extension background if found
-    if (location.hostname.endsWith('amonexus.com')) {
-        try {
-            const sbKey = 'sb-zdvbjuxcithcrvsdzumj-auth-token';
-            const raw = localStorage.getItem(sbKey);
-            if (raw) {
-                const parsed = JSON.parse(raw);
-                const token = parsed?.access_token;
-                const refresh = parsed?.refresh_token;
-                if (token && refresh) {
-                    chrome.runtime.sendMessage({
-                        type: 'WEB_AUTH_DETECTED',
-                        payload: { access_token: token, refresh_token: refresh }
-                    }).catch(() => { });
-                }
-            }
-        } catch (e) {
-            // Silently fail — not critical
-        }
-    }
+    // Auth sync is handled in background.js via chrome.scripting.executeScript
+    // with world: 'MAIN' to bypass CSP restrictions on pages like amonexus.com.
 
     let atomMsg = (key, substitutions, fallback) =>
         chrome.i18n.getMessage(key, substitutions) || fallback || key;
@@ -2368,6 +2349,28 @@
         },
     };
 
+    // Cache for fetched scene images (data URLs from background service worker)
+    const _bgBlobCache = new Map();
+
+    async function fetchImageAsBlob(url) {
+        if (_bgBlobCache.has(url)) return _bgBlobCache.get(url);
+        try {
+            // Fetch via background service worker (bypasses page CSP entirely)
+            const response = await chrome.runtime.sendMessage({
+                type: 'FETCH_IMAGE_AS_DATA_URL',
+                url: url
+            });
+            if (response?.ok && response.dataUrl) {
+                _bgBlobCache.set(url, response.dataUrl);
+                return response.dataUrl;
+            }
+            return null;
+        } catch (e) {
+            console.warn('[ATOM Lofi Mirror] Failed to fetch scene image:', url, e);
+            return null;
+        }
+    }
+
     function applyLofiMirror(config) {
         if (!config?.active) { clearLofiMirror(); return; }
         lofiMirrorActive = true;
@@ -2381,10 +2384,18 @@
             : null;
 
         if (bgUrl) {
-            bgLayerEl.style.backgroundImage = `url(${bgUrl})`;
-            bgLayerEl.style.backgroundSize = 'cover';
-            bgLayerEl.style.backgroundPosition = 'center';
-            bgLayerEl.style.filter = 'brightness(0.85)';
+            // Fetch image via extension permissions → blob URL (bypasses page CSP img-src)
+            fetchImageAsBlob(bgUrl).then(blobUrl => {
+                if (blobUrl) {
+                    bgLayerEl.style.backgroundImage = `url(${blobUrl})`;
+                } else {
+                    // Fallback: try direct URL (works on pages without strict CSP)
+                    bgLayerEl.style.backgroundImage = `url(${bgUrl})`;
+                }
+                bgLayerEl.style.backgroundSize = 'cover';
+                bgLayerEl.style.backgroundPosition = 'center';
+                bgLayerEl.style.filter = 'brightness(0.85)';
+            });
 
             // Tint overlay via style injection (shadow DOM safe)
             let tintStyle = shadow.getElementById('lofi-tint-override');
@@ -2405,29 +2416,12 @@
             `;
         }
 
-        // Rain effect color → match scene accent
-        if (config.primary_color) {
-            let rainStyle = shadow.getElementById('lofi-rain-override');
-            if (!rainStyle) {
-                rainStyle = document.createElement('style');
-                rainStyle.id = 'lofi-rain-override';
-                shadow.appendChild(rainStyle);
-            }
-            rainStyle.textContent = `
-                #atom-focus-bg-layer::after {
-                    background-image: repeating-linear-gradient(90deg,
-                        transparent,
-                        transparent 40px,
-                        ${config.primary_color}26 40px,
-                        ${config.primary_color}26 41px) !important;
-                }
-            `;
-        }
 
         console.log('[ATOM Lofi Mirror] Scene applied:', config.scene_id, config.variant);
 
-        // [MILESTONE B] Apply audio if focus block is active and not muted
-        if (isFocusBlockActive && config.audio_layers?.length || config.music) {
+        // [MILESTONE B] Apply audio only when focus block is active on this page
+        // NOTE: parentheses required — without them, `|| config.music` bypasses isFocusBlockActive
+        if (isFocusBlockActive && (config.audio_layers?.length || config.music)) {
             applyLofiAudio(config);
         }
     }
@@ -2451,8 +2445,10 @@
                 audio.crossOrigin = 'anonymous';
                 audio.loop = true;
                 audio.volume = Math.min(1, (layer.volume || 0.5) * masterVol);
-                audio.muted = isMuted;
-                audio.play().catch(e => console.warn('[ATOM Lofi] Ambience autoplay blocked:', layer.id, e));
+                audio.muted = true; // start muted — Chrome allows muted autoplay
+                audio.play().then(() => {
+                    audio.muted = isMuted; // unmute to desired state once playing
+                }).catch(() => { /* silently ignore — page has no audio permission */ });
                 lofiAudioInstances.push(audio);
             } catch (e) {
                 console.warn('[ATOM Lofi] Audio load failed:', layer.id, e);
@@ -2467,8 +2463,10 @@
                 lofiMusicInstance.crossOrigin = 'anonymous';
                 lofiMusicInstance.loop = true;
                 lofiMusicInstance.volume = Math.min(1, (config.music.volume || 0.4) * masterVol);
-                lofiMusicInstance.muted = isMuted;
-                lofiMusicInstance.play().catch(e => console.warn('[ATOM Lofi] Music autoplay blocked:', e));
+                lofiMusicInstance.muted = true; // start muted — Chrome allows muted autoplay
+                lofiMusicInstance.play().then(() => {
+                    lofiMusicInstance.muted = isMuted; // unmute to desired state once playing
+                }).catch(() => { /* silently ignore — page has no audio permission */ });
             } catch (e) {
                 console.warn('[ATOM Lofi] Music load failed:', e);
             }

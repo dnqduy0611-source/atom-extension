@@ -9,9 +9,9 @@ import { getSupabaseClient } from '../lib/supabase_client.js';
 import { GOOGLE_CONFIG, EXTENSION_CONFIG, DEBUG_MODE } from '../config/supabase_config.js';
 import { cacheAuthState, getCachedAuthState, clearAuthCache } from './auth_cache_service.js';
 
-// Get client instance (lazy loaded)
-function getClient() {
-    return getSupabaseClient();
+// Get client instance (lazy loaded, async for MV3 service worker support)
+async function getClient() {
+    return await getSupabaseClient();
 }
 
 /**
@@ -121,7 +121,8 @@ export async function signInWithGoogle(rememberMe = true) {
         if (DEBUG_MODE) console.log('[Auth] ID Token received, signing into Supabase...');
 
         // Step 4: Sign into Supabase with the Google ID Token
-        const { data: sessionData, error: signInError } = await getClient().auth.signInWithIdToken({
+        const client = await getClient();
+        const { data: sessionData, error: signInError } = await client.auth.signInWithIdToken({
             provider: 'google',
             token: idToken,
             access_token: accessToken, // Optional but helpful
@@ -146,6 +147,19 @@ export async function signInWithGoogle(rememberMe = true) {
                 }
             });
             if (DEBUG_MODE) console.log('[Auth] Proxy session saved to storage');
+
+            // Step 5b: Trigger Lofi Sync bridge (AmoLofi Web ↔ Extension)
+            try {
+                chrome.runtime.sendMessage({
+                    type: 'LOFI_SYNC_INIT',
+                    userId: sessionData.session.user.id
+                }, () => {
+                    if (chrome.runtime.lastError) { /* ignore - background may not be ready */ }
+                });
+                if (DEBUG_MODE) console.log('[Auth] Lofi Sync init triggered');
+            } catch (e) {
+                if (DEBUG_MODE) console.warn('[Auth] Lofi Sync init failed:', e.message);
+            }
         }
 
         // Step 6: Get auth state and cache it
@@ -183,7 +197,8 @@ export async function signOut() {
 
         // Use scope: 'local' to only clear local session (no network call)
         // This prevents hanging when Supabase is unreachable
-        const { error } = await getClient().auth.signOut({ scope: 'local' });
+        const client = await getClient();
+        const { error } = await client.auth.signOut({ scope: 'local' });
 
         if (error) {
             console.error('[Auth] Sign-out error:', error);
@@ -232,7 +247,8 @@ export async function getAuthState(forceRefresh = false) {
         }
 
         // Get session from Supabase
-        const { data: { session }, error } = await getClient().auth.getSession();
+        const client = await getClient();
+        const { data: { session }, error } = await client.auth.getSession();
 
         if (error) {
             console.error('[Auth] getSession error:', error);
@@ -288,7 +304,8 @@ export async function getAuthState(forceRefresh = false) {
 export async function getUserProfile(userId) {
     try {
         // Add timeout to prevent hanging if profiles table doesn't exist
-        const profilePromise = getClient()
+        const client = await getClient();
+        const profilePromise = client
             .from('profiles')
             .select('*')
             .eq('id', userId)
@@ -326,8 +343,9 @@ export async function isAuthenticated() {
  * @param {Function} callback - Called with (event, authState) on changes
  * @returns {Function} Unsubscribe function
  */
-export function onAuthStateChange(callback) {
-    const { data: { subscription } } = getClient().auth.onAuthStateChange(
+export async function onAuthStateChange(callback) {
+    const client = await getClient();
+    const { data: { subscription } } = client.auth.onAuthStateChange(
         async (event, session) => {
             if (DEBUG_MODE) console.log('[Auth] State change event:', event);
 
@@ -370,7 +388,8 @@ function createEmptyAuthState() {
  */
 export async function refreshSession() {
     try {
-        const { data, error } = await getClient().auth.refreshSession();
+        const client = await getClient();
+        const { data, error } = await client.auth.refreshSession();
 
         if (error) {
             console.error('[Auth] Refresh error:', error);

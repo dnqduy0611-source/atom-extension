@@ -32,7 +32,8 @@
       "Bash(curl:*)",
       "WebFetch(domain:beeziee.com)",
       "Bash(test:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "WebFetch(domain:chromewebstore.google.com)"
     ]
   }
 }

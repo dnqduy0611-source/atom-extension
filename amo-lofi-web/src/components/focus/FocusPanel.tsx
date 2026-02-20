@@ -20,11 +20,9 @@ export function FocusPanel({ onClose }: Props) {
 
     return (
         <div
-            className="w-[520px] h-full rounded-2xl backdrop-blur-xl fade-in overflow-hidden flex flex-col"
+            className="w-[520px] h-full glass-card glass-card-glow fade-in flex flex-col"
             style={{
-                background: `linear-gradient(160deg, color-mix(in srgb, var(--theme-primary) 12%, rgba(10,10,20,0.55)) 0%, color-mix(in srgb, var(--theme-primary) 6%, rgba(10,10,20,0.6)) 50%, rgba(8,6,15,0.65) 100%)`,
-                border: `1px solid color-mix(in srgb, var(--theme-primary) 12%, rgba(255,255,255,0.08))`,
-                boxShadow: '0 16px 64px rgba(0,0,0,0.5), 0 0 1px rgba(255,255,255,0.1)',
+                borderRadius: '16px',
             }}
         >
             {/* Header */}

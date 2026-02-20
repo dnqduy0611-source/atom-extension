@@ -43,6 +43,22 @@ export const en = {
     // ── Hero Timer ──
     'heroTimer.placeholder': 'What are you working on?',
 
+    // ── Mood Companion ──
+    'mood.placeholder': 'How are you feeling today?',
+    'mood.chatWithAmo': 'How are you today?',
+    'mood.inputPlaceholder': 'Share with me...',
+    'mood.replyPlaceholder': 'Type a reply...',
+    'mood.send': 'Send',
+    'mood.createScene': 'Create scene',
+    'mood.likeThis': 'Create this scene',
+    'mood.createSceneSub': 'Pro · 10 credits',
+    'mood.thinking': 'Amo is thinking...',
+    'mood.creating': 'Creating...',
+    'mood.dismiss': 'Maybe later',
+    'mood.newChat': 'New conversation',
+    'mood.applyScene': 'Use this scene',
+    'mood.skipScene': 'Skip',
+
     // ── Sound Mixer ──
     'mixer.title': 'Sound Mixer',
     'mixer.tracks': 'Tracks',

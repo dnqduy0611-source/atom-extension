@@ -14,7 +14,7 @@ export interface Task {
     createdAt: number;
 }
 
-interface FocusStats {
+export interface FocusStats {
     totalFocusMinutes: number;
     sessionsCompleted: number;
     tasksCompleted: number;
@@ -33,6 +33,11 @@ interface FocusStats {
     focusHistory: Record<string, number>;
     /** Hourly focus history: hour (0-23) → session count */
     hourlyHistory: Record<string, number>;
+    /** Streak Freeze — Pro only */
+    streakFreezes: number;          // remaining freezes this month (max 2)
+    freezesUsedThisMonth: number;   // how many used this month
+    lastFreezeResetMonth: string;   // 'YYYY-MM' of last reset
+    frozenDates: string[];          // YYYY-MM-DD dates where freeze was used
 }
 
 // ── localStorage persistence ──
@@ -71,6 +76,7 @@ function pruneHistory(history: Record<string, number>): Record<string, number> {
 }
 
 function loadStats(): FocusStats {
+    const currentMonth = todayStr().slice(0, 7); // YYYY-MM
     const defaults: FocusStats = {
         totalFocusMinutes: 0,
         sessionsCompleted: 0,
@@ -83,6 +89,10 @@ function loadStats(): FocusStats {
         todayDate: todayStr(),
         focusHistory: {},
         hourlyHistory: {},
+        streakFreezes: 2,
+        freezesUsedThisMonth: 0,
+        lastFreezeResetMonth: currentMonth,
+        frozenDates: [],
     };
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -100,6 +110,16 @@ function loadStats(): FocusStats {
         }
         if (!stats.hourlyHistory || typeof stats.hourlyHistory !== 'object') {
             stats.hourlyHistory = {};
+        }
+        // Monthly freeze reset
+        if (stats.lastFreezeResetMonth !== currentMonth) {
+            stats.streakFreezes = 2;
+            stats.freezesUsedThisMonth = 0;
+            stats.lastFreezeResetMonth = currentMonth;
+        }
+        // Ensure frozenDates array
+        if (!Array.isArray(stats.frozenDates)) {
+            stats.frozenDates = [];
         }
         return stats;
     } catch {
@@ -126,26 +146,58 @@ function recordHourly(hourly: Record<string, number>): Record<string, number> {
     return { ...hourly, [hour]: (hourly[hour] ?? 0) + 1 };
 }
 
-/** Compute updated day streak after completing a work session */
-function computeDayStreak(stats: FocusStats): Pick<FocusStats, 'dayStreak' | 'bestDayStreak' | 'lastSessionDate'> {
+/** Compute updated day streak after completing a work session.
+ *  isPro controls whether streak freezes are used on missed days. */
+function computeDayStreak(stats: FocusStats, isPro = false): Pick<FocusStats, 'dayStreak' | 'bestDayStreak' | 'lastSessionDate' | 'streakFreezes' | 'freezesUsedThisMonth' | 'frozenDates'> {
     const today = todayStr();
     const yesterday = yesterdayStr();
     let dayStreak = stats.dayStreak;
+    let streakFreezes = stats.streakFreezes;
+    let freezesUsedThisMonth = stats.freezesUsedThisMonth;
+    let frozenDates = [...stats.frozenDates];
 
     if (stats.lastSessionDate === today) {
         // Already counted today — no change
     } else if (stats.lastSessionDate === yesterday) {
         // Consecutive day — extend streak
         dayStreak += 1;
+    } else if (stats.lastSessionDate && stats.dayStreak > 0) {
+        // Gap detected — check how many days missed
+        const lastDate = new Date(stats.lastSessionDate + 'T00:00:00');
+        const todayDate = new Date(today + 'T00:00:00');
+        const gapDays = Math.floor((todayDate.getTime() - lastDate.getTime()) / 86400000) - 1;
+
+        if (isPro && gapDays > 0 && gapDays <= streakFreezes) {
+            // Use freezes to cover missed days
+            for (let i = 1; i <= gapDays; i++) {
+                const missedDate = new Date(lastDate);
+                missedDate.setDate(missedDate.getDate() + i);
+                frozenDates.push(missedDate.toISOString().slice(0, 10));
+            }
+            streakFreezes -= gapDays;
+            freezesUsedThisMonth += gapDays;
+            dayStreak += gapDays + 1; // extend streak through frozen days + today
+        } else {
+            // No freezes or not Pro — reset streak
+            dayStreak = 1;
+        }
     } else {
-        // Gap — start fresh
+        // First ever session
         dayStreak = 1;
     }
+
+    // Keep only last 90 days of frozenDates
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 90);
+    frozenDates = frozenDates.filter(d => new Date(d + 'T00:00:00') >= cutoff);
 
     return {
         dayStreak,
         bestDayStreak: Math.max(stats.bestDayStreak, dayStreak),
         lastSessionDate: today,
+        streakFreezes,
+        freezesUsedThisMonth,
+        frozenDates,
     };
 }
 

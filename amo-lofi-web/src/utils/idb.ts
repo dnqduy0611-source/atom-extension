@@ -8,7 +8,7 @@
  */
 
 const DB_NAME = 'amo-lofi-personalization';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const WALLPAPER_STORE = 'custom-wallpapers';
 const SCENE_STORE = 'custom-scenes';
 
@@ -25,6 +25,8 @@ export interface StoredWallpaper {
 
 export interface StoredScene {
     id: string;
+    /** Owner user ID — scopes scenes per Supabase user (set automatically by useCustomScenes) */
+    user_id?: string;
     name: string;
     description: string;
     theme: {
@@ -57,14 +59,24 @@ export function openDB(): Promise<IDBDatabase> {
     _dbPromise = new Promise((resolve, reject) => {
         const req = indexedDB.open(DB_NAME, DB_VERSION);
 
-        req.onupgradeneeded = () => {
+        req.onupgradeneeded = (event) => {
             const db = req.result;
+            const oldVersion = (event as IDBVersionChangeEvent).oldVersion;
+
             if (!db.objectStoreNames.contains(WALLPAPER_STORE)) {
                 const ws = db.createObjectStore(WALLPAPER_STORE, { keyPath: 'id' });
                 ws.createIndex('byScene', 'sceneId', { unique: false });
             }
             if (!db.objectStoreNames.contains(SCENE_STORE)) {
-                db.createObjectStore(SCENE_STORE, { keyPath: 'id' });
+                const ss = db.createObjectStore(SCENE_STORE, { keyPath: 'id' });
+                ss.createIndex('byUser', 'user_id', { unique: false });
+            } else if (oldVersion < 2) {
+                // Migration: add byUser index to existing store
+                const tx = (event.target as IDBOpenDBRequest).transaction!;
+                const store = tx.objectStore(SCENE_STORE);
+                if (!store.indexNames.contains('byUser')) {
+                    store.createIndex('byUser', 'user_id', { unique: false });
+                }
             }
         };
 
@@ -113,13 +125,29 @@ export async function deleteWallpaper(id: string): Promise<void> {
 
 // ── Scene CRUD ──
 
-export async function getAllScenes(): Promise<StoredScene[]> {
+export async function getAllScenes(userId?: string): Promise<StoredScene[]> {
     const db = await openDB();
     return new Promise((resolve, reject) => {
         const tx = db.transaction(SCENE_STORE, 'readonly');
-        const req = tx.objectStore(SCENE_STORE).getAll();
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
+        const store = tx.objectStore(SCENE_STORE);
+
+        // If userId provided, filter by user; otherwise return all (backward compat)
+        if (userId && store.indexNames.contains('byUser')) {
+            const idx = store.index('byUser');
+            const req = idx.getAll(userId);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        } else {
+            const req = store.getAll();
+            req.onsuccess = () => {
+                // Fallback: filter in memory if index not ready
+                const results = userId
+                    ? (req.result as StoredScene[]).filter(s => s.user_id === userId)
+                    : req.result;
+                resolve(results);
+            };
+            req.onerror = () => reject(req.error);
+        }
     });
 }
 
@@ -138,6 +166,21 @@ export async function deleteScene(id: string): Promise<void> {
     return new Promise((resolve, reject) => {
         const tx = db.transaction(SCENE_STORE, 'readwrite');
         tx.objectStore(SCENE_STORE).delete(id);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+    });
+}
+
+/** Clear all scenes for a specific user (useful on logout) */
+export async function clearScenesForUser(userId: string): Promise<void> {
+    const scenes = await getAllScenes(userId);
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(SCENE_STORE, 'readwrite');
+        const store = tx.objectStore(SCENE_STORE);
+        for (const scene of scenes) {
+            store.delete(scene.id);
+        }
         tx.oncomplete = () => resolve();
         tx.onerror = () => reject(tx.error);
     });

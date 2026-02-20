@@ -91,6 +91,7 @@ export function useGenerateBackground() {
                 height: data.background.height,
                 ai_prompt: data.background.ai_prompt || data.imagePrompt,
                 created_at: data.background.created_at,
+                scene_ids: [],
             };
 
             setPreview(bg.signedUrl);

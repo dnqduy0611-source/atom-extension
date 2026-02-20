@@ -160,8 +160,16 @@ export function useAudioEngine() {
     // ── Play / Pause all ──
     const syncPlayback = useCallback((isPlaying: boolean) => {
         if (isPlaying) {
-            musicRef.current?.howl.play();
-            ambienceMapRef.current.forEach((howl) => howl.play());
+            // Only play if already loaded — if still loading, the onLoad callback handles it.
+            // Calling play() on an unloaded html5 Howl queues a play internally;
+            // combined with the onLoad callback it causes double playback.
+            if (musicRef.current) {
+                const { howl } = musicRef.current;
+                if (howl.state() === 'loaded') howl.play();
+            }
+            ambienceMapRef.current.forEach((howl) => {
+                if (howl.state() === 'loaded') howl.play();
+            });
         } else {
             musicRef.current?.howl.pause();
             ambienceMapRef.current.forEach((howl) => howl.pause());

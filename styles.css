@@ -720,6 +720,8 @@ body.light-mode {
 /* [ATOM ATMOSPHERE] Rain Effect Layer */
 #atom-focus-bg-layer::after {
     content: '';
+    display: none;
+    /* Disabled — rain lines removed */
     position: absolute;
     inset: 0;
     /* Vertical rain lines */

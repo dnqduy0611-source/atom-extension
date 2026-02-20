@@ -32,7 +32,7 @@ const STYLES = [
 
 export function AIBackgroundGenerator({ sceneName, sceneDescription, sceneId, onClose, onGenerated }: Props) {
     const { generate, isGenerating, phase, error, preview, reset } = useGenerateBackground();
-    const { refresh: refreshBgs } = useBackgrounds();
+    const { refresh: refreshBgs, isFull: bgFull, count: bgCount } = useBackgrounds();
     const { balance } = useCredits();
 
     const [style, setStyle] = useState('realistic');
@@ -78,6 +78,8 @@ export function AIBackgroundGenerator({ sceneName, sceneDescription, sceneId, on
         <div
             className="ss-panel fade-in"
             style={{
+                width: '380px',
+                borderRadius: '16px',
                 background: 'rgba(12,12,18,0.92)',
                 backdropFilter: 'blur(24px) saturate(1.2)',
                 border: '1px solid rgba(255,255,255,0.06)',
@@ -365,6 +367,37 @@ export function AIBackgroundGenerator({ sceneName, sceneDescription, sceneId, on
                     </div>
                 )}
 
+                {/* Storage limit warning */}
+                {bgFull && (
+                    <div style={{
+                        padding: '10px 14px',
+                        borderRadius: '10px',
+                        background: 'rgba(251,191,36,0.08)',
+                        border: '1px solid rgba(251,191,36,0.15)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                    }}>
+                        <span style={{ fontSize: '16px' }}>⚠️</span>
+                        <div>
+                            <div style={{
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                color: 'rgba(251,191,36,0.9)',
+                                marginBottom: '2px',
+                            }}>
+                                Đã đạt giới hạn {bgCount}/50 backgrounds
+                            </div>
+                            <div style={{
+                                fontSize: '10px',
+                                color: 'rgba(255,255,255,0.4)',
+                            }}>
+                                Xóa background cũ để tạo thêm mới
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Action buttons */}
                 <div style={{ display: 'flex', gap: '8px' }}>
                     {phase === 'done' ? (
@@ -409,7 +442,7 @@ export function AIBackgroundGenerator({ sceneName, sceneDescription, sceneId, on
                     ) : (
                         <button
                             onClick={handleGenerate}
-                            disabled={isGenerating || !hasEnoughCredits}
+                            disabled={isGenerating || !hasEnoughCredits || bgFull}
                             style={{
                                 width: '100%',
                                 padding: '12px',
@@ -427,7 +460,7 @@ export function AIBackgroundGenerator({ sceneName, sceneDescription, sceneId, on
                                         : 'rgba(255,255,255,0.9)',
                                 fontSize: '13px',
                                 fontWeight: 600,
-                                cursor: isGenerating || !hasEnoughCredits ? 'not-allowed' : 'pointer',
+                                cursor: isGenerating || !hasEnoughCredits || bgFull ? 'not-allowed' : 'pointer',
                                 transition: 'all 0.2s',
                                 display: 'flex',
                                 alignItems: 'center',

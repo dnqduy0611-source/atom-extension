@@ -3,8 +3,13 @@ import { useFocusStore } from '../../store/useFocusStore';
 import { formatDuration } from '../../utils/formatTime';
 import { useTranslation } from '../../hooks/useTranslation';
 import { FocusHeatmap } from './FocusHeatmap';
+import { SessionHistoryList } from './SessionHistoryList';
+import { AIInsightCard } from './AIInsightCard';
 import { useSceneIcons } from '../../hooks/useSceneIcons';
-import { BarChart3, TrendingUp, Clock, Zap, Calendar, X } from 'lucide-react';
+import { useProGate } from '../../hooks/useProGate';
+import { useFocusSync } from '../../hooks/useFocusSync';
+import { checkConversionTriggers } from '../../hooks/useConversionTrigger';
+import { BarChart3, TrendingUp, Clock, Zap, Calendar, X, Lock } from 'lucide-react';
 
 /**
  * StatsDashboard — V8: Futuristic Glassmorphism.
@@ -78,8 +83,8 @@ function Sparkline({ data, color, h = 32 }: { data: number[]; color: string; h?:
 /* ══════════════════════
    VIEW: OVERVIEW
    ══════════════════════ */
-function OverviewView({ stats, tc, spark, completedTasks, totalTasks, perfScore }: {
-    stats: any; tc: string; spark: number[]; completedTasks: number; totalTasks: number; perfScore: number;
+function OverviewView({ stats, tc, spark, completedTasks, totalTasks, perfScore, isPro, showUpsell }: {
+    stats: any; tc: string; spark: number[]; completedTasks: number; totalTasks: number; perfScore: number; isPro: boolean; showUpsell: () => void;
 }) {
     const avgDur = stats.sessionsCompleted > 0 ? Math.round(stats.totalFocusMinutes / stats.sessionsCompleted) : 0;
     const r = 58, circ = 2 * Math.PI * r, offset = circ * (1 - Math.min(perfScore / 100, 1));
@@ -87,7 +92,7 @@ function OverviewView({ stats, tc, spark, completedTasks, totalTasks, perfScore 
         { label: 'Sessions', val: String(stats.sessionsCompleted), sub: 'completed' },
         { label: 'Focus', val: formatDuration(stats.totalFocusMinutes), sub: 'total time' },
         { label: 'Average', val: avgDur > 0 ? `${avgDur}m` : '—', sub: 'per session' },
-        { label: 'Streak', val: `${stats.dayStreak}d`, sub: `best ${stats.bestDayStreak}d` },
+        { label: isPro ? '🔥 Streak' : 'Streak', val: `${stats.dayStreak}d`, sub: isPro ? `❄️ ${stats.streakFreezes}/2 Freezes` : `best ${stats.bestDayStreak}d` },
     ];
 
     return (
@@ -149,8 +154,14 @@ function OverviewView({ stats, tc, spark, completedTasks, totalTasks, perfScore 
                             <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.12em', marginTop: 4 }}>Tasks Done</div>
                         </div>
                         <div>
-                            <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 30, fontWeight: 700, color: '#fff' }}>{stats.dayStreak}d</div>
-                            <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.12em', marginTop: 4 }}>Day Streak</div>
+                            <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 30, fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                {stats.dayStreak}d
+                                <span style={{ fontSize: 22 }}>{isPro && stats.frozenDates?.includes(new Date().toISOString().slice(0, 10)) ? '🔵' : '🔥'}</span>
+                            </div>
+                            <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.12em', marginTop: 4 }}>
+                                Day Streak
+                                {isPro && <span style={{ color: '#87CEEB', marginLeft: 6, fontSize: 10, letterSpacing: '0.06em', textTransform: 'none' }}>❄️ {stats.streakFreezes}/2</span>}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -175,6 +186,9 @@ function OverviewView({ stats, tc, spark, completedTasks, totalTasks, perfScore 
                     </div>
                 ))}
             </div>
+
+            {/* AI Insight Card */}
+            <AIInsightCard isPro={isPro} showUpsell={showUpsell} tc={tc} />
         </div>
     );
 }
@@ -182,57 +196,168 @@ function OverviewView({ stats, tc, spark, completedTasks, totalTasks, perfScore 
 /* ══════════════════════
    VIEW: WEEKLY
    ══════════════════════ */
-function WeeklyView({ data, maxVal, tc, title }: { data: { key: string; value: number }[]; maxVal: number; tc: string; title: string }) {
+type TimeRange = 'week' | 'month' | 'year';
+
+function WeeklyView({ data, tc, title, isPro, showUpsell, focusHistory }: {
+    data: { key: string; value: number }[]; maxVal: number; tc: string; title: string;
+    isPro: boolean; showUpsell: () => void; focusHistory: Record<string, number>;
+}) {
+    const [range, setRange] = useState<TimeRange>('week');
+    const [showLockOverlay, setShowLockOverlay] = useState(false);
+
+    // Compute month data from focusHistory (last 30 days)
+    const monthData = useMemo(() => {
+        const now = new Date();
+        return Array.from({ length: 30 }, (_, idx) => {
+            const d = new Date(now); d.setDate(d.getDate() - (29 - idx));
+            const key = d.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+            return { key, value: focusHistory[d.toISOString().slice(0, 10)] ?? 0 };
+        });
+    }, [focusHistory]);
+
+    // Compute year data from focusHistory (last 12 months, grouped by week)
+    const yearData = useMemo(() => {
+        const now = new Date();
+        const weeks: { key: string; value: number }[] = [];
+        for (let w = 51; w >= 0; w--) {
+            let weekTotal = 0;
+            const weekStart = new Date(now);
+            weekStart.setDate(weekStart.getDate() - (w * 7 + 6));
+            for (let d = 0; d < 7; d++) {
+                const day = new Date(weekStart);
+                day.setDate(day.getDate() + d);
+                weekTotal += focusHistory[day.toISOString().slice(0, 10)] ?? 0;
+            }
+            const label = weekStart.toLocaleDateString('en-US', { month: 'short' });
+            const weekNum = 52 - w;
+            weeks.push({ key: w % 4 === 0 ? label : `W${weekNum}`, value: weekTotal });
+        }
+        return weeks;
+    }, [focusHistory]);
+
+    const activeData = range === 'year' ? yearData : range === 'month' ? monthData : data;
+    const activeMax = Math.max(...activeData.map(d => d.value), 1);
+
+    const handleTabClick = (tab: TimeRange) => {
+        if (tab === 'week') {
+            setRange('week');
+            setShowLockOverlay(false);
+        } else if (isPro) {
+            setRange(tab);
+            setShowLockOverlay(false);
+        } else {
+            setShowLockOverlay(true);
+        }
+    };
+
+    // Chart rendering
     const W = 700, H = 300, PL = 36, PR = 30, PT = 24, PB = 44;
     const plotW = W - PL - PR, plotH = H - PT - PB;
-    const step = plotW / (data.length - 1);
-    const pts = data.map((d, i) => ({ x: PL + i * step, y: PT + plotH * (1 - d.value / Math.max(maxVal, 1)) }));
+    const step = plotW / Math.max(activeData.length - 1, 1);
+    const pts = activeData.map((d, i) => ({ x: PL + i * step, y: PT + plotH * (1 - d.value / Math.max(activeMax, 1)) }));
     let line = `M ${pts[0].x} ${pts[0].y}`;
     for (let i = 1; i < pts.length; i++) line += ` Q ${(pts[i - 1].x + pts[i].x) / 2} ${pts[i - 1].y} ${pts[i].x} ${pts[i].y}`;
     const area = line + ` L ${PL + plotW} ${PT + plotH} L ${PL} ${PT + plotH} Z`;
-    const totalMin = data.reduce((a, d) => a + d.value, 0);
+    const totalMin = activeData.reduce((a, d) => a + d.value, 0);
+    // For month view, show fewer labels to avoid clutter
+    const showLabel = (i: number) => {
+        if (range === 'week') return true;
+        if (range === 'year') return i % 4 === 0 || i === activeData.length - 1;
+        return i % 5 === 0 || i === activeData.length - 1; // month
+    };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <div className="dash-card" style={{ padding: '32px 36px' }}>
+            <div className="dash-card" style={{ padding: '32px 36px', position: 'relative', overflow: 'hidden' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
                     <span style={{ fontFamily: 'Sora, sans-serif', fontSize: 18, fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>{title}</span>
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: MUTED }}>
-                        Total: {formatDuration(totalMin)}
-                    </span>
+                    {/* Time Range Tabs */}
+                    <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 3 }}>
+                        {(['week', 'month', 'year'] as TimeRange[]).map(tab => {
+                            const active = range === tab && !showLockOverlay;
+                            const locked = !isPro && tab !== 'week';
+                            return (
+                                <button key={tab} onClick={() => handleTabClick(tab)}
+                                    className="cursor-pointer transition-all duration-200"
+                                    style={{
+                                        padding: '5px 14px', borderRadius: 8, border: 'none',
+                                        fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600,
+                                        letterSpacing: '0.04em', textTransform: 'capitalize' as const,
+                                        display: 'flex', alignItems: 'center', gap: 4,
+                                        background: active ? `color-mix(in srgb, ${tc} 18%, transparent)` : 'transparent',
+                                        color: active ? tc : 'rgba(255,255,255,0.35)',
+                                    }}>
+                                    {tab}
+                                    {locked && <Lock size={10} style={{ opacity: 0.5 }} />}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
+
+                {/* Chart */}
                 <svg width="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" className="block overflow-visible">
                     <NeonDefs tc={tc} id="wk" />
-                    {/* Y-axis guide lines — minimalist */}
                     {[.25, .5, .75, 1].map(p => (
                         <g key={p}>
                             <line x1={PL} y1={PT + plotH * (1 - p)} x2={PL + plotW} y2={PT + plotH * (1 - p)} stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" strokeDasharray="4 8" />
                             <text x={PL - 10} y={PT + plotH * (1 - p) + 4} textAnchor="end" fill={MUTED} fontSize="10" fontFamily="Inter, sans-serif" opacity="0.6">
-                                {Math.round(maxVal * p)}m
+                                {Math.round(activeMax * p)}m
                             </text>
                         </g>
                     ))}
-                    {/* Area fill */}
                     <path d={area} fill="url(#wk-fill)" />
-                    {/* Line with glow */}
                     <path d={line} fill="none" stroke={tc} strokeWidth="3" strokeLinecap="round" filter="url(#wk-glow)" />
-                    {/* Data points */}
                     {pts.map((p, i) => (
                         <g key={i}>
-                            {data[i].value > 0 && <circle cx={p.x} cy={p.y} r="10" fill={tc} opacity="0.08" />}
-                            <circle cx={p.x} cy={p.y} r="5" fill="#120E2E" stroke={tc} strokeWidth="2.5" />
+                            {activeData[i].value > 0 && <circle cx={p.x} cy={p.y} r="10" fill={tc} opacity="0.08" />}
+                            <circle cx={p.x} cy={p.y} r={range === 'week' ? 5 : 3} fill="#120E2E" stroke={tc} strokeWidth={range === 'week' ? 2.5 : 1.5} />
                         </g>
                     ))}
-                    {/* Labels */}
-                    {data.map((d, i) => (
-                        <g key={d.key}>
+                    {activeData.map((d, i) => showLabel(i) ? (
+                        <g key={d.key + i}>
                             <text x={pts[i].x} y={H - 10} textAnchor="middle"
-                                fill={MUTED} fontSize="12" fontFamily="Inter, sans-serif">{d.key}</text>
-                            {d.value > 0 && <text x={pts[i].x} y={pts[i].y - 16} textAnchor="middle"
+                                fill={MUTED} fontSize={range === 'week' ? 12 : 9} fontFamily="Inter, sans-serif">{d.key}</text>
+                            {d.value > 0 && range === 'week' && <text x={pts[i].x} y={pts[i].y - 16} textAnchor="middle"
                                 fill="rgba(255,255,255,0.55)" fontSize="11" fontFamily="Sora, sans-serif" fontWeight="600">{formatDuration(d.value)}</text>}
                         </g>
-                    ))}
+                    ) : null)}
                 </svg>
+                <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: MUTED, marginTop: 12, textAlign: 'right' }}>
+                    Total: {formatDuration(totalMin)}
+                </div>
+
+                {/* Lock Overlay — shown for Free users clicking Month/Year */}
+                {showLockOverlay && (
+                    <div style={{
+                        position: 'absolute', inset: 0,
+                        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                        background: 'rgba(10,10,20,0.5)',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        gap: 16, zIndex: 10, borderRadius: 'inherit',
+                    }}>
+                        <Lock size={28} style={{ color: tc, opacity: 0.7, filter: `drop-shadow(0 0 8px ${tc})` }} />
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.7)', textAlign: 'center', maxWidth: 260 }}>
+                            See your long-term growth trends with Pro.
+                        </span>
+                        <button onClick={(e) => { e.stopPropagation(); showUpsell(); }}
+                            className="cursor-pointer transition-all duration-200 hover:scale-105"
+                            style={{
+                                padding: '8px 24px', borderRadius: 12, border: 'none',
+                                background: `linear-gradient(135deg, ${tc}, color-mix(in srgb, ${tc} 70%, #fff))`,
+                                fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600,
+                                color: '#fff', letterSpacing: '0.02em',
+                                boxShadow: `0 0 20px color-mix(in srgb, ${tc} 30%, transparent)`,
+                            }}>
+                            Upgrade to Pro ✨
+                        </button>
+                        <button onClick={() => setShowLockOverlay(false)}
+                            className="cursor-pointer"
+                            style={{ background: 'none', border: 'none', fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>
+                            Back to Week
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -291,8 +416,9 @@ function HoursView({ data, maxVal, tc, title }: { data: { key: string; value: nu
 /* ══════════════════════
    VIEW: TODAY
    ══════════════════════ */
-function TodayView({ stats, tc, completedTasks, totalTasks, pomodoroCount }: {
+function TodayView({ stats, tc, completedTasks, totalTasks, pomodoroCount, isPro, showUpsell }: {
     stats: any; tc: string; completedTasks: number; totalTasks: number; pomodoroCount: number;
+    isPro: boolean; showUpsell: () => void;
 }) {
     const milestones = [3, 7, 14, 30, 60, 100];
     const nextMS = milestones.find(m => m > stats.dayStreak) ?? 100;
@@ -339,6 +465,9 @@ function TodayView({ stats, tc, completedTasks, totalTasks, pomodoroCount }: {
                     {4 - (pomodoroCount % 4)} more until long break
                 </div>
             </div>
+
+            {/* Session History — Pro-gated */}
+            <SessionHistoryList focusHistory={stats.focusHistory} hourlyHistory={stats.hourlyHistory} isPro={isPro} showUpsell={showUpsell} tc={tc} />
         </div>
     );
 }
@@ -369,8 +498,20 @@ export function StatsDashboard({ onClose }: Props) {
     const { t } = useTranslation();
     const tc = useThemeColor();
     const icons = useSceneIcons();
+    const { isPro, showUpsell } = useProGate();
+    const { syncNow } = useFocusSync();
     const stats = useFocusStore(s => s.stats);
     const pomodoroCount = useFocusStore(s => s.pomodoroCount);
+
+    // Auto-sync to cloud when sessions change (Pro only)
+    const prevSessionsRef = useMemo(() => ({ val: stats.sessionsCompleted }), []);
+    useEffect(() => {
+        if (stats.sessionsCompleted > prevSessionsRef.val) {
+            prevSessionsRef.val = stats.sessionsCompleted;
+            const workMinutes = Math.round(useFocusStore.getState().workDuration / 60);
+            syncNow(workMinutes, new Date().getHours());
+        }
+    }, [stats.sessionsCompleted, syncNow]);
     const tasks = useFocusStore(s => s.tasks);
     const completedTasks = tasks.filter(tk => tk.completed).length;
     const totalTasks = tasks.length;
@@ -398,6 +539,17 @@ export function StatsDashboard({ onClose }: Props) {
         Array.from({ length: 24 }, (_, i) => ({ key: String(i).padStart(2, '0'), value: stats.hourlyHistory[String(i)] ?? 0 })),
         [stats.hourlyHistory]);
     const hourMax = Math.max(...hourData.map(d => d.value), 1);
+
+    // Conversion trigger toast
+    const [triggerToast, setTriggerToast] = useState<{ emoji: string; text: string; cta: string } | null>(null);
+    useEffect(() => {
+        const msg = checkConversionTriggers(stats, isPro);
+        if (msg) {
+            setTriggerToast(msg);
+            const timer = setTimeout(() => setTriggerToast(null), 6000);
+            return () => clearTimeout(timer);
+        }
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
@@ -467,19 +619,72 @@ export function StatsDashboard({ onClose }: Props) {
 
                 {/* ── CONTENT AREA ── */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar relative" style={{ padding: '32px 36px' }}>
-                    {/* View title */}
-                    <div style={{ marginBottom: 28 }}>
+                    {/* View title + Plan Badge */}
+                    <div style={{ marginBottom: 28, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <h2 style={{ fontFamily: 'Sora, sans-serif', fontSize: 24, fontWeight: 700, color: 'rgba(255,255,255,0.93)', letterSpacing: '-0.01em', margin: 0 }}>
                             {TAB_DEFS.find(t => t.id === activeView)?.label}
                         </h2>
+                        {/* Plan Badge */}
+                        <div style={{
+                            padding: '5px 14px',
+                            borderRadius: 20,
+                            fontSize: 11,
+                            fontFamily: 'Inter, sans-serif',
+                            fontWeight: 600,
+                            letterSpacing: '0.06em',
+                            ...(isPro
+                                ? {
+                                    background: 'linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,180,0,0.08))',
+                                    border: '1px solid rgba(255,215,0,0.25)',
+                                    color: '#FFD700',
+                                    textShadow: '0 0 8px rgba(255,215,0,0.3)',
+                                }
+                                : {
+                                    background: `color-mix(in srgb, ${tc} 8%, transparent)`,
+                                    border: `1px solid color-mix(in srgb, ${tc} 15%, transparent)`,
+                                    color: MUTED,
+                                }),
+                        }}>
+                            {isPro ? '⭐ Pro' : 'Free'}
+                        </div>
                     </div>
+
+                    {/* Conversion trigger toast */}
+                    {triggerToast && (
+                        <div style={{
+                            marginBottom: 18, padding: '12px 20px', borderRadius: 14,
+                            background: `color-mix(in srgb, ${tc} 10%, rgba(10,10,20,0.6))`,
+                            border: `1px solid color-mix(in srgb, ${tc} 18%, transparent)`,
+                            display: 'flex', alignItems: 'center', gap: 14,
+                            animation: 'dash-in 0.4s ease-out',
+                        }}>
+                            <span style={{ fontSize: 22, flexShrink: 0 }}>{triggerToast.emoji}</span>
+                            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.75)', flex: 1, lineHeight: 1.4 }}>
+                                {triggerToast.text}
+                            </span>
+                            <button onClick={(e) => { e.stopPropagation(); showUpsell(); }}
+                                className="cursor-pointer transition-all duration-200 hover:scale-105"
+                                style={{
+                                    padding: '6px 16px', borderRadius: 8, border: 'none', flexShrink: 0,
+                                    background: `linear-gradient(135deg, ${tc}, color-mix(in srgb, ${tc} 70%, #fff))`,
+                                    fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600,
+                                    color: '#fff', whiteSpace: 'nowrap',
+                                }}>
+                                {triggerToast.cta}
+                            </button>
+                            <button onClick={() => setTriggerToast(null)}
+                                className="cursor-pointer" style={{ background: 'none', border: 'none', padding: 4 }}>
+                                <X size={14} style={{ color: 'rgba(255,255,255,0.25)' }} />
+                            </button>
+                        </div>
+                    )}
 
                     {/* Render active view */}
                     <div className="animate-dash-in" key={activeView}>
-                        {activeView === 'overview' && <OverviewView stats={stats} tc={tc} spark={spark} completedTasks={completedTasks} totalTasks={totalTasks} perfScore={perfScore} />}
-                        {activeView === 'weekly' && <WeeklyView data={weekData} maxVal={weekMax} tc={tc} title={t('stats.thisWeek')} />}
+                        {activeView === 'overview' && <OverviewView stats={stats} tc={tc} spark={spark} completedTasks={completedTasks} totalTasks={totalTasks} perfScore={perfScore} isPro={isPro} showUpsell={showUpsell} />}
+                        {activeView === 'weekly' && <WeeklyView data={weekData} maxVal={weekMax} tc={tc} title={t('stats.thisWeek')} isPro={isPro} showUpsell={showUpsell} focusHistory={stats.focusHistory} />}
                         {activeView === 'hours' && <HoursView data={hourData} maxVal={hourMax} tc={tc} title={t('stats.peakHours')} />}
-                        {activeView === 'today' && <TodayView stats={stats} tc={tc} completedTasks={completedTasks} totalTasks={totalTasks} pomodoroCount={pomodoroCount} />}
+                        {activeView === 'today' && <TodayView stats={stats} tc={tc} completedTasks={completedTasks} totalTasks={totalTasks} pomodoroCount={pomodoroCount} isPro={isPro} showUpsell={showUpsell} />}
                         {activeView === 'activity' && <ActivityView />}
                     </div>
                 </div>

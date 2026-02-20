@@ -29,7 +29,7 @@ export function Sidebar() {
         { id: 'scenes' as const, Icon: icons.ui.scenes, label: t('sidebar.scenes'), shortcut: 'S', proOnly: false },
         { id: 'mixer' as const, Icon: icons.ui.music, label: t('sidebar.mixer'), shortcut: 'M', proOnly: false },
         { id: 'focus' as const, Icon: icons.ui.focus, label: t('sidebar.focus'), shortcut: 'F', proOnly: false },
-        { id: 'stats' as const, Icon: icons.ui.stats, label: t('sidebar.stats'), shortcut: 'R', proOnly: true },
+        { id: 'stats' as const, Icon: icons.ui.stats, label: t('sidebar.stats'), shortcut: 'R', proOnly: false },
     ];
 
     const ICON = 20;

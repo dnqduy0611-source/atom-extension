@@ -55,15 +55,13 @@ export function SoundMixer({ onClose }: Props) {
 
     return (
         <div
-            className="w-[480px] h-full rounded-2xl backdrop-blur-xl fade-in overflow-hidden flex flex-col"
+            className="w-[480px] h-full glass-card glass-card-glow fade-in flex flex-col"
             style={{
-                background: 'var(--theme-panel-bg)',
-                border: `1px solid var(--theme-panel-border)`,
-                boxShadow: '0 12px 48px rgba(0,0,0,0.5)',
+                borderRadius: '16px',
             }}
         >
             {/* ═══ Header ═══ */}
-            <div className="flex items-center justify-between px-6 pt-5 pb-3">
+            <div className="flex items-center justify-between px-7 pt-6 pb-4">
                 <div className="w-7" />
                 <div className="flex items-center gap-3">
                     <Headphones size={22} style={{ color: 'var(--theme-primary)' }} />
@@ -81,21 +79,26 @@ export function SoundMixer({ onClose }: Props) {
 
             {/* ═══ Now Playing Card ═══ */}
             {currentTrack && (
-                <div className="mx-5 mt-2 mb-4">
+                <div className="mx-6 mt-2 mb-5">
                     <div
                         className="rounded-xl p-5 relative overflow-hidden"
                         style={{
                             background: `linear-gradient(135deg, 
-                                color-mix(in srgb, var(--theme-primary) 25%, rgba(0,0,0,0.4)),
-                                color-mix(in srgb, var(--theme-secondary) 15%, rgba(0,0,0,0.6))
+                                color-mix(in srgb, var(--theme-primary) 20%, rgba(0,0,0,0.25)),
+                                color-mix(in srgb, var(--theme-secondary) 12%, rgba(0,0,0,0.35))
                             )`,
-                            border: '1px solid rgba(255,255,255,0.08)',
+                            border: '1px solid rgba(255,255,255,0.12)',
+                            boxShadow: '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)',
                         }}
                     >
                         {/* Subtle glow behind */}
                         <div
-                            className="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-3xl opacity-30"
+                            className="absolute -top-8 -right-8 w-36 h-36 rounded-full blur-3xl opacity-25"
                             style={{ background: 'var(--theme-primary)' }}
+                        />
+                        <div
+                            className="absolute -bottom-12 -left-12 w-28 h-28 rounded-full blur-3xl opacity-15"
+                            style={{ background: 'var(--theme-secondary)' }}
                         />
 
                         {/* Track info */}
@@ -171,9 +174,9 @@ export function SoundMixer({ onClose }: Props) {
             )}
 
             {/* ═══ Tab Switcher ═══ */}
-            <div className="flex mx-5 mb-3 rounded-xl p-1.5" style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <div className="flex mx-6 mb-5 rounded-xl p-2" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.04)' }}>
                 <button
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[14px] font-medium transition-all duration-200 cursor-pointer"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-[14px] font-medium transition-all duration-200 cursor-pointer"
                     style={{
                         background: activeTab === 'music'
                             ? 'color-mix(in srgb, var(--theme-primary) 15%, transparent)'
@@ -188,7 +191,7 @@ export function SoundMixer({ onClose }: Props) {
                     <span>{t('mixer.tracks')}</span>
                 </button>
                 <button
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[14px] font-medium transition-all duration-200 cursor-pointer"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-[14px] font-medium transition-all duration-200 cursor-pointer"
                     style={{
                         background: activeTab === 'ambience'
                             ? 'color-mix(in srgb, var(--theme-primary) 15%, transparent)'
@@ -203,7 +206,7 @@ export function SoundMixer({ onClose }: Props) {
                     <span>{t('mixer.ambience')}</span>
                 </button>
                 <button
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[14px] font-medium transition-all duration-200 cursor-pointer"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-[14px] font-medium transition-all duration-200 cursor-pointer"
                     style={{
                         background: activeTab === 'brainwave'
                             ? 'color-mix(in srgb, var(--theme-primary) 15%, transparent)'
@@ -225,9 +228,9 @@ export function SoundMixer({ onClose }: Props) {
             </div>
 
             {/* ═══ Tab Content ═══ */}
-            <div className="flex-1 overflow-y-auto px-4 pb-5 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto px-6 pb-6 custom-scrollbar">
                 {activeTab === 'music' && (
-                    <div className="space-y-3">
+                    <div className="space-y-1">
                         {musicTracks.map((track) => {
                             const isActive = musicTrackState?.id === track.id;
                             const GenreIcon = (icons.genre as Record<string, FC<IconProps>>)[track.genre] ?? icons.ui.music;
@@ -236,7 +239,7 @@ export function SoundMixer({ onClose }: Props) {
                                 <button
                                     key={track.id}
                                     onClick={() => setMusicTrack(track.id)}
-                                    className="w-full flex items-center gap-3 px-3 py-3.5 rounded-xl text-left transition-all duration-200 cursor-pointer group"
+                                    className="w-full flex items-center gap-4 px-4 py-4 rounded-xl text-left transition-all duration-200 cursor-pointer group"
                                     style={{
                                         background: isActive
                                             ? 'color-mix(in srgb, var(--theme-primary) 10%, transparent)'
@@ -296,7 +299,7 @@ export function SoundMixer({ onClose }: Props) {
                 )}
 
                 {activeTab === 'ambience' && (
-                    <div className="space-y-3">
+                    <div className="space-y-1">
                         {ambienceSounds.map((sound) => {
                             const layer = ambienceLayers.find((l) => l.id === sound.id);
                             const isActive = layer?.active ?? false;
@@ -305,7 +308,7 @@ export function SoundMixer({ onClose }: Props) {
                             return (
                                 <div key={sound.id}>
                                     <button
-                                        className="w-full flex items-center gap-3 px-3 py-3.5 rounded-xl text-left transition-all duration-200 cursor-pointer"
+                                        className="w-full flex items-center gap-4 px-4 py-4 rounded-xl text-left transition-all duration-200 cursor-pointer"
                                         style={{
                                             background: isActive
                                                 ? 'color-mix(in srgb, var(--theme-primary) 10%, transparent)'
@@ -359,7 +362,7 @@ export function SoundMixer({ onClose }: Props) {
                 )}
 
                 {activeTab === 'brainwave' && (
-                    <div className="space-y-4 px-1">
+                    <div className="space-y-5 px-1">
 
                         {/* ── Hero Card: Toggle + Description ── */}
                         <div

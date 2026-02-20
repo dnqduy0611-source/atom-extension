@@ -1,6 +1,8 @@
 ﻿// background.js - V3 ADAPTER
 
 import './config/build_flags.js';
+import './lib/supabase.min.js'; // Load Supabase UMD bundle — populates self.supabase for MV3 module service worker
+import { getSupabaseClient } from './lib/supabase_client.js';
 import './utils/console_guard.js';
 import { SignalExtractor, DecisionEngine } from './core_logic.js';
 import { StrategyLayer } from './strategy_layer.js';
@@ -37,7 +39,7 @@ import { captureVisualAnchor, cleanupAnchors } from './services/srq_visual_ancho
 import { SRQ_ERROR_CODES } from './bridge/types.js';
 
 // Lofi Sync (AmoLofi Web → Extension bridge)
-import { initLofiSync, disconnectLofiSync, tryAutoInitLofiSync, isLofiSyncActive } from './services/lofi_sync.js';
+import { initLofiSync, disconnectLofiSync, tryAutoInitLofiSync, isLofiSyncActive, sendFocusCommand } from './services/lofi_sync.js';
 
 const BUILD_FLAGS = globalThis.ATOM_BUILD_FLAGS || { DEBUG: false };
 const DEBUG_BUILD_ENABLED = !!BUILD_FLAGS.DEBUG;
@@ -3731,6 +3733,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             await saveFocusState(st);
             scheduleFocusAlarm(st.phaseEndsAt);
             await broadcastFocusState(st);
+            sendFocusCommand('enter_zen', { workMin, breakMin });
 
             chrome.storage.local.get(['atom_events'], (r) => {
                 const cur = r.atom_events || [];
@@ -3749,16 +3752,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             const st = await loadFocusState();
             const now = Date.now();
 
-            if (!st?.enabled) {
+            if (!st?.enabled && !st?.paused) {
                 sendResponse({ ok: false, reason: "NOT_ENABLED" });
                 return;
             }
 
             const isWork = st.phase === "WORK";
             const durationMin = isWork ? cfg.workMin : cfg.breakMin;
+            const durationMs = durationMin * 60 * 1000;
 
+            // Reset like AmoLofi: reset duration + pause (don't auto-start)
+            st.enabled = false;
+            st.paused = true;
+            st.pausedRemainingMs = durationMs;
             st.phaseStartedAt = now;
-            st.phaseEndsAt = now + durationMin * 60 * 1000;
+            st.phaseEndsAt = now + durationMs;
             st.lastStateUpdatedAt = now;
 
             // Reset counters if restarting a work block
@@ -3766,8 +3774,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 resetWorkCounters(st);
             }
 
+            chrome.alarms.clear(FOCUS_ALARM_NAME);
             await saveFocusState(st);
-            scheduleFocusAlarm(st.phaseEndsAt);
             await broadcastFocusState(st);
 
             // Log event
@@ -3777,7 +3785,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 chrome.storage.local.set({ atom_events: cur.slice(-2000) });
             });
 
-            console.log(`[ATOM] Focus Phase Reset: ${st.phase} (Reset to ${durationMin}m)`);
+            console.log(`[ATOM] Focus Phase Reset: ${st.phase} (Reset to ${durationMin}m, paused)`);
             sendResponse({ ok: true, atom_focus_state: st });
         })();
         return true;
@@ -3792,6 +3800,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             const next = st ? { ...st, enabled: false, lastStateUpdatedAt: now } : { enabled: false };
             await saveFocusState(next);
             await broadcastFocusState(next);
+            sendFocusCommand('exit_zen', {});
 
             chrome.storage.local.get(['atom_events'], (r) => {
                 const cur = r.atom_events || [];
@@ -3815,13 +3824,89 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 return;
             }
 
-            const next = { ...st, enabled: false, paused: true, lastStateUpdatedAt: now };
+            const remainingMs = Math.max(0, st.phaseEndsAt - now);
+            const next = { ...st, enabled: false, paused: true, pausedRemainingMs: remainingMs, lastStateUpdatedAt: now };
             await saveFocusState(next);
             await broadcastFocusState(next);
 
             chrome.storage.local.get(['atom_events'], (r) => {
                 const cur = r.atom_events || [];
                 cur.push({ timestamp: now, event: "FOCUS_PAUSE", mode: "FOCUS", context: {} });
+                chrome.storage.local.set({ atom_events: cur.slice(-2000) });
+            });
+
+            sendResponse({ ok: true, atom_focus_state: next });
+        })();
+        return true;
+    }
+
+    if (request.type === "FOCUS_RESUME") {
+        (async () => {
+            const st = await loadFocusState();
+            const now = Date.now();
+
+            if (!st?.paused) {
+                sendResponse({ ok: false, reason: "not_paused" });
+                return;
+            }
+
+            const remainingMs = st.pausedRemainingMs || 0;
+            const next = {
+                ...st,
+                enabled: true,
+                paused: false,
+                pausedRemainingMs: undefined,
+                phaseStartedAt: now - ((st.phaseEndsAt - st.phaseStartedAt) - remainingMs),
+                phaseEndsAt: now + remainingMs,
+                lastStateUpdatedAt: now
+            };
+            await saveFocusState(next);
+            scheduleFocusAlarm(next.phaseEndsAt);
+            await broadcastFocusState(next);
+
+            chrome.storage.local.get(['atom_events'], (r) => {
+                const cur = r.atom_events || [];
+                cur.push({ timestamp: now, event: "FOCUS_RESUME", mode: "FOCUS", context: {} });
+                chrome.storage.local.set({ atom_events: cur.slice(-2000) });
+            });
+
+            sendResponse({ ok: true, atom_focus_state: next });
+        })();
+        return true;
+    }
+
+    if (request.type === "FOCUS_SKIP") {
+        (async () => {
+            const cfg = await loadFocusConfig();
+            const st = await loadFocusState();
+            const now = Date.now();
+
+            if (!st?.enabled && !st?.paused) {
+                sendResponse({ ok: false, reason: "not_active" });
+                return;
+            }
+
+            // Toggle phase: WORK → BREAK, BREAK → WORK
+            const nextPhase = st.phase === "WORK" ? "BREAK" : "WORK";
+            const durationMin = nextPhase === "WORK" ? cfg.workMin : cfg.breakMin;
+
+            const next = {
+                ...st,
+                enabled: true,
+                paused: false,
+                pausedRemainingMs: undefined,
+                phase: nextPhase,
+                phaseStartedAt: now,
+                phaseEndsAt: now + durationMin * 60 * 1000,
+                lastStateUpdatedAt: now
+            };
+            await saveFocusState(next);
+            scheduleFocusAlarm(next.phaseEndsAt);
+            await broadcastFocusState(next);
+
+            chrome.storage.local.get(['atom_events'], (r) => {
+                const cur = r.atom_events || [];
+                cur.push({ timestamp: now, event: "FOCUS_SKIP", mode: "FOCUS", context: { from: st.phase, to: nextPhase } });
                 chrome.storage.local.set({ atom_events: cur.slice(-2000) });
             });
 
@@ -6287,16 +6372,370 @@ function handleSrqMessage(request, sender, sendResponse) {
     })();
 }
 
+// ===========================
+// Image Proxy: fetch images in service worker (bypasses page CSP)
+// ===========================
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type !== 'FETCH_IMAGE_AS_DATA_URL') return;
+
+    const { url } = message;
+    if (!url) { sendResponse({ ok: false }); return; }
+
+    fetch(url)
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.blob();
+        })
+        .then(blob => {
+            const reader = new FileReader();
+            reader.onloadend = () => sendResponse({ ok: true, dataUrl: reader.result });
+            reader.onerror = () => sendResponse({ ok: false });
+            reader.readAsDataURL(blob);
+        })
+        .catch(err => {
+            console.warn('[Image Proxy] Fetch failed:', url, err.message);
+            sendResponse({ ok: false });
+        });
+
+    return true; // async
+});
 
 
 // ===========================
 // Auth Sync: Web → Extension
 // ===========================
+
+// Detect Supabase session on *.amonexus.com tabs (bypasses CSP via extension API)
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (changeInfo.status !== 'complete') return;
+    if (!tab.url) return;
+    try {
+        const url = new URL(tab.url);
+        const isAmonexus = url.hostname.endsWith('amonexus.com');
+        const isLocalDev = url.hostname === 'localhost' && url.port === '5173';
+        if (!isAmonexus && !isLocalDev) return;
+    } catch { return; }
+
+    // Execute in MAIN world to access page's localStorage (bypasses CSP)
+    chrome.scripting.executeScript({
+        target: { tabId },
+        world: 'MAIN',
+        func: () => {
+            try {
+                const raw = localStorage.getItem('sb-zdvbjuxcithcrvsdzumj-auth-token');
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                if (parsed?.access_token && parsed?.refresh_token) {
+                    return { access_token: parsed.access_token, refresh_token: parsed.refresh_token };
+                }
+            } catch { }
+            return null;
+        }
+    }).then(results => {
+        const tokens = results?.[0]?.result;
+        if (!tokens) {
+            // No auth tokens but still pull config if already authenticated
+            pullLatestLofiConfig();
+        } else {
+            console.log('[Auth Sync] Detected Supabase session on', tab.url);
+            // Feed into the existing WEB_AUTH_DETECTED handler
+            handleWebAuthDetected(tokens);
+        }
+
+        // Also extract scene visuals from the AmoLofi page DOM
+        // This captures custom/AI scene backgrounds that aren't in SCENE_REGISTRY
+        extractSceneVisualsFromTab(tabId);
+    }).catch(() => { /* tab may have been closed */ });
+});
+
+// Core handler for web auth tokens (called from tab detection above)
+async function handleWebAuthDetected(tokens) {
+    const { access_token, refresh_token } = tokens;
+    if (!access_token || !refresh_token) return;
+
+    try {
+        // Skip if already authenticated with same user
+        const supaClient = await getSupabaseClient();
+        const { data: { session: existing } } = await supaClient.auth.getSession();
+        if (existing?.user) {
+            console.log('[Auth Sync] Already authenticated, pulling latest config');
+            pullLatestLofiConfig();
+            return;
+        }
+
+        // Set session from web tokens
+        const { data, error } = await supaClient.auth.setSession({
+            access_token,
+            refresh_token,
+        });
+
+        if (error) {
+            console.warn('[Auth Sync] Failed to set session from web:', error.message);
+            return;
+        }
+
+        // Cache for proxy usage → triggers initLofiSync via storage.onChanged
+        if (data?.session) {
+            await chrome.storage.local.set({
+                atom_proxy_session: {
+                    access_token: data.session.access_token,
+                    refresh_token: data.session.refresh_token,
+                    expires_at: data.session.expires_at,
+                    user_id: data.session.user?.id
+                }
+            });
+        }
+
+        console.log('[Auth Sync] ✅ Session synced from web successfully');
+        // Pull latest config after session sync
+        setTimeout(() => pullLatestLofiConfig(), 2000);
+    } catch (err) {
+        console.warn('[Auth Sync] Error:', err.message);
+    }
+}
+
+// ── Extract scene visuals from AmoLofi tab DOM ──
+// This captures custom/AI scene backgrounds by reading the rendered page,
+// converting blob URLs to data URLs via canvas, and syncing to extension.
+async function extractSceneVisualsFromTab(tabId) {
+    try {
+        // Wait for the page to fully render the scene
+        await new Promise(r => setTimeout(r, 3000));
+
+        const results = await chrome.scripting.executeScript({
+            target: { tabId },
+            world: 'MAIN',
+            func: () => {
+                try {
+                    const root = document.documentElement;
+                    const cs = getComputedStyle(root);
+                    const primary = cs.getPropertyValue('--theme-primary').trim();
+                    const tint = cs.getPropertyValue('--theme-panel-bg').trim();
+
+                    // Find scene background: look for divs with backgroundSize: cover
+                    // (SceneBackground uses inline style backgroundSize: 'cover')
+                    let bgUrl = '';
+                    const allDivs = document.querySelectorAll('div');
+                    for (const div of allDivs) {
+                        const computed = getComputedStyle(div);
+                        if (computed.backgroundSize !== 'cover') continue;
+                        const bgImage = computed.backgroundImage;
+                        if (!bgImage || bgImage === 'none') continue;
+                        const match = bgImage.match(/url\(["']?(.+?)["']?\)/);
+                        if (match && match[1] && !match[1].includes('data:image/svg')) {
+                            bgUrl = match[1];
+                            // Don't break — take the LAST match (z-[1] = current scene, appears after z-0 = old scene)
+                        }
+                    }
+
+                    if (!bgUrl) return { primary, bgUrl: null, bgDataUrl: null };
+
+                    // If it's a blob URL, convert to data URL via canvas
+                    if (bgUrl.startsWith('blob:')) {
+                        return new Promise((resolve) => {
+                            const img = new Image();
+                            img.onload = () => {
+                                try {
+                                    const canvas = document.createElement('canvas');
+                                    // Resize for efficiency (max 960px width)
+                                    const maxW = 960;
+                                    const ratio = Math.min(maxW / img.width, 1);
+                                    canvas.width = Math.round(img.width * ratio);
+                                    canvas.height = Math.round(img.height * ratio);
+                                    const ctx = canvas.getContext('2d');
+                                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                    const dataUrl = canvas.toDataURL('image/jpeg', 0.65);
+                                    resolve({ bgDataUrl: dataUrl, primary, bgUrl: null });
+                                } catch {
+                                    resolve({ bgDataUrl: null, primary, bgUrl: null });
+                                }
+                            };
+                            img.onerror = () => resolve({ bgDataUrl: null, primary, bgUrl: null });
+                            img.src = bgUrl;
+                        });
+                    }
+
+                    // For non-blob URLs (built-in scenes with /scenes/xxx.jpg paths)
+                    return { bgUrl, primary, bgDataUrl: null };
+                } catch { return null; }
+            }
+        });
+
+        const visuals = results?.[0]?.result;
+        if (!visuals) return;
+        if (!visuals.bgDataUrl && !visuals.bgUrl && !visuals.primary) return;
+
+        // Get or create atom_lofi_config
+        const stored = await chrome.storage.local.get('atom_lofi_config');
+        const existing = stored.atom_lofi_config || { active: true, scene_id: 'unknown', variant: 'day' };
+
+        const updated = { ...existing, active: true, updated_at: Date.now() };
+
+        if (visuals.bgDataUrl) {
+            updated.bg_url = visuals.bgDataUrl;
+            console.log('[Auth Sync] 🎨 Captured custom scene bg as data URL');
+        } else if (visuals.bgUrl && !visuals.bgUrl.startsWith('blob:')) {
+            if (visuals.bgUrl.startsWith('/')) {
+                updated.bg_url = `${LOFI_BASE_BG}${visuals.bgUrl}`;
+            } else {
+                updated.bg_url = visuals.bgUrl;
+            }
+            console.log('[Auth Sync] 🎨 Captured scene bg URL:', updated.bg_url);
+        }
+        if (visuals.primary) {
+            updated.primary_color = visuals.primary;
+        }
+
+        await chrome.storage.local.set({ atom_lofi_config: updated });
+        // Broadcast to all tabs
+        chrome.tabs.query({}, (tabs) => {
+            tabs.forEach(t => {
+                chrome.tabs.sendMessage(t.id, { type: 'LOFI_CONFIG_UPDATED', config: updated }).catch(() => { });
+            });
+        });
+        console.log('[Auth Sync] 🎨 Scene visuals extracted from tab successfully');
+    } catch (e) {
+        // Tab may have been closed or navigated away
+        console.warn('[Auth Sync] Visual extraction failed:', e.message);
+    }
+}
+
+// Pull latest lofi config from Supabase DB (catch-up after SW sleep)
+const LOFI_BASE_BG = 'https://lofi.amonexus.com';
+const SCENE_REGISTRY_BG = {
+    cozy_cafe: {
+        bg: { day: '/scenes/cafe_day.jpg', night: '/scenes/cafe_night.jpg' },
+        tint: { day: 'rgba(30,15,5,0.4)', night: 'rgba(10,5,2,0.55)' },
+        primary: { day: '#f59e0b', night: '#fb923c' }
+    },
+    japanese_garden: {
+        bg: { day: '/scenes/garden_day.jpg', night: '/scenes/garden_night.jpg' },
+        tint: { day: 'rgba(15,10,20,0.3)', night: 'rgba(15,5,25,0.5)' },
+        primary: { day: '#ec4899', night: '#a855f7' }
+    },
+    city_night: {
+        bg: { day: '/scenes/city_day.jpg', night: '/scenes/city_night.jpg' },
+        tint: { day: 'rgba(10,5,30,0.4)', night: 'rgba(5,2,15,0.45)' },
+        primary: { day: '#8b5cf6', night: '#e879f9' }
+    },
+    forest_cabin: {
+        bg: { day: '/scenes/forest_day.jpg', night: '/scenes/forest_night.jpg' },
+        tint: { day: 'rgba(5,15,5,0.35)', night: 'rgba(3,8,3,0.5)' },
+        primary: { day: '#22c55e', night: '#34d399' }
+    },
+    ocean_cliff: {
+        bg: { day: '/scenes/ocean_day.jpg', night: '/scenes/ocean_night.jpg' },
+        tint: { day: 'rgba(5,10,25,0.3)', night: 'rgba(2,5,15,0.5)' },
+        primary: { day: '#06b6d4', night: '#38bdf8' }
+    },
+    space_station: {
+        bg: { day: '/scenes/space_day.jpg', night: '/scenes/space_night.jpg' },
+        tint: { day: 'rgba(3,3,15,0.35)', night: 'rgba(0,0,5,0.45)' },
+        primary: { day: '#6366f1', night: '#a78bfa' }
+    },
+    cyberpunk_alley: {
+        bg: { day: '/scenes/cyberpunk_day.jpg', night: '/scenes/cyberpunk_night.jpg' },
+        tint: { day: 'rgba(0,5,15,0.12)', night: 'rgba(0,3,10,0.18)' },
+        primary: { day: '#00ffd5', night: '#ff2d95' }
+    },
+    ghibli_meadow: {
+        bg: { day: '/scenes/ghibli_day.jpg', night: '/scenes/ghibli_night.jpg' },
+        tint: { day: 'rgba(20,15,5,0.2)', night: 'rgba(10,8,20,0.4)' },
+        primary: { day: '#4ade80', night: '#c084fc' }
+    },
+};
+
+async function pullLatestLofiConfig() {
+    try {
+        const data = await chrome.storage.local.get('atom_proxy_session');
+        const session = data.atom_proxy_session;
+        if (!session?.user_id) return;
+
+        const supaClient = await getSupabaseClient();
+        const { data: stateRow, error } = await supaClient
+            .from('lofi_state')
+            .select('active_config, is_playing, master_volume')
+            .eq('user_id', session.user_id)
+            .single();
+
+        if (error || !stateRow?.active_config) {
+            console.log('[Auth Sync] No lofi_state found:', error?.message);
+            return;
+        }
+
+        const config = stateRow.active_config;
+        if (!config.scene_id) return;
+
+        const sceneData = SCENE_REGISTRY_BG[config.scene_id];
+        const variant = config.variant || 'day';
+
+        // For known scenes, build URL from registry. For custom/AI, use payload data.
+        let bg_url, bg_tint, primary_color;
+        if (sceneData) {
+            bg_url = `${LOFI_BASE_BG}${sceneData.bg[variant] || sceneData.bg.day}`;
+            bg_tint = sceneData.tint[variant] || 'rgba(0,0,0,0.4)';
+            primary_color = sceneData.primary[variant] || '#10b981';
+        } else {
+            bg_url = config.bg_url ? (config.bg_url.startsWith('/') ? `${LOFI_BASE_BG}${config.bg_url}` : config.bg_url) : '';
+            bg_tint = config.tint || 'rgba(0,0,0,0.4)';
+            primary_color = config.primary_color || '#10b981';
+        }
+
+        const mirrorConfig = {
+            active: true,
+            updated_at: Date.now(),
+            scene_id: config.scene_id,
+            variant: variant,
+            bg_url: bg_url,
+            bg_tint: bg_tint,
+            primary_color: primary_color,
+            audio_layers: (config.ambience || []).map(a => ({
+                id: a.id,
+                volume: a.volume ?? 0.5,
+                src: `${LOFI_BASE_BG}/assets/audio/ambience/${a.id}.mp3`,
+            })),
+            music: config.music ? {
+                id: config.music.id,
+                name: config.music.name || config.music.id,
+                artist: config.music.artist || 'Amo',
+                volume: config.music.volume ?? 0.4,
+                src: `${LOFI_BASE_BG}/assets/audio/music/${config.music.id}.mp3`,
+            } : null,
+            is_playing: stateRow.is_playing !== false,
+            master_volume: stateRow.master_volume ?? 0.7,
+        };
+
+        // If bg_url is empty (custom/AI scene without cloud URL),
+        // preserve any existing captured bg (data:image from extractSceneVisualsFromTab)
+        if (!mirrorConfig.bg_url) {
+            const existingData = await chrome.storage.local.get('atom_lofi_config');
+            const existingConfig = existingData.atom_lofi_config;
+            if (existingConfig?.bg_url && existingConfig.bg_url.startsWith('data:')) {
+                mirrorConfig.bg_url = existingConfig.bg_url;
+                console.log('[Auth Sync] Preserved captured bg for custom scene');
+            }
+        }
+
+        // Save & broadcast to all tabs
+        await chrome.storage.local.set({ atom_lofi_config: mirrorConfig });
+        chrome.tabs.query({}, (tabs) => {
+            tabs.forEach(tab => {
+                chrome.tabs.sendMessage(tab.id, { type: 'LOFI_CONFIG_UPDATED', config: mirrorConfig }).catch(() => { });
+            });
+        });
+        console.log('[Auth Sync] 📥 Config pulled from DB:', mirrorConfig.scene_id, mirrorConfig.variant);
+    } catch (e) {
+        console.warn('[Auth Sync] Pull config failed:', e.message);
+    }
+}
+
+// Legacy message handler (kept for backwards compatibility)
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type !== 'WEB_AUTH_DETECTED') return;
 
     (async () => {
         try {
+            console.log('[Auth Sync] Received WEB_AUTH_DETECTED from content script');
             const { access_token, refresh_token } = message.payload || {};
             if (!access_token || !refresh_token) {
                 sendResponse({ ok: false, reason: 'missing tokens' });
@@ -6304,14 +6743,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
 
             // Skip if already authenticated
-            const { data: { session: existing } } = await getSupabaseClient().auth.getSession();
+            const supaClient = await getSupabaseClient();
+            const { data: { session: existing } } = await supaClient.auth.getSession();
             if (existing?.user) {
                 sendResponse({ ok: true, reason: 'already authenticated' });
                 return;
             }
 
             // Set session from web tokens
-            const { data, error } = await getSupabaseClient().auth.setSession({
+            const { data, error } = await supaClient.auth.setSession({
                 access_token,
                 refresh_token,
             });
@@ -6342,4 +6782,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
     })();
     return true; // async response
+});
+
+// ===========================
+// Lofi Sync: Periodic Config Polling (MV3 keep-alive)
+// ===========================
+// MV3 service workers sleep after ~30s → Realtime WebSocket drops.
+// chrome.alarms wakes SW periodically to pull latest config from Supabase DB.
+const LOFI_SYNC_ALARM = 'lofi-sync-poll';
+
+chrome.alarms.create(LOFI_SYNC_ALARM, {
+    delayInMinutes: 0.5,   // first check after 30 seconds
+    periodInMinutes: 0.5   // then every 30 seconds
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name !== LOFI_SYNC_ALARM) return;
+    // Only poll if user has an active session
+    chrome.storage.local.get('atom_proxy_session', (data) => {
+        if (data.atom_proxy_session?.user_id) {
+            pullLatestLofiConfig();
+        }
+    });
 });

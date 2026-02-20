@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let focusTickId = null;
     let focusState = null;
 
-    const RING_CIRC = 2 * Math.PI * 21; // ~131.95
+    const RING_CIRC = 2 * Math.PI * 36; // ~226.19 (r=36 in 80×80 SVG)
 
     // 0. Theme sync
     const { atom_theme } = await chrome.storage.local.get(['atom_theme']);
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.runtime.sendMessage({ type: 'FOCUS_GET_STATE' }, (res) => {
         if (chrome.runtime.lastError) return;
         const st = res?.atom_focus_state;
-        if (st?.enabled) {
+        if (st?.enabled || st?.paused) {
             focusState = st;
             showFocusActive();
         }
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (msg.type === 'ATOM_FOCUS_STATE_UPDATED' || msg.type === 'FOCUS_STATE_UPDATED') {
             const st = msg?.payload?.atom_focus_state || msg?.payload || null;
             focusState = st;
-            if (st?.enabled) {
+            if (st?.enabled || st?.paused) {
                 showFocusActive();
             } else {
                 showFocusIdle();
@@ -89,11 +89,53 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // Stop focus
-    document.getElementById('focus-stop')?.addEventListener('click', () => {
-        chrome.runtime.sendMessage({ type: 'FOCUS_STOP' }, () => {
+    // Reset: if running → reset phase + pause (like AmoLofi). If already paused → stop completely.
+    document.getElementById('focus-reset')?.addEventListener('click', () => {
+        if (focusState?.paused) {
+            // Already paused → stop completely
+            chrome.runtime.sendMessage({ type: 'FOCUS_STOP' }, () => {
+                if (chrome.runtime.lastError) return;
+                showFocusIdle();
+            });
+        } else {
+            // Running → reset phase + pause
+            chrome.runtime.sendMessage({ type: 'FOCUS_RESET_PHASE' }, (res) => {
+                if (chrome.runtime.lastError) return;
+                const st = res?.atom_focus_state;
+                if (st?.enabled || st?.paused) {
+                    focusState = st;
+                    showFocusActive();
+                }
+            });
+        }
+    });
+
+    // Pause / Resume focus
+    document.getElementById('focus-pause')?.addEventListener('click', () => {
+        if (!focusState?.enabled && !focusState?.paused) return;
+        const isPaused = focusState.paused;
+        const msgType = isPaused ? 'FOCUS_RESUME' : 'FOCUS_PAUSE';
+        chrome.runtime.sendMessage({ type: msgType }, (res) => {
             if (chrome.runtime.lastError) return;
-            showFocusIdle();
+            const st = res?.atom_focus_state;
+            if (st) {
+                focusState = st;
+                updatePauseIcon();
+            }
+        });
+    });
+
+    // Skip to next phase
+    document.getElementById('focus-skip')?.addEventListener('click', () => {
+        chrome.runtime.sendMessage({ type: 'FOCUS_SKIP' }, (res) => {
+            if (chrome.runtime.lastError) return;
+            const st = res?.atom_focus_state;
+            if (st?.enabled) {
+                focusState = st;
+                showFocusActive();
+            } else {
+                showFocusIdle();
+            }
         });
     });
 
@@ -137,8 +179,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         focusIdle.classList.add('hidden');
         focusActive.classList.remove('hidden');
         updateFocusDisplay();
+        updatePauseIcon();
         if (focusTickId) clearInterval(focusTickId);
-        focusTickId = setInterval(updateFocusDisplay, 1000);
+        // Only tick when actually running (not paused)
+        if (!focusState?.paused) {
+            focusTickId = setInterval(updateFocusDisplay, 1000);
+        } else {
+            focusTickId = null;
+        }
     }
 
     function showFocusIdle() {
@@ -149,9 +197,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function updateFocusDisplay() {
-        if (!focusState?.enabled) return;
+        if (!focusState?.enabled && !focusState?.paused) return;
+
+        // When paused, show frozen remaining time
         const now = Date.now();
-        const remaining = Math.max(0, focusState.phaseEndsAt - now);
+        const remaining = focusState.paused
+            ? (focusState.pausedRemainingMs || 0)
+            : Math.max(0, focusState.phaseEndsAt - now);
         const total = focusState.phaseEndsAt - focusState.phaseStartedAt;
 
         // Timer text
@@ -173,14 +225,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Auto-switch to idle if time's up and state not refreshed
         if (remaining <= 0 && focusState.enabled) {
-            // Re-check state from background
             chrome.runtime.sendMessage({ type: 'FOCUS_GET_STATE' }, (res) => {
                 if (chrome.runtime.lastError) return;
                 const st = res?.atom_focus_state;
                 if (!st?.enabled) showFocusIdle();
-                else focusState = st; // phase may have changed to BREAK
+                else focusState = st;
             });
         }
+    }
+
+    function updatePauseIcon() {
+        const btn = document.getElementById('focus-pause');
+        if (!btn) return;
+        const isPaused = focusState?.paused;
+        // Play icon ▶ when paused, Pause icon ⏸ when running
+        btn.innerHTML = isPaused
+            ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>'
+            : '<svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>';
     }
 
     function setDisabled(off) {

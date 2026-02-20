@@ -65,16 +65,20 @@ export function SceneBackground({ children }: Props) {
         [activeSceneId, customScenes],
     );
 
-    // Resolve wallpaper: check custom wallpapers (blob URLs) first
+    // Resolve wallpaper: check cloud → custom → built-in
+    const isCloudWallpaper = activeWallpaperId?.startsWith('cloud_url:');
     const isCustomWallpaper = activeWallpaperId?.startsWith('custom_');
+    const cloudWpUrl = isCloudWallpaper
+        ? activeWallpaperId!.replace('cloud_url:', '')
+        : null;
     const customWp = isCustomWallpaper
         ? customWallpapers.find(w => w.id === activeWallpaperId)
         : null;
-    const builtInWp = !isCustomWallpaper && activeWallpaperId
+    const builtInWp = !isCustomWallpaper && !isCloudWallpaper && activeWallpaperId
         ? scene.wallpapers.find(w => w.id === activeWallpaperId)
         : null;
 
-    const currentImage = customWp?.blobUrl ?? builtInWp?.src ?? scene.background[activeVariant];
+    const currentImage = cloudWpUrl ?? customWp?.blobUrl ?? builtInWp?.src ?? scene.background[activeVariant];
     const currentTint = customWp?.tint ?? builtInWp?.tint ?? scene.background.tint[activeVariant];
 
     // ── Fallback gradient when image fails to load ──

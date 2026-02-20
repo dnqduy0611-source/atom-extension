@@ -80,7 +80,7 @@ export async function initLofiSync(userId) {
     _userId = userId;
 
     try {
-        const client = getSupabaseClient();
+        const client = await getSupabaseClient();
         const channelName = `lofi:${userId}`;
 
         _channel = client.channel(channelName, {
@@ -127,10 +127,10 @@ export async function initLofiSync(userId) {
 /**
  * Disconnect from Lofi Sync channel
  */
-export function disconnectLofiSync() {
+export async function disconnectLofiSync() {
     if (_channel) {
         try {
-            const client = getSupabaseClient();
+            const client = await getSupabaseClient();
             client.removeChannel(_channel);
         } catch (e) {
             console.warn('[Lofi Sync] Disconnect error:', e);
@@ -156,25 +156,51 @@ export function isLofiSyncActive() {
     return _channel !== null;
 }
 
-// ── Internal Handlers ──
+/**
+ * Send a focus command to AmoLofi Web via Realtime channel
+ * @param {'enter_zen'|'exit_zen'|'toggle_play'} command
+ * @param {Record<string, unknown>} [data]
+ */
+export function sendFocusCommand(command, data = {}) {
+    if (!_channel) {
+        if (DEBUG_MODE) console.log('[Lofi Sync] sendFocusCommand skipped — no channel');
+        return;
+    }
+    _channel.send({
+        type: 'broadcast',
+        event: 'focus_command',
+        payload: { command, data, source: 'extension', timestamp: Date.now() },
+    });
+    if (DEBUG_MODE) console.log('[Lofi Sync] focus_command sent:', command);
+}
 
-function handleConfigChange(payload) {
-    if (payload.source === 'extension') return; // ignore own echo
+// ── Shared Mirror Config Builder ──
 
-    const config = payload.config;
-    if (!config?.scene_id) return;
-
+function buildMirrorConfig(config, isPlaying, masterVolume) {
     const sceneData = SCENE_REGISTRY[config.scene_id];
     const variant = config.variant || 'day';
 
-    const mirrorConfig = {
+    // For known scenes, build URL from registry. For custom/AI scenes, use payload data.
+    let bg_url, bg_tint, primary_color;
+    if (sceneData) {
+        bg_url = `${LOFI_BASE}${sceneData.bg[variant] || sceneData.bg.day}`;
+        bg_tint = sceneData.tint[variant] || 'rgba(0,0,0,0.4)';
+        primary_color = sceneData.primary[variant] || '#10b981';
+    } else {
+        // Custom/AI scene — use metadata from sync payload
+        bg_url = config.bg_url ? (config.bg_url.startsWith('/') ? `${LOFI_BASE}${config.bg_url}` : config.bg_url) : '';
+        bg_tint = config.tint || 'rgba(0,0,0,0.4)';
+        primary_color = config.primary_color || '#10b981';
+    }
+
+    return {
         active: true,
         updated_at: Date.now(),
         scene_id: config.scene_id,
         variant: variant,
-        bg_url: sceneData ? `${LOFI_BASE}${sceneData.bg[variant] || sceneData.bg.day}` : '',
-        bg_tint: sceneData?.tint[variant] || 'rgba(0,0,0,0.4)',
-        primary_color: sceneData?.primary[variant] || '#10b981',
+        bg_url: bg_url,
+        bg_tint: bg_tint,
+        primary_color: primary_color,
         audio_layers: (config.ambience || []).map(a => ({
             id: a.id,
             volume: a.volume ?? 0.5,
@@ -187,9 +213,20 @@ function handleConfigChange(payload) {
             volume: config.music.volume ?? 0.4,
             src: `${LOFI_BASE}/assets/audio/music/${config.music.id}.mp3`,
         } : null,
-        is_playing: config.isPlaying !== false,
-        master_volume: config.masterVolume ?? 0.7,
+        is_playing: isPlaying !== false,
+        master_volume: masterVolume ?? 0.7,
     };
+}
+
+// ── Internal Handlers ──
+
+function handleConfigChange(payload) {
+    if (payload.source === 'extension') return; // ignore own echo
+
+    const config = payload.config;
+    if (!config?.scene_id) return;
+
+    const mirrorConfig = buildMirrorConfig(config, config.isPlaying, config.masterVolume);
 
     // Persist to storage
     chrome.storage.local.set({ atom_lofi_config: mirrorConfig });
@@ -254,6 +291,8 @@ export async function tryAutoInitLofiSync() {
             const expiresAt = session.expires_at;
             if (expiresAt && Date.now() / 1000 < expiresAt) {
                 await initLofiSync(session.user_id);
+                // Also pull latest config from DB (catch-up after SW sleep)
+                await pullLatestLofiConfig();
             } else {
                 if (DEBUG_MODE) console.log('[Lofi Sync] Session expired, skipping auto-init');
             }
@@ -264,3 +303,74 @@ export async function tryAutoInitLofiSync() {
         console.warn('[Lofi Sync] Auto-init failed:', e);
     }
 }
+
+/**
+ * Pull latest config from Supabase `lofi_state` table.
+ * Used as catch-up mechanism when Realtime channel was disconnected
+ * (e.g., MV3 service worker went to sleep).
+ */
+export async function pullLatestLofiConfig() {
+    try {
+        const data = await chrome.storage.local.get('atom_proxy_session');
+        const session = data.atom_proxy_session;
+        if (!session?.user_id) return;
+
+        const client = await getSupabaseClient();
+        const { data: stateRow, error } = await client
+            .from('lofi_state')
+            .select('active_config, is_playing, master_volume')
+            .eq('user_id', session.user_id)
+            .single();
+
+        if (error || !stateRow?.active_config) {
+            if (DEBUG_MODE) console.log('[Lofi Sync] No lofi_state found or error:', error?.message);
+            return;
+        }
+
+        const config = stateRow.active_config;
+        if (!config.scene_id) return;
+
+        // Build mirror config (same logic as handleConfigChange)
+        const mirrorConfig = buildMirrorConfig(config, stateRow.is_playing, stateRow.master_volume);
+
+        // Check if config actually changed
+        const existing = await chrome.storage.local.get('atom_lofi_config');
+        const current = existing.atom_lofi_config;
+        if (current?.scene_id === mirrorConfig.scene_id && current?.variant === mirrorConfig.variant) {
+            if (DEBUG_MODE) console.log('[Lofi Sync] Config unchanged, skipping pull update');
+            return;
+        }
+
+        // Save & broadcast
+        chrome.storage.local.set({ atom_lofi_config: mirrorConfig });
+        broadcastToTabs({ type: 'LOFI_CONFIG_UPDATED', config: mirrorConfig });
+        console.log('[Lofi Sync] 📥 Config pulled from DB:', mirrorConfig.scene_id, mirrorConfig.variant);
+    } catch (e) {
+        console.warn('[Lofi Sync] Pull config failed:', e);
+    }
+}
+
+// ── Auto-init on auth session changes (MV3 resilience) ──
+// Watches for atom_proxy_session being written (login, token refresh)
+// and automatically connects the Realtime channel.
+chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local') return;
+    if (!changes.atom_proxy_session) return;
+
+    const newSession = changes.atom_proxy_session.newValue;
+    if (newSession?.user_id && newSession?.access_token) {
+        // New valid session → connect (or reconnect if user changed)
+        if (_userId && _userId !== newSession.user_id) {
+            // Different user → disconnect old channel first
+            disconnectLofiSync();
+        }
+        if (!_channel) {
+            initLofiSync(newSession.user_id).catch(e =>
+                console.warn('[Lofi Sync] Auto-init on session change failed:', e)
+            );
+        }
+    } else if (!newSession || !newSession.access_token) {
+        // Session removed (logout) → disconnect
+        disconnectLofiSync();
+    }
+});

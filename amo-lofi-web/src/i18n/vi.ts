@@ -43,6 +43,22 @@ export const vi: Record<string, string> = {
     // ── Hero Timer ──
     'heroTimer.placeholder': 'Bạn đang làm gì?',
 
+    // ── Mood Companion ──
+    'mood.placeholder': 'Hôm nay bạn thấy thế nào?',
+    'mood.chatWithAmo': 'Hôm nay bạn thế nào?',
+    'mood.inputPlaceholder': 'Chia sẻ với mình...',
+    'mood.replyPlaceholder': 'Gõ trả lời...',
+    'mood.send': 'Gửi',
+    'mood.createScene': 'Tạo scene',
+    'mood.likeThis': 'Tạo scene này',
+    'mood.createSceneSub': 'Pro · 10 credits',
+    'mood.thinking': 'Amo đang suy nghĩ...',
+    'mood.creating': 'Đang tạo...',
+    'mood.dismiss': 'Lần sau nhé',
+    'mood.newChat': 'Cuộc trò chuyện mới',
+    'mood.applyScene': 'Dùng scene này',
+    'mood.skipScene': 'Bỏ qua',
+
     // ── Sound Mixer ──
     'mixer.title': 'Trộn Âm thanh',
     'mixer.tracks': 'Nhạc',

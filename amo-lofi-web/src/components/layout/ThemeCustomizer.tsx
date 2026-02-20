@@ -323,10 +323,30 @@ export function ThemeCustomizer({ onClose }: Props) {
                     width: 340px;
                     max-height: calc(100vh - 80px);
                     overflow-y: auto;
-                    border-radius: 16px;
-                    backdrop-filter: blur(24px) saturate(1.4);
+                    border-radius: 20px;
+                    backdrop-filter: blur(40px) saturate(1.5);
+                    -webkit-backdrop-filter: blur(40px) saturate(1.5);
                     animation: tcIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
                     font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+                }
+                .tc-panel::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 1px;
+                    background: linear-gradient(
+                        90deg,
+                        transparent 0%,
+                        rgba(255,255,255,0.15) 20%,
+                        rgba(255,255,255,0.25) 50%,
+                        rgba(255,255,255,0.15) 80%,
+                        transparent 100%
+                    );
+                    pointer-events: none;
+                    z-index: 1;
+                    border-radius: 20px 20px 0 0;
                 }
                 .tc-panel::-webkit-scrollbar { width: 4px; }
                 .tc-panel::-webkit-scrollbar-track { background: transparent; }
@@ -440,15 +460,18 @@ export function ThemeCustomizer({ onClose }: Props) {
                     align-items: center;
                     gap: 6px;
                     padding: 12px 4px 8px;
-                    border-radius: 10px;
-                    background: rgba(255, 255, 255, 0.04);
-                    border: 1.5px solid transparent;
+                    border-radius: 12px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1.5px solid rgba(255, 255, 255, 0.06);
                     cursor: pointer;
-                    transition: all 0.2s;
+                    transition: all 0.25s ease;
+                    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
                 }
                 .tc-clock-card:hover {
-                    background: rgba(255, 255, 255, 0.07);
-                    border-color: rgba(255, 255, 255, 0.1);
+                    background: rgba(255, 255, 255, 0.09);
+                    border-color: rgba(255, 255, 255, 0.14);
+                    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 12px rgba(0,0,0,0.2);
+                    transform: translateY(-1px);
                 }
                 .tc-clock-active {
                     border-color: var(--theme-primary) !important;
@@ -559,9 +582,11 @@ export function ThemeCustomizer({ onClose }: Props) {
                     display: flex;
                     flex-direction: column;
                     gap: 0;
-                    background: rgba(255, 255, 255, 0.03);
-                    border-radius: 12px;
+                    background: rgba(255, 255, 255, 0.04);
+                    border-radius: 14px;
                     padding: 4px 0;
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
                 }
                 .tc-toggle-row {
                     display: flex;

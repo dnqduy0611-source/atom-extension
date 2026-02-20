@@ -4,6 +4,7 @@ import { useLofiStore } from '../../store/useLofiStore';
 import { formatTime } from '../../utils/formatTime';
 import { Pause, Play, SkipForward, RotateCcw } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
+import { MoodCompanion } from '../mood/MoodCompanion';
 
 const WORK_DURATIONS = [15, 25, 30, 45, 60];
 
@@ -36,15 +37,11 @@ export function HeroTimer() {
         skipTimer,
         tick,
         setWorkDuration,
-        taskLabel,
-        setTaskLabel,
     } = useFocusStore();
 
     const timerJustCompleted = useFocusStore((s) => s.timerJustCompleted);
 
-    const [isEditingLabel, setIsEditingLabel] = useState(false);
     const [hovered, setHovered] = useState(false);
-    const inputRef = useRef<HTMLInputElement>(null);
 
     // ── Timer tick engine — always mounted, runs independently ──
     const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
@@ -64,13 +61,6 @@ export function HeroTimer() {
         const id = setInterval(() => setClockTick((t) => t + 1), 1000);
         return () => clearInterval(id);
     }, [heroStyle]);
-
-    // Auto-focus input when editing
-    useEffect(() => {
-        if (isEditingLabel && inputRef.current) {
-            inputRef.current.focus();
-        }
-    }, [isEditingLabel]);
 
     // Calculate total duration for ring progress
     const totalDuration = timerMode === 'work'
@@ -227,40 +217,7 @@ export function HeroTimer() {
     );
 
     const taskLabelInput = (
-        <div className="mt-2 text-center max-w-[320px]">
-            {isEditingLabel ? (
-                <input
-                    ref={inputRef}
-                    type="text"
-                    value={taskLabel}
-                    onChange={(e) => setTaskLabel(e.target.value)}
-                    onBlur={() => setIsEditingLabel(false)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') setIsEditingLabel(false); }}
-                    maxLength={60}
-                    className="w-full text-center text-sm bg-transparent border-none outline-none
-                        placeholder:text-white/40"
-                    style={{
-                        color: 'rgba(255,255,255,0.8)',
-                        borderBottom: '1px solid rgba(255,255,255,0.2)',
-                        paddingBottom: 4,
-                    }}
-                    placeholder={t('heroTimer.placeholder') || 'What are you working on?'}
-                />
-            ) : (
-                <button
-                    className="text-sm cursor-pointer transition-all duration-200 hover:text-white/80"
-                    style={{
-                        color: taskLabel ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.4)',
-                        background: 'none',
-                        border: 'none',
-                        textShadow: '0 1px 6px rgba(0,0,0,0.3)',
-                    }}
-                    onClick={() => setIsEditingLabel(true)}
-                >
-                    {taskLabel || (t('heroTimer.placeholder') || 'What are you working on?')}
-                </button>
-            )}
-        </div>
+        <MoodCompanion />
     );
 
     // ── Mode label ──
@@ -530,13 +487,56 @@ export function HeroTimer() {
                         height: clockSize,
                     }}
                 >
+                    {/* Glassmorphism clock face background */}
+                    <div
+                        className="absolute rounded-full"
+                        style={{
+                            width: faceR * 2,
+                            height: faceR * 2,
+                            top: center - faceR,
+                            left: center - faceR,
+                            background: `linear-gradient(160deg,
+                                color-mix(in srgb, ${accent} 8%, rgba(10, 10, 20, 0.25)) 0%,
+                                rgba(10, 10, 20, 0.30) 50%,
+                                rgba(8, 6, 15, 0.35) 100%
+                            )`,
+                            backdropFilter: 'blur(30px) saturate(1.5)',
+                            WebkitBackdropFilter: 'blur(30px) saturate(1.5)',
+                            border: `1.5px solid color-mix(in srgb, ${accent} ${isActive ? '25%' : '12%'}, rgba(255,255,255,0.12))`,
+                            boxShadow: isActive
+                                ? `0 8px 32px rgba(0,0,0,0.3), 0 0 20px ${colors.indie}, inset 0 1px 0 rgba(255,255,255,0.1)`
+                                : '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)',
+                            transition: 'all 0.6s ease',
+                        }}
+                    />
+
+                    {/* Top-edge glass highlight */}
+                    <div
+                        className="absolute rounded-full overflow-hidden pointer-events-none"
+                        style={{
+                            width: faceR * 2,
+                            height: faceR * 2,
+                            top: center - faceR,
+                            left: center - faceR,
+                        }}
+                    >
+                        <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: '10%',
+                            right: '10%',
+                            height: 1,
+                            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)',
+                        }} />
+                    </div>
+
                     <svg width={clockSize} height={clockSize}>
-                        {/* Dark face with edge glow */}
+                        {/* Transparent face — glass bg is behind via HTML div */}
                         <circle cx={center} cy={center} r={faceR}
-                            fill="rgba(10,10,20,0.85)"
+                            fill="none"
                             stroke={accent}
-                            strokeWidth={isActive ? 2 : 1}
-                            opacity={isActive ? 1 : 0.3}
+                            strokeWidth={isActive ? 1.5 : 0.5}
+                            opacity={isActive ? 0.4 : 0.15}
                             style={{
                                 filter: isActive ? `drop-shadow(0 0 12px ${colors.glow}) drop-shadow(0 0 30px ${colors.indie})` : 'none',
                                 transition: 'all 0.6s',

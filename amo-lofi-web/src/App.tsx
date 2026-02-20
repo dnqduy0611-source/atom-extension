@@ -21,6 +21,7 @@ import { QuickSettings } from './components/layout/QuickSettings';
 import { UserProfile } from './components/auth/UserProfile';
 import { PlayerBar } from './components/audio/PlayerBar';
 import { ProUpgradeModal } from './components/pro/ProUpgradeModal';
+import { SyncIndicator } from './components/ui/SyncIndicator';
 import { useProGate } from './hooks/useProGate';
 import { useTranslation } from './hooks/useTranslation';
 import { useAuth } from './hooks/useAuth';
@@ -29,6 +30,8 @@ import { LoginModal } from './components/auth/LoginModal';
 import { OnboardingModal } from './components/auth/OnboardingModal';
 import { useState, useRef, useEffect } from 'react';
 import { useSyncBridge } from './hooks/useSyncBridge';
+import { usePersistState } from './hooks/usePersistState';
+import { useRestoreState } from './hooks/useRestoreState';
 
 function App() {
   useAudioEngine();
@@ -49,7 +52,9 @@ function App() {
   const { t } = useTranslation();
   const { user, isLoading: authLoading, signOut } = useAuth();
   const { profile, isLoading: profileLoading, refresh: refreshProfile } = useProfile();
-  useSyncBridge(user?.id); // Broadcast state to Extension via Supabase
+  const { syncState } = useSyncBridge(user?.id); // Broadcast state to Extension via Supabase
+  usePersistState();       // Debounce-save mixer config → lofi_state
+  useRestoreState();       // Restore last config on app open
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -120,7 +125,7 @@ function App() {
             {!zenMode && showBranding && (
               <div className="pointer-events-auto absolute top-4 left-4 flex items-center gap-2 z-50">
                 {/* Logo icon */}
-                <div className="flex items-center gap-2">
+                <a href="https://amonexus.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 no-underline" style={{ textDecoration: 'none' }}>
                   <img
                     src="/amo-icon.png"
                     alt="AmoLofi"
@@ -140,7 +145,7 @@ function App() {
                   >
                     AmoLofi
                   </span>
-                </div>
+                </a>
 
                 {/* Pro crown button */}
                 {!isPro && (
@@ -421,7 +426,7 @@ function App() {
 
               {/* Panel container — Scenes (centered) */}
               {activePanel === 'scenes' && (
-                <div className="absolute z-40 top-4 bottom-16 left-20 flex flex-col mobile-panel-container">
+                <div className="absolute z-40 top-4 bottom-16 left-24 flex flex-col mobile-panel-container">
                   <div className="animate-panel-in flex flex-col max-h-full my-auto">
                     <SceneSelector onClose={() => togglePanel('scenes')} />
                   </div>
@@ -430,7 +435,7 @@ function App() {
 
               {/* Panel container — Focus (full-height) */}
               {activePanel === 'focus' && (
-                <div className="absolute z-40 top-3 bottom-16 left-20 flex flex-col mobile-panel-container">
+                <div className="absolute z-40 top-3 bottom-16 left-24 flex flex-col mobile-panel-container">
                   <div className="animate-panel-in h-full">
                     <FocusPanel onClose={() => togglePanel('focus')} />
                   </div>
@@ -451,6 +456,9 @@ function App() {
               )}
             </>
           )}
+
+          {/* ═══ Sync Indicator — shows when Extension is connected ═══ */}
+          <SyncIndicator syncState={syncState} />
 
           {/* ═══ Player Bar — bottom, always slightly visible ═══ */}
           {showPlayerBar && (

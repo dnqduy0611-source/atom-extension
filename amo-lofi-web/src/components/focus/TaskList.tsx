@@ -23,7 +23,7 @@ export function TaskList() {
     };
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-5">
             {/* Input */}
             <div className="flex gap-2">
                 <input
@@ -52,7 +52,7 @@ export function TaskList() {
             </div>
 
             {/* Task list */}
-            <div className="space-y-1.5 flex-1 overflow-y-auto custom-scrollbar">
+            <div className="space-y-2 flex-1 overflow-y-auto custom-scrollbar">
                 {tasks.length === 0 ? (
                     <div
                         className="text-center py-10 rounded-xl"
@@ -73,7 +73,7 @@ export function TaskList() {
                         <div
                             key={task.id}
                             className={`
-                                group flex items-center gap-3 px-3 py-3 rounded-xl
+                                group flex items-center gap-3 px-4 py-3.5 rounded-xl
                                 transition-all duration-200 hover:bg-white/5
                                 ${task.completed ? 'opacity-50' : ''}
                             `}
@@ -119,7 +119,7 @@ export function TaskList() {
             {/* Footer */}
             {tasks.length > 0 && (
                 <div
-                    className="flex items-center justify-between pt-3"
+                    className="flex items-center justify-between pt-4 mt-1"
                     style={{ borderTop: '1px solid var(--theme-panel-border)' }}
                 >
                     <span className="text-[12px]" style={{ color: 'var(--theme-text-muted)' }}>

@@ -15,9 +15,53 @@
     /* — Core surfaces — */
     --bg: #050505;
     --bg-elevated: #0A0A0A;
-    --surface: rgba(255, 255, 255, 0.04);
-    --surface-hover: rgba(255, 255, 255, 0.08);
+    --surface: rgba(255, 255, 255, 0.05);
+    --surface-hover: rgba(255, 255, 255, 0.09);
     --surface-active: rgba(255, 255, 255, 0.12);
+
+    /* ── Glass System (synced with AmoLofi) ── */
+    --glass-bg: rgba(10, 10, 20, 0.45);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-highlight: rgba(255, 255, 255, 0.06);
+    --glass-blur: blur(32px) saturate(1.4);
+    --glass-blur-sm: blur(20px) saturate(1.3);
+    --glass-blur-lg: blur(40px) saturate(1.5);
+
+    /* ── Glass Panel (main container: popup, sidepanel) ── */
+    --glass-panel-bg: linear-gradient(160deg,
+            rgba(10, 10, 20, 0.38) 0%,
+            rgba(10, 10, 20, 0.42) 50%,
+            rgba(8, 6, 15, 0.48) 100%);
+    --glass-panel-shadow:
+        0 16px 64px rgba(0, 0, 0, 0.4),
+        0 0 1px rgba(255, 255, 255, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    --glass-panel-radius: 20px;
+
+    /* ── Glass Surface (stat cards, inner elements) ── */
+    --glass-surface: rgba(255, 255, 255, 0.04);
+    --glass-surface-hover: rgba(255, 255, 255, 0.08);
+    --glass-surface-border: rgba(255, 255, 255, 0.06);
+    --glass-surface-border-hover: rgba(255, 255, 255, 0.12);
+
+    /* ── Glass Controls (icon buttons, toggles) ── */
+    --glass-ctrl-bg: rgba(255, 255, 255, 0.08);
+    --glass-ctrl-border: rgba(255, 255, 255, 0.08);
+    --glass-ctrl-hover-bg: rgba(255, 255, 255, 0.15);
+    --glass-ctrl-hover-border: rgba(255, 255, 255, 0.15);
+    --glass-ctrl-active: rgba(255, 255, 255, 0.12);
+
+    /* ── Glass Divider ── */
+    --glass-divider: rgba(255, 255, 255, 0.08);
+    --glass-divider-strong: rgba(255, 255, 255, 0.12);
+
+    /* ── Glass Edge Highlight (top-edge refraction) ── */
+    --glass-edge-peak: rgba(255, 255, 255, 0.28);
+    --glass-edge-mid: rgba(255, 255, 255, 0.18);
+
+    /* ── Glass Inset Highlight (hover/footer) ── */
+    --glass-inset: rgba(255, 255, 255, 0.05);
+    --glass-inset-strong: rgba(255, 255, 255, 0.10);
 
     /* — Text — */
     --text: #FFFFFF;
@@ -26,8 +70,8 @@
     --text-inverse: #050505;
 
     /* — Borders — */
-    --border: rgba(255, 255, 255, 0.08);
-    --border-strong: rgba(255, 255, 255, 0.14);
+    --border: rgba(255, 255, 255, 0.10);
+    --border-strong: rgba(255, 255, 255, 0.16);
     --border-focus: rgba(16, 185, 129, 0.5);
 
     /* — Accent: Primary (Emerald) — */
@@ -165,6 +209,49 @@ body.light-mode,
     --surface: rgba(0, 0, 0, 0.03);
     --surface-hover: rgba(0, 0, 0, 0.06);
     --surface-active: rgba(0, 0, 0, 0.09);
+
+    /* ── Glass System (Light) ── */
+    --glass-bg: rgba(255, 255, 255, 0.55);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --glass-highlight: rgba(255, 255, 255, 0.4);
+    --glass-blur: blur(24px) saturate(1.3);
+    --glass-blur-sm: blur(16px) saturate(1.2);
+    --glass-blur-lg: blur(32px) saturate(1.4);
+
+    /* ── Glass Panel (Light) ── */
+    --glass-panel-bg: linear-gradient(160deg,
+            rgba(255, 255, 255, 0.68) 0%,
+            rgba(255, 255, 255, 0.72) 50%,
+            rgba(240, 240, 255, 0.76) 100%);
+    --glass-panel-shadow:
+        0 16px 64px rgba(0, 0, 0, 0.12),
+        0 0 1px rgba(255, 255, 255, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+
+    /* ── Glass Surface (Light) ── */
+    --glass-surface: rgba(0, 0, 0, 0.03);
+    --glass-surface-hover: rgba(0, 0, 0, 0.06);
+    --glass-surface-border: rgba(0, 0, 0, 0.08);
+    --glass-surface-border-hover: rgba(0, 0, 0, 0.12);
+
+    /* ── Glass Controls (Light) ── */
+    --glass-ctrl-bg: rgba(0, 0, 0, 0.06);
+    --glass-ctrl-border: rgba(0, 0, 0, 0.08);
+    --glass-ctrl-hover-bg: rgba(0, 0, 0, 0.10);
+    --glass-ctrl-hover-border: rgba(0, 0, 0, 0.14);
+    --glass-ctrl-active: rgba(0, 0, 0, 0.08);
+
+    /* ── Glass Divider (Light) ── */
+    --glass-divider: rgba(0, 0, 0, 0.06);
+    --glass-divider-strong: rgba(0, 0, 0, 0.10);
+
+    /* ── Glass Edge (Light) ── */
+    --glass-edge-peak: rgba(255, 255, 255, 0.7);
+    --glass-edge-mid: rgba(255, 255, 255, 0.5);
+
+    /* ── Glass Inset (Light) ── */
+    --glass-inset: rgba(255, 255, 255, 0.4);
+    --glass-inset-strong: rgba(255, 255, 255, 0.6);
 
     --text: #111827;
     --text-secondary: #4B5563;
@@ -399,20 +486,67 @@ body {
    COMPONENT: CARDS
    ================================================================ */
 .card-glass {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    position: relative;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
     padding: var(--space-4);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    box-shadow: var(--shadow-md);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 var(--glass-highlight);
     transition: all var(--duration-normal) var(--ease-spring);
 }
 
+/* Top-edge highlight — frosted glass shine */
+.card-glass::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.15) 20%,
+            rgba(255, 255, 255, 0.25) 50%,
+            rgba(255, 255, 255, 0.15) 80%,
+            transparent 100%);
+    pointer-events: none;
+    z-index: 1;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
 .card-glass:hover {
-    border-color: rgba(var(--primary-rgb), 0.2);
-    box-shadow: var(--shadow-lg), var(--glow-xs);
+    border-color: rgba(var(--primary-rgb), 0.25);
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 var(--glass-highlight),
+        0 0 12px rgba(var(--primary-rgb), 0.12);
     transform: translateY(-1px);
+}
+
+/* Animated glow modifier — synced with AmoLofi glass-card-glow */
+.card-glass-glow {
+    animation: glassGlow 4s ease-in-out infinite;
+}
+
+@keyframes glassGlow {
+
+    0%,
+    100% {
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 var(--glass-highlight);
+    }
+
+    50% {
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.08),
+            0 0 20px rgba(var(--primary-rgb), 0.08);
+    }
 }
 
 /* Card with glow border on hover */

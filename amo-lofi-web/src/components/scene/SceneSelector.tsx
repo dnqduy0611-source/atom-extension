@@ -9,6 +9,23 @@ import { useProGate } from '../../hooks/useProGate';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useBackgrounds } from '../../hooks/useBackgrounds';
 import { useCredits } from '../../hooks/useCredits';
+import { useAuth } from '../../hooks/useAuth';
+
+// ── Sample AI Scenes (locked previews to showcase AI capability) ──
+const SAMPLE_AI_SCENES = [
+    {
+        id: '_sample_city_day',
+        name: 'City Day',
+        description: 'A vibrant city skyline in daylight',
+        thumbnail: '/scenes/city_night.jpg',
+    },
+    {
+        id: '_sample_green_forest',
+        name: 'Green Forest',
+        description: 'A peaceful forest bathed in sunlight',
+        thumbnail: '/scenes/forest_day.jpg',
+    },
+];
 import { SceneCreator } from './SceneCreator';
 import { AIBackgroundGenerator } from './AIBackgroundGenerator';
 
@@ -40,7 +57,9 @@ export function SceneSelector({ onClose }: Props) {
     const { wallpapers: customWallpapers, removeWallpaper } = useCustomWallpapers(activeSceneId);
     const { customScenes, addCustomScene, removeCustomScene } = useCustomScenes();
     const { backgrounds: cloudBgs, upload: uploadCloudBg, remove: removeCloudBg, isFull: bgFull, refresh: refreshBgs } = useBackgrounds();
-    const { refresh: refreshCredits } = useCredits();
+    console.log('[SceneSelector] cloudBgs count:', cloudBgs.length);
+    const { trialUsed, refresh: refreshCredits } = useCredits();
+    const { user, signIn } = useAuth();
     const [showCreator, setShowCreator] = useState(false);
     const [showAIBgGen, setShowAIBgGen] = useState(false);
     const [showAddMenu, setShowAddMenu] = useState(false);
@@ -116,11 +135,9 @@ export function SceneSelector({ onClose }: Props) {
 
     return (
         <div
-            className="ss-panel fade-in"
+            className="ss-panel glass-card glass-card-glow fade-in flex flex-col"
             style={{
-                background: 'var(--theme-panel-bg)',
-                border: `1px solid var(--theme-panel-border)`,
-                boxShadow: '0 12px 48px rgba(0,0,0,0.5)',
+                borderRadius: '16px',
             }}
         >
             {/* Header */}
@@ -159,6 +176,68 @@ export function SceneSelector({ onClose }: Props) {
                 onChange={handleCloudUpload}
                 className="hidden"
             />
+
+            {/* ── Sample AI Scenes (locked previews for discovery) ── */}
+            {!isPro && (
+                <div style={{ padding: '0 12px 8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {SAMPLE_AI_SCENES.map((sample) => (
+                        <button
+                            key={sample.id}
+                            className="ss-card group"
+                            style={{
+                                height: '90px',
+                                borderColor: 'rgba(139,92,246,0.25)',
+                            } as React.CSSProperties}
+                            onClick={() => {
+                                if (!user) { signIn(); return; }
+                                setShowCreator(true);
+                            }}
+                        >
+                            {/* Blurred background */}
+                            <div
+                                className="absolute inset-0 bg-cover bg-center"
+                                style={{
+                                    backgroundImage: `url(${sample.thumbnail})`,
+                                    filter: 'blur(2px) brightness(0.5)',
+                                    transform: 'scale(1.05)',
+                                }}
+                            />
+                            {/* Gradient overlay */}
+                            <div
+                                className="absolute inset-0"
+                                style={{
+                                    background: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(236,72,153,0.15))',
+                                }}
+                            />
+                            {/* Content */}
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+                                <span className="ss-card-name" style={{ fontSize: '14px' }}>
+                                    ✨ {sample.name}
+                                </span>
+                                <span style={{
+                                    fontSize: '10px',
+                                    color: 'rgba(255,255,255,0.5)',
+                                    fontWeight: 500,
+                                    letterSpacing: '0.5px',
+                                }}>
+                                    AI Generated • Bấm để tạo
+                                </span>
+                            </div>
+                            {/* AI badge */}
+                            <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[9px] font-semibold"
+                                style={{
+                                    background: 'linear-gradient(135deg, rgba(139,92,246,0.5), rgba(236,72,153,0.4))',
+                                    color: 'rgba(255,255,255,0.9)',
+                                    backdropFilter: 'blur(8px)',
+                                    border: '1px solid rgba(255,255,255,0.15)',
+                                }}
+                            >
+                                ✦ AI
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            )}
 
             <div className="ss-gallery custom-scrollbar">
                 {visibleScenes.map((scene) => {
@@ -259,7 +338,7 @@ export function SceneSelector({ onClose }: Props) {
                             {/* ── Wallpaper thumbnail strip (built-in + custom) ── */}
                             {isActive && (<>
                                 <div
-                                    className="flex gap-1.5 px-2 py-2 overflow-x-auto custom-scrollbar rounded-xl mt-1.5"
+                                    className="flex gap-1.5 px-2 py-2 overflow-x-auto custom-scrollbar rounded-xl mt-[40px] mb-[50px]"
                                     style={{ background: 'rgba(0,0,0,0.25)' }}
                                 >
                                     {/* Built-in wallpapers */}
@@ -322,24 +401,26 @@ export function SceneSelector({ onClose }: Props) {
                                     })}
 
                                     {/* Cloud backgrounds for this scene */}
-                                    {cloudBgs.filter(bg => bg.signedUrl).map((bg) => {
-                                        const isSelected = activeWallpaperId === `cloud_${bg.id}`;
+                                    {cloudBgs.filter(bg => bg.signedUrl && (bg.scene_ids.length === 0 || bg.scene_ids.includes(scene.id))).map((bg) => {
+                                        const cloudWpId = `cloud_url:${bg.signedUrl}`;
+                                        const isSelected = activeWallpaperId === cloudWpId;
                                         return (
                                             <div key={`cloud_${bg.id}`} className="shrink-0 relative group/cb">
                                                 <button
-                                                    onClick={() => setWallpaper(`cloud_${bg.id}`)}
+                                                    onClick={() => setWallpaper(cloudWpId)}
                                                     className="w-16 h-10 rounded-lg overflow-hidden bg-cover bg-center transition-all duration-200 cursor-pointer hover:opacity-100"
                                                     style={{
                                                         backgroundImage: `url(${bg.signedUrl})`,
+                                                        backgroundColor: 'rgba(139,92,246,0.4)',
                                                         border: isSelected
                                                             ? `2px solid ${sceneAccent}`
-                                                            : '2px solid rgba(255,255,255,0.1)',
-                                                        opacity: isSelected ? 1 : 0.55,
+                                                            : '2px solid rgba(255,255,255,0.3)',
+                                                        opacity: isSelected ? 1 : 0.7,
                                                         boxShadow: isSelected
                                                             ? `0 0 8px color-mix(in srgb, ${sceneAccent} 40%, transparent)`
                                                             : 'none',
                                                     }}
-                                                    title={bg.name}
+                                                    title={bg.name || 'Cloud background'}
                                                 />
                                                 {/* Cloud badge */}
                                                 <span className="absolute bottom-0.5 right-0.5 text-[8px] opacity-60">☁️</span>
@@ -349,7 +430,7 @@ export function SceneSelector({ onClose }: Props) {
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         removeCloudBg(bg.id);
-                                                        if (activeWallpaperId === `cloud_${bg.id}`) setWallpaper(null);
+                                                        if (activeWallpaperId === cloudWpId) setWallpaper(null);
                                                     }}
                                                 >
                                                     <icons.ui.close size={8} color="white" />
@@ -456,7 +537,7 @@ export function SceneSelector({ onClose }: Props) {
 
             {/* ── Footer: Create Scene + Hidden Scenes (always visible) ── */}
             <div className="ss-footer">
-                {/* ── Create Scene button (Pro-gated) ── */}
+                {/* ── Create Scene button — smart CTA based on user state ── */}
                 {isPro ? (
                     <button
                         className="w-full py-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2.5 transition-all duration-300 cursor-pointer hover:shadow-lg hover:scale-[1.01]"
@@ -470,7 +551,43 @@ export function SceneSelector({ onClose }: Props) {
                         <span style={{ fontSize: '16px' }}>✨</span>
                         <span>{t('scene.createScene')}</span>
                     </button>
+                ) : !user ? (
+                    /* Not logged in — invite to login */
+                    <button
+                        className="group/create w-full rounded-xl overflow-hidden transition-all duration-300 cursor-pointer hover:scale-[1.01]"
+                        style={{ padding: '2px', background: 'linear-gradient(135deg, #8b5cf6, #ec4899, #f59e0b)' }}
+                        onClick={() => signIn()}
+                    >
+                        <div
+                            className="flex items-center justify-center gap-2.5 py-4 rounded-[10px] transition-all duration-300 group-hover/create:bg-black/60"
+                            style={{ background: 'rgba(0,0,0,0.75)' }}
+                        >
+                            <span className="text-base transition-transform duration-300 group-hover/create:scale-110">✨</span>
+                            <span className="text-sm font-semibold bg-gradient-to-r from-violet-400 via-pink-400 to-amber-400 bg-clip-text text-transparent">
+                                Đăng nhập để tạo cảnh AI
+                            </span>
+                        </div>
+                    </button>
+                ) : !trialUsed ? (
+                    /* Logged in + trial available — highlight free trial */
+                    <button
+                        className="group/create w-full rounded-xl overflow-hidden transition-all duration-300 cursor-pointer hover:scale-[1.01] animate-pulse-subtle"
+                        style={{ padding: '2px', background: 'linear-gradient(135deg, #10b981, #06b6d4, #8b5cf6)' }}
+                        onClick={() => setShowCreator(true)}
+                    >
+                        <div
+                            className="flex items-center justify-center gap-2.5 py-4 rounded-[10px] transition-all duration-300 group-hover/create:bg-black/60"
+                            style={{ background: 'rgba(0,0,0,0.75)' }}
+                        >
+                            <span className="text-base transition-transform duration-300 group-hover/create:scale-110">✨</span>
+                            <span className="text-sm font-semibold bg-gradient-to-r from-emerald-400 via-cyan-400 to-violet-400 bg-clip-text text-transparent">
+                                Tạo Cảnh AI — Miễn phí lần đầu
+                            </span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}>🎁 FREE</span>
+                        </div>
+                    </button>
                 ) : (
+                    /* Logged in + trial used + not Pro — PRO upsell */
                     <button
                         className="group/create w-full rounded-xl overflow-hidden transition-all duration-300 cursor-pointer hover:scale-[1.01]"
                         style={{ padding: '2px', background: 'linear-gradient(135deg, #f59e0b, #ec4899, #8b5cf6)' }}
@@ -546,15 +663,15 @@ export function SceneSelector({ onClose }: Props) {
             <style>{`
                 .ss-panel {
                     width: 380px;
+                    max-height: 85vh;
                     border-radius: 16px;
-                    backdrop-filter: blur(24px) saturate(1.4);
                     font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
                 }
                 .ss-header {
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
-                    padding: 16px 16px 12px;
+                    padding: 16px 16px 16px;
                 }
                 .ss-header-center {
                     display: flex;
@@ -589,11 +706,11 @@ export function SceneSelector({ onClose }: Props) {
                 .ss-close:hover { background: rgba(255,255,255,0.08); }
 
                 .ss-gallery {
-                    padding: 0 12px 0;
+                    padding: 0 14px 14px;
                     display: flex;
                     flex-direction: column;
-                    gap: 10px;
-                    max-height: 420px;
+                    gap: 14px;
+                    flex: 1;
                     overflow-y: auto;
                 }
                 .ss-footer {
@@ -627,6 +744,14 @@ export function SceneSelector({ onClose }: Props) {
                     text-shadow: 0 2px 12px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.5);
                     text-align: center;
                     padding: 0 20px;
+                }
+
+                @keyframes pulse-subtle {
+                    0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+                    50% { box-shadow: 0 0 16px 2px rgba(16,185,129,0.15); }
+                }
+                .animate-pulse-subtle {
+                    animation: pulse-subtle 3s ease-in-out infinite;
                 }
             `}</style>
         </div >

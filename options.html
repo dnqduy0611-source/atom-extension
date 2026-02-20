@@ -12,36 +12,117 @@
             padding: 40px 20px;
             min-height: 100vh;
             box-sizing: border-box;
+            background: var(--bg);
+            position: relative;
+            overflow-x: hidden;
         }
 
-        /* Main Container - Flex Layout */
+        /* Decorative gradient mesh — gives glass something to blur */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -40%;
+            left: -20%;
+            width: 70%;
+            height: 70%;
+            background: radial-gradient(ellipse, rgba(var(--primary-rgb), 0.12) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            animation: orb-drift 20s ease-in-out infinite alternate;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -30%;
+            right: -15%;
+            width: 60%;
+            height: 60%;
+            background: radial-gradient(ellipse, rgba(var(--secondary-rgb), 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            animation: orb-drift 25s ease-in-out infinite alternate-reverse;
+        }
+
+        @keyframes orb-drift {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            100% {
+                transform: translate(30px, -20px) scale(1.05);
+            }
+        }
+
         .options-container {
             display: flex;
             max-width: 800px;
             width: 100%;
-            background: var(--surface);
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.15);
+            background: var(--glass-panel-bg);
+            backdrop-filter: var(--glass-blur-lg);
+            -webkit-backdrop-filter: var(--glass-blur-lg);
+            border-radius: var(--glass-panel-radius);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-panel-shadow);
             overflow: hidden;
             min-height: 600px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Top-edge refraction line */
+        .options-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg,
+                    transparent 0%,
+                    var(--glass-edge-mid) 20%,
+                    var(--glass-edge-peak) 50%,
+                    var(--glass-edge-mid) 80%,
+                    transparent 100%);
+            pointer-events: none;
+            z-index: 2;
         }
 
         /* Sidebar Navigation */
         .options-nav {
             width: 180px;
             min-width: 180px;
-            background: var(--background);
-            border-right: 1px solid var(--border);
+            background: linear-gradient(180deg,
+                    var(--glass-surface) 0%,
+                    var(--glass-inset) 100%);
+            border-right: 1px solid var(--glass-surface-border);
             padding: 24px 0;
             display: flex;
             flex-direction: column;
             gap: 4px;
+            position: relative;
+        }
+
+        /* Nav right-edge shine */
+        .options-nav::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 1px;
+            background: linear-gradient(180deg,
+                    transparent 0%,
+                    var(--glass-edge-mid) 30%,
+                    var(--glass-edge-peak) 50%,
+                    var(--glass-edge-mid) 70%,
+                    transparent 100%);
+            pointer-events: none;
         }
 
         .nav-header {
             padding: 0 20px 20px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--glass-divider);
             margin-bottom: 12px;
         }
 
@@ -71,12 +152,12 @@
         }
 
         .nav-tab:hover {
-            background: rgba(16, 185, 129, 0.05);
+            background: var(--glass-surface-hover);
             color: var(--foreground);
         }
 
         .nav-tab.active {
-            background: rgba(16, 185, 129, 0.1);
+            background: rgba(var(--primary-rgb), 0.1);
             color: var(--primary);
             border-left-color: var(--primary);
         }
@@ -90,7 +171,7 @@
         .nav-footer {
             margin-top: auto;
             padding: 16px 20px;
-            border-top: 1px solid var(--border);
+            border-top: 1px solid var(--glass-divider);
         }
 
         /* Content Area */
@@ -153,9 +234,15 @@
             align-items: center;
             justify-content: space-between;
             padding: 16px;
-            background: var(--background);
-            border: 1px solid var(--border);
+            background: var(--glass-surface);
+            border: 1px solid var(--glass-surface-border);
             border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .setting-row:hover {
+            background: var(--glass-surface-hover);
+            border-color: var(--glass-surface-border-hover);
         }
 
         .setting-row-info {
@@ -187,11 +274,11 @@
         input[type="number"] {
             width: 100%;
             padding: 12px 14px;
-            border: 1px solid var(--border);
+            border: 1px solid var(--glass-surface-border);
             border-radius: 10px;
             font-size: 14px;
             box-sizing: border-box;
-            background: var(--background);
+            background: var(--glass-surface);
             color: var(--foreground);
             transition: all 0.2s;
         }
@@ -200,16 +287,16 @@
         input[type="number"]:focus {
             outline: none;
             border-color: var(--primary);
-            background: rgba(16, 185, 129, 0.05);
-            box-shadow: 0 0 10px var(--primary-glow);
+            background: rgba(var(--primary-rgb), 0.05);
+            box-shadow: var(--glow-sm);
         }
 
         textarea {
             width: 100%;
             padding: 12px;
-            border: 1px solid var(--border);
+            border: 1px solid var(--glass-surface-border);
             border-radius: 10px;
-            background: var(--background);
+            background: var(--glass-surface);
             color: var(--foreground);
             font-size: 14px;
             font-family: inherit;
@@ -220,23 +307,23 @@
         textarea:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 10px var(--primary-glow);
+            box-shadow: var(--glow-sm);
         }
 
         select {
             width: 100%;
             padding: 12px 14px;
-            border: 1px solid var(--border);
+            border: 1px solid var(--glass-surface-border);
             border-radius: 10px;
             font-size: 14px;
             box-sizing: border-box;
-            background: var(--background);
+            background: var(--glass-surface);
             color: var(--foreground);
             cursor: pointer;
         }
 
         select option {
-            background-color: var(--background);
+            background-color: var(--bg);
             color: var(--foreground);
         }
 
@@ -309,12 +396,12 @@
         }
 
         .card-content {
-            border: 1px solid var(--border);
+            border: 1px solid var(--glass-surface-border);
             border-radius: 14px;
             padding: 16px 12px;
             text-align: center;
             transition: all 0.2s;
-            background: var(--background);
+            background: var(--glass-surface);
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -324,8 +411,8 @@
 
         .radio-card input:checked+.card-content {
             border-color: var(--primary);
-            background: rgba(16, 185, 129, 0.1);
-            box-shadow: 0 0 15px var(--primary-glow);
+            background: rgba(var(--primary-rgb), 0.1);
+            box-shadow: var(--glow-md);
             transform: translateY(-2px);
         }
 
@@ -359,11 +446,11 @@
         .dropdown-selected {
             width: 100%;
             padding: 12px 14px;
-            border: 1px solid var(--border);
+            border: 1px solid var(--glass-surface-border);
             border-radius: 10px;
             font-size: 14px;
             box-sizing: border-box;
-            background: var(--background);
+            background: var(--glass-surface);
             color: var(--foreground);
             cursor: pointer;
             display: flex;
@@ -378,8 +465,8 @@
 
         .custom-dropdown.open .dropdown-selected {
             border-color: var(--primary);
-            background: rgba(16, 185, 129, 0.05);
-            box-shadow: 0 0 10px var(--primary-glow);
+            background: rgba(var(--primary-rgb), 0.05);
+            box-shadow: var(--glow-sm);
         }
 
         .dropdown-arrow {
@@ -395,8 +482,8 @@
             top: calc(100% + 4px);
             left: 0;
             right: 0;
-            background: var(--background);
-            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            border: 1px solid var(--glass-border);
             border-radius: 10px;
             overflow: hidden;
             opacity: 0;
@@ -404,7 +491,9 @@
             transform: translateY(-8px);
             transition: all 0.2s ease;
             z-index: 100;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
         }
 
         .custom-dropdown.open .dropdown-options {
@@ -423,13 +512,13 @@
         }
 
         .dropdown-option:hover {
-            background: rgba(16, 185, 129, 0.1);
+            background: rgba(var(--primary-rgb), 0.1);
             border-left-color: var(--primary);
             color: var(--primary);
         }
 
         .dropdown-option.selected {
-            background: rgba(16, 185, 129, 0.15);
+            background: rgba(var(--primary-rgb), 0.15);
             color: var(--primary);
             border-left-color: var(--primary);
             font-weight: 600;
@@ -445,8 +534,8 @@
         .guide-details,
         .advanced-settings {
             margin-top: 12px;
-            background: var(--background);
-            border: 1px solid var(--border);
+            background: var(--glass-surface);
+            border: 1px solid var(--glass-surface-border);
             border-radius: 10px;
             overflow: hidden;
         }
@@ -467,12 +556,12 @@
         .guide-details summary:hover,
         .advanced-settings summary:hover {
             color: var(--primary);
-            background: rgba(16, 185, 129, 0.05);
+            background: rgba(var(--primary-rgb), 0.05);
         }
 
         .guide-details[open] summary,
         .advanced-settings[open] summary {
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--glass-divider);
             color: var(--primary);
         }
 
@@ -507,7 +596,7 @@
             color: var(--foreground);
             margin: 24px 0 16px 0;
             padding-bottom: 8px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--glass-divider);
             display: flex;
             align-items: center;
             gap: 8px;
@@ -523,7 +612,7 @@
 
         /* Hero box for API key */
         .hero-box {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, transparent 100%);
+            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.08) 0%, transparent 100%);
             border: 1px solid var(--primary);
             padding: 20px;
             border-radius: 14px;
@@ -539,13 +628,13 @@
             padding: 12px 24px;
             border-radius: 20px;
             display: inline-block;
-            box-shadow: 0 0 15px var(--primary-glow);
+            box-shadow: var(--glow-md);
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .btn-get-key:hover {
             transform: translateY(-2px);
-            box-shadow: 0 0 25px var(--primary-glow);
+            box-shadow: var(--glow-lg);
         }
 
         /* Action buttons */
@@ -553,7 +642,7 @@
             padding: 12px 16px;
             background: transparent;
             color: var(--foreground);
-            border: 1px solid var(--border);
+            border: 1px solid var(--glass-surface-border);
             border-radius: 10px;
             font-weight: 600;
             cursor: pointer;
@@ -568,14 +657,14 @@
         .btn-action:hover {
             border-color: var(--primary);
             color: var(--primary);
-            background: rgba(16, 185, 129, 0.05);
+            background: rgba(var(--primary-rgb), 0.05);
         }
 
         /* Save bar */
         .save-bar {
             margin-top: auto;
             padding-top: 24px;
-            border-top: 1px solid var(--border);
+            border-top: 1px solid var(--glass-divider);
         }
 
         #btn-save {
@@ -597,7 +686,7 @@
 
         #btn-save:hover {
             background: var(--primary-hover, #059669);
-            box-shadow: 0 0 20px var(--primary-glow);
+            box-shadow: var(--glow-lg);
         }
 
         #btn-save:disabled {

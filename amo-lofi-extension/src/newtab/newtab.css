@@ -1,0 +1,500 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&display=swap');
+
+/* ── Reset ── */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #000;
+    color: #e0e0e0;
+}
+
+/* ── CSS Variables (set dynamically by SceneBackground) ── */
+:root {
+    --theme-primary: #fb923c;
+    --theme-primary-glow: rgba(251, 146, 60, 0.25);
+    --theme-text-primary: rgba(255, 255, 255, 0.9);
+    --theme-text-muted: rgba(255, 220, 180, 0.45);
+}
+
+/* ── Crossfade Animations ── */
+@keyframes bgFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes bgFadeOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+/* ── Sanctuary Layout ── */
+.sanctuary {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.center-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ── Clock ── */
+.clock-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.clock-time {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    font-size: 7rem;
+    font-weight: 200;
+    letter-spacing: 0.02em;
+    color: var(--theme-text-primary, #fff);
+    text-shadow: 0 2px 40px rgba(0, 0, 0, 0.3);
+    font-variant-numeric: tabular-nums;
+}
+
+.clock-separator {
+    opacity: 0.5;
+    animation: blink 2s ease-in-out infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 0.15;
+    }
+}
+
+.clock-date {
+    font-size: 0.9rem;
+    font-weight: 400;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--theme-text-muted);
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Greeting ── */
+.greeting {
+    font-size: 1.4rem;
+    font-weight: 300;
+    color: var(--theme-text-primary);
+    opacity: 0.7;
+    margin-top: 8px;
+}
+
+/* ── Focus Input ── */
+.focus-input {
+    margin-top: 8px;
+    width: 340px;
+    max-width: 70vw;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+    font-family: inherit;
+    outline: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.focus-input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.focus-input:focus {
+    border-color: var(--theme-primary);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 24px var(--theme-primary-glow);
+}
+
+/* ── Search Bar ── */
+.search-bar {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 480px;
+    max-width: 85vw;
+    padding: 14px 22px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 28px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: all 0.3s ease;
+}
+
+.search-bar:focus-within {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.search-bar-icon {
+    display: flex;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.4);
+    flex-shrink: 0;
+}
+
+.search-bar-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.95rem;
+    font-family: inherit;
+}
+
+.search-bar-input::placeholder {
+    color: rgba(255, 255, 255, 0.35);
+}
+
+/* ── Dock ── */
+.dock {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    padding: 10px 16px;
+    background: rgba(10, 10, 20, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: none;
+    border-radius: 16px 16px 0 0;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 100;
+}
+
+.dock.visible {
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Show dock when hovering bottom 80px of screen */
+.sanctuary::after {
+    content: '';
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    z-index: 99;
+}
+
+.sanctuary:hover .dock,
+.dock:hover {
+    transform: translateX(-50%) translateY(0);
+}
+
+.dock-inner {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.dock-separator {
+    width: 1px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 0 4px;
+}
+
+.dock-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.dock-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.dock-btn.active {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.dock-btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.55);
+    transition: color 0.2s ease;
+}
+
+.dock-btn:hover .dock-btn-icon {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.dock-btn.active .dock-btn-icon {
+    color: var(--theme-primary);
+}
+
+.dock-btn-label {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.dock-btn:hover .dock-btn-label {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.dock-badge {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    background: var(--theme-primary);
+    color: #000;
+    font-size: 0.55rem;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0 4px;
+}
+
+/* ── Teleport Toast ── */
+.teleport-toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    background: rgba(10, 10, 20, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(20px);
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.85);
+    animation: toastSlideIn 0.4s ease-out, toastFadeOut 0.4s ease 4.6s forwards;
+    z-index: 200;
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes toastFadeOut {
+    to {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-10px);
+    }
+}
+
+/* ── Timer Panel ── */
+.timer-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.timer-ring-container {
+    position: relative;
+    width: 260px;
+    height: 260px;
+}
+
+.timer-ring {
+    width: 100%;
+    height: 100%;
+}
+
+.timer-inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.timer-mode-badge {
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--theme-primary);
+    text-shadow: 0 0 16px var(--theme-primary-glow);
+}
+
+.timer-digits {
+    font-size: 3.5rem;
+    font-weight: 200;
+    color: var(--theme-text-primary);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.05em;
+    text-shadow: 0 2px 30px rgba(0, 0, 0, 0.3);
+}
+
+.timer-task {
+    font-size: 0.8rem;
+    color: var(--theme-text-muted);
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+}
+
+/* ── Timer Controls ── */
+.timer-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.timer-btn {
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.85rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(12px);
+}
+
+.timer-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+.timer-btn.primary {
+    background: var(--theme-primary);
+    color: #000;
+    border-color: transparent;
+    font-weight: 600;
+}
+
+.timer-btn.primary:hover {
+    filter: brightness(1.15);
+    box-shadow: 0 0 20px var(--theme-primary-glow);
+}
+
+/* ── Timer Duration Presets ── */
+.timer-presets {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.preset-btn {
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.75rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.preset-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.preset-btn.active {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--theme-primary);
+    color: var(--theme-primary);
+}
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}

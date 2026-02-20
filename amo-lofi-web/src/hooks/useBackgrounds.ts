@@ -23,6 +23,7 @@ export interface UserBackground {
     height: number | null;
     ai_prompt: string | null;
     created_at: string;
+    scene_ids: string[];  // scenes this background is applied to
 }
 
 const MAX_BACKGROUNDS = 50;
@@ -34,6 +35,7 @@ export function useBackgrounds() {
 
     // ── Fetch all user backgrounds ──
     const refresh = useCallback(async () => {
+        console.log('[useBackgrounds] refresh called');
         try {
             setError(null);
             const { data: { session } } = await supabase.auth.getSession();
@@ -55,22 +57,57 @@ export function useBackgrounds() {
             }
 
             if (!bgs || bgs.length === 0) {
+                console.log('[useBackgrounds] No backgrounds found');
                 setBackgrounds([]);
                 setIsLoading(false);
                 return;
             }
+            console.log('[useBackgrounds] Found', bgs.length, 'backgrounds');
 
             // Get signed URLs for all backgrounds
             const paths = bgs.map((bg) => bg.storage_path);
-            const { data: signedUrls } = await supabase.storage
+            const { data: signedUrls, error: signError } = await supabase.storage
                 .from('user-backgrounds')
                 .createSignedUrls(paths, 60 * 60 * 24); // 24 hours
+
+            if (signError) {
+                console.error('[useBackgrounds] createSignedUrls ERROR:', signError);
+            }
+            // Log first item details including any per-item error
+            if (signedUrls && signedUrls.length > 0) {
+                console.log('[useBackgrounds] First signedUrl item (full):', JSON.stringify(signedUrls[0]));
+            }
 
             const urlMap = new Map<string, string>();
             signedUrls?.forEach((item) => {
                 if (item.signedUrl) {
+                    // Store with both original and normalized paths to handle path format differences
                     urlMap.set(item.path!, item.signedUrl);
+                    // Also store without leading slash
+                    const normalized = item.path!.replace(/^\//, '');
+                    urlMap.set(normalized, item.signedUrl);
                 }
+            });
+
+            // Debug: compare paths
+            if (bgs.length > 0 && signedUrls && signedUrls.length > 0) {
+                console.log('[useBackgrounds] DB storage_path:', bgs[0].storage_path);
+                console.log('[useBackgrounds] SignedURL path:', signedUrls[0].path);
+                console.log('[useBackgrounds] SignedURL url:', signedUrls[0].signedUrl?.slice(0, 100));
+                console.log('[useBackgrounds] urlMap has DB path?', urlMap.has(bgs[0].storage_path));
+            }
+
+            // Fetch scene mappings
+            const { data: sceneMappings } = await supabase
+                .from('scene_backgrounds')
+                .select('background_id, scene_id')
+                .eq('user_id', session.user.id);
+
+            const sceneMap = new Map<string, string[]>();
+            sceneMappings?.forEach((m) => {
+                const existing = sceneMap.get(m.background_id) || [];
+                existing.push(m.scene_id);
+                sceneMap.set(m.background_id, existing);
             });
 
             const mapped: UserBackground[] = bgs.map((bg) => ({
@@ -78,14 +115,16 @@ export function useBackgrounds() {
                 name: bg.name,
                 source: bg.source,
                 storage_path: bg.storage_path,
-                signedUrl: urlMap.get(bg.storage_path) || '',
+                signedUrl: urlMap.get(bg.storage_path) || urlMap.get(bg.storage_path.replace(/^\//, '')) || '',
                 file_size_bytes: bg.file_size_bytes,
                 width: bg.width,
                 height: bg.height,
                 ai_prompt: bg.ai_prompt,
                 created_at: bg.created_at,
+                scene_ids: sceneMap.get(bg.id) || [],
             }));
 
+            console.log('[useBackgrounds] Mapped backgrounds with URLs:', mapped.map(b => ({ id: b.id, name: b.name, hasUrl: !!b.signedUrl, scenes: b.scene_ids })));
             setBackgrounds(mapped);
         } catch (err) {
             setError((err as Error).message);
@@ -159,6 +198,7 @@ export function useBackgrounds() {
             height: data.background.height,
             ai_prompt: null,
             created_at: data.background.created_at,
+            scene_ids: [],
         };
 
         setBackgrounds((prev) => [newBg, ...prev]);

@@ -1,0 +1,87 @@
+/* ── Mood Companion Animations ── */
+
+@keyframes moodSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes moodBounce {
+
+    0%,
+    80%,
+    100% {
+        transform: scale(0.6);
+        opacity: 0.3;
+    }
+
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Stagger dots */
+.mood-dot-1 {
+    animation-delay: 0s;
+}
+
+.mood-dot-2 {
+    animation-delay: 0.2s;
+}
+
+.mood-dot-3 {
+    animation-delay: 0.4s;
+}
+
+/* Idle button hover */
+.mood-idle-btn:hover {
+    color: rgba(255, 255, 255, 0.7) !important;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* Minimized button hover */
+.mood-min-btn:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Create scene button hover */
+.mood-create-btn:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 6px 24px rgba(139, 92, 246, 0.4);
+}
+
+.mood-create-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Custom scrollbar for chat */
+.mood-panel ::-webkit-scrollbar {
+    width: 4px;
+}
+
+.mood-panel ::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.mood-panel ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.mood-panel ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Chat input placeholder */
+.mood-panel input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
