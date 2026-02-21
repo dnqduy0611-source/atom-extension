@@ -7,7 +7,9 @@
         "tabs",
         "storage",
         "alarms",
-        "notifications"
+        "notifications",
+        "identity",
+        "topSites"
     ],
     "chrome_url_overrides": {
         "newtab": "src/newtab/index.html"

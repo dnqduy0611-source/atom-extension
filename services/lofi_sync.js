@@ -62,6 +62,7 @@ const SCENE_REGISTRY = {
 
 let _channel = null;
 let _userId = null;
+let _timerSyncInProgress = false; // prevents echo loops for timer sync
 
 /**
  * Initialize Lofi Sync — subscribe to Supabase Realtime channel
@@ -103,6 +104,12 @@ export async function initLofiSync(userId) {
         _channel.on('broadcast', { event: 'focus_command' }, ({ payload }) => {
             if (DEBUG_MODE) console.log('[Lofi Sync] focus_command received:', payload);
             handleFocusCommand(payload);
+        });
+
+        // Listen for timer sync from AmoLofi Web
+        _channel.on('broadcast', { event: 'timer_sync' }, ({ payload }) => {
+            if (DEBUG_MODE) console.log('[Lofi Sync] timer_sync received:', payload);
+            handleTimerSync(payload);
         });
 
         // Subscribe to the channel
@@ -172,6 +179,24 @@ export function sendFocusCommand(command, data = {}) {
         payload: { command, data, source: 'extension', timestamp: Date.now() },
     });
     if (DEBUG_MODE) console.log('[Lofi Sync] focus_command sent:', command);
+}
+
+/**
+ * Send a timer sync event to AmoLofi Web via Realtime channel
+ * @param {'start'|'pause'|'reset'|'skip'} action
+ * @param {Record<string, unknown>} [data] - extra data (duration, remaining, task, mode)
+ */
+export function sendTimerSync(action, data = {}) {
+    if (!_channel) {
+        if (DEBUG_MODE) console.log('[Lofi Sync] sendTimerSync skipped — no channel');
+        return;
+    }
+    _channel.send({
+        type: 'broadcast',
+        event: 'timer_sync',
+        payload: { action, ...data, source: 'extension', timestamp: Date.now() },
+    });
+    if (DEBUG_MODE) console.log('[Lofi Sync] timer_sync sent:', action);
 }
 
 // ── Shared Mirror Config Builder ──
@@ -268,6 +293,95 @@ function handleFocusCommand(payload) {
     // enter_zen is handled implicitly via config_change
 }
 
+/**
+ * Handle incoming timer sync from AmoLofi Web
+ * Maps web timer events → extension's chrome.storage timerState + alarms
+ */
+async function handleTimerSync(payload) {
+    if (payload.source === 'extension') return; // ignore own echo
+    _timerSyncInProgress = true;
+
+    try {
+        const result = await chrome.storage.local.get('timerState');
+        const currentState = result.timerState || {
+            mode: 'idle', remaining: 25 * 60, duration: 25 * 60,
+            task: '', isRunning: false, lastTick: 0,
+        };
+
+        switch (payload.action) {
+            case 'start': {
+                const duration = payload.duration || currentState.duration;
+                const remaining = payload.remaining || duration;
+                const newState = {
+                    mode: (payload.mode === 'work' || payload.mode === 'shortBreak' || payload.mode === 'longBreak')
+                        ? (payload.mode === 'work' ? 'focus' : 'break')
+                        : 'focus',
+                    remaining: remaining,
+                    duration: duration,
+                    task: payload.task || currentState.task,
+                    isRunning: true,
+                    lastTick: Date.now(),
+                };
+                await chrome.storage.local.set({ timerState: newState });
+                chrome.alarms.create('pomodoro_tick', { periodInMinutes: 1 / 60 });
+                console.log('[Lofi Sync] Timer started from web sync');
+                break;
+            }
+            case 'pause': {
+                const elapsed = currentState.isRunning
+                    ? Math.floor((Date.now() - currentState.lastTick) / 1000)
+                    : 0;
+                const newState = {
+                    ...currentState,
+                    remaining: payload.remaining || Math.max(0, currentState.remaining - elapsed),
+                    isRunning: false,
+                    lastTick: 0,
+                };
+                await chrome.storage.local.set({ timerState: newState });
+                chrome.alarms.clear('pomodoro_tick');
+                console.log('[Lofi Sync] Timer paused from web sync');
+                break;
+            }
+            case 'reset': {
+                const newState = {
+                    mode: 'idle',
+                    remaining: 25 * 60,
+                    duration: 25 * 60,
+                    task: '',
+                    isRunning: false,
+                    lastTick: 0,
+                };
+                await chrome.storage.local.set({ timerState: newState });
+                chrome.alarms.clear('pomodoro_tick');
+                console.log('[Lofi Sync] Timer reset from web sync');
+                break;
+            }
+            case 'skip': {
+                chrome.alarms.clear('pomodoro_tick');
+                const webMode = payload.mode; // 'work', 'shortBreak', 'longBreak'
+                const extMode = (webMode === 'work') ? 'focus' : 'break';
+                const duration = extMode === 'focus' ? 25 * 60 : 5 * 60;
+                const newState = {
+                    mode: extMode,
+                    remaining: payload.remaining || duration,
+                    duration: duration,
+                    task: currentState.task,
+                    isRunning: false,
+                    lastTick: 0,
+                };
+                await chrome.storage.local.set({ timerState: newState });
+                console.log('[Lofi Sync] Timer skipped from web sync →', extMode);
+                break;
+            }
+        }
+    } catch (e) {
+        console.warn('[Lofi Sync] handleTimerSync error:', e);
+    } finally {
+        // Clear flag after a tick to let storage update propagate
+        setTimeout(() => { _timerSyncInProgress = false; }, 100);
+    }
+}
+
 // ── Utility ──
 
 function broadcastToTabs(message) {
@@ -350,27 +464,60 @@ export async function pullLatestLofiConfig() {
     }
 }
 
-// ── Auto-init on auth session changes (MV3 resilience) ──
-// Watches for atom_proxy_session being written (login, token refresh)
-// and automatically connects the Realtime channel.
+// ── Auto-init on auth session changes + Timer sync broadcast ──
 chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local') return;
-    if (!changes.atom_proxy_session) return;
 
-    const newSession = changes.atom_proxy_session.newValue;
-    if (newSession?.user_id && newSession?.access_token) {
-        // New valid session → connect (or reconnect if user changed)
-        if (_userId && _userId !== newSession.user_id) {
-            // Different user → disconnect old channel first
+    // ── Auth session changes (MV3 resilience) ──
+    if (changes.atom_proxy_session) {
+        const newSession = changes.atom_proxy_session.newValue;
+        if (newSession?.user_id && newSession?.access_token) {
+            // New valid session → connect (or reconnect if user changed)
+            if (_userId && _userId !== newSession.user_id) {
+                // Different user → disconnect old channel first
+                disconnectLofiSync();
+            }
+            if (!_channel) {
+                initLofiSync(newSession.user_id).catch(e =>
+                    console.warn('[Lofi Sync] Auto-init on session change failed:', e)
+                );
+            }
+        } else if (!newSession || !newSession.access_token) {
+            // Session removed (logout) → disconnect
             disconnectLofiSync();
         }
-        if (!_channel) {
-            initLofiSync(newSession.user_id).catch(e =>
-                console.warn('[Lofi Sync] Auto-init on session change failed:', e)
-            );
+    }
+
+    // ── Timer state change → broadcast to web ──
+    if (changes.timerState && !_timerSyncInProgress && _channel) {
+        const oldState = changes.timerState.oldValue || {};
+        const newState = changes.timerState.newValue || {};
+
+        // Detect meaningful transitions
+        if (newState.isRunning && !oldState.isRunning) {
+            // Started
+            sendTimerSync('start', {
+                duration: newState.duration,
+                remaining: newState.remaining,
+                task: newState.task,
+                mode: newState.mode === 'focus' ? 'work' : 'shortBreak',
+            });
+        } else if (!newState.isRunning && oldState.isRunning) {
+            // Paused
+            sendTimerSync('pause', {
+                remaining: newState.remaining,
+                mode: newState.mode === 'focus' ? 'work' : 'shortBreak',
+            });
+        } else if (newState.mode !== oldState.mode && !newState.isRunning) {
+            // Mode changed (skip/complete)
+            if (newState.mode === 'idle') {
+                sendTimerSync('reset', {});
+            } else {
+                sendTimerSync('skip', {
+                    mode: newState.mode === 'focus' ? 'work' : 'shortBreak',
+                    remaining: newState.remaining,
+                });
+            }
         }
-    } else if (!newSession || !newSession.access_token) {
-        // Session removed (logout) → disconnect
-        disconnectLofiSync();
     }
 });

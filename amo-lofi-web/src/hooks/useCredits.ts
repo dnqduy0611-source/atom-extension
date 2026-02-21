@@ -1,8 +1,8 @@
 /**
- * useCredits — Credit balance + trial status hook for AmoLofi
+ * useCredits — Credit balance + daily free + trial status hook for AmoLofi
  *
  * Fetches from the `get-credits` Edge Function.
- * Provides balance, trialUsed, loading state, and refresh function.
+ * Provides balance, daily free remaining, trial info, loading state, and refresh.
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -11,6 +11,10 @@ import { supabase, SUPABASE_URL } from '../lib/supabaseClient';
 interface CreditsState {
     balance: number;
     trialUsed: boolean;
+    dailyFreeRemaining: number;
+    maxDaily: number;
+    isInTrial: boolean;
+    trialDaysLeft: number;
     isLoading: boolean;
     error: string | null;
     refresh: () => Promise<void>;
@@ -19,6 +23,10 @@ interface CreditsState {
 export function useCredits(): CreditsState {
     const [balance, setBalance] = useState(0);
     const [trialUsed, setTrialUsed] = useState(false);
+    const [dailyFreeRemaining, setDailyFreeRemaining] = useState(1);
+    const [maxDaily, setMaxDaily] = useState(1);
+    const [isInTrial, setIsInTrial] = useState(false);
+    const [trialDaysLeft, setTrialDaysLeft] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -29,6 +37,10 @@ export function useCredits(): CreditsState {
             if (!session) {
                 setBalance(0);
                 setTrialUsed(false);
+                setDailyFreeRemaining(0);
+                setMaxDaily(0);
+                setIsInTrial(false);
+                setTrialDaysLeft(0);
                 setIsLoading(false);
                 return;
             }
@@ -47,6 +59,10 @@ export function useCredits(): CreditsState {
             const data = await res.json();
             setBalance(data.balance ?? 0);
             setTrialUsed(data.trialUsed ?? false);
+            setDailyFreeRemaining(data.dailyFreeRemaining ?? 0);
+            setMaxDaily(data.maxDaily ?? 1);
+            setIsInTrial(data.isInTrial ?? false);
+            setTrialDaysLeft(data.trialDaysLeft ?? 0);
         } catch (err) {
             setError((err as Error).message);
         } finally {
@@ -58,5 +74,9 @@ export function useCredits(): CreditsState {
         refresh();
     }, [refresh]);
 
-    return { balance, trialUsed, isLoading, error, refresh };
+    return {
+        balance, trialUsed,
+        dailyFreeRemaining, maxDaily, isInTrial, trialDaysLeft,
+        isLoading, error, refresh,
+    };
 }

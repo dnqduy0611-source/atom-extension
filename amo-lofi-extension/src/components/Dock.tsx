@@ -75,12 +75,14 @@ function DockButton({ icon, label, badge, onClick, active }: DockButtonProps) {
 interface Props {
     onToggleTimer?: () => void;
     timerActive?: boolean;
+    onToggleParking?: () => void;
+    parkingCount?: number;
     onOpenMusic?: () => void;
     onOpenChat?: () => void;
     onOpenSettings?: () => void;
 }
 
-export function Dock({ onToggleTimer, timerActive, onOpenMusic, onOpenChat, onOpenSettings }: Props) {
+export function Dock({ onToggleTimer, timerActive, onToggleParking, parkingCount, onOpenMusic, onOpenChat, onOpenSettings }: Props) {
     const [visible, setVisible] = useState(false);
 
     const openLofiTab = async (path = '/') => {
@@ -108,7 +110,8 @@ export function Dock({ onToggleTimer, timerActive, onOpenMusic, onOpenChat, onOp
                 <DockButton
                     icon={<IconParking />}
                     label="Parking"
-                    onClick={() => { }} // Phase 4
+                    badge={parkingCount}
+                    onClick={onToggleParking}
                 />
                 <div className="dock-separator" />
                 <DockButton

@@ -12,6 +12,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useLofiStore } from '../store/useLofiStore';
+import { useFocusStore } from '../store/useFocusStore';
 import { supabase } from '../lib/supabaseClient';
 import { scenes } from '../data/scenes';
 
@@ -29,6 +30,9 @@ function getSceneVisuals(sceneId: string, variant: 'day' | 'night', customScenes
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 const DEBOUNCE_MS = 300; // debounce rapid state changes
+
+// Prevents echo loops when applying remote timer sync events
+let _timerSyncInProgress = false;
 
 // ── Types ──
 
@@ -161,6 +165,36 @@ export function useSyncBridge(userId: string | null | undefined) {
             }
         });
 
+        // ── BROADCAST: Timer sync from Extension ──
+        channel.on('broadcast', { event: 'timer_sync' }, ({ payload }) => {
+            if (payload?.source === 'web') return;
+            _timerSyncInProgress = true;
+            const store = useFocusStore.getState();
+
+            switch (payload?.action) {
+                case 'start':
+                    if (payload.duration) {
+                        store.setWorkDuration(Math.round(payload.duration / 60));
+                    }
+                    if (payload.task) {
+                        store.setTaskLabel(payload.task);
+                    }
+                    store.startTimer();
+                    break;
+                case 'pause':
+                    store.pauseTimer();
+                    break;
+                case 'reset':
+                    store.resetTimer();
+                    break;
+                case 'skip':
+                    store.skipTimer();
+                    break;
+            }
+            console.log('[SyncBridge] timer_sync received:', payload?.action);
+            setTimeout(() => { _timerSyncInProgress = false; }, 50);
+        });
+
         // ── Subscribe + track Presence ──
         channel.subscribe(async (status) => {
             if (status === 'SUBSCRIBED') {
@@ -268,5 +302,83 @@ export function useSyncBridge(userId: string | null | undefined) {
         };
     }, [userId]);
 
-    return { syncState, broadcastFocusCommand };
+    // ── Watch focus store and broadcast timer changes ──
+    useEffect(() => {
+        if (!userId) return;
+
+        let prevRunning = useFocusStore.getState().isTimerRunning;
+        let prevMode = useFocusStore.getState().timerMode;
+
+        const unsubFocus = useFocusStore.subscribe((state) => {
+            if (_timerSyncInProgress) return; // ignore remote-induced changes
+
+            const channel = channelRef.current;
+            if (!channel) return;
+
+            // Detect start/pause transitions
+            if (state.isTimerRunning !== prevRunning) {
+                if (state.isTimerRunning) {
+                    channel.send({
+                        type: 'broadcast',
+                        event: 'timer_sync',
+                        payload: {
+                            action: 'start',
+                            duration: state.workDuration,
+                            remaining: state.timeRemaining,
+                            task: state.taskLabel,
+                            mode: state.timerMode,
+                            source: 'web',
+                            timestamp: Date.now(),
+                        },
+                    });
+                    console.log('[SyncBridge] timer_sync sent: start');
+                } else {
+                    channel.send({
+                        type: 'broadcast',
+                        event: 'timer_sync',
+                        payload: {
+                            action: 'pause',
+                            remaining: state.timeRemaining,
+                            mode: state.timerMode,
+                            source: 'web',
+                            timestamp: Date.now(),
+                        },
+                    });
+                    console.log('[SyncBridge] timer_sync sent: pause');
+                }
+            }
+
+            // Detect mode change (skip/complete)
+            if (state.timerMode !== prevMode && !state.isTimerRunning) {
+                channel.send({
+                    type: 'broadcast',
+                    event: 'timer_sync',
+                    payload: {
+                        action: 'skip',
+                        mode: state.timerMode,
+                        remaining: state.timeRemaining,
+                        source: 'web',
+                        timestamp: Date.now(),
+                    },
+                });
+                console.log('[SyncBridge] timer_sync sent: skip →', state.timerMode);
+            }
+
+            prevRunning = state.isTimerRunning;
+            prevMode = state.timerMode;
+        });
+
+        return () => unsubFocus();
+    }, [userId]);
+
+    // ── Broadcast timer events to Extension ──
+    const broadcastTimerSync = useCallback((action: string, data?: Record<string, unknown>) => {
+        channelRef.current?.send({
+            type: 'broadcast',
+            event: 'timer_sync',
+            payload: { action, ...data, source: 'web', timestamp: Date.now() },
+        });
+    }, []);
+
+    return { syncState, broadcastFocusCommand, broadcastTimerSync };
 }

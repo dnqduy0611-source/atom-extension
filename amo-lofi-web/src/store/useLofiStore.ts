@@ -314,6 +314,7 @@ export const useLofiStore = create<LofiState>((set, get) => ({
             return {
                 activeSceneId: config.scene_id,
                 activeVariant: config.variant,
+                activeWallpaperId: null, // Clear custom wallpaper so scene change is visible
                 musicTrack: config.music,
                 ambienceLayers,
                 isPlaying: true,

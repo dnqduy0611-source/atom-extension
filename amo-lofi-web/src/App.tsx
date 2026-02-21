@@ -28,6 +28,8 @@ import { useAuth } from './hooks/useAuth';
 import { useProfile } from './hooks/useProfile';
 import { LoginModal } from './components/auth/LoginModal';
 import { OnboardingModal } from './components/auth/OnboardingModal';
+import { AnnouncementBanner } from './components/ui/AnnouncementBanner';
+import { NotificationCenter } from './components/ui/NotificationCenter';
 import { useState, useRef, useEffect } from 'react';
 import { useSyncBridge } from './hooks/useSyncBridge';
 import { usePersistState } from './hooks/usePersistState';
@@ -173,6 +175,7 @@ function App() {
             {/* ── Top-right: Auth + Zen exit ── */}
             <div className="pointer-events-auto absolute top-4 right-4 flex items-center gap-3 z-50">
               {/* Quick Settings gear */}
+              {!zenMode && <NotificationCenter />}
               {!zenMode && <QuickSettings />}
               {zenMode && (
                 <button
@@ -500,6 +503,9 @@ function App() {
       {user && !onboardingDone && !profileLoading && (
         <OnboardingModal onComplete={() => { setOnboardingDone(true); refreshProfile(); }} />
       )}
+
+      {/* ═══ Announcement Banner — new free tier notification ═══ */}
+      <AnnouncementBanner />
     </>
   );
 }

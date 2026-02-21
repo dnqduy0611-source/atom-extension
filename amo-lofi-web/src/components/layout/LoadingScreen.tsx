@@ -1,51 +1,137 @@
-import { useState, useEffect } from 'react';
-import { useTranslation } from '../../hooks/useTranslation';
+import { useState, useEffect, useRef } from 'react';
 
+const INTRO_KEY = 'amo_intro_done';
+const INTRO_SESSION_COOKIE = 'amo_intro_session';
+
+/**
+ * LoadingScreen — Plays the AmoLofi intro video (3s) then fades out.
+ * Falls back to a static logo splash if video fails to load.
+ * Uses session cookie + localStorage: plays once per Chrome session.
+ */
 export function LoadingScreen() {
-    const { t } = useTranslation();
-    const [show, setShow] = useState(true);
-    const [fadeOut, setFadeOut] = useState(false);
+    // Session cookie = cleared when Chrome closes
+    const isExistingSession = document.cookie.includes(`${INTRO_SESSION_COOKIE}=1`);
 
+    if (!isExistingSession) {
+        // New Chrome session → clear old "done" flag & set session cookie
+        localStorage.removeItem(INTRO_KEY);
+        document.cookie = `${INTRO_SESSION_COOKIE}=1; path=/; SameSite=Lax`;
+    }
+
+    const alreadyPlayed = localStorage.getItem(INTRO_KEY) === '1';
+    const [show, setShow] = useState(!alreadyPlayed);
+    const [fadeOut, setFadeOut] = useState(false);
+    const [videoError, setVideoError] = useState(false);
+    const videoRef = useRef<HTMLVideoElement>(null);
+
+    const markDone = () => {
+        localStorage.setItem(INTRO_KEY, '1');
+    };
+
+    // Fallback: if video doesn't end in 3.5s, force fade out
     useEffect(() => {
-        const timer = setTimeout(() => {
+        if (!show || fadeOut) return;
+
+        const fallback = setTimeout(() => {
+            markDone();
             setFadeOut(true);
-            setTimeout(() => setShow(false), 600);
-        }, 1500);
-        return () => clearTimeout(timer);
-    }, []);
+            setTimeout(() => setShow(false), 800);
+        }, 3500);
+
+        // Cut video at 3s mark
+        const video = videoRef.current;
+        if (video) {
+            const onTime = () => {
+                if (video.currentTime >= 3) {
+                    video.removeEventListener('timeupdate', onTime);
+                    handleVideoEnd();
+                }
+            };
+            video.addEventListener('timeupdate', onTime);
+            return () => {
+                clearTimeout(fallback);
+                video.removeEventListener('timeupdate', onTime);
+            };
+        }
+
+        return () => clearTimeout(fallback);
+    }, [show, fadeOut]);
+
+    const handleVideoEnd = () => {
+        markDone();
+        setFadeOut(true);
+        setTimeout(() => setShow(false), 800);
+    };
+
+    const handleVideoError = () => {
+        setVideoError(true);
+        // Show static fallback for 2s then fade
+        setTimeout(() => {
+            setFadeOut(true);
+            setTimeout(() => setShow(false), 800);
+        }, 2000);
+    };
 
     if (!show) return null;
 
     return (
         <div
-            className={`
-        fixed inset-0 z-[100] flex items-center justify-center
-        bg-[var(--amo-bg)] transition-opacity duration-600
-        ${fadeOut ? 'opacity-0' : 'opacity-100'}
-      `}
+            style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 9999,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#0a0a14',
+                transition: 'opacity 0.8s ease-out',
+                opacity: fadeOut ? 0 : 1,
+            }}
         >
-            <div className="text-center">
-                {/* Logo */}
-                <div className="mb-6">
-                    <span className="text-5xl">🎵</span>
-                </div>
-                <h1 className="text-2xl font-semibold bg-gradient-to-r from-[var(--amo-primary)] to-[var(--amo-accent)] bg-clip-text text-transparent mb-2">
-                    Amo Lofi
-                </h1>
-                <p className="text-sm text-[var(--amo-text-muted)]">
-                    {t('loading.tagline')}
-                </p>
-
-                {/* Loading bar */}
-                <div className="w-40 h-0.5 bg-white/10 rounded-full mt-6 mx-auto overflow-hidden">
-                    <div
-                        className="h-full bg-gradient-to-r from-[var(--amo-primary)] to-[var(--amo-accent)] rounded-full"
+            {!videoError ? (
+                <video
+                    ref={videoRef}
+                    autoPlay
+                    muted
+                    playsInline
+                    onEnded={handleVideoEnd}
+                    onError={handleVideoError}
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                    }}
+                >
+                    <source src="/assets/intro.mp4" type="video/mp4" />
+                </video>
+            ) : (
+                /* Fallback: static logo */
+                <div style={{ textAlign: 'center' }}>
+                    <img
+                        src="/amo-icon.png"
+                        alt="AmoLofi"
+                        width={80}
+                        height={80}
                         style={{
-                            animation: 'loadingBar 1.5s ease-in-out',
+                            borderRadius: '50%',
+                            filter: 'drop-shadow(0 0 20px rgba(74,222,128,0.5))',
+                            marginBottom: 16,
                         }}
                     />
+                    <h1
+                        style={{
+                            fontSize: 24,
+                            fontWeight: 600,
+                            background: 'linear-gradient(135deg, #4ade80, #22d3ee)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            margin: 0,
+                        }}
+                    >
+                        Amo Lofi
+                    </h1>
                 </div>
-            </div>
+            )}
         </div>
     );
 }

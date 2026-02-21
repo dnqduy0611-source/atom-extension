@@ -11,9 +11,9 @@ import { useAuth } from '../../hooks/useAuth';
  *
  * Credit system flow:
  *   - Not logged in → show login prompt
- *   - Logged in + trial available → "Create Free (Trial)"
+ *   - Logged in + daily free remaining → "Create Free (X remaining today)"
  *   - Logged in + has credits → "Create with AI (10 credits)"
- *   - Logged in + no credits + no trial → disable + show "Buy Credits"
+ *   - Logged in + no credits + no daily free → disable + show "Buy Credits"
  *
  * Scene generation is handled server-side via create-scene Edge Function.
  * No API key needed.
@@ -34,7 +34,7 @@ export function SceneCreator({ onSave, onClose, onShowLogin, onShowUpgrade }: Pr
     const icons = useSceneIcons();
     const { generate, isGenerating, error: genError } = useGeminiTheme();
     const { user } = useAuth();
-    const { balance, trialUsed, refresh: refreshCredits } = useCredits();
+    const { balance, dailyFreeRemaining, isInTrial, trialDaysLeft, refresh: refreshCredits } = useCredits();
 
     // Form state
     const [name, setName] = useState('');
@@ -54,9 +54,9 @@ export function SceneCreator({ onSave, onClose, onShowLogin, onShowUpgrade }: Pr
     const [isSaving, setIsSaving] = useState(false);
 
     // Derived
-    const canUseTrial = !trialUsed;
+    const hasDailyFree = dailyFreeRemaining > 0;
     const canUseCredits = balance >= CREDITS_PER_SCENE;
-    const canGenerate = name.trim().length > 0 && description.trim().length >= 10 && !!user && (canUseTrial || canUseCredits);
+    const canGenerate = name.trim().length > 0 && description.trim().length >= 10 && !!user && (hasDailyFree || canUseCredits);
     const isBusy = isGenerating || phase !== 'idle';
 
     const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,7 +91,7 @@ export function SceneCreator({ onSave, onClose, onShowLogin, onShowUpgrade }: Pr
             await refreshCredits();
         } catch (err) {
             const code = (err as { code?: string }).code;
-            if (code === 'INSUFFICIENT_CREDITS') {
+            if (code === 'INSUFFICIENT_CREDITS' || code === 'DAILY_LIMIT_REACHED') {
                 onShowUpgrade?.();
             }
         } finally {
@@ -131,9 +131,9 @@ export function SceneCreator({ onSave, onClose, onShowLogin, onShowUpgrade }: Pr
         if (!user) return 'Đăng nhập để tạo';
         if (isBusy) return phase === 'theme' ? 'Đang thiết kế...' : 'Đang tạo hình nền...';
         if (result) return 'Tạo lại';
-        if (canUseTrial) return '✨ Tạo miễn phí (Dùng thử)';
+        if (hasDailyFree) return `✨ Tạo miễn phí (còn ${dailyFreeRemaining} hôm nay)`;
         if (canUseCredits) return `✨ Tạo bằng AI (${CREDITS_PER_SCENE} credits)`;
-        return 'Hết credits — Mua thêm';
+        return 'Hết lượt — Mua thêm hoặc quay lại ngày mai';
     }
 
     function handleMainButton() {
@@ -141,7 +141,7 @@ export function SceneCreator({ onSave, onClose, onShowLogin, onShowUpgrade }: Pr
             onShowLogin?.();
             return;
         }
-        if (!canUseTrial && !canUseCredits) {
+        if (!hasDailyFree && !canUseCredits) {
             onShowUpgrade?.();
             return;
         }
@@ -176,15 +176,17 @@ export function SceneCreator({ onSave, onClose, onShowLogin, onShowUpgrade }: Pr
                 {user && (
                     <div className="sc-credits-banner">
                         <div className="sc-credits-left">
-                            <span className="sc-credits-icon">💎</span>
+                            <span className="sc-credits-icon">🎨</span>
                             <span className="sc-credits-text">
-                                {balance} credits
+                                {dailyFreeRemaining > 0
+                                    ? `${dailyFreeRemaining} free hôm nay`
+                                    : `${balance} credits`}
                             </span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            {!trialUsed && (
+                            {isInTrial && (
                                 <span className="sc-trial-badge">
-                                    🎁 1 lượt thử miễn phí
+                                    🎁 Trial · {trialDaysLeft} ngày còn lại
                                 </span>
                             )}
                             <button
@@ -244,7 +246,7 @@ export function SceneCreator({ onSave, onClose, onShowLogin, onShowUpgrade }: Pr
                     style={{
                         background: (canGenerate || !user) && !isBusy
                             ? `linear-gradient(135deg, var(--theme-primary), var(--theme-secondary))`
-                            : (!canUseTrial && !canUseCredits && user)
+                            : (!hasDailyFree && !canUseCredits && user)
                                 ? 'linear-gradient(135deg, #f59e0b, #ef4444)'
                                 : 'rgba(255,255,255,0.06)',
                         color: 'white',

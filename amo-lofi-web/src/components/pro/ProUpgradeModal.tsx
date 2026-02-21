@@ -36,13 +36,13 @@ interface Props {
 }
 
 const PREMIUM_FEATURE_KEYS = [
-    { key: 'pro.feat.freeTrial', highlight: true },
-    { key: 'pro.feat.allScenes', highlight: false },
-    { key: 'pro.feat.allSounds', highlight: false },
-    { key: 'pro.feat.aiCreate', highlight: true },
     { key: 'pro.feat.monthlyCredits', highlight: true },
-    { key: 'pro.feat.stats', highlight: false },
-    { key: 'pro.feat.wallpaper', highlight: false },
+    { key: 'pro.feat.unlimitedAI', highlight: true },
+    { key: 'pro.feat.weeklyInsight', highlight: true },
+    { key: 'pro.feat.priorityGen', highlight: false },
+    { key: 'pro.feat.cloudStorage', highlight: false },
+    { key: 'pro.feat.earlyAccess', highlight: false },
+    { key: 'pro.feat.supportDev', highlight: false },
 ];
 
 const CREDIT_PACKS = [
@@ -71,9 +71,9 @@ export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
         return tz === 'Asia/Ho_Chi_Minh' || tz === 'Asia/Saigon';
     }, [profile?.country]);
 
-    const monthlyPrice = isVN ? '49.000₫' : '$1.99';
-    const yearlyPrice = isVN ? '29.000₫' : '$1.25';
-    const yearlyTotal = isVN ? '349.000₫' : '$14.99';
+    const monthlyPrice = isVN ? '25.000₫' : '$0.99';
+    const yearlyPrice = isVN ? '15.000₫' : '$0.63';
+    const yearlyTotal = isVN ? '179.000₫' : '$7.49';
 
     const handleCheckout = async (planId: string) => {
         // Vietnamese users → PayOS via create-order Edge Function
@@ -207,8 +207,13 @@ export function ProUpgradeModal({ onClose, onSelectPlan }: Props) {
                             disabled={checkoutLoading}
                             style={checkoutLoading ? { opacity: 0.6, cursor: 'wait' } : undefined}
                         >
-                            {checkoutLoading ? (isVN ? 'Đang tạo đơn...' : 'Loading...') : t('pro.startFreeTrial')}
+                            {checkoutLoading ? (isVN ? 'Đang tạo đơn...' : 'Loading...') : t('pro.subscribe')}
                         </button>
+
+                        {/* Free tier reminder */}
+                        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '10px 0 0', textAlign: 'center', lineHeight: 1.5 }}>
+                            {t('pro.freeReminder')}
+                        </p>
                     </div>
 
                     {/* ── Right: Credit Packs ── */}

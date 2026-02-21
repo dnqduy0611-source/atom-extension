@@ -15,8 +15,8 @@ const PAYOS_API_URL = 'https://api-merchant.payos.vn';
 
 // ── Pricing VND ──
 const PRICING: Record<string, { amount: number; label: string; type: 'subscription' | 'credits'; credits?: number }> = {
-    premium_monthly: { amount: 49000, label: 'AmoLofi Pro Monthly', type: 'subscription' },
-    premium_yearly: { amount: 349000, label: 'AmoLofi Pro Yearly', type: 'subscription' },
+    premium_monthly: { amount: 25000, label: 'AmoLofi Pro Monthly', type: 'subscription' },
+    premium_yearly: { amount: 179000, label: 'AmoLofi Pro Yearly', type: 'subscription' },
     credits_50: { amount: 25000, label: '50 Credits', type: 'credits', credits: 50 },
     credits_150: { amount: 49000, label: '150 Credits', type: 'credits', credits: 150 },
     credits_500: { amount: 119000, label: '500 Credits', type: 'credits', credits: 500 },

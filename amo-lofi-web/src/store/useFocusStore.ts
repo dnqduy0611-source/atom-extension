@@ -12,6 +12,11 @@ export interface Task {
     text: string;
     completed: boolean;
     createdAt: number;
+    // AI-generated task metadata (optional)
+    isAIGenerated?: boolean;
+    emoji?: string;
+    estimatedMinutes?: number;
+    definitionOfDone?: string;
 }
 
 export interface FocusStats {
@@ -223,6 +228,10 @@ interface FocusState {
     // ── Notes ──
     focusNotes: string;
 
+    // ── Auto-Flow (task-driven auto-break) ──
+    autoFlowEnabled: boolean;           // toggle task-driven breaks
+    pendingNextStepIndex: number | null; // step to auto-start after break
+
     // ── Pomodoro Actions ──
     startTimer: () => void;
     pauseTimer: () => void;
@@ -236,6 +245,17 @@ interface FocusState {
     toggleTask: (id: string) => void;
     removeTask: (id: string) => void;
     clearCompletedTasks: () => void;
+
+    // ── AI Task Actions ──
+    addAITasks: (steps: import('../types/agent').TaskStep[]) => void;
+
+    // ── Step-Timer Sync ──
+    activeStepIndex: number | null;
+    startStepTimer: (index: number, minutes: number) => void;
+    clearActiveStep: () => void;
+
+    // ── Auto-Flow Actions ──
+    setAutoFlow: (enabled: boolean) => void;
 
     // ── Task Label Actions ──
     setTaskLabel: (text: string) => void;
@@ -276,6 +296,9 @@ export const useFocusStore = create<FocusState>((set, get) => ({
     taskLabel: (() => { try { return localStorage.getItem(TASK_LABEL_KEY) ?? ''; } catch { return ''; } })(),
     focusNotes: loadNotes(),
     timerJustCompleted: null,
+    activeStepIndex: null,
+    autoFlowEnabled: false,
+    pendingNextStepIndex: null,
 
     // ── Pomodoro ──
     startTimer: () => set({ isTimerRunning: true }),
@@ -328,6 +351,7 @@ export const useFocusStore = create<FocusState>((set, get) => ({
         if (state.timeRemaining <= 1) {
             // Timer complete
             const wasWork = state.timerMode === 'work';
+            const wasBreak = !wasWork;
             const nextMode = getNextMode(state.timerMode, state.pomodoroCount);
             const newCount = wasWork ? state.pomodoroCount + 1 : state.pomodoroCount;
 
@@ -360,6 +384,31 @@ export const useFocusStore = create<FocusState>((set, get) => ({
                 }
                 : state.stats;
             if (wasWork) saveStats(newStats);
+
+            // ── Auto-Flow: break ended → auto-start next step ──
+            if (wasBreak && state.autoFlowEnabled && state.pendingNextStepIndex !== null) {
+                const pendingIdx = state.pendingNextStepIndex;
+                // Find the AI task at this step index to get its duration
+                const aiTasks = state.tasks.filter(t => t.isAIGenerated);
+                const nextTask = aiTasks[pendingIdx];
+                const nextMinutes = nextTask?.estimatedMinutes || 25;
+                const nextSeconds = Math.max(1, nextMinutes) * 60;
+
+                set({
+                    timerMode: 'work',
+                    workDuration: nextSeconds,
+                    timeRemaining: nextSeconds,
+                    isTimerRunning: true,
+                    pomodoroCount: newCount,
+                    stats: newStats,
+                    timerJustCompleted: state.timerMode,
+                    activeStepIndex: pendingIdx,
+                    pendingNextStepIndex: null,
+                });
+                // Auto-clear flash after 3s
+                setTimeout(() => set({ timerJustCompleted: null }), 3000);
+                return;
+            }
 
             set({
                 timerMode: nextMode,
@@ -394,21 +443,70 @@ export const useFocusStore = create<FocusState>((set, get) => ({
             ],
         })),
 
-    toggleTask: (id) =>
-        set((state) => {
-            const task = state.tasks.find((t) => t.id === id);
-            const wasCompleted = task?.completed ?? false;
-            const newStats = !wasCompleted
-                ? { ...state.stats, tasksCompleted: state.stats.tasksCompleted + 1 }
-                : { ...state.stats, tasksCompleted: Math.max(0, state.stats.tasksCompleted - 1) };
-            saveStats(newStats);
-            return {
-                tasks: state.tasks.map((t) =>
-                    t.id === id ? { ...t, completed: !t.completed } : t
-                ),
-                stats: newStats,
+    toggleTask: (id) => {
+        const state = get();
+        const task = state.tasks.find((t) => t.id === id);
+        if (!task) return;
+
+        const wasCompleted = task.completed;
+        const isNowCompleting = !wasCompleted; // ticking ON
+        const newStats = isNowCompleting
+            ? { ...state.stats, tasksCompleted: state.stats.tasksCompleted + 1 }
+            : { ...state.stats, tasksCompleted: Math.max(0, state.stats.tasksCompleted - 1) };
+        saveStats(newStats);
+
+        const updatedTasks = state.tasks.map((t) =>
+            t.id === id ? { ...t, completed: !t.completed } : t
+        );
+
+        // ── Auto-Flow: completing a task during work → auto break ──
+        if (
+            isNowCompleting &&
+            state.autoFlowEnabled &&
+            state.timerMode === 'work' &&
+            state.isTimerRunning &&
+            task.isAIGenerated
+        ) {
+            // Find next uncompleted AI step
+            const aiTasks = updatedTasks.filter(t => t.isAIGenerated);
+            const nextIdx = aiTasks.findIndex(t => !t.completed);
+
+            // Calculate actual focused minutes for this session
+            const elapsedSeconds = state.workDuration - state.timeRemaining;
+            const actualMinutes = Math.max(1, Math.round(elapsedSeconds / 60));
+
+            // Update stats with actual time
+            const autoStats = {
+                ...newStats,
+                sessionsCompleted: newStats.sessionsCompleted + 1,
+                totalFocusMinutes: newStats.totalFocusMinutes + actualMinutes,
+                currentStreak: newStats.currentStreak + 1,
+                todayMinutes: (newStats.todayDate === todayStr() ? newStats.todayMinutes : 0) + actualMinutes,
+                todayDate: todayStr(),
+                focusHistory: recordHistory(newStats.focusHistory, actualMinutes),
+                hourlyHistory: recordHourly(newStats.hourlyHistory),
+                ...computeDayStreak(newStats),
             };
-        }),
+            saveStats(autoStats);
+
+            set({
+                tasks: updatedTasks,
+                stats: autoStats,
+                // Skip to break & auto-start it
+                timerMode: 'shortBreak',
+                timeRemaining: state.shortBreakDuration,
+                isTimerRunning: true,   // auto-start break
+                pomodoroCount: state.pomodoroCount + 1,
+                timerJustCompleted: 'work',
+                pendingNextStepIndex: nextIdx >= 0 ? nextIdx : null,
+                activeStepIndex: null,  // clear current step
+            });
+            setTimeout(() => set({ timerJustCompleted: null }), 3000);
+            return;
+        }
+
+        set({ tasks: updatedTasks, stats: newStats });
+    },
 
     removeTask: (id) =>
         set((state) => ({
@@ -419,6 +517,44 @@ export const useFocusStore = create<FocusState>((set, get) => ({
         set((state) => ({
             tasks: state.tasks.filter((t) => !t.completed),
         })),
+
+    // ── AI Tasks ──
+    addAITasks: (steps) =>
+        set((state) => ({
+            tasks: [
+                ...state.tasks,
+                ...steps.map((step) => ({
+                    id: `ai_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                    text: `${step.emoji} ${step.text}`,
+                    completed: false,
+                    createdAt: Date.now(),
+                    isAIGenerated: true,
+                    emoji: step.emoji,
+                    estimatedMinutes: step.estimatedMinutes,
+                    definitionOfDone: step.definitionOfDone,
+                })),
+            ],
+            activeStepIndex: null, // Reset active step when new AI tasks arrive
+            autoFlowEnabled: true, // Enable auto-flow when AI generates tasks
+            pendingNextStepIndex: null,
+        })),
+
+    // ── Step-Timer Sync ──
+    startStepTimer: (index, minutes) => {
+        const seconds = Math.max(1, minutes) * 60;
+        set({
+            activeStepIndex: index,
+            workDuration: seconds,
+            timeRemaining: seconds,
+            timerMode: 'work',
+            isTimerRunning: true,
+        });
+    },
+
+    clearActiveStep: () => set({ activeStepIndex: null }),
+
+    // ── Auto-Flow ──
+    setAutoFlow: (enabled) => set({ autoFlowEnabled: enabled, pendingNextStepIndex: null }),
 
     // ── Task Label ──
     setTaskLabel: (text) => {

@@ -66,7 +66,7 @@ export function Sidebar() {
                 >
                     {/* Logo */}
                     <div className="w-11 h-11 flex items-center justify-center mb-0.5" title="Amo Lofi">
-                        <icons.ui.music size={LOGO_ICON} style={{ color: 'var(--theme-primary)' }} />
+                        <img src="/amo-icon.png" alt="AmoLofi" width={LOGO_ICON} height={LOGO_ICON} className="rounded-full" style={{ filter: 'drop-shadow(0 0 4px var(--theme-primary-glow))' }} />
                     </div>
 
                     <div className="w-8 h-px mb-0.5" style={{ background: 'var(--theme-panel-border)' }} />

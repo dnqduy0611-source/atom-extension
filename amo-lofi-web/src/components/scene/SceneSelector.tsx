@@ -58,7 +58,7 @@ export function SceneSelector({ onClose }: Props) {
     const { customScenes, addCustomScene, removeCustomScene } = useCustomScenes();
     const { backgrounds: cloudBgs, upload: uploadCloudBg, remove: removeCloudBg, isFull: bgFull, refresh: refreshBgs } = useBackgrounds();
     console.log('[SceneSelector] cloudBgs count:', cloudBgs.length);
-    const { trialUsed, refresh: refreshCredits } = useCredits();
+    const { dailyFreeRemaining, refresh: refreshCredits } = useCredits();
     const { user, signIn } = useAuth();
     const [showCreator, setShowCreator] = useState(false);
     const [showAIBgGen, setShowAIBgGen] = useState(false);
@@ -443,34 +443,27 @@ export function SceneSelector({ onClose }: Props) {
                                     <button
                                         className="shrink-0 w-16 h-10 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer group/add"
                                         style={{
-                                            border: !isPro
-                                                ? '2px solid rgba(245,158,11,0.25)'
-                                                : '2px dashed rgba(255,255,255,0.2)',
-                                            background: !isPro
-                                                ? 'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(236,72,153,0.08))'
-                                                : 'rgba(255,255,255,0.03)',
+                                            border: '2px dashed rgba(255,255,255,0.2)',
+                                            background: 'rgba(255,255,255,0.03)',
                                         }}
                                         onClick={() => {
-                                            if (!isPro) {
-                                                showUpsell('custom_wallpaper');
-                                                return;
-                                            }
+                                            if (!user) { signIn(); return; }
                                             setShowAddMenu((v) => !v);
                                         }}
-                                        title={!isPro ? t('scene.proFeature') : t('scene.addWallpaper')}
+                                        title={t('scene.addWallpaper')}
                                     >
                                         {isUploading ? (
                                             <span className="w-3 h-3 border border-white/40 border-t-white rounded-full animate-spin" />
                                         ) : (
-                                            <span className="text-xs transition-transform group-hover/add:scale-110" style={{ color: !isPro ? '#f59e0b' : 'var(--theme-text-muted)' }}>
-                                                {!isPro ? '👑' : '+'}
+                                            <span className="text-xs transition-transform group-hover/add:scale-110" style={{ color: 'var(--theme-text-muted)' }}>
+                                                +
                                             </span>
                                         )}
                                     </button>
                                 </div>
 
                                 {/* Add menu — cinematic style */}
-                                {showAddMenu && isPro && (
+                                {showAddMenu && (
                                     <div style={{
                                         display: 'flex',
                                         gap: '6px',
@@ -568,8 +561,8 @@ export function SceneSelector({ onClose }: Props) {
                             </span>
                         </div>
                     </button>
-                ) : !trialUsed ? (
-                    /* Logged in + trial available — highlight free trial */
+                ) : dailyFreeRemaining > 0 ? (
+                    /* Logged in + daily free available — highlight free */
                     <button
                         className="group/create w-full rounded-xl overflow-hidden transition-all duration-300 cursor-pointer hover:scale-[1.01] animate-pulse-subtle"
                         style={{ padding: '2px', background: 'linear-gradient(135deg, #10b981, #06b6d4, #8b5cf6)' }}
@@ -581,27 +574,27 @@ export function SceneSelector({ onClose }: Props) {
                         >
                             <span className="text-base transition-transform duration-300 group-hover/create:scale-110">✨</span>
                             <span className="text-sm font-semibold bg-gradient-to-r from-emerald-400 via-cyan-400 to-violet-400 bg-clip-text text-transparent">
-                                Tạo Cảnh AI — Miễn phí lần đầu
+                                Tạo Cảnh AI — Còn {dailyFreeRemaining} free hôm nay
                             </span>
                             <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(16,185,129,0.2)', color: '#34d399', border: '1px solid rgba(16,185,129,0.3)' }}>🎁 FREE</span>
                         </div>
                     </button>
                 ) : (
-                    /* Logged in + trial used + not Pro — PRO upsell */
+                    /* Logged in + no daily free remaining — show buy credits */
                     <button
                         className="group/create w-full rounded-xl overflow-hidden transition-all duration-300 cursor-pointer hover:scale-[1.01]"
                         style={{ padding: '2px', background: 'linear-gradient(135deg, #f59e0b, #ec4899, #8b5cf6)' }}
-                        onClick={() => showUpsell('create_scene')}
+                        onClick={() => setShowCreator(true)}
                     >
                         <div
                             className="flex items-center justify-center gap-2.5 py-4 rounded-[10px] transition-all duration-300 group-hover/create:bg-black/60"
                             style={{ background: 'rgba(0,0,0,0.75)' }}
                         >
-                            <span className="text-base transition-transform duration-300 group-hover/create:scale-110">👑</span>
+                            <span className="text-base transition-transform duration-300 group-hover/create:scale-110">✨</span>
                             <span className="text-sm font-semibold bg-gradient-to-r from-amber-400 via-pink-400 to-violet-400 bg-clip-text text-transparent">
                                 {t('scene.createScene')}
                             </span>
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium">PRO</span>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium">Credits</span>
                         </div>
                     </button>
                 )}

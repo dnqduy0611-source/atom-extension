@@ -1,15 +1,14 @@
 import { formatDuration } from '../../utils/formatTime';
 import { exportFocusCSV } from '../../utils/exportCSV';
-import { Lock, Download } from 'lucide-react';
+import { Download } from 'lucide-react';
 
 /**
- * SessionHistoryList — Shows recent focus sessions with Pro-gating.
- * Free: 10 most recent entries + blurred overflow rows with CTA.
- * Pro: Full history (up to 90 days from focusHistory).
+ * SessionHistoryList — Shows recent focus sessions.
+ * All users can see full history and export CSV.
  */
 
 const MUTED = '#928FB0';
-const FREE_LIMIT = 10;
+
 
 interface Props {
     focusHistory: Record<string, number>; // YYYY-MM-DD -> minutes
@@ -19,14 +18,13 @@ interface Props {
     tc: string;
 }
 
-export function SessionHistoryList({ focusHistory, hourlyHistory, isPro, showUpsell, tc }: Props) {
+export function SessionHistoryList({ focusHistory, hourlyHistory, isPro: _isPro, showUpsell: _showUpsell, tc }: Props) {
     // Sort entries by date descending
     const entries = Object.entries(focusHistory)
         .filter(([, v]) => v > 0)
         .sort(([a], [b]) => b.localeCompare(a));
 
-    const visibleEntries = isPro ? entries : entries.slice(0, FREE_LIMIT);
-    const hasOverflow = !isPro && entries.length > FREE_LIMIT;
+    const visibleEntries = entries;
 
     if (entries.length === 0) {
         return (
@@ -45,7 +43,7 @@ export function SessionHistoryList({ focusHistory, hourlyHistory, isPro, showUps
                     Session History
                 </span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    {isPro && (
+                    {(
                         <button onClick={(e) => { e.stopPropagation(); exportFocusCSV(focusHistory, hourlyHistory); }}
                             className="cursor-pointer transition-all duration-200 hover:scale-105"
                             title="Export as CSV"
@@ -89,51 +87,6 @@ export function SessionHistoryList({ focusHistory, hourlyHistory, isPro, showUps
                     );
                 })}
             </div>
-
-            {/* Blurred overflow rows + CTA for Free users */}
-            {hasOverflow && (
-                <div style={{ position: 'relative', marginTop: 2 }}>
-                    {/* Fake blurred rows */}
-                    {[1, 2, 3].map(i => (
-                        <div key={i} style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            padding: '10px 14px', borderRadius: 10,
-                            filter: `blur(${3 + i * 2}px)`, opacity: 0.4,
-                            pointerEvents: 'none',
-                        }}>
-                            <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>
-                                Mon, Jan 01
-                            </span>
-                            <span style={{ fontFamily: 'Sora, sans-serif', fontSize: 13, fontWeight: 600, color: tc }}>
-                                25m
-                            </span>
-                        </div>
-                    ))}
-
-                    {/* Gradient fade overlay + CTA */}
-                    <div style={{
-                        position: 'absolute', inset: 0,
-                        background: 'linear-gradient(to bottom, transparent 0%, rgba(10,10,20,0.8) 60%)',
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
-                        paddingBottom: 8, gap: 8,
-                    }}>
-                        <Lock size={14} style={{ color: tc, opacity: 0.6 }} />
-                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(255,255,255,0.5)', textAlign: 'center' }}>
-                            See full history with Pro
-                        </span>
-                        <button onClick={(e) => { e.stopPropagation(); showUpsell(); }}
-                            className="cursor-pointer transition-all duration-200 hover:scale-105"
-                            style={{
-                                padding: '5px 16px', borderRadius: 8, border: 'none',
-                                background: `color-mix(in srgb, ${tc} 15%, transparent)`,
-                                fontFamily: 'Inter, sans-serif', fontSize: 11, fontWeight: 600,
-                                color: tc, letterSpacing: '0.02em',
-                            }}>
-                            Unlock ✨
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

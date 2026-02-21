@@ -198,12 +198,12 @@ function OverviewView({ stats, tc, spark, completedTasks, totalTasks, perfScore,
    ══════════════════════ */
 type TimeRange = 'week' | 'month' | 'year';
 
-function WeeklyView({ data, tc, title, isPro, showUpsell, focusHistory }: {
+function WeeklyView({ data, tc, title, isPro: _isPro, showUpsell: _showUpsell, focusHistory }: {
     data: { key: string; value: number }[]; maxVal: number; tc: string; title: string;
     isPro: boolean; showUpsell: () => void; focusHistory: Record<string, number>;
 }) {
     const [range, setRange] = useState<TimeRange>('week');
-    const [showLockOverlay, setShowLockOverlay] = useState(false);
+    // Lock overlay removed — Month/Year now free for all users
 
     // Compute month data from focusHistory (last 30 days)
     const monthData = useMemo(() => {
@@ -239,15 +239,7 @@ function WeeklyView({ data, tc, title, isPro, showUpsell, focusHistory }: {
     const activeMax = Math.max(...activeData.map(d => d.value), 1);
 
     const handleTabClick = (tab: TimeRange) => {
-        if (tab === 'week') {
-            setRange('week');
-            setShowLockOverlay(false);
-        } else if (isPro) {
-            setRange(tab);
-            setShowLockOverlay(false);
-        } else {
-            setShowLockOverlay(true);
-        }
+        setRange(tab);
     };
 
     // Chart rendering
@@ -274,8 +266,8 @@ function WeeklyView({ data, tc, title, isPro, showUpsell, focusHistory }: {
                     {/* Time Range Tabs */}
                     <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.03)', borderRadius: 10, padding: 3 }}>
                         {(['week', 'month', 'year'] as TimeRange[]).map(tab => {
-                            const active = range === tab && !showLockOverlay;
-                            const locked = !isPro && tab !== 'week';
+                            const active = range === tab;
+                            const locked = false; // Month/Year now free for all
                             return (
                                 <button key={tab} onClick={() => handleTabClick(tab)}
                                     className="cursor-pointer transition-all duration-200"
@@ -327,37 +319,7 @@ function WeeklyView({ data, tc, title, isPro, showUpsell, focusHistory }: {
                     Total: {formatDuration(totalMin)}
                 </div>
 
-                {/* Lock Overlay — shown for Free users clicking Month/Year */}
-                {showLockOverlay && (
-                    <div style={{
-                        position: 'absolute', inset: 0,
-                        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-                        background: 'rgba(10,10,20,0.5)',
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                        gap: 16, zIndex: 10, borderRadius: 'inherit',
-                    }}>
-                        <Lock size={28} style={{ color: tc, opacity: 0.7, filter: `drop-shadow(0 0 8px ${tc})` }} />
-                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: 'rgba(255,255,255,0.7)', textAlign: 'center', maxWidth: 260 }}>
-                            See your long-term growth trends with Pro.
-                        </span>
-                        <button onClick={(e) => { e.stopPropagation(); showUpsell(); }}
-                            className="cursor-pointer transition-all duration-200 hover:scale-105"
-                            style={{
-                                padding: '8px 24px', borderRadius: 12, border: 'none',
-                                background: `linear-gradient(135deg, ${tc}, color-mix(in srgb, ${tc} 70%, #fff))`,
-                                fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600,
-                                color: '#fff', letterSpacing: '0.02em',
-                                boxShadow: `0 0 20px color-mix(in srgb, ${tc} 30%, transparent)`,
-                            }}>
-                            Upgrade to Pro ✨
-                        </button>
-                        <button onClick={() => setShowLockOverlay(false)}
-                            className="cursor-pointer"
-                            style={{ background: 'none', border: 'none', fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>
-                            Back to Week
-                        </button>
-                    </div>
-                )}
+                {/* Lock Overlay removed — Month/Year now free for all */}
             </div>
         </div>
     );

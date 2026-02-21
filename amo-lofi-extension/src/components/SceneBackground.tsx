@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { CDN_BASE, getSceneById, type Scene } from '../data/scenes';
+import { CDN_BASE, getSceneById, getWallpaper, type Scene } from '../data/scenes';
 
 const prefersReducedMotion =
     typeof window !== 'undefined'
@@ -8,6 +8,8 @@ const prefersReducedMotion =
 
 interface Props {
     sceneId: string;
+    wallpaperId?: string;
+    cloudBgUrl?: string;
     children?: React.ReactNode;
 }
 
@@ -15,9 +17,12 @@ interface Props {
  * SceneBackground — Loads cinematic background from CDN.
  * Features: parallax, tint overlay, vignette, film grain, crossfade.
  */
-export function SceneBackground({ sceneId, children }: Props) {
+export function SceneBackground({ sceneId, wallpaperId, cloudBgUrl, children }: Props) {
     const scene = useMemo(() => getSceneById(sceneId), [sceneId]);
-    const bgUrl = `${CDN_BASE}${scene.background}`;
+    const wallpaper = useMemo(() => getWallpaper(scene, wallpaperId), [scene, wallpaperId]);
+    // Cloud URL takes priority over CDN wallpaper
+    const bgUrl = cloudBgUrl || (wallpaper ? `${CDN_BASE}${wallpaper.src}` : `${CDN_BASE}${scene.background}`);
+    const tint = wallpaper ? wallpaper.tint : scene.tint;
 
     const [imageLoaded, setImageLoaded] = useState(false);
     const [imageFailed, setImageFailed] = useState(false);
@@ -130,7 +135,7 @@ export function SceneBackground({ sceneId, children }: Props) {
             {/* Tint overlay */}
             <div style={{
                 position: 'absolute', inset: 0, zIndex: 2,
-                backgroundColor: scene.tint,
+                backgroundColor: tint,
                 transition: 'background-color 1s ease',
             }} />
 

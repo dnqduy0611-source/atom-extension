@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import type { SceneTheme } from '../data/scenes';
 import { supabase, SUPABASE_URL } from '../lib/supabaseClient';
+import { buildSceneHints } from '../utils/userModel';
 
 /**
  * useGeminiTheme — Calls the create-scene Edge Function (server-side proxy).
@@ -66,7 +67,10 @@ export function useGeminiTheme() {
                         Authorization: `Bearer ${session.access_token}`,
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ name, description }),
+                    body: JSON.stringify({
+                        name,
+                        description: description + buildSceneHints(),
+                    }),
                 });
 
                 const data = await res.json();

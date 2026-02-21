@@ -8,7 +8,7 @@
 
 import './MoodCompanion.css';
 import { useState, useRef, useEffect, type CSSProperties } from 'react';
-import { useMoodCompanion } from '../../hooks/useMoodCompanion';
+import { useAmoAgent } from '../../hooks/useAmoAgent';
 import { useGeminiTheme } from '../../hooks/useGeminiTheme';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useProGate } from '../../hooks/useProGate';
@@ -17,7 +17,12 @@ import { useCredits } from '../../hooks/useCredits';
 import { useFocusStore } from '../../store/useFocusStore';
 import { useCustomScenes } from '../../hooks/useCustomScenes';
 import { useLofiStore } from '../../store/useLofiStore';
+import { getDefaultChips } from '../../utils/intentDetector';
+import { SuggestionChips } from './SuggestionChips';
+import { InlineTaskSteps } from './InlineTaskSteps';
+import { InlineJournal } from './InlineJournal';
 import type { StoredScene } from '../../utils/idb';
+import type { TaskStep } from '../../types/agent';
 
 
 // ── Typing Indicator ──
@@ -46,12 +51,12 @@ export function MoodCompanion() {
         confirmScene,
         dismiss,
         reset,
-    } = useMoodCompanion();
+    } = useAmoAgent();
 
     const { generate, isGenerating } = useGeminiTheme();
     const { user, signIn } = useAuth();
-    const { isPro, showUpsell } = useProGate();
-    const { balance, trialUsed, refresh: refreshCredits } = useCredits();
+    const { isPro: _isPro, showUpsell } = useProGate();
+    const { balance, dailyFreeRemaining, refresh: refreshCredits } = useCredits();
     const { addCustomScene } = useCustomScenes();
     const setScene = useLofiStore((s) => s.setScene);
 
@@ -126,11 +131,10 @@ export function MoodCompanion() {
             return;
         }
 
-        // Free trial: first-time users get one free scene
-        const hasFreeTrialAvailable = !trialUsed;
-        if (!hasFreeTrialAvailable) {
-            // Need credits for subsequent uses
-            if (!isPro) { showUpsell(); return; }
+        // Daily free: users get free scenes each day
+        const hasDailyFree = dailyFreeRemaining > 0;
+        if (!hasDailyFree) {
+            // Need credits for additional uses
             if (balance < 10) { showUpsell(); return; }
         }
 
@@ -267,6 +271,24 @@ export function MoodCompanion() {
                             }}
                         >
                             <div style={styles.bubbleContent}>{msg.content}</div>
+                            {/* Inline Task Steps for task_breakdown messages */}
+                            {msg.inlineUI?.type === 'task_steps' && (
+                                <InlineTaskSteps
+                                    steps={msg.inlineUI.data as TaskStep[]}
+                                />
+                            )}
+                            {msg.inlineUI?.type === 'journal_entry' && (
+                                <InlineJournal
+                                    amoReply={msg.content}
+                                    onJournalSubmit={(mood, content) => {
+                                        // Send journal content as follow-up for Amo to respond warmly
+                                        const journalMsg = content
+                                            ? `[Nhật ký ${mood}] ${content}`
+                                            : `[Nhật ký] Hôm nay mình cảm thấy ${mood}`;
+                                        sendMessage(journalMsg);
+                                    }}
+                                />
+                            )}
                         </div>
                     ))}
 
@@ -328,9 +350,9 @@ export function MoodCompanion() {
                             <span style={styles.creditNote}>
                                 {!user
                                     ? 'Đăng nhập để tạo'
-                                    : !trialUsed
-                                        ? 'Bạn có 1 lần miễn phí'
-                                        : 'Pro · 10 credits'}
+                                    : dailyFreeRemaining > 0
+                                        ? `Còn ${dailyFreeRemaining} lượt free hôm nay`
+                                        : `10 credits`}
                             </span>
                         </div>
                     )}
@@ -365,6 +387,23 @@ export function MoodCompanion() {
                             ➤
                         </button>
                     </div>
+                )}
+
+                {/* Suggestion Chips */}
+                {phase !== 'creating' && phase !== 'done' && (
+                    <SuggestionChips
+                        chips={
+                            // Use last message suggestions if available, otherwise defaults
+                            messages.length > 0 && messages[messages.length - 1].suggestions
+                                ? messages[messages.length - 1].suggestions!
+                                : getDefaultChips(phase)
+                        }
+                        onChipClick={(text) => {
+                            setInput(text);
+                            setTimeout(() => inputRef.current?.focus(), 50);
+                        }}
+                        disabled={phase === 'thinking'}
+                    />
                 )}
             </div>
         </div>

@@ -44,7 +44,7 @@ export function Toolbar() {
                 <div className="flex items-center gap-3">
                     {/* Logo */}
                     <div className="flex items-center gap-2 glass-panel-sm px-3 py-2">
-                        <span className="text-lg">🎵</span>
+                        <img src="/amo-icon.png" alt="AmoLofi" width={20} height={20} className="rounded-full" style={{ filter: 'drop-shadow(0 0 4px rgba(74,222,128,0.4))' }} />
                         <span className="text-sm font-semibold bg-gradient-to-r from-[var(--amo-primary)] to-[var(--amo-accent)] bg-clip-text text-transparent">
                             Amo Lofi
                         </span>

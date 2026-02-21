@@ -14,6 +14,15 @@ import {
 
 const ALARM_NAME = 'amo-timer-tick';
 
+/** Increment rating session count (for CWS rating prompt) */
+async function incrementRatingCount() {
+    const result = await chrome.storage.local.get('ratingState');
+    const state = (result.ratingState as { sessionsCompleted: number; dismissed: boolean; nextPromptAt: number })
+        ?? { sessionsCompleted: 0, dismissed: false, nextPromptAt: 5 };
+    state.sessionsCompleted++;
+    await chrome.storage.local.set({ ratingState: state });
+}
+
 // ── Notification helper ──
 function showNotification(title: string, message: string) {
     chrome.notifications.create({
@@ -127,6 +136,8 @@ export async function handleTimerTick() {
             state.remaining = TIMER_PRESETS.default.break * 60;
             state.duration = TIMER_PRESETS.default.break * 60;
             showNotification('Focus complete! 🎉', `Great work on "${state.task || 'your task'}"! Time for a break.`);
+            // Track completed sessions for CWS rating prompt
+            incrementRatingCount();
         } else {
             state.mode = 'idle';
             state.remaining = TIMER_PRESETS.default.focus * 60;
