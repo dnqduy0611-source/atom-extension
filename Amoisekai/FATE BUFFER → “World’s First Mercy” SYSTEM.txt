@@ -1,0 +1,170 @@
+Rất tốt.
+
+Chọn **B – Sau này người chơi có thể phát hiện thế giới đã từng bảo vệ mình** là một quyết định rất “isekai đúng nghĩa” và cực kỳ cinematic.
+
+Nó biến Fate Buffer từ một cơ chế kỹ thuật thành:
+
+> Một bí ẩn của thế giới.
+> Một phần của lore.
+> Thậm chí có thể là mồi cho arc lớn.
+
+Giờ tôi sẽ đóng khung lại thành thiết kế hoàn chỉnh.
+
+---
+
+# 🌌 FATE BUFFER → “World’s First Mercy” SYSTEM
+
+---
+
+# I. Triết lý
+
+Early game:
+
+> Thế giới chưa hoàn toàn để ý đến bạn.
+
+Late game:
+
+> Bạn nhận ra… có điều gì đó từng can thiệp.
+
+Buffer không phải “game cứu bạn”.
+
+Nó là:
+
+* Thực thể
+* Quy luật cổ
+* Cơ chế tái sinh
+* Hoặc hệ thống linh hồn của universe
+
+---
+
+# II. Cách vận hành kỹ thuật (ẩn)
+
+```json
+{
+  "fate_protection": 0-100,
+  "world_attention": 0-100,
+  "death_threshold_modifier": 0-100
+}
+```
+
+* Khi fate_protection cao → death_threshold giảm
+* Khi notoriety tăng → fate_protection giảm
+* Khi world_attention tăng → buffer biến mất
+
+---
+
+# III. Người chơi phát hiện bằng cách nào?
+
+Không phải qua tooltip.
+
+Mà qua:
+
+* Một NPC cổ xưa
+* Một thực thể
+* Một artifact
+* Hoặc khi suýt chết ở mid-game nhưng không được cứu
+
+Ví dụ:
+
+> “Ngươi không còn được định mệnh bảo hộ nữa.”
+
+Cú đó sẽ cực kỳ mạnh.
+
+---
+
+# IV. Vì sao nó rất hợp universe kiểu Rimuru?
+
+Trong kiểu world build như vậy luôn có:
+
+* Voice of the World
+* Hệ thống linh hồn
+* Great Sage kiểu AI trong thế giới
+* Ma Vương thức tỉnh
+* Cấp bậc tiến hóa
+
+Fate Buffer có thể là:
+
+> “Hệ thống bảo hộ linh hồn mới tái sinh.”
+
+Nhưng khi người chơi đủ mạnh:
+
+→ Họ thoát khỏi lớp bảo hộ đó.
+→ Và thế giới bắt đầu đối xử công bằng (và tàn nhẫn).
+
+---
+
+# V. Điều này tạo ra gì?
+
+1️⃣ Early game: an toàn vừa đủ
+2️⃣ Mid game: shock khi nhận ra không còn được bảo hộ
+3️⃣ Late game: chết là thật
+
+Nó tạo một đường cong tension rất tự nhiên.
+
+---
+
+# VI. Rủi ro nếu không kiểm soát
+
+Nếu người chơi biết quá sớm:
+
+→ Họ sẽ test death mechanic.
+
+Nếu reveal quá muộn:
+
+→ Họ không hiểu vì sao suddenly chết.
+
+Phải reveal ở điểm:
+
+* Sau 20–30 chương
+* Sau một near-death nghiêm trọng
+* Hoặc khi notoriety vượt ngưỡng
+
+---
+
+# VII. Kết nối với Identity System
+
+Fate Buffer không chỉ bảo vệ thân xác.
+
+Nó có thể:
+
+* Làm instability tăng chậm hơn early game
+* Giảm mutation threshold early game
+* Cho người chơi cơ hội sửa sai
+
+Tức là:
+
+> Universe cho bạn thời gian trở thành ai đó trước khi phán xét.
+
+---
+
+# VIII. Đây là hệ thống hiện tại của anh
+
+Anh đang có:
+
+✔ Single universe
+✔ Isekai world build
+✔ Unique identity-based skill
+✔ Skill bí mật
+✔ Mutation có agency
+✔ Echo of origin
+✔ Suppression & anti-unique
+✔ Fair RNG + catch-up
+✔ Fate buffer ẩn nhưng có lore
+
+Đây là nền tảng rất mạnh.
+
+---
+
+# IX. Giờ câu hỏi cực thực tế
+
+Universe kiểu Rimuru có đặc trưng lớn:
+
+Nation-building, faction, chính trị.
+
+Anh có muốn:
+
+A) Người chơi có thể xây dựng quốc gia / lãnh thổ như Rimuru
+B) Chỉ tập trung cá nhân + faction
+C) Nation-building là late-game feature
+
+Câu này quyết định scale kỹ thuật rất lớn.

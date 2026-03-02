@@ -1,0 +1,327 @@
+Rất tốt. Quyết định này **rất thông minh về mặt triết lý và cân bằng**.
+
+* ❌ Không thể bị đánh cắp → bảo toàn “identity = linh hồn nhân vật”
+* ✅ Có thể bị vô hiệu hóa một phần
+* ✅ Có thể tồn tại Anti-Unique Field
+
+Giờ tôi sẽ thiết kế lại hệ thống sao cho:
+
+* Không phá fairness
+* Không biến thành meta “anti unique spam”
+* Không giết tension narrative
+* Vẫn giữ được chiều sâu chiến thuật
+
+---
+
+# 🌌 UNIQUE SKILL CONTROL SYSTEM v1
+
+## I. Triết lý nền
+
+Unique Skill = bản ngã.
+
+Bạn không thể mất bản ngã.
+Nhưng bản ngã có thể:
+
+* Bị áp chế
+* Bị bóp méo
+* Bị phản chiếu
+* Bị nhiễu loạn
+
+Khác hoàn toàn với “mất skill”.
+
+---
+
+# II. 3 MỨC ĐỘ VÔ HIỆU HÓA
+
+---
+
+## 1️⃣ Suppression (Áp chế một phần)
+
+⚠️ QUY TẮC DOMAIN:
+* CHỈ Unique-tier effect hoặc artifact-level mới Suppress được Unique Skill
+* Normal Skill KHÔNG THỂ suppress Unique Skill (bảo toàn Domain Authority — xem V2 SPEC §3)
+* Nếu opponent dùng Normal Skill cùng category → Domain immunity tự động chặn
+
+Tác dụng:
+
+* Giảm hiệu quả
+* Tăng cooldown
+* Làm skill thiếu ổn định
+* Giới hạn phạm vi
+
+Ví dụ:
+
+Skill của bạn là “Predictive Echo”.
+
+Đối phương có “Chaos Interference”.
+
+Khi va chạm:
+
+* Tầm nhìn tương lai trở nên nhiễu
+* Hình ảnh mờ
+* Sai lệch 30%
+
+Không vô hiệu hoàn toàn.
+Chỉ giảm độ chính xác.
+
+---
+
+## 2️⃣ Seal (Phong ấn tạm thời)
+
+Điều kiện (cần ít nhất 1):
+
+* Ritual: tốn 30+ stability, cần 1 phase chuẩn bị, không thể dùng trong combat
+* Khu vực đặc biệt: Tower zone hoặc narrative location có pre-defined seal property
+* Contract: thỏa thuận 2 bên (đồng ý cả 2), phá hủy = hậu quả narrative
+* Faction technology: Faction-locked, cần Rank 3+ hoặc quest line hoàn thành
+
+Duration: tối đa 3-5 combat phases hoặc 1 narrative scene
+
+Kết quả:
+
+* Core skill bị khóa (suppression_type = "seal", multiplier 1.5x)
+* Sub-skills khác trait vẫn hoạt động yếu (effectiveness 30%)
+* Domain passive TẮT hoàn toàn
+
+Quan trọng:
+Seal phải có điều kiện rõ.
+Không được spam.
+Chi phí cao → quyết định chiến thuật, không phải spam.
+
+---
+
+## 3️⃣ Anti-Unique Field (Khu vực vô hiệu hóa hoàn toàn)
+
+Rất hiếm.
+
+Có thể là:
+
+* Di tích cổ
+* Artifact toàn server
+* Event toàn thành phố
+* Faction superweapon
+
+Trong vùng này:
+
+* Unique Skill không kích hoạt
+* Nhưng identity vẫn ảnh hưởng narrative
+
+Ví dụ:
+
+Người có skill dựa trên chiến lược
+→ vẫn ra quyết định tốt dù không có năng lực.
+
+Không biến họ thành người thường.
+Chỉ bỏ “siêu nhiên”.
+
+---
+
+# III. CÂN BẰNG HỆ PERCEPTION + SUPPRESSION
+
+Anh đã chọn:
+
+* Skill bí mật
+* Có perception type
+* Có suppression
+
+Vậy cần hệ tam giác cân bằng:
+
+Perception ↔ Obfuscation ↔ Suppression
+
+Không được cho 1 loại dominate meta.
+
+## III.b Tương tác với Weakness System (V2 SPEC §4)
+
+Suppression có thể exploit weakness type của Unique Skill:
+
+* Nếu Suppression nhắm đúng `axis_blind_spot` của target → suppression_power +15
+* Nếu Suppression trigger đúng `weakness_type` của target → suppression_power +10
+* Tổng bonus tối đa: +25 (cộng với category match +10 = tối đa +35)
+
+Ví dụ:
+
+Skill "Vết Nứt Sự Thật" (Perception, weakness: sensory_tax, blind spot: không damage)
+→ Suppression dạng Manifestation nhắm vào blind spot (+15)
+→ Kết hợp hiệu ứng gây sensory overload (+10)
+→ Tổng bonus = +25 → dễ đạt SEALED
+
+Điều này tạo chiều sâu chiến thuật: scout weakness rồi dùng Suppression phù hợp.
+
+---
+
+# IV. CÁCH NGĂN META “ANTI UNIQUE SPAM”
+
+Nếu Anti-Unique quá dễ:
+
+→ người chơi chỉ spam vùng vô hiệu hóa
+→ biến game thành đánh tay thường
+
+Giải pháp:
+
+1️⃣ Anti-Unique cực hiếm
+2️⃣ Có chi phí cực cao
+3️⃣ Chỉ tồn tại ngắn
+4️⃣ Có hậu quả thế giới
+
+Ví dụ:
+
+Kích hoạt Anti-Unique Field:
+
+* Toàn khu vực mất năng lượng
+* NPC hoảng loạn
+* Faction truy lùng người kích hoạt
+* Notoriety tăng mạnh
+
+Tức là:
+
+> Anti-Unique là quyết định chính trị lớn.
+
+Không phải tool PvP.
+
+---
+
+# V. TÁC ĐỘNG TỚI MMO NARRATIVE
+
+Hệ này tạo:
+
+* Người chuyên săn Unique user
+* Faction nghiên cứu Anti-Unique tech
+* Người build Obfuscation
+* Người build Control skill
+
+Drama cực mạnh.
+
+---
+
+# VI. VẤN ĐỀ CẦN CẨN THẬN
+
+### 1️⃣ Nếu suppression quá phổ biến
+
+→ Unique mất ý nghĩa.
+
+### 2️⃣ Nếu anti field quá mạnh
+
+→ Người mới không có skill vẫn đánh ngang top.
+
+### 3️⃣ Nếu perception quá chính xác
+
+→ bí mật không còn giá trị.
+
+---
+
+# VII. Thiết kế an toàn cho v1
+
+Tôi đề xuất:
+
+* Mỗi Unique Skill có “Resilience Score”
+* Suppression phải vượt threshold
+* Anti-Unique Field chỉ hoạt động trong:
+
+  * Major event
+  * Hoặc artifact cấp cao
+
+Không cho user tự tạo vô hạn.
+
+---
+
+# VIII. Hình dung anime vibe
+
+Giống kiểu:
+
+* Trong một thánh địa cổ
+* Mọi năng lực biến mất
+* Chỉ còn con người thật
+
+Hoặc:
+
+* Một tổ chức có công nghệ vô hiệu hóa năng lực
+* Nhưng phải trả giá bằng sinh mạng
+
+Cực cinematic.
+
+---
+
+# IX. Kiến trúc kỹ thuật
+
+⚠️ LƯU Ý QUAN TRỌNG:
+* `suppression_resistance` (0-100) = chống bị opponent/field áp chế (spec này)
+* `resilience` (0-100) = sức khỏe nội tại skill (xem UNIQUE_SKILL_FAILURE_SPEC)
+* 2 field TÁCH BIỆT, phục vụ mục đích khác nhau
+
+Mỗi Unique Skill có thêm:
+
+```json
+{
+  "suppression_resistance": 0-100,
+  "resilience": 0-100,
+  "trait_tags": [],
+  "instability": 0-100,
+  "countered_by": []
+}
+```
+
+Chi tiết field:
+
+* `countered_by`: list SkillCategory ("manifestation", "perception"...) mà skill yếu trước.
+  → AI Forge populate khi tạo skill (dựa trên axis_blind_spot).
+  → Tác dụng: opponent có Unique thuộc category trong `countered_by` → category match bonus +10.
+  → VD: Perception skill có `countered_by: ["manifestation"]`.
+
+* `instability`: derived value, sync = `player.instability x 0.5` cuối mỗi chapter.
+  → KHÔNG phải input độc lập — chỉ cache của player state.
+  → Xem FAILURE_SPEC §3.2 Layer 3a.
+
+Stage → suppression_resistance mặc định:
+
+* Seed: 50
+* Bloom: 65
+* Aspect: 80
+* Ultimate: 95
+
+Suppression check formula:
+
+```
+effective_power = suppression_power × type_multiplier
+if same category: effective_power += 10
+gap = effective_power - suppression_resistance
+
+gap < 0      → NONE (resistance thắng)
+0 ≤ gap < 30 → SUPPRESSED (hiệu quả giảm)
+30 ≤ gap < 60 → SEALED (core skill bị khóa)
+gap ≥ 60     → NULLIFIED (toàn bộ unique off)
+```
+
+Type multiplier:
+* skill = 1.0 (unique vs unique)
+* seal = 1.5 (ritual/artifact/zone)
+* field = 2.0 (Anti-Unique Field)
+
+Quy tắc: CHỈ Unique-tier hoặc artifact-level mới Suppress được.
+Normal Skill KHÔNG THỂ suppress Unique Skill (bảo toàn Domain Authority).
+
+Xem implementation: app/engine/suppression_check.py
+
+---
+
+# X. Kết luận
+
+Anh vừa chọn một hướng cực hợp lý:
+
+* Identity không bị tước đoạt
+* Nhưng vẫn có counterplay
+* Không pay-to-win
+* Có chiều sâu chiến thuật
+* Có tension bí mật
+
+Đây là MMO Narrative thực thụ.
+
+---
+
+# XI. Quyết định đã chốt
+
+Câu hỏi: Unique Skill có thể “tự mất kiểm soát” nếu player mâu thuẫn identity?
+
+→ ĐÃ CHỌN: HƯỚNG A — Có.
+
+Unique Skill tự misfire/backfire khi identity drift.
+Xem chi tiết: UNIQUE_SKILL_FAILURE_SPEC v1.0 §3.2 (Resilience Gate + Resonance Dependency weakness).

@@ -22,12 +22,12 @@ const LEMON_STORE = 'https://amonexus.lemonsqueezy.com';
 
 const CHECKOUT_URLS: Record<string, string> = {
     // Subscriptions
-    premium_monthly: `${LEMON_STORE}/checkout/buy/3b970ba9-906a-43cd-859a-6c9191893bb1`,
-    premium_yearly: `${LEMON_STORE}/checkout/buy/17f6b711-0b76-43b0-8a9f-775bc470aebf`,
+    premium_monthly: `${LEMON_STORE}/checkout/buy/8967bece-8671-480a-9f5c-f1547daae12f`,
+    premium_yearly: `${LEMON_STORE}/checkout/buy/75042695-ae7c-4f76-82f7-d61a1236378f`,
     // Credit packs
-    credits_50: `${LEMON_STORE}/checkout/buy/08236f00-836d-43f6-a240-2aefa1ec4139`,
-    credits_150: `${LEMON_STORE}/checkout/buy/c9e109aa-c1db-49b5-8f61-8367b95c8199`,
-    credits_500: `${LEMON_STORE}/checkout/buy/ec90b757-c768-4537-8a16-f82c0c1a76bb`,
+    credits_50: `${LEMON_STORE}/checkout/buy/c8b1a5a6-9524-40a5-a845-58a8fa1f837a0`,
+    credits_150: `${LEMON_STORE}/checkout/buy/1d9fb3dd-3630-43b3-b701-597d986f6e4e`,
+    credits_500: `${LEMON_STORE}/checkout/buy/e9bcb884-4adb-4f34-a776-c6c9dff0b807`,
 };
 
 interface Props {

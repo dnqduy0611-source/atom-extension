@@ -1,0 +1,230 @@
+Rất tốt.
+Anh chọn **C – cân bằng 1v1 và 1vN, nhưng boss là trung tâm**.
+
+Đây là hướng hợp lý nhất cho:
+
+* PvE trước
+* PvP mở dần sau
+* Combat là core loop
+* Tower mini-world có guardian
+
+Giờ tôi sẽ đóng khung **Combat System v1 – Boss-Centric Architecture** cho anh.
+
+---
+
+# ⚔️ COMBAT SYSTEM v1 – BOSS-CENTRIC MODEL
+
+---
+
+# I. TRIẾT LÝ
+
+Combat không phải để farm.
+
+Combat là:
+
+> Bài kiểm tra về cấu trúc build.
+
+Boss không phải HP to hơn.
+Boss là:
+
+* Kiểm tra stability
+* Kiểm tra principle synergy
+* Kiểm tra overdrive decision
+* Kiểm tra identity alignment
+
+---
+
+# II. 3 LỚP COMBAT
+
+---
+
+## 🟢 1️⃣ Duel Layer (1v1)
+
+Dùng cho:
+
+* Elite enemy
+* Mini boss
+* Sau này PvP
+
+Tập trung vào:
+
+* Stability pressure
+* Counter principle
+* Overdrive timing
+
+Đây là nơi meta build xuất hiện rõ nhất.
+
+---
+
+## 🔵 2️⃣ Multi-Target Layer (1vN)
+
+Dùng cho:
+
+* Empire unit
+* Anomaly swarm
+* Ritual defense
+
+Kiểm tra:
+
+* Area vector
+* Resource management
+* Instability sustain
+
+Build AoE + control sẽ quan trọng.
+
+---
+
+## 🔴 3️⃣ Boss Layer (Trung tâm)
+
+Boss có:
+
+* 3 phase
+* Principle shift
+* Floor interaction
+* Stability pressure mechanic
+
+Boss fight không chỉ là damage race.
+Mà là:
+
+> “Có hiểu tầng này không?”
+
+---
+
+# III. BOSS DESIGN FRAMEWORK (DETERMINISTIC)
+
+Mỗi boss có:
+
+```json id="ulr78d"
+{
+  "primary_principle": "",
+  "secondary_principle": "",
+  "phase_shift": "",
+  "stability_pressure": "",
+  "environmental_modifier": ""
+}
+```
+
+Ví dụ Floor 2 Boss:
+
+Primary: Order
+Secondary: Light
+
+Phase 1: Defensive structure
+Phase 2: Contract bind
+Phase 3: Order overload (anti-flux)
+
+Người chơi build Flux–Entropy sẽ có lợi,
+nhưng phải giữ stability.
+
+---
+
+# IV. PHASE SHIFT MECHANIC
+
+Boss có thể:
+
+* Thay đổi nguyên lý dominant
+* Đảo vector
+* Tăng floor modifier
+
+Người chơi phải thích nghi.
+Không có 1 build auto win.
+
+---
+
+# V. STABILITY WARFARE
+
+Boss có thể:
+
+* Tấn công Stability trực tiếp
+* Ép người chơi overdrive
+* Tạo zone méo nguyên lý
+
+Ai kiểm soát stability tốt hơn → thắng.
+
+---
+
+# VI. MULTI-PLAYER BOSS (SAU NÀY)
+
+Vì anh muốn MMO chính trị:
+
+Boss tầng cao có thể:
+
+* Yêu cầu nhiều người
+* Phối hợp nguyên lý
+* Kết hợp Order stabilizer + Entropy shredder + Flux mobility
+
+Meta teamwork sẽ hình thành.
+
+---
+
+# VII. META BUILD SẼ PHÂN HÓA
+
+Sẽ có:
+
+* Stability tank
+* Burst overdrive DPS
+* Control build
+* Resonance amplifier
+* Rare principle gambler
+
+Diễn đàn sẽ thảo luận role.
+
+---
+
+# VIII. PVE → PVP TRANSITION
+
+Khi PvE boss system ổn:
+
+PvP có thể reuse:
+
+* Stability system
+* Overdrive risk
+* Principle interaction
+
+PvP không cần design lại từ đầu.
+
+---
+
+# IX. ĐIỀU RẤT QUAN TRỌNG
+
+Anh phải tránh:
+
+* Boss chỉ là HP sponge
+* Boss chỉ dùng 1 nguyên lý
+* Boss không thay đổi phase
+
+Boss phải là:
+
+> Câu đố chiến thuật.
+
+---
+
+# X. TỔNG KẾT HỆ COMBAT HIỆN TẠI
+
+Game anh giờ có:
+
+✔ Principle matrix
+✔ Stability bar
+✔ Instability risk
+✔ Soft cap
+✔ Overdrive
+✔ Identity resonance
+✔ Floor modifier
+✔ Multi-phase boss
+✔ PvE → PvP pipeline
+
+Thành thật mà nói:
+
+Đây là hệ đủ sâu để làm game live service lâu dài.
+
+---
+
+# 🎯 Câu hỏi tiếp theo – quyết định độ khó và chiều sâu
+
+Anh muốn combat thiên về:
+
+A) Quyết định ít nhưng hệ quả lớn (chiến thuật nặng)
+B) Nhiều lựa chọn mỗi lượt (chiến thuật vi mô)
+C) Kết hợp – ít lựa chọn nhưng có tầng chiến lược sâu
+
+Vì text-based combat nếu quá nhiều lựa chọn sẽ rất nặng UI và AI.

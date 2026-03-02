@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { trackProductEvent } from '../utils/analytics';
 
 // ══════════════════════════════════════════════════════
 //  Focus Tools Store
@@ -301,12 +302,27 @@ export const useFocusStore = create<FocusState>((set, get) => ({
     pendingNextStepIndex: null,
 
     // ── Pomodoro ──
-    startTimer: () => set({ isTimerRunning: true }),
+    startTimer: () => {
+        const state = get();
+        if (state.timerMode === 'work') {
+            trackProductEvent('focus_start', {
+                workDuration: Math.round(state.workDuration / 60),
+                timerMode: state.timerMode,
+            });
+        }
+        set({ isTimerRunning: true });
+    },
 
     pauseTimer: () => set({ isTimerRunning: false }),
 
     resetTimer: () => {
         const state = get();
+        if (state.isTimerRunning && state.timerMode === 'work') {
+            trackProductEvent('focus_abort', {
+                timeRemaining: state.timeRemaining,
+                workDuration: Math.round(state.workDuration / 60),
+            });
+        }
         set({
             timeRemaining: getDuration(state.timerMode, state),
             isTimerRunning: false,
@@ -383,7 +399,13 @@ export const useFocusStore = create<FocusState>((set, get) => ({
                     ...computeDayStreak(state.stats),
                 }
                 : state.stats;
-            if (wasWork) saveStats(newStats);
+            if (wasWork) {
+                saveStats(newStats);
+                trackProductEvent('focus_complete', {
+                    minutes: addedMinutes,
+                    pomodoroCount: newCount,
+                });
+            }
 
             // ── Auto-Flow: break ended → auto-start next step ──
             if (wasBreak && state.autoFlowEnabled && state.pendingNextStepIndex !== null) {
@@ -519,7 +541,8 @@ export const useFocusStore = create<FocusState>((set, get) => ({
         })),
 
     // ── AI Tasks ──
-    addAITasks: (steps) =>
+    addAITasks: (steps) => {
+        trackProductEvent('task_breakdown', { stepCount: steps.length });
         set((state) => ({
             tasks: [
                 ...state.tasks,
@@ -534,10 +557,11 @@ export const useFocusStore = create<FocusState>((set, get) => ({
                     definitionOfDone: step.definitionOfDone,
                 })),
             ],
-            activeStepIndex: null, // Reset active step when new AI tasks arrive
-            autoFlowEnabled: true, // Enable auto-flow when AI generates tasks
+            activeStepIndex: null,
+            autoFlowEnabled: true,
             pendingNextStepIndex: null,
-        })),
+        }));
+    },
 
     // ── Step-Timer Sync ──
     startStepTimer: (index, minutes) => {

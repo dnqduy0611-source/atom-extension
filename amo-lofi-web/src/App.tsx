@@ -34,6 +34,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useSyncBridge } from './hooks/useSyncBridge';
 import { usePersistState } from './hooks/usePersistState';
 import { useRestoreState } from './hooks/useRestoreState';
+import { trackProductEvent } from './utils/analytics';
 
 function App() {
   useAudioEngine();
@@ -57,6 +58,10 @@ function App() {
   const { syncState } = useSyncBridge(user?.id); // Broadcast state to Extension via Supabase
   usePersistState();       // Debounce-save mixer config → lofi_state
   useRestoreState();       // Restore last config on app open
+
+  // ── Product Analytics: track app open ──
+  useEffect(() => { trackProductEvent('app_open'); }, []);
+
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showProfile, setShowProfile] = useState(false);

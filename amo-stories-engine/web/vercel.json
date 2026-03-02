@@ -1,0 +1,9 @@
+{
+    "framework": "vite",
+    "rewrites": [
+        {
+            "source": "/api/:path*",
+            "destination": "https://amo-stories-engine-production.up.railway.app/api/:path*"
+        }
+    ]
+}

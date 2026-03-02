@@ -1,0 +1,212 @@
+Rồi. Anh vừa chọn hướng khó nhất — và cũng mạnh nhất về mặt chiều sâu.
+
+> Identity có thể thay đổi hoàn toàn theo thời gian.
+> Seed ban đầu không phải định mệnh cuối cùng.
+
+Điều này biến universe của anh thành:
+
+> A Psychological Evolution MMO.
+
+Không còn là game build.
+Không còn là stat.
+Mà là hành trình trở thành một con người khác.
+
+Tôi sẽ formal hóa lại thành một hệ thống hoàn chỉnh để anh nhìn rõ rủi ro và tiềm năng.
+
+---
+
+# 🌌 IDENTITY TRANSFORMATION ARCHITECTURE v1
+
+---
+
+# I. Triết lý nền
+
+Seed Skill = điểm khởi đầu.
+Không phải bản chất vĩnh viễn.
+
+Identity là:
+
+* Hệ vector động
+* Drift theo hành vi
+* Có thể lật sang cực đối diện
+
+Tức là:
+
+> Người bắt đầu trung thành có thể trở thành kẻ phản bội vĩ đại nhất.
+
+Và skill sẽ thay đổi theo.
+
+---
+
+# II. Cấu trúc kỹ thuật
+
+Mỗi người chơi có 3 lớp identity:
+
+```json
+{
+  "seed_identity": {},
+  "current_identity": {},
+  "latent_identity": {}
+}
+```
+
+### 1️⃣ Seed Identity
+
+* Tạo từ quiz ban đầu.
+* Chỉ là vector khởi điểm.
+
+### 2️⃣ Current Identity
+
+* Cập nhật liên tục theo hành vi.
+* Dùng để tính skill stability.
+
+### 3️⃣ Latent Identity
+
+* Những xu hướng đang hình thành nhưng chưa bộc lộ.
+* Khi vượt threshold → mutation xảy ra.
+
+---
+
+# III. Drift Mechanism
+
+Không có “chuyển phe” đột ngột.
+
+Mà có:
+
+### Identity Drift Rate
+
+Nếu hành vi liên tục lệch khỏi seed:
+
+* Coherence giảm
+* Instability tăng
+* Latent identity tích lũy
+
+Khi latent vượt ngưỡng:
+
+→ Skill Mutation Event.
+
+---
+
+# IV. Skill Mutation Event (cực quan trọng)
+
+Đây không phải nerf.
+Đây là arc lớn.
+
+AI sẽ tạo:
+
+* Một biến cố nội tâm
+* Một sự kiện thế giới
+* Một khoảnh khắc quyết định
+
+Sau đó:
+
+Skill đổi bản chất.
+
+---
+
+## Ví dụ thực tế
+
+Seed:
+“Oath Resonance” (trung thành)
+
+Sau 30 chương phản bội vì lý tưởng lớn hơn:
+
+Mutation Event:
+
+Skill đổi thành:
+“Covenant Breaker”
+
+Giờ:
+
+* Bạn mạnh hơn khi phá vỡ trật tự.
+* Nhưng không thể tạo alliance lâu dài.
+
+---
+
+# V. Điều này tạo ra gì?
+
+1️⃣ Không có meta cố định
+2️⃣ Không có build bất biến
+3️⃣ Không ai biết mình sẽ trở thành gì
+4️⃣ Người chơi có thể nhìn lại 50 chương đầu và nói:
+
+> Tôi đã thay đổi.
+
+Đây là thứ cực hiếm trong game.
+
+---
+
+# VI. Rủi ro cực lớn
+
+Anh phải cẩn thận 3 điểm:
+
+### 1️⃣ Người chơi không được cảm thấy bị “mất skill”
+
+Mutation phải:
+
+* Có cinematic build-up
+* Có giải thích narrative
+* Có cảm giác tiến hóa chứ không phải mất mát
+
+---
+
+### 2️⃣ Không được làm quá thường xuyên
+
+Nếu mutation dễ:
+→ mất giá trị
+
+Tôi khuyên:
+
+* Tối đa 2–3 mutation lớn trong suốt đời nhân vật.
+
+---
+
+### 3️⃣ Phải cho phép Stabilization Path
+
+Người chơi có thể:
+
+* Quay lại bản chất cũ
+* Hoặc chấp nhận bản chất mới
+
+Không ép.
+
+---
+
+# VII. Kết quả hệ thống này
+
+Anh sẽ có universe nơi:
+
+* Unique Skill không phải vũ khí
+* Mà là tiến trình trưởng thành hoặc tha hóa
+* Và không ai là phiên bản cố định
+
+Đây là kiểu anime sâu như:
+
+* nhân vật dần dần biến thành phản diện
+* hoặc từ phản diện thành cứu tinh
+
+---
+
+# VIII. Vấn đề kỹ thuật cần tính trước
+
+Anh sẽ cần:
+
+* Identity Vector continuous update
+* Drift threshold
+* Mutation trigger system
+* Narrative justification generator
+* Stability curve smoothing (để không gây cảm giác bug)
+
+---
+
+# IX. Đây là câu hỏi lớn cuối cùng cho identity system
+
+Anh có muốn:
+
+A) Mutation luôn là lựa chọn có thể chấp nhận hoặc từ chối?
+B) Mutation có thể xảy ra ngoài ý muốn, không thể tránh?
+
+A → Người chơi kiểm soát số phận.
+B → Universe có tính bi kịch và định mệnh.
+
+Hai hướng này tạo ra hai trải nghiệm hoàn toàn khác.

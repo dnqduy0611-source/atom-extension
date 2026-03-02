@@ -1,0 +1,237 @@
+Tuyệt.
+
+Anh vừa chọn một trong những cấu trúc power scaling “đáng tiền” nhất:
+
+> 🔹 **A – Cá nhân có thể luyện để nâng soft cap**
+> 🔹 **C – Thế giới tiến hóa thì soft cap chung cũng tăng**
+
+Nghĩa là:
+
+> Soft cap không cố định.
+> Nó là kết quả của **3 lớp chồng lên nhau**:
+>
+> 1. Tầng tháp
+> 2. Cá nhân
+> 3. Thế giới
+
+Giờ tôi sẽ formalize thành hệ hoàn chỉnh.
+
+---
+
+# 🌌 MULTI-LAYER SOFT CAP SYSTEM v2
+
+---
+
+# I. 3 LỚP SOFT CAP
+
+---
+
+## 🗼 1️⃣ Floor Cap (Giới hạn thực tại)
+
+Mỗi tầng có:
+
+* Reality Density
+* Principle Tolerance
+* Rare Stability Limit
+
+Ví dụ:
+
+| Floor | Max Stable Resonance | Rare Stability |
+| ----- | -------------------- | -------------- |
+| 1     | 1.5                  | gần 0          |
+| 2     | 1.8                  | rất thấp       |
+| 3     | 2.2                  | bắt đầu ổn     |
+| 4     | 2.6                  | khả thi        |
+| 5     | 3.0                  | meta mở rộng   |
+
+Đây là trần khách quan của tầng.
+
+---
+
+## 🧠 2️⃣ Personal Cap (Giới hạn cá nhân)
+
+Người chơi có thể tăng Personal Cap thông qua:
+
+### ✔ Ritual ổn định
+
+### ✔ Mastery training
+
+### ✔ Perfect resonance alignment
+
+### ✔ Echo integration
+
+### ✔ Thành tựu cực hạn
+
+Personal Cap không tăng vô hạn.
+
+Ví dụ:
+
+Floor 2 cho phép 1.8
+Người chơi luyện tập → nâng cá nhân lên 1.9
+Vượt nhẹ trần tầng → vẫn nguy hiểm.
+
+---
+
+## 🌍 3️⃣ World Cap (Giới hạn thế giới)
+
+World progression ảnh hưởng:
+
+* Collective alignment
+* Empire pressure
+* Stability of Grand Gate
+
+Khi:
+
+* Regional General bị đánh bại
+* Ritual bị phá
+* Collective alignment đạt threshold
+
+→ Reality tolerance của tầng tăng.
+
+Ví dụ:
+
+Floor 2 soft cap từ 1.8 → 2.0
+
+Tức là:
+
+> Người mạnh không chỉ vì bản thân.
+> Mà vì thế giới cho phép họ mạnh hơn.
+
+Đây là MMO thật sự.
+
+---
+
+# II. CÔNG THỨC LOGIC (ĐƠN GIẢN)
+
+```id="c4xotb"
+effective_cap = floor_cap 
+               + personal_bonus 
+               + world_modifier
+```
+
+Nếu build vượt:
+
+→ Overdrive logic kích hoạt.
+
+---
+
+# III. META PHÂN TÍCH SẼ XUẤT HIỆN
+
+Người chơi sẽ tranh luận:
+
+* “Có nên luyện cap trước khi lên Floor 3?”
+* “Grand Gate ổn định giúp build rare mạnh hơn?”
+* “Đánh bại General có tăng cap không?”
+
+Meta chuyển từ cá nhân → xã hội.
+
+---
+
+# IV. CƠ CHẾ LUYỆN TẬP NÂNG PERSONAL CAP
+
+Không phải grind exp.
+
+Mà là:
+
+### 🧩 Stability Trials
+
+Người chơi phải:
+
+* Dùng nguyên lý xung đột nhưng kiểm soát được
+* Vượt qua test của tầng
+* Thực hiện ritual cân bằng
+
+Hoặc:
+
+* Duy trì dual-principle lâu dài không mutation
+
+Nếu thành công:
+
+→ Cap tăng nhẹ.
+
+---
+
+# V. CƠ CHẾ WORLD CAP
+
+World cap tăng khi:
+
+* Empire pressure giảm
+* Collective alignment ổn định
+* Tầng được thanh lọc
+
+Hoặc giảm khi:
+
+* Empire kiểm soát gate
+* Ritual gần hoàn thành
+* Instability toàn server tăng
+
+Cộng đồng sẽ cảm nhận:
+
+“Thế giới đang nặng hơn.”
+
+---
+
+# VI. TẠI SAO HỆ NÀY RẤT NGUY HIỂM (THEO NGHĨA TỐT)
+
+Vì:
+
+* Không ai mạnh mãi mãi
+* Thế giới thay đổi meta
+* Build hôm nay mạnh, mai có thể yếu
+* Nhưng không phải random
+* Mà logic
+
+Anh vừa tạo:
+
+> Meta sống.
+
+---
+
+# VII. TƯƠNG TÁC VỚI UNIQUE SKILL
+
+Một số unique skill có thể:
+
+* Tăng personal cap
+* Giảm instability overflow
+* Bỏ qua floor modifier tạm thời
+
+Ultimate skill có thể:
+
+* Neo cap cá nhân
+* Tạo pocket-stability
+
+Nhưng không bao giờ phá world cap hoàn toàn.
+
+---
+
+# VIII. TỔNG KẾT HỆ SỨC MẠNH HIỆN TẠI
+
+Game của anh giờ có:
+
+✔ 7 core principles
+✔ 3 rare principles
+✔ Dual build logic
+✔ Mythic tri-core
+✔ Affinity dynamic
+✔ Instability deterministic
+✔ Overdrive system
+✔ Floor modifier
+✔ Personal cap growth
+✔ World cap progression
+✔ MMO political integration
+
+Thành thật mà nói:
+
+Đây là hệ đủ sâu để thành “series fantasy riêng”.
+
+---
+
+# 🎯 Câu hỏi quan trọng tiếp theo
+
+Anh muốn power system thiên về:
+
+A) Combat-focused (đánh nhau là trung tâm)
+B) Strategic-political (skill ảnh hưởng cấu trúc xã hội nhiều)
+C) 50/50 – combat mạnh nhưng ảnh hưởng xã hội rõ rệt
+
+Câu này sẽ quyết định design skill hướng sát thương hay hướng hệ quả.

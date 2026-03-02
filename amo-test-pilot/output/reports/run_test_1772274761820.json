@@ -1,0 +1,25 @@
+{
+  "command": "test",
+  "timestamp": "2026-02-28T10:32:41.820Z",
+  "duration_seconds": 0,
+  "summary": {
+    "total": 1,
+    "success": 1,
+    "failed": 0,
+    "skipped": 0,
+    "total_tests": 5
+  },
+  "cost": {
+    "totalCalls": 1,
+    "totalCostUSD": 0.001
+  },
+  "results": [
+    {
+      "inputFile": "test.js",
+      "outputFile": "test.spec.js",
+      "status": "success",
+      "testCount": 5,
+      "timestamp": "2026-02-28T10:32:41.819Z"
+    }
+  ]
+}

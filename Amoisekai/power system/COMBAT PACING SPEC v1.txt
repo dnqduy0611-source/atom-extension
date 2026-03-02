@@ -1,0 +1,209 @@
+Tốt.
+
+Anh chọn:
+
+> ⚔️ Duel nhanh
+> 🐉 Boss dài, nhiều phase
+
+Đây là cấu trúc pacing cực hợp với:
+
+* Text-based combat
+* Identity-driven power system
+* Tower mini-world
+* PvE trước, PvP sau
+
+Giờ tôi sẽ đóng khung lại **Combat Pacing Architecture v1** cho anh.
+
+---
+
+# ⚔️ COMBAT PACING SPEC v1
+
+---
+
+# I. DUEL – NHANH, NGUY HIỂM, SẮC
+
+### 🎯 Mục tiêu:
+
+* 3–6 lượt là kết thúc
+* Sai 1–2 quyết định là thua
+* Stability cực quan trọng
+
+---
+
+## Duel đặc điểm:
+
+* Không nhiều phase
+* Không môi trường phức tạp
+* Tập trung principle counter
+* Overdrive rất rủi ro
+
+Duel giống:
+
+> Kiếm đạo – chớp nhoáng, dứt khoát.
+
+Meta duel = đọc build + timing.
+
+---
+
+# II. BOSS – DÀI, NHIỀU PHASE, CHIẾN LƯỢC
+
+### 🎯 Mục tiêu:
+
+* 8–15 lượt
+* 3 phase
+* Mỗi phase thay đổi principle dominance
+* Stability management cực quan trọng
+
+Boss giống:
+
+> Cuộc chiến thực tại.
+
+---
+
+# III. CẤU TRÚC BOSS 3 PHASE (MẪU CHUẨN)
+
+---
+
+## Phase 1 – Structural
+
+* Test damage
+* Test principle interaction
+* Dễ đọc
+
+---
+
+## Phase 2 – Distortion
+
+* Tăng instability
+* Thay floor modifier
+* Ép overdrive
+
+---
+
+## Phase 3 – Reality Pressure
+
+* Soft cap giảm
+* Rare principle xuất hiện
+* Backlash tăng
+* Stability drain mạnh
+
+Đây là cao trào điện ảnh.
+
+---
+
+# IV. TẠI SAO CẤU TRÚC NÀY HOẠT ĐỘNG TỐT?
+
+Vì:
+
+* Duel → showcase build
+* Boss → showcase mastery
+* PvP sau này → dùng duel model
+
+Người chơi không mệt vì trận nào cũng dài.
+
+---
+
+# V. STABILITY QUYẾT ĐỊNH CẢ HAI
+
+Duel:
+
+* Stability vỡ = thua nhanh
+
+Boss:
+
+* Stability vỡ = phase skip hoặc mutation
+
+Không phải chỉ HP.
+
+---
+
+# VI. META SẼ PHÂN HÓA
+
+Có người build:
+
+* Burst duel
+* Boss sustain
+* Stability tank
+* Overdrive gambler
+
+Diễn đàn sẽ phân tích:
+
+“Build tốt duel chưa chắc tốt boss.”
+
+---
+
+# VII. TƯƠNG TÁC VỚI TẦNG
+
+Tầng thấp:
+
+* Boss ít phase
+* Rare principle chưa xuất hiện
+
+Tầng cao:
+
+* Boss thay đổi nguyên lý giữa phase
+* Stability war khốc liệt
+
+---
+
+# VIII. PvP TRIỂN KHAI SAU NÀY
+
+Duel model đã có sẵn.
+
+PvP chỉ cần:
+
+* Stability logic
+* Intensity timing
+* Hidden resonance mind game
+
+Không phải viết lại combat engine.
+
+---
+
+# IX. CẢNH BÁO
+
+Đừng làm boss quá dài sớm.
+
+Season 1:
+
+* Floor 1 boss: 2 phase
+* Floor 2 boss: 3 phase
+* Floor 3 boss: 3 phase + rare hint
+* Floor 4–5 mới full complexity
+
+Nếu không, người chơi mới sẽ overwhelm.
+
+---
+
+# X. BÂY GIỜ HỆ CỦA ANH ĐÃ RẤT HOÀN CHỈNH
+
+Chúng ta đã có:
+
+✔ Ontological principle matrix
+✔ Affinity + awakening
+✔ Stability bar
+✔ Instability system
+✔ Soft cap (floor + personal + world)
+✔ Overdrive mechanic
+✔ Combat 3-choice
+✔ Duel nhanh
+✔ Boss nhiều phase
+✔ PvE → PvP roadmap
+✔ Tower mini-world
+✔ Gate political layer
+
+Thành thật:
+
+Đây đã là nền móng một game IP cực kỳ độc đáo.
+
+---
+
+# 🎯 Câu hỏi cực quan trọng cuối cùng về combat
+
+Anh muốn:
+
+A) Có yếu tố “đọc ý định” (bluff mind game)
+B) Combat hoàn toàn tính toán xác suất
+C) Có cả bluff và deterministic core
+
+Câu này sẽ quyết định PvP sau này có giống cờ vua hay giống poker.

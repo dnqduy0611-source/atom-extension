@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "amo-stories-engine"
-version = "0.1.0"
+version = "0.2.0"
 description = "AI-powered interactive fiction engine for AmoLofi — narrative engine with LangGraph pipeline"
 requires-python = ">=3.11"
 dependencies = [
@@ -20,6 +20,7 @@ dependencies = [
     "pydantic-settings>=2.0",
     "python-dotenv>=1.0.0",
     "httpx>=0.24",
+    "python-jose[cryptography]>=3.3",
 ]
 
 [project.optional-dependencies]

@@ -1,0 +1,286 @@
+```python
+import pytest
+from app.models.weapon import Weapon, WeaponLore, WeaponOrigin, WeaponGrade
+from unittest.mock import MagicMock
+
+# ──────────────────────────────────────────────
+# Test classify_archon_affinity
+# ──────────────────────────────────────────────
+
+def test_classify_archon_affinity_vyrel():
+    result = classify_archon_affinity(
+        alignment_change=-2.0,
+        action_category="soul_choice"
+    )
+    assert result == "vyrel"
+
+def test_classify_archon_affinity_dominar():
+    result = classify_archon_affinity(
+        notoriety_change=1.5,
+        action_category="social"
+    )
+    assert result == "dominar"
+
+def test_classify_archon_affinity_aethis():
+    result = classify_archon_affinity(
+        coherence_change=1.2,
+        action_category="exploration"
+    )
+    assert result == "aethis"
+
+def test_classify_archon_affinity_morphael():
+    result = classify_archon_affinity(
+        drift_detected="minor",
+        action_category="stealth"
+    )
+    assert result == "morphael"
+
+def test_classify_archon_affinity_seraphine():
+    result = classify_archon_affinity(
+        alignment_change=2.0,
+        action_category="social"
+    )
+    assert result == "seraphine"
+
+def test_classify_archon_affinity_none():
+    result = classify_archon_affinity()
+    assert result is None
+
+# ──────────────────────────────────────────────
+# Test increment_archon_affinity
+# ──────────────────────────────────────────────
+
+def test_increment_archon_affinity_new_key():
+    affinity = {}
+    result = increment_archon_affinity(affinity, "vyrel")
+    assert result == {"vyrel": 1}
+
+def test_increment_archon_affinity_existing_key():
+    affinity = {"vyrel": 1}
+    result = increment_archon_affinity(affinity, "vyrel")
+    assert result == {"vyrel": 2}
+
+def test_increment_archon_affinity_invalid_key():
+    affinity = {"vyrel": 1}
+    result = increment_archon_affinity(affinity, "invalid")
+    assert result == {"vyrel": 1}
+
+# ──────────────────────────────────────────────
+# Test check_fragment_conditions
+# ──────────────────────────────────────────────
+
+def test_check_fragment_conditions_veil_unbound():
+    affinity = {"vyrel": 3}
+    result = check_fragment_conditions(affinity, alignment=-21)
+    assert result == "veil_unbound"
+
+def test_check_fragment_conditions_iron_dominion():
+    affinity = {"dominar": 2}
+    result = check_fragment_conditions(affinity, notoriety=31)
+    assert result == "iron_dominion"
+
+def test_check_fragment_conditions_lex_primordialis():
+    affinity = {"aethis": 3}
+    result = check_fragment_conditions(affinity, coherence=71)
+    assert result == "lex_primordialis"
+
+def test_check_fragment_conditions_morphic_hunger():
+    affinity = {"morphael": 2}
+    result = check_fragment_conditions(affinity, had_drift=True)
+    assert result == "morphic_hunger"
+
+def test_check_fragment_conditions_grace_eternal():
+    affinity = {"seraphine": 3}
+    result = check_fragment_conditions(affinity, alignment=21)
+    assert result == "grace_eternal"
+
+def test_check_fragment_conditions_none():
+    affinity = {"vyrel": 2}
+    result = check_fragment_conditions(affinity)
+    assert result is None
+
+# ──────────────────────────────────────────────
+# Test get_dominant_archon
+# ──────────────────────────────────────────────
+
+def test_get_dominant_archon_single():
+    affinity = {"vyrel": 3}
+    result = get_dominant_archon(affinity)
+    assert result == "vyrel"
+
+def test_get_dominant_archon_multiple():
+    affinity = {"vyrel": 3, "dominar": 2}
+    result = get_dominant_archon(affinity)
+    assert result == "vyrel"
+
+def test_get_dominant_archon_none():
+    result = get_dominant_archon({})
+    assert result is None
+
+# ──────────────────────────────────────────────
+# Test get_fragment_weapon
+# ──────────────────────────────────────────────
+
+def test_get_fragment_weapon_valid():
+    weapon = get_fragment_weapon("veil_unbound")
+    assert weapon is not None
+    assert weapon.name == "Veil Unbound"
+
+def test_get_fragment_weapon_invalid():
+    weapon = get_fragment_weapon("invalid")
+    assert weapon is None
+
+# ──────────────────────────────────────────────
+# Test can_use_divine_ability
+# ──────────────────────────────────────────────
+
+def test_can_use_divine_ability_available():
+    weapon = Weapon(is_archon_fragment=True, dormant=False, divine_ability_used_season=0)
+    result = can_use_divine_ability(weapon, 1)
+    assert result is True
+
+def test_can_use_divine_ability_unavailable():
+    weapon = Weapon(is_archon_fragment=True, dormant=False, divine_ability_used_season=1)
+    result = can_use_divine_ability(weapon, 1)
+    assert result is False
+
+def test_can_use_divine_ability_not_fragment():
+    weapon = Weapon(is_archon_fragment=False)
+    result = can_use_divine_ability(weapon, 1)
+    assert result is False
+
+def test_can_use_divine_ability_dormant():
+    weapon = Weapon(is_archon_fragment=True, dormant=True)
+    result = can_use_divine_ability(weapon, 1)
+    assert result is False
+
+# ──────────────────────────────────────────────
+# Test activate_divine_ability
+# ──────────────────────────────────────────────
+
+def test_activate_divine_ability_success():
+    weapon = Weapon(
+        is_archon_fragment=True,
+        dormant=False,
+        divine_ability_used_season=0,
+        id="veil_unbound"
+    )
+    result = activate_divine_ability(weapon, 1)
+    assert result is not None
+    assert weapon.divine_ability_used_season == 1
+
+def test_activate_divine_ability_unavailable():
+    weapon = Weapon(
+        is_archon_fragment=True,
+        dormant=False,
+        divine_ability_used_season=1,
+        id="veil_unbound"
+    )
+    result = activate_divine_ability(weapon, 1)
+    assert result is None
+
+# ──────────────────────────────────────────────
+# Test get_divine_ability_info
+# ──────────────────────────────────────────────
+
+def test_get_divine_ability_info_fragment():
+    weapon = Weapon(
+        is_archon_fragment=True,
+        dormant=False,
+        divine_ability_used_season=0,
+        id="veil_unbound"
+    )
+    result = get_divine_ability_info(weapon, 1)
+    assert result["divine_ability_available"] is True
+
+def test_get_divine_ability_info_not_fragment():
+    weapon = Weapon(is_archon_fragment=False)
+    result = get_divine_ability_info(weapon, 1)
+    assert result == {}
+
+# ──────────────────────────────────────────────
+# Test increment_lore_reveal
+# ──────────────────────────────────────────────
+
+def test_increment_lore_reveal_success():
+    weapon = Weapon(
+        is_archon_fragment=True,
+        lore=WeaponLore(lore_fragments_revealed=0)
+    )
+    result = increment_lore_reveal(weapon)
+    assert result == 1
+
+def test_increment_lore_reveal_max():
+    weapon = Weapon(
+        is_archon_fragment=True,
+        lore=WeaponLore(lore_fragments_revealed=5)
+    )
+    result = increment_lore_reveal(weapon)
+    assert result == 5
+
+def test_increment_lore_reveal_not_fragment():
+    weapon = Weapon(is_archon_fragment=False)
+    result = increment_lore_reveal(weapon)
+    assert result == 0
+
+# ──────────────────────────────────────────────
+# Test get_lore_reveal_progress
+# ──────────────────────────────────────────────
+
+def test_get_lore_reveal_progress_fragment():
+    weapon = Weapon(
+        is_archon_fragment=True,
+        lore=WeaponLore(lore_fragments_revealed=2)
+    )
+    result = get_lore_reveal_progress(weapon)
+    assert result["lore_fragments_revealed"] == 2
+
+def test_get_lore_reveal_progress_not_fragment():
+    weapon = Weapon(is_archon_fragment=False)
+    result = get_lore_reveal_progress(weapon)
+    assert result == {}
+
+# ──────────────────────────────────────────────
+# Test check_shard_resonance
+# ──────────────────────────────────────────────
+
+def test_check_shard_resonance_true():
+    weapon = Weapon(
+        shard_count=3,
+        shard_principle="entropy",
+        primary_principle="entropy"
+    )
+    result = check_shard_resonance(weapon)
+    assert result is True
+
+def test_check_shard_resonance_false():
+    weapon = Weapon(
+        shard_count=2,
+        shard_principle="entropy",
+        primary_principle="entropy"
+    )
+    result = check_shard_resonance(weapon)
+    assert result is False
+
+# ──────────────────────────────────────────────
+# Test get_shard_resonance_bonus
+# ──────────────────────────────────────────────
+
+def test_get_shard_resonance_bonus_active():
+    weapon = Weapon(
+        shard_count=3,
+        shard_principle="entropy",
+        primary_principle="entropy"
+    )
+    result = get_shard_resonance_bonus(weapon)
+    assert result == 0.02
+
+def test_get_shard_resonance_bonus_inactive():
+    weapon = Weapon(
+        shard_count=2,
+        shard_principle="entropy",
+        primary_principle="entropy"
+    )
+    result = get_shard_resonance_bonus(weapon)
+    assert result == 0.0
+```

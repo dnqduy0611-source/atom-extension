@@ -1,0 +1,281 @@
+# NeuralMemory FAQ
+
+## Installation
+
+### Q: `pip install neural-memory` installs what?
+
+- **Core**: pydantic, networkx, python-dateutil, typer, aiohttp, aiosqlite, rich
+- **CLI tools**: `nmem`, `neural-memory`, `nmem-mcp`
+- **Optional extras**:
+  - `[server]` — FastAPI + Uvicorn
+  - `[neo4j]` — Neo4j graph database
+  - `[nlp-en]` — English NLP (spaCy)
+  - `[nlp-vi]` — Vietnamese NLP (underthesea, pyvi)
+  - `[all]` — All of the above
+  - `[dev]` — Development tools (pytest, ruff, mypy, etc.)
+
+### Q: `pip` not working on Windows?
+
+Use `python -m pip` instead:
+
+```powershell
+python -m pip install neural-memory[all]
+```
+
+### Q: How to install from source?
+
+```bash
+git clone https://github.com/nhadaututtheky/neural-memory.git
+cd neural-memory
+pip install -e ".[all,dev]"
+```
+
+The `-e` flag enables editable mode — code changes take effect immediately without reinstalling.
+
+### Q: Too many commands — is there a simpler UI/UX approach?
+
+Yes. If you use VS Code, the **NeuralMemory extension** provides a full GUI — no terminal commands needed:
+
+- **Encode memory**: Select text → `Ctrl+Shift+M E`
+- **Query memory**: `Ctrl+Shift+M Q` → type your question
+- **Start/stop server**: `Ctrl+Shift+P` → NeuralMemory: Start Server
+- **Switch brain**: `Ctrl+Shift+P` → NeuralMemory: Switch Brain
+- **View graph**: `Ctrl+Shift+P` → NeuralMemory: Open Graph View
+
+The sidebar panel also shows neurons, fibers, and brain stats at a glance.
+
+### Q: How to update to the latest version?
+
+```bash
+pip install --upgrade neural-memory[all]
+```
+
+If installed from source:
+
+```bash
+git pull
+pip install -e ".[all,dev]"
+```
+
+## VS Code Extension
+
+### Q: How to use NeuralMemory without writing Python code?
+
+Install the VS Code extension:
+
+1. Open VS Code
+2. Go to Extensions (`Ctrl+Shift+X`)
+3. Search **NeuralMemory**
+4. Click **Install**
+
+> **Note**: The extension still requires Python + `neural-memory` package installed on the machine as its backend.
+
+### Q: Extension not showing data?
+
+1. Start the server: `Ctrl+Shift+P` → **NeuralMemory: Start Server**
+2. Switch brain if needed: `Ctrl+Shift+P` → **NeuralMemory: Switch Brain** → select your brain
+3. Click refresh
+
+### Q: Server running on a different port than the extension expects?
+
+The extension defaults to port `8000`. If your server runs on a different port, update the setting:
+
+1. Open VS Code Settings (`Ctrl+,`)
+2. Search `neuralmemory.serverUrl`
+3. Set it to your server's URL (e.g. `http://127.0.0.1:8080`)
+
+### Q: Server is running, correct port set, but extension still shows nothing?
+
+A new brain starts empty — there is no data to display yet. You need to encode at least one memory first:
+
+1. Select any text in your editor
+2. Press `Ctrl+Shift+M E` to encode it
+3. Click refresh in the NeuralMemory sidebar
+
+After encoding, neurons and fibers will appear in the sidebar.
+
+### Q: I opened the server URL in the browser but only see JSON info, not my data?
+
+The root URL (`/`) only shows basic API info. To view your data:
+
+- **Graph visualization (UI)**: go to `/ui` (e.g. `http://127.0.0.1:8000/ui`)
+- **API documentation (Swagger)**: go to `/docs` (e.g. `http://127.0.0.1:8000/docs`)
+- **Neurons list (API)**: go to `/memory/neurons` (requires `X-Brain-ID` header)
+
+The VS Code sidebar is the main way to browse your neurons and fibers.
+
+## Per-Project Configuration
+
+### Q: How do I keep memories from different projects separate?
+
+**You don't need to do anything.** NeuralMemory auto-detects which git repo and branch you're in, then tags your memories accordingly. When you recall, it prioritizes memories from your current context.
+
+Just use NeuralMemory normally — the right memories surface for the right project.
+
+### Q: What if I want complete separation between projects?
+
+Think of a **brain** as a separate notebook. By default, everything goes into one notebook called `default`. If you want a completely separate notebook for a different project, just tell the AI:
+
+> "Create a new brain called work-api and switch to it"
+
+To switch back later:
+
+> "Switch to my default brain"
+
+Memories in `work-api` and `default` never mix.
+
+### Q: Can I make Claude Code auto-pick the right brain per project?
+
+Yes. Drop a `.mcp.json` file in each project root:
+
+```jsonc
+// ~/projects/work-api/.mcp.json
+{
+  "mcpServers": {
+    "neuralmemory": {
+      "command": "python",
+      "args": ["-m", "neural_memory.mcp"],
+      "env": { "NEURALMEMORY_BRAIN": "work-api" }
+    }
+  }
+}
+```
+
+Now when you open that project in Claude Code, it automatically uses the `work-api` brain.
+
+### Q: Can I save project rules that the AI always follows?
+
+Yes. Just tell the AI in plain language:
+
+> "Remember: this project uses PostgreSQL, never SQLite"
+>
+> "Remember: all API responses must use the {data, error, meta} format"
+
+These are saved in your current brain and automatically surface when relevant — you don't need to know any commands.
+
+For bigger project context, just say:
+
+> "Save this project context: name is work-api, tech stack is Python, FastAPI, PostgreSQL"
+
+Next session, say "recap" or "what were we working on?" and everything reloads instantly.
+
+## Database Training
+
+### Q: Can NeuralMemory learn from my database?
+
+Yes. The `nmem_train_db` tool teaches your brain to understand database structure:
+
+```
+nmem_train_db(action="train", connection_string="sqlite:///myapp.db", domain_tag="myapp")
+```
+
+This extracts schema knowledge (tables, relationships, patterns) — NOT raw data rows.
+
+### Q: Which databases are supported?
+
+SQLite only in v1. The architecture supports adding PostgreSQL and MySQL dialects in the future.
+
+### Q: Will it read my actual data?
+
+No. DB-to-Brain opens the database in **read-only mode** and only reads PRAGMA metadata (table definitions, foreign keys, indexes). No `SELECT` queries are run on your data tables (except `COUNT(*)` for row count estimates).
+
+### Q: How do I check what schema knowledge is stored?
+
+```
+nmem_train_db(action="status")
+```
+
+This shows how many schema entities have been trained into the current brain.
+
+## AI Agent Skills
+
+### Q: What are NeuralMemory skills?
+
+Composable AI agent workflows that follow the [ship-faster](https://github.com/Heyvhuang/ship-faster) SKILL.md pattern. They give Claude Code structured methods for memory management:
+
+| Skill | What it does |
+|-------|-------------|
+| `memory-intake` | Converts messy notes into well-typed, tagged memories via 1-question-at-a-time clarification |
+| `memory-audit` | 6-dimension quality review (purity, freshness, coverage, clarity, relevance, structure) with A-F grading |
+| `memory-evolution` | Evidence-based optimization — consolidation, enrichment, pruning, tag normalization |
+
+### Q: How do I install the skills?
+
+Copy from the NeuralMemory repo to your Claude Code skills directory:
+
+```bash
+# Linux/macOS
+cp -r skills/memory-* ~/.claude/skills/
+
+# Windows
+xcopy /E /I skills\memory-intake %USERPROFILE%\.claude\skills\memory-intake
+xcopy /E /I skills\memory-audit %USERPROFILE%\.claude\skills\memory-audit
+xcopy /E /I skills\memory-evolution %USERPROFILE%\.claude\skills\memory-evolution
+```
+
+### Q: How do I use them?
+
+In Claude Code, invoke by name:
+
+```
+/memory-intake "Meeting notes: decided on Redis caching, Bob handles migration, deadline Friday"
+/memory-audit
+/memory-evolution "Focus on the auth topic"
+```
+
+### Q: Do they require anything besides NeuralMemory?
+
+Just the NeuralMemory MCP server configured in Claude Code. The skills use existing MCP tools (`nmem_remember`, `nmem_recall`, `nmem_stats`, `nmem_health`, etc.) — no new dependencies.
+
+## Data & Multi-tool Sharing
+
+### Q: Do I need to install NeuralMemory per project?
+
+No. Install once globally and it works for the entire machine:
+
+```bash
+python -m pip install neural-memory[all]
+```
+
+Data is stored in `~/.neuralmemory/` — not tied to any specific project. All tools (CLI, AntiGravity, Claude Code, VS Code extension) read from the same location.
+
+To separate data per project, use different brains:
+
+```bash
+nmem brain create my-project
+nmem brain switch my-project
+```
+
+### Q: How to share brain data between AntiGravity and Claude Code?
+
+They already share the same brain automatically. Both read/write to the same files:
+
+- **Config**: `~/.neuralmemory/config.toml`
+- **Data**: `~/.neuralmemory/brains/<name>.db`
+
+As long as both tools point to the same `current_brain`, all memories are synced. Verify with:
+
+```bash
+nmem config show
+```
+
+### Q: How do I let Claude Code query my brain using natural language?
+
+Add the NeuralMemory MCP server to `~/.claude.json`:
+
+```json
+{
+  "mcpServers": {
+    "neuralmemory": {
+      "command": "python",
+      "args": ["-m", "neural_memory.mcp"]
+    }
+  }
+}
+```
+
+After restarting Claude Code, just ask naturally:
+
+> "What did we decide about the volume spike feature?"
+
+The agent will automatically call the `recall` tool to search your brain.

@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeuralMemory Dashboard</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            nm: {
+              bg: '#0F172A',
+              primary: '#1E293B',
+              secondary: '#334155',
+              cta: '#22C55E',
+              'cta-hover': '#16A34A',
+              text: '#F8FAFC',
+              muted: '#94A3B8',
+              border: '#475569',
+              danger: '#EF4444',
+              warning: '#F59E0B',
+              info: '#3B82F6',
+            }
+          },
+          fontFamily: {
+            code: ['Fira Code', 'monospace'],
+            sans: ['Fira Sans', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Cytoscape.js -->
+  <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.4/dist/cytoscape.min.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Dashboard CSS -->
+  <link rel="stylesheet" href="/static/css/dashboard.css">
+
+  <!-- Alpine.js (defer) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+</head>
+
+<body class="bg-nm-bg text-nm-text font-sans min-h-screen" x-data="dashboardApp()" x-init="init()">
+
+  <!-- ── Toast Notifications ──────────────────────────── -->
+  <div class="fixed top-16 right-4 z-[60] space-y-2 pointer-events-none" aria-live="polite">
+    <template x-for="t in toasts" :key="t.id">
+      <div x-transition:enter="transition ease-out duration-200"
+           x-transition:enter-start="opacity-0 translate-x-4"
+           x-transition:enter-end="opacity-1 translate-x-0"
+           x-transition:leave="transition ease-in duration-150"
+           x-transition:leave-start="opacity-1"
+           x-transition:leave-end="opacity-0 translate-x-4"
+           class="pointer-events-auto bg-nm-primary border-l-4 rounded-lg px-4 py-3 shadow-xl flex items-center gap-3 min-w-[280px] max-w-sm toast-enter"
+           :class="toastColor(t.type)">
+        <i :data-lucide="toastIcon(t.type)" class="w-5 h-5 flex-shrink-0"></i>
+        <span class="text-sm text-nm-text" x-text="t.message"></span>
+        <button @click="toasts = toasts.filter(x => x.id !== t.id)" class="ml-auto text-nm-muted hover:text-nm-text cursor-pointer" aria-label="Dismiss notification">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </template>
+  </div>
+
+  <!-- ── Top Navigation ───────────────────────────────── -->
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-nm-primary/95 backdrop-blur-md border-b border-nm-border" role="navigation" aria-label="Main navigation">
+    <div class="max-w-[1600px] mx-auto px-4 h-14 flex items-center justify-between">
+      <!-- Logo -->
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-nm-cta rounded-lg flex items-center justify-center" style="animation:none">
+          <i data-lucide="brain" class="w-5 h-5 text-nm-bg"></i>
+        </div>
+        <span class="font-code font-bold text-lg">NeuralMemory</span>
+        <span class="text-xs text-nm-muted font-code bg-nm-secondary px-2 py-0.5 rounded" x-text="version"></span>
+      </div>
+
+      <!-- Brain Selector + Locale -->
+      <div class="flex items-center gap-4">
+        <!-- Brain Selector -->
+        <div class="relative" x-data="{ open: false }">
+          <button @click="open = !open"
+                  aria-label="Select brain"
+                  aria-haspopup="listbox"
+                  class="flex items-center gap-2 bg-nm-secondary hover:bg-nm-border px-3 py-1.5 rounded-lg transition-colors duration-200 cursor-pointer text-sm font-code">
+            <i data-lucide="database" class="w-4 h-4 text-nm-cta"></i>
+            <span x-text="activeBrain || 'No brain'"></span>
+            <i data-lucide="chevron-down" class="w-3 h-3 text-nm-muted"></i>
+          </button>
+          <div x-show="open" @click.away="open = false" x-transition
+               role="listbox"
+               class="absolute right-0 top-10 bg-nm-primary border border-nm-border rounded-lg shadow-xl w-52 py-1 z-50">
+            <template x-for="brain in brains" :key="brain.id">
+              <button @click="switchBrain(brain.name); open = false"
+                      role="option"
+                      :aria-selected="brain.is_active"
+                      class="w-full text-left px-4 py-2 hover:bg-nm-secondary transition-colors duration-150 text-sm font-code flex items-center justify-between cursor-pointer">
+                <span x-text="brain.name"></span>
+                <span x-show="brain.is_active" class="w-2 h-2 rounded-full bg-nm-cta pulse-dot"></span>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Locale Toggle -->
+        <button @click="toggleLocale()"
+                aria-label="Toggle language"
+                class="bg-nm-secondary hover:bg-nm-border px-2.5 py-1.5 rounded-lg transition-colors duration-200 cursor-pointer text-xs font-code">
+          <span x-text="locale === 'vi' ? 'VI' : 'EN'"></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Layout: Sidebar + Main ───────────────────────── -->
+  <div class="flex pt-14 min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="fixed left-0 top-14 bottom-0 w-56 bg-nm-primary border-r border-nm-border overflow-y-auto" role="tablist" aria-label="Dashboard sections">
+      <nav class="py-4 px-3 space-y-1">
+        <template x-for="tab in tabs" :key="tab.id">
+          <button @click="activeTab = tab.id"
+                  role="tab"
+                  :aria-selected="activeTab === tab.id"
+                  :aria-label="t(tab.label)"
+                  :class="activeTab === tab.id ? 'bg-nm-cta/10 text-nm-cta border-l-2 border-nm-cta' : 'text-nm-muted hover:text-nm-text hover:bg-nm-secondary border-l-2 border-transparent'"
+                  class="w-full text-left px-3 py-2.5 rounded-r-lg flex items-center gap-3 transition-all duration-200 text-sm font-sans cursor-pointer">
+            <i :data-lucide="tab.icon" class="w-4 h-4"></i>
+            <span x-text="t(tab.label)"></span>
+          </button>
+        </template>
+      </nav>
+
+      <!-- Health Badge (sidebar bottom) -->
+      <div class="absolute bottom-0 left-0 right-0 p-3 border-t border-nm-border">
+        <div class="bg-nm-secondary rounded-lg p-3 text-center cursor-pointer hover:bg-nm-border transition-colors duration-200"
+             @click="activeTab = 'health'"
+             role="button"
+             aria-label="View brain health">
+          <div class="text-2xl font-code font-bold" :class="gradeColor(healthGrade)" x-text="healthGrade"></div>
+          <div class="text-xs text-nm-muted mt-1" x-text="t('purity_score') + ': ' + purityScore"></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Main Content ───────────────────────────────── -->
+    <main class="ml-56 flex-1 p-6 pb-12" role="main">
+
+      <!-- ═══ Overview Tab ═══════════════════════════════ -->
+      <section x-show="activeTab === 'overview'" x-transition role="tabpanel" aria-label="Overview">
+        <h2 class="text-2xl font-code font-bold mb-6" x-text="t('overview')"></h2>
+
+        <!-- Loading skeleton -->
+        <template x-if="loading.stats">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-card"></div>
+          </div>
+        </template>
+
+        <!-- Quick Actions -->
+        <template x-if="!loading.stats">
+          <div class="flex flex-wrap gap-3 mb-6">
+            <button @click="runHealthCheck()"
+                    aria-label="Run health check"
+                    class="bg-nm-secondary hover:bg-nm-border px-4 py-2 rounded-lg font-code text-sm transition-colors duration-200 cursor-pointer flex items-center gap-2">
+              <i data-lucide="heart-pulse" class="w-4 h-4 text-nm-cta"></i>
+              <span x-text="t('run_health_check')"></span>
+            </button>
+            <button @click="exportBrain()"
+                    aria-label="Export brain"
+                    class="bg-nm-secondary hover:bg-nm-border px-4 py-2 rounded-lg font-code text-sm transition-colors duration-200 cursor-pointer flex items-center gap-2">
+              <i data-lucide="download" class="w-4 h-4 text-nm-info"></i>
+              <span x-text="t('export_brain')"></span>
+            </button>
+            <button @click="viewWarnings()" x-show="healthWarnings.length > 0"
+                    aria-label="View warnings"
+                    class="bg-nm-warning/10 hover:bg-nm-warning/20 text-nm-warning px-4 py-2 rounded-lg font-code text-sm transition-colors duration-200 cursor-pointer flex items-center gap-2">
+              <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+              <span x-text="t('view_warnings') + ' (' + healthWarnings.length + ')'"></span>
+            </button>
+          </div>
+        </template>
+
+        <!-- Stats Cards -->
+        <template x-if="!loading.stats">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-nm-primary border border-nm-border rounded-xl p-5 hover:border-nm-cta/50 transition-colors duration-200">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 bg-nm-cta/10 rounded-lg flex items-center justify-center">
+                  <i data-lucide="database" class="w-5 h-5 text-nm-cta"></i>
+                </div>
+                <span class="text-sm text-nm-muted" x-text="t('brains')"></span>
+              </div>
+              <div class="text-3xl font-code font-bold" x-text="stats.total_brains"></div>
+            </div>
+
+            <div class="bg-nm-primary border border-nm-border rounded-xl p-5 hover:border-nm-info/50 transition-colors duration-200">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 bg-nm-info/10 rounded-lg flex items-center justify-center">
+                  <i data-lucide="circle-dot" class="w-5 h-5 text-nm-info"></i>
+                </div>
+                <span class="text-sm text-nm-muted" x-text="t('neurons')"></span>
+              </div>
+              <div class="text-3xl font-code font-bold" x-text="stats.total_neurons"></div>
+            </div>
+
+            <div class="bg-nm-primary border border-nm-border rounded-xl p-5 hover:border-nm-warning/50 transition-colors duration-200">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 bg-nm-warning/10 rounded-lg flex items-center justify-center">
+                  <i data-lucide="git-branch" class="w-5 h-5 text-nm-warning"></i>
+                </div>
+                <span class="text-sm text-nm-muted" x-text="t('synapses')"></span>
+              </div>
+              <div class="text-3xl font-code font-bold" x-text="stats.total_synapses"></div>
+            </div>
+
+            <div class="bg-nm-primary border border-nm-border rounded-xl p-5 hover:border-nm-danger/50 transition-colors duration-200">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 bg-nm-danger/10 rounded-lg flex items-center justify-center">
+                  <i data-lucide="layers" class="w-5 h-5 text-nm-danger"></i>
+                </div>
+                <span class="text-sm text-nm-muted" x-text="t('fibers')"></span>
+              </div>
+              <div class="text-3xl font-code font-bold" x-text="stats.total_fibers"></div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Health Summary Card -->
+        <template x-if="!loading.stats && _healthData">
+          <div class="bg-nm-primary border border-nm-border rounded-xl p-5 mb-8">
+            <h3 class="text-sm font-code font-semibold text-nm-muted mb-3" x-text="t('health_summary')"></h3>
+            <div class="flex items-center gap-6 flex-wrap">
+              <div class="text-center">
+                <div class="text-4xl font-code font-bold" :class="gradeColor(healthGrade)" x-text="healthGrade"></div>
+                <div class="text-xs text-nm-muted mt-1" x-text="t('grade')"></div>
+              </div>
+              <div class="flex gap-4 flex-wrap text-sm">
+                <div><span class="text-nm-muted"x-text="t('connectivity') + ': '"></span><span class="font-code" x-text="((_healthData.connectivity || 0) * 100).toFixed(0) + '%'"></span></div>
+                <div><span class="text-nm-muted" x-text="t('freshness') + ': '"></span><span class="font-code" x-text="((_healthData.freshness || 0) * 100).toFixed(0) + '%'"></span></div>
+                <div><span class="text-nm-muted" x-text="t('recall') + ': '"></span><span class="font-code" x-text="((_healthData.recall_confidence || 0) * 100).toFixed(0) + '%'"></span></div>
+                <div><span class="text-nm-muted" x-text="t('purity_score') + ': '"></span><span class="font-code" x-text="purityScore"></span></div>
+              </div>
+              <div x-show="healthWarnings.length > 0" class="ml-auto">
+                <span class="text-xs bg-nm-warning/10 text-nm-warning px-2 py-1 rounded font-code" x-text="healthWarnings.length + ' ' + t('warnings')"></span>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Brain List -->
+        <h3 class="text-lg font-code font-semibold mb-4" x-text="t('brain_list')"></h3>
+
+        <!-- Empty state -->
+        <div x-show="!loading.stats && brains.length === 0" class="empty-state">
+          <i data-lucide="brain"></i>
+          <p class="font-code text-lg mb-2" x-text="t('no_brains_yet')"></p>
+          <p class="text-sm" x-text="t('create_first_brain')"></p>
+        </div>
+
+        <!-- Brain cards -->
+        <div x-show="brains.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <template x-for="brain in brains" :key="brain.id">
+            <div class="bg-nm-primary border border-nm-border rounded-xl p-5 hover:border-nm-cta/30 transition-colors duration-200 cursor-pointer"
+                 @click="switchBrain(brain.name)"
+                 role="button"
+                 :aria-label="t('switch_to') + ' ' + brain.name">
+              <div class="flex items-center justify-between mb-3">
+                <span class="font-code font-semibold" x-text="brain.name"></span>
+                <span x-show="brain.is_active" class="text-xs bg-nm-cta/20 text-nm-cta px-2 py-0.5 rounded font-code" x-text="t('active')"></span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-center text-xs text-nm-muted">
+                <div>
+                  <div class="font-code text-nm-text text-sm" x-text="brain.neuron_count"></div>
+                  <div x-text="t('neurons')"></div>
+                </div>
+                <div>
+                  <div class="font-code text-nm-text text-sm" x-text="brain.synapse_count"></div>
+                  <div x-text="t('synapses')"></div>
+                </div>
+                <div>
+                  <div class="font-code text-nm-text text-sm" x-text="brain.fiber_count"></div>
+                  <div x-text="t('fibers')"></div>
+                </div>
+              </div>
+              <div class="mt-3 flex items-center justify-between">
+                <span class="text-xs text-nm-muted" x-text="t('grade') + ': '"></span>
+                <span class="font-code font-bold text-sm" :class="gradeColor(brain.grade)" x-text="brain.grade"></span>
+              </div>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <!-- ═══ Graph Tab ═════════════════════════════════ -->
+      <section x-show="activeTab === 'graph'" x-transition role="tabpanel" aria-label="Neural Graph">
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <h2 class="text-2xl font-code font-bold" x-text="t('neural_graph')"></h2>
+
+          <!-- Graph Toolbar -->
+          <div class="flex items-center gap-2 graph-toolbar flex-wrap">
+            <!-- Search -->
+            <div class="relative">
+              <input type="text" x-model="graphSearch" @input.debounce.300ms="searchGraph()"
+                     :placeholder="t('search_nodes')"
+                     aria-label="Search graph nodes"
+                     class="bg-nm-secondary border border-nm-border rounded-lg pl-3 pr-8 py-1.5 text-sm font-code text-nm-text placeholder-nm-muted focus:outline-none focus:border-nm-cta w-44">
+              <i data-lucide="search" class="absolute right-2.5 top-2 w-4 h-4 text-nm-muted pointer-events-none"></i>
+            </div>
+
+            <!-- Filter by type -->
+            <select x-model="graphFilter" @change="filterGraph()"
+                    aria-label="Filter by neuron type"
+                    class="bg-nm-secondary border border-nm-border rounded-lg px-3 py-1.5 text-sm font-code text-nm-text focus:outline-none focus:border-nm-cta cursor-pointer">
+              <option value="" x-text="t('all_types')"></option>
+              <option value="concept">Concept</option>
+              <option value="entity">Entity</option>
+              <option value="time">Time</option>
+              <option value="action">Action</option>
+              <option value="state">State</option>
+              <option value="spatial">Spatial</option>
+              <option value="sensory">Sensory</option>
+              <option value="intent">Intent</option>
+            </select>
+
+            <!-- Zoom / Fit / Reload -->
+            <button @click="graphZoomIn()" class="graph-toolbar-btn" :aria-label="t('zoom_in')">
+              <i data-lucide="zoom-in" class="w-4 h-4"></i>
+            </button>
+            <button @click="graphZoomOut()" class="graph-toolbar-btn" :aria-label="t('zoom_out')">
+              <i data-lucide="zoom-out" class="w-4 h-4"></i>
+            </button>
+            <button @click="graphFit()" class="graph-toolbar-btn" :aria-label="t('fit_graph')">
+              <i data-lucide="maximize-2" class="w-4 h-4"></i>
+            </button>
+            <button @click="reloadGraph()" class="graph-toolbar-btn" :aria-label="t('reload')">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Graph loading -->
+        <div x-show="loading.graph" class="bg-nm-primary border border-nm-border rounded-xl flex items-center justify-center" style="height: calc(100vh - 180px);">
+          <div class="text-center">
+            <div class="spinner spinner-lg mx-auto mb-3"></div>
+            <span class="text-sm text-nm-muted font-code" x-text="t('loading')"></span>
+          </div>
+        </div>
+
+        <!-- Graph container -->
+        <div x-show="!loading.graph" class="bg-nm-primary border border-nm-border rounded-xl overflow-hidden relative" style="height: calc(100vh - 180px);">
+          <div id="cy-graph" class="w-full h-full"></div>
+
+          <!-- Graph empty state (overlay) -->
+          <div x-show="graphEmpty" class="absolute inset-0 flex items-center justify-center bg-nm-primary/90">
+            <div class="empty-state">
+              <i data-lucide="share-2"></i>
+              <p class="font-code text-lg mb-2" x-text="t('no_graph_data')"></p>
+              <p class="text-sm" x-text="t('graph_empty_hint')"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Node detail panel -->
+        <div x-show="selectedNode" x-transition
+             class="fixed right-6 top-20 w-80 bg-nm-primary border border-nm-border rounded-xl p-5 shadow-2xl z-40">
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-code font-semibold text-sm" x-text="t('node_detail')"></span>
+            <button @click="selectedNode = null" class="text-nm-muted hover:text-nm-text cursor-pointer" aria-label="Close node detail">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <template x-if="selectedNode">
+            <div class="space-y-2 text-sm">
+              <div><span class="text-nm-muted">Type:</span> <span class="font-code" x-text="selectedNode.type"></span></div>
+              <div><span class="text-nm-muted">ID:</span> <span class="font-code text-xs break-all" x-text="selectedNode.id"></span></div>
+              <div class="mt-2 text-nm-muted text-xs leading-relaxed max-h-40 overflow-y-auto" x-text="selectedNode.content"></div>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <!-- ═══ Integrations Tab (status + activity + wizards) ═════════════ -->
+      <section x-show="activeTab === 'integrations'" x-transition role="tabpanel" aria-label="Integrations">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-2xl font-code font-bold" x-text="t('integrations')"></h2>
+          <button @click="refreshIntegrations()"
+                  aria-label="Refresh integration status"
+                  class="bg-nm-secondary hover:bg-nm-border px-3 py-1.5 rounded-lg font-code text-xs transition-colors duration-200 cursor-pointer flex items-center gap-1.5">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            <span x-text="t('reload')"></span>
+          </button>
+        </div>
+        <p class="text-nm-muted text-sm mb-6" x-text="t('int_desc')"></p>
+
+        <!-- Loading -->
+        <div x-show="loading.integrations" class="space-y-3 max-w-3xl">
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+        </div>
+
+        <!-- Integration status cards (enhanced with metrics) -->
+        <div x-show="!loading.integrations" class="space-y-3 max-w-3xl">
+          <template x-for="int in integrations" :key="int.id">
+            <div class="bg-nm-primary border border-nm-border rounded-xl p-5">
+              <div class="flex items-center gap-4">
+                <!-- Icon -->
+                <div class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
+                     :style="`background: ${int.color}15`">
+                  <i :data-lucide="int.icon" class="w-6 h-6" :style="`color: ${int.color}`"></i>
+                </div>
+
+                <!-- Info -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span class="font-code font-semibold" x-text="int.name"></span>
+                    <span class="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                          :class="int.active ? 'bg-nm-cta pulse-dot' : 'bg-nm-secondary'"></span>
+                  </div>
+                  <div class="text-sm text-nm-muted mt-0.5" x-text="int.detail"></div>
+                </div>
+
+                <!-- Deep link -->
+                <a x-show="int.link"
+                   :href="int.link" target="_blank" rel="noopener"
+                   class="bg-nm-secondary hover:bg-nm-border px-3 py-1.5 rounded-lg font-code text-xs transition-colors duration-200 cursor-pointer flex items-center gap-1.5 flex-shrink-0">
+                  <span x-text="int.linkLabel"></span>
+                  <i data-lucide="external-link" class="w-3 h-3"></i>
+                </a>
+              </div>
+
+              <!-- Metrics row (shown when metrics available) -->
+              <div x-show="int.metrics && int.metrics.total_today > 0"
+                   class="flex flex-wrap gap-4 mt-3 pt-3 border-t border-nm-border text-xs">
+                <div>
+                  <span class="font-code text-nm-text" x-text="int.metrics?.memories_today || 0"></span>
+                  <span class="text-nm-muted" x-text="t('int_memories_today')"></span>
+                </div>
+                <div>
+                  <span class="font-code text-nm-text" x-text="int.metrics?.recalls_today || 0"></span>
+                  <span class="text-nm-muted" x-text="t('int_recalls_today')"></span>
+                </div>
+                <div x-show="int.metrics?.last_call_at">
+                  <span class="text-nm-muted" x-text="t('int_last_call')"></span>:
+                  <span class="font-code text-nm-text" x-text="formatTime(int.metrics?.last_call_at)"></span>
+                </div>
+              </div>
+
+              <!-- Error badge -->
+              <div x-show="int.metrics?.error_count > 0" class="mt-2">
+                <span class="text-xs bg-red-500/10 text-red-400 px-2 py-0.5 rounded font-code"
+                      x-text="int.metrics.error_count + ' ' + t('errors')"></span>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Empty state -->
+        <div x-show="!loading.integrations && integrations.length === 0" class="empty-state">
+          <i data-lucide="puzzle"></i>
+          <p class="text-sm text-nm-muted" x-text="t('loading')"></p>
+        </div>
+
+        <!-- ── Activity Log ──────────────────────────────── -->
+        <div x-show="!loading.integrations" class="mt-8 max-w-3xl">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-lg font-code font-semibold" x-text="t('int_activity_log')"></h3>
+            <div class="flex gap-2">
+              <button @click="refreshActivity()"
+                      aria-label="Refresh activity log"
+                      class="bg-nm-secondary hover:bg-nm-border px-3 py-1.5 rounded-lg font-code text-xs transition-colors duration-200 cursor-pointer flex items-center gap-1.5">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+              </button>
+              <button @click="activityExpanded = !activityExpanded"
+                      :aria-label="activityExpanded ? t('collapse') : t('expand')"
+                      class="bg-nm-secondary hover:bg-nm-border px-3 py-1.5 rounded-lg font-code text-xs transition-colors duration-200 cursor-pointer flex items-center gap-1.5">
+                <i :data-lucide="activityExpanded ? 'chevron-up' : 'chevron-down'" class="w-3.5 h-3.5"></i>
+                <span x-text="activityExpanded ? t('collapse') : t('expand')"></span>
+              </button>
+            </div>
+          </div>
+
+          <div x-show="activityExpanded" x-transition class="space-y-2">
+            <!-- Activity loading -->
+            <div x-show="loading.activity" class="space-y-2">
+              <div class="skeleton skeleton-line"></div>
+              <div class="skeleton skeleton-line"></div>
+              <div class="skeleton skeleton-line"></div>
+            </div>
+
+            <!-- Activity empty -->
+            <div x-show="!loading.activity && activityLog.length === 0"
+                 class="text-sm text-nm-muted py-4 text-center" x-text="t('int_no_activity')">
+            </div>
+
+            <!-- Activity entries -->
+            <template x-for="entry in activityLog" :key="entry.id">
+              <div class="bg-nm-primary border border-nm-border rounded-lg px-4 py-3 flex items-center gap-3 text-sm hover:border-nm-cta/30 transition-colors duration-150">
+                <i :data-lucide="activityIcon(entry.action_type)" class="w-4 h-4 flex-shrink-0 text-nm-muted"></i>
+                <div class="flex-1 min-w-0">
+                  <span class="font-code" x-text="entry.action_type"></span>
+                  <span x-show="entry.action_context" class="text-nm-muted ml-2 truncate inline-block max-w-xs align-bottom" x-text="entry.action_context"></span>
+                </div>
+                <span class="text-xs text-nm-muted bg-nm-secondary px-2 py-0.5 rounded font-code flex-shrink-0" x-text="entry.source"></span>
+                <span class="text-xs text-nm-muted font-code flex-shrink-0" x-text="formatTime(entry.created_at)"></span>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- ── Setup Wizards ─────────────────────────────── -->
+        <div x-show="!loading.integrations" class="mt-8 max-w-3xl">
+          <h3 class="text-lg font-code font-semibold mb-2" x-text="t('int_setup_wizards')"></h3>
+          <p class="text-nm-muted text-sm mb-4" x-text="t('int_setup_desc')"></p>
+
+          <div class="space-y-3">
+            <template x-for="wizard in setupWizards" :key="wizard.id">
+              <div class="bg-nm-primary border border-nm-border rounded-xl overflow-hidden">
+                <button @click="wizard.open = !wizard.open"
+                        class="w-full text-left px-5 py-4 flex items-center gap-3 hover:bg-nm-secondary/50 transition-colors duration-200 cursor-pointer"
+                        :aria-expanded="wizard.open"
+                        :aria-label="wizard.name + ' setup'">
+                  <i :data-lucide="wizard.icon" class="w-5 h-5" :style="`color: ${wizard.color}`"></i>
+                  <span class="font-code font-semibold" x-text="wizard.name"></span>
+                  <i :data-lucide="wizard.open ? 'chevron-up' : 'chevron-down'" class="w-4 h-4 ml-auto text-nm-muted"></i>
+                </button>
+                <div x-show="wizard.open" x-transition class="px-5 pb-5 border-t border-nm-border">
+                  <p class="text-sm text-nm-muted my-3" x-text="wizard.description"></p>
+                  <div class="relative">
+                    <pre class="bg-nm-bg border border-nm-border rounded-lg p-4 text-sm font-code text-nm-text overflow-x-auto whitespace-pre"><code x-text="wizard.snippet"></code></pre>
+                    <button @click="copySnippet(wizard.snippet)"
+                            class="absolute top-2 right-2 bg-nm-secondary hover:bg-nm-border p-1.5 rounded-lg cursor-pointer transition-colors duration-200"
+                            :aria-label="t('copy_to_clipboard')">
+                      <i data-lucide="copy" class="w-4 h-4"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- ── Import Sources (Preview) ──────────────────── -->
+        <div x-show="!loading.integrations" class="mt-8 max-w-3xl">
+          <h3 class="text-lg font-code font-semibold mb-2" x-text="t('int_import_sources')"></h3>
+          <p class="text-nm-muted text-sm mb-4" x-text="t('int_import_desc')"></p>
+          <div class="space-y-2">
+            <template x-for="src in importSources" :key="src.id">
+              <div class="bg-nm-primary border border-nm-border rounded-lg px-5 py-3 flex items-center gap-3">
+                <span class="font-code text-sm" x-text="src.name"></span>
+                <span class="ml-auto text-xs font-code px-2 py-0.5 rounded"
+                      :class="src.detected ? 'bg-green-500/10 text-green-400' : 'bg-nm-secondary text-nm-muted'"
+                      x-text="src.detected ? t('detected') : t('not_detected')"></span>
+                <button x-show="src.detected" disabled
+                        class="bg-nm-secondary px-3 py-1.5 rounded-lg font-code text-xs text-nm-muted cursor-not-allowed flex items-center gap-1.5"
+                        :aria-label="t('int_import_coming_soon')">
+                  <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                  <span x-text="t('int_coming_soon')"></span>
+                </button>
+              </div>
+            </template>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ Health Tab ════════════════════════════════ -->
+      <section x-show="activeTab === 'health'" x-transition role="tabpanel" aria-label="Brain Health">
+        <h2 class="text-2xl font-code font-bold mb-6" x-text="t('brain_health')"></h2>
+
+        <!-- Health loading -->
+        <div x-show="loading.health" class="flex items-center justify-center py-16">
+          <div class="spinner spinner-lg"></div>
+        </div>
+
+        <!-- Radar Chart -->
+        <template x-if="!loading.health && _healthData">
+          <div class="bg-nm-primary border border-nm-border rounded-xl p-6 mb-6">
+            <canvas id="health-radar" width="400" height="400"></canvas>
+          </div>
+        </template>
+
+        <!-- Warnings -->
+        <div x-show="healthWarnings.length > 0" class="space-y-3 mb-6">
+          <h3 class="text-lg font-code font-semibold" x-text="t('warnings')"></h3>
+          <template x-for="(warn, i) in healthWarnings" :key="i">
+            <div class="bg-nm-primary border rounded-lg p-4 flex items-start gap-3"
+                 :class="warn.severity === 'critical' ? 'border-nm-danger' : warn.severity === 'warning' ? 'border-nm-warning' : 'border-nm-border'"
+                 role="alert">
+              <i :data-lucide="warn.severity === 'critical' ? 'alert-triangle' : warn.severity === 'warning' ? 'alert-circle' : 'info'" class="w-5 h-5 mt-0.5 flex-shrink-0"
+                 :class="warn.severity === 'critical' ? 'text-nm-danger' : warn.severity === 'warning' ? 'text-nm-warning' : 'text-nm-info'"></i>
+              <div>
+                <div class="font-code text-sm" x-text="warn.code"></div>
+                <div class="text-sm text-nm-muted mt-1" x-text="warn.message"></div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- No warnings state -->
+        <div x-show="!loading.health && healthWarnings.length === 0" class="empty-state mb-6">
+          <i data-lucide="check-circle" class="text-nm-cta"></i>
+          <p class="text-sm" x-text="t('no_warnings')"></p>
+        </div>
+
+        <!-- Recommendations -->
+        <div x-show="healthRecommendations.length > 0" class="space-y-2">
+          <h3 class="text-lg font-code font-semibold" x-text="t('recommendations')"></h3>
+          <template x-for="(rec, i) in healthRecommendations" :key="i">
+            <div class="bg-nm-primary border border-nm-border rounded-lg p-4 flex items-start gap-3">
+              <i data-lucide="lightbulb" class="w-5 h-5 text-nm-warning mt-0.5 flex-shrink-0"></i>
+              <span class="text-sm" x-text="rec"></span>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <!-- ═══ Settings Tab ══════════════════════════════ -->
+      <section x-show="activeTab === 'settings'" x-transition role="tabpanel" aria-label="Settings">
+        <h2 class="text-2xl font-code font-bold mb-6" x-text="t('settings')"></h2>
+
+        <div class="space-y-6 max-w-xl">
+          <!-- Language -->
+          <div class="bg-nm-primary border border-nm-border rounded-xl p-5">
+            <h3 class="font-code font-semibold mb-3" x-text="t('language')"></h3>
+            <div class="flex gap-3">
+              <button @click="setLocale('en')"
+                      :class="locale === 'en' ? 'bg-nm-cta text-nm-bg' : 'bg-nm-secondary text-nm-text'"
+                      class="px-4 py-2 rounded-lg font-code text-sm transition-colors duration-200 cursor-pointer"
+                      style="animation:none">English</button>
+              <button @click="setLocale('vi')"
+                      :class="locale === 'vi' ? 'bg-nm-cta text-nm-bg' : 'bg-nm-secondary text-nm-text'"
+                      class="px-4 py-2 rounded-lg font-code text-sm transition-colors duration-200 cursor-pointer"
+                      style="animation:none">Ti&#7871;ng Vi&#7879;t</button>
+            </div>
+          </div>
+
+          <!-- Export/Import Brain -->
+          <div class="bg-nm-primary border border-nm-border rounded-xl p-5">
+            <h3 class="font-code font-semibold mb-3" x-text="t('brain_management')"></h3>
+            <div class="flex gap-3">
+              <button @click="exportBrain()"
+                      aria-label="Export brain data"
+                      class="bg-nm-secondary hover:bg-nm-border px-4 py-2 rounded-lg font-code text-sm transition-colors duration-200 cursor-pointer flex items-center gap-2">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span x-text="t('export')"></span>
+              </button>
+              <label class="bg-nm-secondary hover:bg-nm-border px-4 py-2 rounded-lg font-code text-sm transition-colors duration-200 cursor-pointer flex items-center gap-2"
+                     aria-label="Import brain data">
+                <i data-lucide="upload" class="w-4 h-4"></i>
+                <span x-text="t('import')"></span>
+                <input type="file" accept=".json" @change="importBrain($event)" class="hidden">
+              </label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- JS Modules -->
+  <script src="/static/js/i18n.js"></script>
+  <script src="/static/js/graph.js"></script>
+  <script src="/static/js/oauth.js"></script>
+  <script src="/static/js/openclaw.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

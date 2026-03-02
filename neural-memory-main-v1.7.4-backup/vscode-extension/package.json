@@ -1,0 +1,265 @@
+{
+  "name": "neuralmemory",
+  "displayName": "NeuralMemory",
+  "description": "Visual brain explorer, inline recall, and memory management for NeuralMemory",
+  "version": "0.4.0",
+  "publisher": "neuralmem",
+  "license": "MIT",
+  "preview": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nhadaututtheky/neural-memory"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "neural",
+    "memory",
+    "brain",
+    "knowledge-graph",
+    "recall"
+  ],
+  "icon": "media/icon.png",
+  "activationEvents": [
+    "onView:neuralmemory.memories"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "neuralmemory.encode",
+        "title": "Encode Selection as Memory",
+        "category": "NeuralMemory"
+      },
+      {
+        "command": "neuralmemory.encodeInput",
+        "title": "Encode Text as Memory",
+        "category": "NeuralMemory"
+      },
+      {
+        "command": "neuralmemory.recall",
+        "title": "Recall Memory",
+        "category": "NeuralMemory"
+      },
+      {
+        "command": "neuralmemory.openGraph",
+        "title": "Open Graph Explorer",
+        "category": "NeuralMemory"
+      },
+      {
+        "command": "neuralmemory.switchBrain",
+        "title": "Switch Brain",
+        "category": "NeuralMemory"
+      },
+      {
+        "command": "neuralmemory.createBrain",
+        "title": "Create Brain",
+        "category": "NeuralMemory"
+      },
+      {
+        "command": "neuralmemory.refreshMemories",
+        "title": "Refresh Memory Tree",
+        "category": "NeuralMemory",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "neuralmemory.startServer",
+        "title": "Start Server",
+        "category": "NeuralMemory"
+      },
+      {
+        "command": "neuralmemory.connectServer",
+        "title": "Connect to Server",
+        "category": "NeuralMemory"
+      },
+      {
+        "command": "neuralmemory.recallFromTree",
+        "title": "Recall Related Memories",
+        "category": "NeuralMemory",
+        "icon": "$(search)"
+      },
+      {
+        "command": "neuralmemory.indexCodebase",
+        "title": "Index Codebase",
+        "category": "NeuralMemory",
+        "icon": "$(search-fuzzy)"
+      },
+      {
+        "command": "neuralmemory.importMemories",
+        "title": "Import Memories from External Source",
+        "category": "NeuralMemory",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "neuralmemory.recap",
+        "title": "Recap Session Context",
+        "category": "NeuralMemory",
+        "icon": "$(history)"
+      },
+      {
+        "command": "neuralmemory.recapTopic",
+        "title": "Recap by Topic",
+        "category": "NeuralMemory",
+        "icon": "$(search)"
+      },
+      {
+        "command": "neuralmemory.eternalSave",
+        "title": "Save Eternal Context",
+        "category": "NeuralMemory",
+        "icon": "$(save)"
+      },
+      {
+        "command": "neuralmemory.eternalStatus",
+        "title": "Eternal Context Status",
+        "category": "NeuralMemory",
+        "icon": "$(info)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "neuralmemory",
+          "title": "NeuralMemory",
+          "icon": "media/brain.svg"
+        }
+      ]
+    },
+    "views": {
+      "neuralmemory": [
+        {
+          "id": "neuralmemory.memories",
+          "name": "Memories",
+          "icon": "media/neuron.svg"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "neuralmemory.refreshMemories",
+          "when": "view == neuralmemory.memories",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "neuralmemory.recallFromTree",
+          "when": "view == neuralmemory.memories && viewItem == neuralmemory.neuron",
+          "group": "inline"
+        },
+        {
+          "command": "neuralmemory.recallFromTree",
+          "when": "view == neuralmemory.memories && viewItem == neuralmemory.neuron",
+          "group": "1_actions"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "neuralmemory.encode",
+        "key": "ctrl+shift+m e",
+        "mac": "cmd+shift+m e",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "neuralmemory.recall",
+        "key": "ctrl+shift+m r",
+        "mac": "cmd+shift+m r"
+      },
+      {
+        "command": "neuralmemory.openGraph",
+        "key": "ctrl+shift+m g",
+        "mac": "cmd+shift+m g"
+      },
+      {
+        "command": "neuralmemory.indexCodebase",
+        "key": "ctrl+shift+m i",
+        "mac": "cmd+shift+m i"
+      },
+      {
+        "command": "neuralmemory.recap",
+        "key": "ctrl+shift+m c",
+        "mac": "cmd+shift+m c"
+      }
+    ],
+    "configuration": {
+      "title": "NeuralMemory",
+      "properties": {
+        "neuralmemory.pythonPath": {
+          "type": "string",
+          "default": "python",
+          "description": "Path to Python interpreter with neural-memory installed"
+        },
+        "neuralmemory.autoStart": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically start the NeuralMemory server on activation"
+        },
+        "neuralmemory.serverUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:8000",
+          "description": "URL of the NeuralMemory server"
+        },
+        "neuralmemory.graphNodeLimit": {
+          "type": "number",
+          "default": 1000,
+          "minimum": 50,
+          "maximum": 10000,
+          "description": "Maximum number of nodes to render in the graph explorer"
+        },
+        "neuralmemory.codeLensEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show CodeLens hints for memory-related comments"
+        },
+        "neuralmemory.commentTriggers": {
+          "type": "array",
+          "default": [
+            "remember:",
+            "note:",
+            "decision:",
+            "todo:"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Comment patterns that trigger encode suggestions"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.js --production",
+    "watch": "node esbuild.js --watch",
+    "lint": "eslint src --ext ts",
+    "pretest": "tsc -p test/tsconfig.json",
+    "test": "node ./out/test/runTest.js",
+    "test:unit": "node test/unit/build.js && mocha out/test/unit/**/*.test.js --timeout 10000",
+    "test:perf": "npx playwright test test/webview/graph.perf.test.ts",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/cytoscape": "^3.21.9",
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@types/ws": "^8.5.0",
+    "@vscode/test-electron": "^2.3.0",
+    "@vscode/vsce": "^2.22.0",
+    "esbuild": "^0.19.0",
+    "glob": "^13.0.1",
+    "mocha": "^11.7.5",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "cytoscape": "^3.33.1",
+    "ws": "^8.16.0"
+  }
+}

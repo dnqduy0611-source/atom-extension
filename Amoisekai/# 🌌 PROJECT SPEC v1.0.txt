@@ -1,0 +1,401 @@
+# 🌌 PROJECT SPEC v1.0
+
+## “AI-Driven MMO Narrative Universe”
+
+---
+
+# I. TRIẾT LÝ SẢN PHẨM
+
+### 1️⃣ Core Identity
+
+> Người chơi không “cày level”.
+> Người chơi trở thành một nhân vật trong một bộ anime đang sống.
+
+Không P2W.
+Không bán power.
+Không bán stat.
+
+Sức mạnh đến từ:
+
+* RNG có kiểm soát
+* Quyết định chiến lược
+* Hệ quả narrative
+
+---
+
+# II. KIẾN TRÚC TỔNG THỂ
+
+## 1️⃣ Một Universe duy nhất
+
+* 1 timeline chung
+* 1 world-state toàn server
+* Nhiều tuyến truyện cá nhân
+* Có collision engine
+
+---
+
+## 2️⃣ State Layer
+
+### A) Global World State
+
+```json
+{
+  "factions": [],
+  "power_balance": {},
+  "global_conflicts": [],
+  "major_events": [],
+  "artifact_registry": {},
+  "threat_level": 0-100
+}
+```
+
+---
+
+### B) Player State
+
+```json
+{
+  "dna_affinity": [],
+  "alignment": -100 → 100,
+  "reputation": {},
+  "notoriety": 0-100,
+  "decision_quality_score": 0-100,
+  "breakthrough_meter": 0-100,
+  "pity_counter": int,
+  "major_flags": [],
+  "relationships": {}
+}
+```
+
+---
+
+# III. CORE GAME MECHANICS
+
+---
+
+# 1️⃣ Controlled RNG System (CRNG)
+
+### Mục tiêu:
+
+Ngẫu nhiên nhưng không phá cân bằng.
+
+---
+
+## A) DNA Affinity System
+
+Mỗi người chơi có 3–5 “Affinity Tags” ẩn:
+
+Ví dụ:
+
+* Shadow
+* Oath
+* Bloodline
+* Tech
+* Chaos
+* Mind
+* Charm
+* Relic
+
+AI generate skill/item:
+
+* Ưu tiên hợp DNA
+* 70% synergistic
+* 30% outlier
+
+=> Giảm “rác RNG”.
+
+---
+
+## B) Pity Timer (ẩn hoàn toàn)
+
+Nếu X chương không nhận được:
+
+* Major skill
+* Major relic
+* Major arc
+
+→ xác suất event lớn tăng dần.
+
+Không hiển thị.
+Không gọi là pity.
+Chỉ là “định mệnh chuyển động”.
+
+---
+
+## C) Breakthrough Meter
+
+Tăng khi:
+
+* Chọn quyết định high-risk
+* Giữ lời thề
+* Theo đuổi arc cá nhân
+* Mâu thuẫn tăng cao
+
+Khi đầy:
+→ unlock “Breakthrough Window”
+→ AI generate arc đột phá lớn
+
+---
+
+# 2️⃣ Catch-Up Mechanism (Quan trọng nhất)
+
+Mục tiêu:
+Người mới vào giữa chừng vẫn có thể leo nhanh.
+
+---
+
+## A) Threat Tier Matching
+
+Thế giới có nhiều tầng sự kiện:
+
+* Tier 1: local
+* Tier 2: city
+* Tier 3: regional
+* Tier 4: global
+
+Người mới:
+
+* Gặp Tier thấp
+* Nhưng có xác suất gặp “Rogue Event”
+
+Rogue Event:
+
+* Relic kén chủ
+* Mentor phản diện
+* Forbidden awakening
+* Hidden faction invitation
+
+=> Nếu chọn đúng → tăng vọt power trajectory.
+
+---
+
+## B) Decision Quality Score (DQS)
+
+Không phải đạo đức.
+Mà là consistency chiến lược.
+
+Tăng khi:
+
+* Không mâu thuẫn build
+* Khai thác thông tin đã có
+* Chọn rủi ro đúng lúc
+* Không flip-flop
+
+DQS cao:
+→ AI mở nhánh reward lớn hơn
+→ unlock “high leverage arcs”
+
+Người mới có thể max DQS nhanh → leo nhanh.
+
+---
+
+## C) Soft Cap + Diminishing Return
+
+Càng mạnh:
+
+* Breakthrough khó hơn
+* Event nguy hiểm hơn
+* Cost tăng cao
+* Xác suất betrayal cao
+
+=> Người top không thể snowball vô hạn.
+
+---
+
+# 3️⃣ Anti-Snowball System
+
+---
+
+## A) Notoriety System
+
+Khi mạnh:
+
+* Notoriety tăng
+* NPC elite săn
+* Faction để ý
+* Bounty xuất hiện
+
+Power lớn = rủi ro lớn.
+
+---
+
+## B) Resource Friction
+
+Skill mạnh:
+
+* Cooldown dài
+* Điều kiện kích hoạt
+* Cần sacrifice
+
+---
+
+## C) World Reaction Engine
+
+Khi người top:
+
+* Thế giới tăng Threat Level
+* Spawn đối trọng tự nhiên
+* Faction cân bằng
+
+Không phải nerf người chơi.
+Mà là lore reaction.
+
+---
+
+# IV. MMO NARRATIVE LAYER
+
+---
+
+# 1️⃣ Fate Collision Engine
+
+Scan:
+
+* Objective trùng
+* Artifact trùng
+* Faction đối nghịch
+
+Generate:
+
+* Shared chapter
+* Asynchronous duel
+* Political arc
+
+---
+
+# 2️⃣ Influence > Level
+
+Không có level chung.
+
+Chỉ có:
+
+* Combat Index
+* Influence Index
+* Information Index
+* Notoriety Index
+
+Leaderboard không hiển thị số.
+Chỉ hiển thị title:
+
+* “Kẻ Kích Hoạt Đại Thanh Trừng”
+* “Bóng Ma Thứ 7”
+* “Người Sống Sót Sau Thảm Họa Huyết Nguyệt”
+
+---
+
+# V. Không Pay-To-Win
+
+Không bán:
+
+* Stat
+* Skill
+* Item
+* RNG boost
+
+Có thể bán:
+
+* Cosmetic aura
+* Character art generation
+* Extra save slot
+* Story export PDF
+* Social features
+
+---
+
+# VI. RỦI RO & CÁCH GIẢM
+
+---
+
+## Rủi ro 1: RNG bất công
+
+→ Controlled RNG
+→ Pity
+→ DNA bias
+
+---
+
+## Rủi ro 2: Người top phá server
+
+→ Notoriety
+→ Threat scaling
+→ Soft cap
+
+---
+
+## Rủi ro 3: Người mới cảm giác thua thiệt
+
+→ Rogue Event
+→ DQS unlock arc lớn
+→ Breakthrough Window
+
+---
+
+# VII. Trải nghiệm người chơi (Example Flow)
+
+### Người chơi A (người mới)
+
+Chương 5:
+
+* Chọn cứu NPC thay vì loot
+* DQS tăng
+* Breakthrough tăng
+
+Chương 8:
+
+* Rogue event: Relic nhận diện DNA
+* Unlock awakening
+
+Chương 15:
+
+* Vào conflict Tier 2
+* Va chạm người top
+
+→ Leo nhanh nếu quyết định đúng.
+
+---
+
+### Người chơi Top
+
+Chương 70:
+
+* Notoriety 85
+* Elite faction săn
+
+Chương 75:
+
+* Betrayal arc
+* Cooldown skill kéo dài
+
+→ Không thể snowball mãi.
+
+---
+
+# VIII. Tổng đánh giá khả thi
+
+Có làm được không?
+
+Có.
+
+Khó nhất không phải AI viết.
+Khó nhất là:
+
+* Thiết kế state engine
+* Kiểm soát entropy
+* Giữ fairness cảm nhận
+
+Nhưng về mặt kỹ thuật:
+Không cần combat engine phức tạp.
+Chỉ cần:
+
+* World-state logic tốt
+* RNG control
+* Narrative constraint layer
+
+---
+
+# IX. Câu hỏi để refine v1
+
+1. Có cho phép “chết vĩnh viễn” không?
+2. Có cho phép “timeline rewind” giới hạn không?
+3. Universe tone là gì (urban, dark, isekai…)?
+4. Có cho người chơi lập faction không?
+

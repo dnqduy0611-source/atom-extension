@@ -1,0 +1,243 @@
+# 🌌 UNIQUE SKILL SYSTEM v3 – “Seed → Evolution → Integration”
+
+---
+
+# I. Tổng quan hệ thống
+
+Mỗi người chơi có:
+
+1️⃣ **Core Seed Skill** (duy nhất – cấp basic)
+2️⃣ **Evolution Path** (3–5 hướng phát triển)
+3️⃣ **Integration Slots** (tích hợp skill phụ nếu tương thích)
+4️⃣ **Ultimate Form** (kết tinh identity + hành vi)
+
+---
+
+# II. Giai đoạn 1 – Core Seed Skill (Ban từ đầu)
+
+## 1️⃣ Onboarding
+
+* 6–8 câu hỏi tình huống
+* Không hỏi trực tiếp “bạn muốn mạnh kiểu gì”
+* Hệ thống tạo Identity Vector ẩn
+
+---
+
+## 2️⃣ AI Generate Core Seed
+
+Seed phải:
+
+* Tinh vi
+* Không quá mạnh
+* Có tiềm năng mở rộng
+* Có giới hạn rõ
+
+---
+
+### Ví dụ
+
+Identity:
+
+* Strategic
+* Control-oriented
+* Loyal
+
+Seed:
+
+> “Anchor Point”
+> Bạn có thể đánh dấu một khoảnh khắc quan trọng để quay lại nếu quyết định sai.
+> (Chỉ dùng 1 lần / 5 chương)
+
+Rất basic.
+Nhưng có chiều sâu.
+
+---
+
+# III. Giai đoạn 2 – Evolution System
+
+Seed không lên cấp theo XP.
+Mà theo:
+
+* Consistency hành vi
+* Decision Quality Score
+* Moral alignment
+* Risk tolerance
+
+---
+
+## Ví dụ tiến hóa
+
+### Anchor Point
+
+Stage 1:
+
+* Quay lại 1 hành động cá nhân
+
+Stage 2:
+
+* Có thể ảnh hưởng người khác gần bạn
+
+Stage 3:
+
+* Tạo “Branching Reality”
+* Nhưng mất ký ức của 1 nhánh
+
+---
+
+Tiến hóa không tuyến tính.
+Có thể phân nhánh:
+
+* Path Control
+* Path Sacrifice
+* Path Manipulation
+
+---
+
+# IV. Integration System (Cơ chế anh vừa đề cập)
+
+Đây là phần rất quan trọng.
+
+---
+
+## 1️⃣ Skill thu thập được trong thế giới
+
+AI generate:
+
+* Relic skills
+* Temporary abilities
+* Contract-based power
+* Faction techniques
+
+Nhưng không phải skill nào cũng tương thích.
+
+---
+
+## 2️⃣ Compatibility Engine
+
+Mỗi skill có:
+
+```json
+{
+  "trait_tags": ["control", "chaos", "oath", "shadow"],
+  "moral_alignment": "neutral",
+  "risk_level": 0-100
+}
+```
+
+Core Seed cũng có trait_tags.
+
+Integration chỉ xảy ra nếu:
+
+* > = 60% trait match
+* Hoặc người chơi chấp nhận corruption risk
+
+---
+
+## 3️⃣ Integration Outcomes
+
+### A) Harmonious Integration
+
+* Skill phụ tăng cường Core
+
+### B) Mutated Integration
+
+* Skill biến dạng thành dạng mới
+
+### C) Instability
+
+* Skill clash
+* Tạo arc nội tâm
+
+---
+
+Ví dụ:
+
+Core:
+“Oath Resonance”
+
+Player nhặt được:
+“Blood Pact Technique”
+
+Nếu tích hợp:
+→ Skill evolve thành “Sacrificial Covenant”
+
+Nhưng:
+→ HP drain khi kích hoạt
+
+---
+
+# V. Ultimate Skill (Endgame Identity)
+
+Ultimate không phải form mạnh nhất.
+Mà là:
+
+> Kết tinh bạn đã trở thành ai trong universe.
+
+Hai người có cùng Seed
+Nhưng hành vi khác
+→ Ultimate khác.
+
+---
+
+Ví dụ:
+
+Seed: Silent Mark
+
+Người A:
+
+* Dùng để bảo vệ
+  → Ultimate: Guardian Insight
+
+Người B:
+
+* Dùng để thao túng
+  → Ultimate: Phantom Predator
+
+---
+
+# VI. Balance & Fairness
+
+Để không P2W + không bất công:
+
+1️⃣ Power Budget cap cho Core
+2️⃣ Integration có giới hạn slot (ví dụ 2–3)
+3️⃣ Corruption nếu ép tích hợp quá nhiều
+4️⃣ Ultimate unlock qua narrative arc lớn
+
+---
+
+# VII. Cảm giác người chơi
+
+* Ngay từ đầu: “Skill này là của tôi.”
+* Sau 20 chương: “Skill này đã thay đổi theo tôi.”
+* Sau 50 chương: “Tôi không còn giống lúc ban đầu.”
+
+Đây là attachment rất mạnh.
+
+---
+
+# VIII. Rủi ro thiết kế
+
+1️⃣ Integration quá phức tạp → AI khó simulate
+2️⃣ Người chơi không hiểu logic
+3️⃣ Skill power creep nếu không cap
+
+Giải pháp:
+
+* V1: tối đa 1 Core + 2 integration
+* Không cho stacking vô hạn
+* Có instability mechanic
+
+---
+
+# IX. Điều cực quan trọng
+
+Anh đang xây:
+
+Không phải game kỹ năng.
+
+Mà là:
+
+> Identity Engine dưới dạng anime MMO.
+
+

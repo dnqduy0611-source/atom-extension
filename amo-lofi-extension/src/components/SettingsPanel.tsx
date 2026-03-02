@@ -481,7 +481,7 @@ export function SettingsPanel({ visible, onClose }: Props) {
 
                 {/* Footer */}
                 <div className="settings-footer">
-                    <span className="settings-version">Amo Lofi Extension v1.0</span>
+                    <span className="settings-version">Amo Lofi Extension v1.5</span>
                 </div>
             </div>
         </>

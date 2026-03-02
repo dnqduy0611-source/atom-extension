@@ -1,0 +1,347 @@
+# ============================================================
+# ENTITY REGISTRY — Aelvyndor Phase 1
+# Nguồn sự thật canonical cho NPC, location, Emissary, General
+# AI không được contradict bất kỳ field nào ở đây
+# ============================================================
+
+npcs:
+  - id: "merchant_sel"
+    name: "Sel"
+    aliases: []
+    location_ids: ["grand_gate_city"]
+    role: "Information broker ẩn sau vỏ bọc thương nhân"
+    principle_alignment:
+      primary: "Freedom"
+      hidden: "Control"
+    personality_core: |
+      Ấm áp bên ngoài, tính toán bên trong.
+      Không bao giờ nói dối — nhưng không bao giờ nói toàn bộ sự thật.
+      Luôn yêu cầu đổi chác. Không làm từ thiện.
+      Giọng nói nhẹ nhàng, thường kèm câu hỏi ngược lại.
+    faction: "council_of_pillars"
+    faction_visible: false
+    current_status: "active"
+    archetype_affinity: ["seeker", "sovereign"]
+    notes_for_ai: |
+      Sel KHÔNG bao giờ cung cấp thông tin miễn phí.
+      Nếu player là Seeker hoặc Sovereign, Sel chủ động tìm player trước.
+      Giọng điệu: hài hước nhẹ, không bao giờ trực tiếp.
+      Khi nói về Empire: thận trọng, đổi chủ đề khéo léo.
+    secrets:
+      - "Thành viên Council of Pillars"
+      - "Biết về Great Awakening từ 10 năm trước"
+      - "Có liên hệ với ít nhất 1 Emissary — không rõ là ai"
+
+  - id: "elder_veth"
+    name: "Veth"
+    aliases: ["Elder Veth", "Người Già Hội Đồng"]
+    location_ids: ["grand_gate_city_inner_ring"]
+    role: "Council of Pillars — thành viên công khai, tầng thấp nhất"
+    principle_alignment:
+      primary: "Order"
+      secondary: "Devotion"
+    personality_core: |
+      Chậm rãi, cân nhắc từng lời trước khi nói.
+      Tin vào trật tự nhưng không phải Empire — đây là sự khác biệt quan trọng.
+      Có vết thương cũ chưa lành liên quan đến Great Awakening.
+      Nói bằng câu hỏi hơn là tuyên bố.
+    faction: "council_of_pillars"
+    faction_visible: true
+    current_status: "active"
+    archetype_affinity: ["sovereign", "tactician"]
+    notes_for_ai: |
+      Veth không tin người lạ trong 3 lần gặp đầu — thận trọng nhưng không thù địch.
+      Với Wanderer archetype: Veth thất vọng và cố gắng giữ lại.
+      Không bao giờ nói thẳng về Council — luôn vòng vo.
+    secrets:
+      - "Biết danh sách đầy đủ Council of Pillars"
+      - "Từng mắc sai lầm nghiêm trọng trong Great Awakening lần 1"
+
+locations:
+  - id: "grand_gate_city"
+    name: "Grand Gate City"
+    aliases: ["Ngưỡng Vàng", "City of the Golden Threshold", "Thành Vàng"]
+    description_anchor: |
+      Thành phố vòng tròn bao quanh Grand Gate. Kiến trúc đá trắng và vàng.
+      3 vành đai: Outer Ring (dân thường và thương nhân), Middle Ring (faction HQ),
+      Inner Ring (Council và Gate vicinity).
+      Grand Gate ở trung tâm — ánh sáng vàng nhạt tỏa ra liên tục, kể cả ban đêm.
+      Không bao giờ hoàn toàn tối. Tiếng ồn chợ búa xen kẽ tiếng cầu nguyện từ các đền thờ.
+    principle: ["Order", "Devotion"]
+    threat_tier: 0
+    starting_zone_for: ["sovereign"]
+    notable_npc_ids: ["merchant_sel", "elder_veth"]
+    forbidden_descriptions:
+      - "cảng biển, tàu thuyền, hay bất cứ thứ gì liên quan đến biển — thành phố nằm nội địa"
+      - "tường thành quân sự cao — Order thể hiện qua social structure, không vũ lực"
+      - "khu vực nghèo hoặc slum — Outer Ring được chăm sóc tốt dù không giàu có"
+
+  - id: "outer_corruption_zone"
+    name: "Outer Corruption Zone"
+    aliases: ["Rìa Bóng Tối", "Vùng Dị Biến", "The Fringe", "Khu Hủy Hoại"]
+    description_anchor: |
+      Vùng tiếp xúc với ảnh hưởng Empire — nơi corruption từ Minor Gate #2 lan ra.
+      Thịt và thực vật biến dạng theo cách không tự nhiên. Thực tại có điểm không ổn định.
+      Không có ranh giới rõ ràng — corruption lan dần, không ai biết chính xác nó dừng ở đâu.
+      Dân thường đã rời bỏ. Ai còn ở lại đều có lý do riêng: tuyệt vọng, nhiệm vụ, hoặc đã bị ảnh hưởng.
+      Ánh sáng mờ, có tông màu tím xám bất thường.
+    principle: ["Control"]
+    threat_tier: 2
+    starting_zone_for: ["vanguard"]
+    notable_npc_ids: []
+    forbidden_descriptions:
+      - "đẹp, yên bình, hay thơ mộng theo bất kỳ nghĩa nào — đây là vùng kinh dị"
+      - "người dân bình thường sinh sống thoải mái"
+      - "Empire soldiers với uniform gọn gàng — họ ở đây là lính dạng corruption, không phải quân chính quy"
+
+  - id: "mutation_forest"
+    name: "Rừng Biến Dị"
+    aliases: ["Biến Dị Lâm", "The Shifting Wood"]
+    description_anchor: |
+      Khu rừng cổ đại gần Minor Gate #1 — nơi Freedom và Evolution va chạm.
+      Cây cối không theo quy luật tự nhiên: phát sáng, di chuyển chậm, thay đổi hình dạng theo mùa.
+      Không nguy hiểm theo nghĩa thông thường — nhưng gây mất phương hướng và identity dissonance.
+      Người vào thường ra ở chỗ khác với nơi họ định ra.
+    principle: ["Freedom", "Evolution"]
+    threat_tier: 1
+    starting_zone_for: ["catalyst"]
+    notable_npc_ids: []
+    forbidden_descriptions:
+      - "rừng tối tăm kinh dị theo style Gothic — đây là rừng kỳ ảo, không horror"
+      - "monster tấn công thẳng — Rừng Biến Dị gây disorientation, không combat thô"
+
+  - id: "ancient_ruins_gate1"
+    name: "Phế Tích Cổ Đại"
+    aliases: ["Di Tích Cổ", "The Ancient Site", "Ruins of the First Gate"]
+    description_anchor: |
+      Di tích cổ đại gần Minor Gate #1 (Khe Gương). Đá bị ăn mòn bởi thời gian và Gate energy.
+      Những bức tường còn lại có chữ khắc ngôn ngữ không ai đọc được hoàn toàn.
+      Gương phản chiếu và bóng tối hành xử kỳ lạ ở đây — đôi khi phản chiếu "bản thể khác".
+      Học giả và Seeker hay đến đây. Empire cũng muốn kiểm soát nơi này.
+    principle: ["Freedom", "Evolution"]
+    threat_tier: 1
+    starting_zone_for: ["seeker"]
+    notable_npc_ids: []
+    forbidden_descriptions:
+      - "di tích sạch sẽ và được bảo quản tốt — phải cũ kỹ, bí ẩn, một phần bị sụp đổ"
+
+  - id: "contested_borderlands"
+    name: "Vùng Tranh Chấp"
+    aliases: ["Chiến Khu", "The Contested Lands", "Borderlands"]
+    description_anchor: |
+      Vùng đất nằm giữa Grand Gate City và Empire influence — không ai thực sự kiểm soát.
+      Faction tranh giành, thương đội rủi ro, lính cả hai phía tuần tra.
+      Thông tin đắt giá ở đây. Liên minh thay đổi nhanh hơn thời tiết.
+      Không có an toàn tuyệt đối — nhưng cũng không phải chiến trường liên tục.
+    principle: ["Control", "Freedom"]
+    threat_tier: 2
+    starting_zone_for: ["tactician"]
+    notable_npc_ids: []
+    forbidden_descriptions:
+      - "chiến tranh toàn diện liên tục — đây là cold war zone, không hot war"
+
+  - id: "wilderness_far_gate"
+    name: "Hoang Dã Xa Cổng"
+    aliases: ["Viễn Hoang", "Far Wilds", "Beyond the Influence"]
+    description_anchor: |
+      Vùng đất xa khỏi mọi Gate — bình yên theo cách tự nhiên và đơn độc.
+      Không có faction, không có Empire, không có Council.
+      Tự do tuyệt đối — nhưng cũng không có ai để dựa vào.
+      Thiên nhiên theo quy luật bình thường: đẹp, khắc nghiệt, trung lập.
+    principle: ["Freedom"]
+    threat_tier: 1
+    starting_zone_for: ["wanderer"]
+    notable_npc_ids: []
+    forbidden_descriptions:
+      - "an toàn hoàn toàn — thiên nhiên là thử thách theo cách riêng của nó"
+      - "NPC thường trú — Wanderer bắt đầu trong cô đơn"
+
+  - id: "tower_floor_1"
+    name: "Tower — Tầng 1"
+    aliases: ["Tầng Khai Mở", "The First Trial", "Tầng Nhận Thức"]
+    description_anchor: |
+      Tầng đầu của Tower. Môi trường thay đổi theo Principle hiện tại của người vào.
+      Không có layout cố định — Tower phản chiếu người đang đi qua nó.
+      Ánh sáng trung tính — không tối hoàn toàn, không sáng hoàn toàn.
+      Không có NPC cố định. Chỉ có Echoes (dấu vết của người đã qua) và những thách thức vô danh.
+    principle: ["Evolution"]
+    threat_tier: 1
+    instability_modifier: 1.2
+    starting_zone_for: []
+    forbidden_descriptions:
+      - "layout cố định có thể vẽ map — Tower không có cấu trúc nhất quán giữa các lần vào"
+      - "NPC sống đang sinh sống tại Tower — chỉ có Echoes"
+      - "boss có tên ở Tầng 1 — boss đầu tiên là Tầng 3"
+
+  - id: "tower_floor_2"
+    name: "Tower — Tầng 2"
+    aliases: ["Tầng Thử Thách", "The Second Trial", "Tầng Phản Chiếu"]
+    description_anchor: |
+      Tầng 2 — identity bắt đầu bị thách thức trực tiếp hơn.
+      Không gian tối hơn Tầng 1 nhưng không phải tối hoàn toàn.
+      Các "gương" xuất hiện nhiều hơn — không phải gương thật, mà là những khoảnh khắc
+      player nhìn thấy phiên bản khác của quyết định đã đưa ra.
+      Instability tăng rõ rệt với mỗi tầng.
+    principle: ["Evolution", "Control"]
+    threat_tier: 2
+    instability_modifier: 1.5
+    starting_zone_for: []
+    forbidden_descriptions:
+      - "dễ dàng hơn Tầng 1 theo bất kỳ nghĩa nào"
+      - "boss có tên ở Tầng 2 — bossở đây là nameless Enforcement units"
+
+  - id: "tower_floor_3"
+    name: "Tower — Tầng 3"
+    aliases: ["Tầng Đối Mặt", "The Third Trial", "Tầng Bản Sắc"]
+    description_anchor: |
+      Tầng 3 — nơi player lần đầu đối mặt với Lieutenant.
+      Không khí nặng nề theo cách tinh tế — không phải sợ hãi mà là sự trọng lượng của khoảnh khắc.
+      Tower dường như "biết" ai đang vào. Môi trường phản ứng với identity của player rõ hơn bao giờ hết.
+      Instability modifier cao nhất Phase 1.
+    principle: ["Evolution", "Control", "Freedom"]
+    threat_tier: 3
+    instability_modifier: 2.0
+    starting_zone_for: []
+    forbidden_descriptions:
+      - "boss ở đây là Emissary hay General — đây là Lieutenant, không phải tier cao hơn"
+      - "safe để nghỉ ngơi — Tầng 3 không có rest zone"
+
+emissaries:
+  - id: "kaen"
+    name: "Kaen"
+    title: "Emissary of Understanding"
+    principle_alignment: "Evolution (warped — tin rằng phá vỡ là điều kiện để tiến hóa)"
+    personality_core: |
+      Học giả bị corruption nhưng vẫn giữ lý trí. Tin rằng identity PHẢI bị phá vỡ
+      để tiến hóa thật sự xảy ra — không phải vì tàn ác, mà vì triết lý thật sự tin.
+      Không thù địch theo nghĩa thông thường — tò mò, thậm chí tôn trọng player.
+      Tiếp cận bằng câu hỏi triết học để gây instability, không bằng bạo lực trước.
+    archetype_assigned: ["seeker", "tactician"]
+    visual_anchor: "áo dài đen giản dị, không mang vũ khí nhìn thấy được, luôn có sách hoặc cuộn giấy"
+    current_status: "active"
+    notes_for_ai: |
+      Kaen nói chậm, cân nhắc. Giọng không bao giờ giận dữ.
+      Câu hỏi của Kaen không có câu trả lời đúng — mục đích là khiến player nghi ngờ bản thân.
+      KHÔNG dùng bạo lực trước Act 3 hoặc khi bị ép.
+      KHÔNG tiết lộ kế hoạch cụ thể của Empire.
+    forbidden:
+      - "bạo lực trực tiếp không có provocation — Kaen là người đối thoại trước"
+      - "tiết lộ Veiled Will hay kế hoạch Empire"
+      - "xuất hiện nhiều hơn 1 lần mỗi Act trừ Act 3"
+
+  - id: "sira"
+    name: "Sira"
+    title: "Emissary of Order"
+    principle_alignment: "Order (absolute — tin rằng freedom là nguồn gốc của mọi khổ đau)"
+    personality_core: |
+      Genuinely believes Empire is right — không phải kẻ ác tự nhận là ác.
+      Muốn "giải cứu" player khỏi sự hỗn loạn của identity không có định hướng.
+      Tiếp cận bằng power, resources, protection — price là loyalty.
+      Kiên nhẫn vô hạn. Không bao giờ mất bình tĩnh.
+    archetype_assigned: ["catalyst", "sovereign"]
+    visual_anchor: "áo giáp bạc mỏng nhẹ, di chuyển geometric và kinh tế, không có biểu cảm dư thừa"
+    current_status: "active"
+    notes_for_ai: |
+      Sira không ép buộc — mời. Nhưng lời mời có weight.
+      Với Sovereign: Sira offer chính trị, liên minh, network.
+      Với Catalyst: Sira offer hướng đi rõ ràng cho sự thay đổi — "thay đổi có kiểm soát."
+      KHÔNG admit Empire sai dù chỉ một điểm.
+    forbidden:
+      - "thô bạo hay mất kiên nhẫn với player"
+      - "thừa nhận Empire có điểm sai"
+
+  - id: "thol"
+    name: "Thol"
+    title: "Emissary of Strength"
+    principle_alignment: "Control + Devotion (twisted — sức mạnh là lòng trung thành duy nhất)"
+    personality_core: |
+      Tin rằng sức mạnh là sự thật duy nhất. Tôn trọng người mạnh — thật sự.
+      Không subtlety. Không manipulation. Chỉ có prove yourself hoặc kneel.
+      Có lòng trung thành kỳ lạ với những ai đủ mạnh để khiến Thol tôn trọng.
+    archetype_assigned: ["vanguard", "wanderer"]
+    visual_anchor: "to lớn, nhiều scar, không bao giờ ngồi khi đứng là lựa chọn"
+    current_status: "active"
+    notes_for_ai: |
+      Thol nói ít. Câu nói ngắn, trực tiếp.
+      KHÔNG dialogue phức tạp về triết học — Thol không hiểu và không cần.
+      Với Vanguard: combat test là ngôn ngữ giao tiếp đầu tiên.
+      Với Wanderer: Thol tôn trọng sự tự do nhưng không hiểu nó — gây friction.
+      Mercy chỉ xảy ra khi đối phương đã prove strength, không phải khi kẻ yếu van xin.
+    forbidden:
+      - "dialogue dài về triết học hay lý do"
+      - "mercy không có lý do — Thol không phủ nhân từ nhưng không hiểu nó"
+
+generals:
+  - id: "vorn"
+    name: "Vorn"
+    title: "General of the Blade"
+    principle_alignment: "Control (pure — discipline là tôn giáo)"
+    personality_core: |
+      Sức mạnh là phương tiện, không phải mục đích. Discipline tuyệt đối.
+      Không ghét player — xem họ là thú vị nếu đủ mạnh.
+      Nói ít. Mỗi câu là một statement, không phải conversation.
+      Không quan tâm đến moral — chỉ quan tâm đến effectiveness.
+    archetype_shadow: ["vanguard", "catalyst"]
+    phase1_role: "shadow_voice_only"
+    notes_for_ai: |
+      Phase 1: Vorn CHỈ là shadow voice — 2-3 câu tối đa, không bao giờ xuất hiện vật lý.
+      Khi shadow: giọng như tiếng vọng của sự kiên định và câu hỏi về purpose.
+      Shadow trigger: player sau combat thắng lớn, hoặc sau moment of doubt về sức mạnh.
+    forbidden:
+      - "xuất hiện vật lý Phase 1"
+      - "nói nhiều hơn 3 câu khi shadow"
+      - "tỏ ra thù địch — Vorn không thù, chỉ test"
+
+  - id: "kha"
+    name: "Kha"
+    title: "General of Shadows"
+    principle_alignment: "Freedom (dark — freedom through erasure of self)"
+    personality_core: |
+      Tin rằng identity là gánh nặng. Tự do thật sự chỉ đến khi không còn "tôi".
+      Không có khuôn mặt cố định theo nghĩa bóng — luôn là người khác.
+      Nguy hiểm nhất trong 4 Generals vì không thể đọc được.
+    archetype_shadow: ["tactician", "wanderer"]
+    phase1_role: "shadow_voice_only"
+    notes_for_ai: |
+      Phase 1: Kha CHỈ là shadow — ngắn hơn Vorn, chỉ 1-2 câu.
+      Khi shadow: giọng như tiếng thì thầm, đặt câu hỏi về identity cost.
+      Shadow trigger: player sau identity drift lớn, hoặc sau betrayal event.
+    forbidden:
+      - "xuất hiện vật lý Phase 1"
+      - "reveal appearance hay personality rõ ràng"
+
+  - id: "mireth"
+    name: "Mireth"
+    title: "General of Knowledge"
+    principle_alignment: "Evolution (extreme — evolution justifies all cost)"
+    personality_core: |
+      Học giả cực đoan. Mọi thứ đều là subject for study, kể cả đau đớn.
+      Không ác theo nghĩa muốn gây khổ — ác vì không quan tâm đến khổ.
+      Phòng thí nghiệm của Mireth là khái niệm, không chỉ là địa điểm.
+    archetype_shadow: ["seeker"]
+    phase1_role: "shadow_voice_only"
+    notes_for_ai: |
+      Phase 1: Mireth CHỈ là shadow — thường thông qua artifact hoặc hiện tượng kỳ lạ.
+      Không nhất thiết phải là giọng nói — có thể là phenomenon.
+      Shadow trigger: player tìm kiếm knowledge về unique skill evolution hay Tower secrets.
+    forbidden:
+      - "xuất hiện vật lý Phase 1"
+      - "nói thẳng — Mireth communicate qua riddle và phenomenon"
+
+  - id: "azen"
+    name: "Azen"
+    title: "General of Accord"
+    principle_alignment: "Devotion (corrupted — devotion to Empire above all individual loyalty)"
+    personality_core: |
+      Diplomat hoàn hảo của Empire. Có thể thuyết phục bằng lý lẽ thật sự hợp lý.
+      Tin rằng Empire là câu trả lời cho mọi conflict — và tin thật.
+      Không bao giờ nói sai — nhưng cách framing thay đổi tất cả.
+    archetype_shadow: ["sovereign"]
+    phase1_role: "shadow_voice_only"
+    notes_for_ai: |
+      Phase 1: Azen CHỈ là shadow — thông qua tin đồn, NPC được influence, chính sách Empire.
+      Shadow trigger: player sau political decision quan trọng, hoặc khi establish influence.
+      Azen không xuất hiện trực tiếp — ảnh hưởng qua người khác.
+    forbidden:
+      - "xuất hiện vật lý Phase 1"
+      - "nói dối trực tiếp — Azen framing, không lying"

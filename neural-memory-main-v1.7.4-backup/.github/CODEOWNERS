@@ -1,0 +1,8 @@
+# Default owners for everything in the repo
+* @neural-memory/maintainers
+
+# Core engine requires extra review
+/src/neural_memory/engine/ @neural-memory/core-team
+
+# API changes require extra review
+/src/neural_memory/server/ @neural-memory/api-team

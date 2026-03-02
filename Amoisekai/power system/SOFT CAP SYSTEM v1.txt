@@ -1,0 +1,201 @@
+Rất đúng.
+
+Anh vừa chọn:
+
+> 🔥 Soft cap theo tầng
+> 🔥 Có thể vượt trần
+> 🔥 Nhưng với nguy cơ cực cao
+
+Đây là lựa chọn hoàn hảo cho game identity-driven + tower cosmology.
+
+Giờ tôi sẽ đóng khung lại hệ **Power Scaling Spec v1 – Soft Cap Architecture**.
+
+---
+
+# 🌌 SOFT CAP SYSTEM v1
+
+---
+
+# I. Soft Cap là gì trong game anh?
+
+Mỗi tầng có:
+
+* Resonance Stability Limit
+* Principle Density Limit
+* Instability Threshold
+
+Ví dụ:
+
+Floor 1:
+
+* Tổng resonance tối ưu ≈ 1.5
+* Dùng tri-core = instability tăng mạnh
+* Rare principle gần như không ổn định
+
+Floor 3:
+
+* Tổng resonance tối ưu ≈ 2.2
+* Dual principle ổn định
+* Rare principle bắt đầu khả thi
+
+Không có “level 30 mới mở skill”.
+Chỉ có:
+
+> Tầng không chịu nổi bạn.
+
+---
+
+# II. Cơ chế vượt trần (Overdrive State)
+
+Nếu người chơi cố dùng build vượt soft cap:
+
+Hệ thống kích hoạt:
+
+### 🔥 Overdrive
+
+Hiệu ứng:
+
+* Power tăng mạnh
+* Instability spike
+* Drift tăng nhanh
+* Backlash chance tăng
+* Mutation risk cao
+
+Overdrive không phải buff miễn phí.
+Nó là gamble.
+
+---
+
+# III. Backlash Logic (Deterministic)
+
+Nếu instability vượt threshold:
+
+Có thể xảy ra:
+
+1️⃣ Skill misfire
+2️⃣ Identity distortion
+3️⃣ Affinity inversion
+4️⃣ Forced mutation event
+5️⃣ Echo fracture
+6️⃣ World attention spike
+
+Không random hoàn toàn.
+Dựa vào:
+
+* Current instability
+* Affinity compatibility
+* Floor modifier
+
+---
+
+# IV. Meta diễn đàn sẽ bùng ở đâu?
+
+Người chơi sẽ bàn:
+
+* “Có nên overdrive ở Floor 2 không?”
+* “Tri-core có vượt soft cap được không?”
+* “Entropy overdrive có đáng trade stability không?”
+
+Vì có risk thật.
+Không chỉ DPS.
+
+---
+
+# V. Tương tác với Identity System
+
+Nếu overdrive hợp identity:
+
+→ Backlash nhẹ hơn
+Nếu overdrive trái identity:
+
+→ Mutation gần như chắc chắn
+
+Game trở thành:
+
+> Không chỉ mạnh.
+> Mà là mạnh đúng cách.
+
+---
+
+# VI. Tương tác với Nation & Chính trị
+
+Nation có thể:
+
+* Xây công trình ổn định resonance
+* Hỗ trợ overdrive ritual
+* Giảm backlash cho thành viên
+
+Strategist có thể:
+
+* Dụ kẻ khác overdrive sai tầng
+* Tạo trap meta
+
+Meta không chỉ cá nhân.
+Mà có yếu tố xã hội.
+
+---
+
+# VII. Tương tác với Rare Principle
+
+Rare principle có:
+
+* Soft cap thấp hơn
+* Backlash cao hơn
+* Drift mạnh hơn
+
+Nhưng nếu thành công:
+
+→ Rất mạnh
+→ Thay đổi cục diện
+
+---
+
+# VIII. Cấu trúc kỹ thuật đơn giản cho backend
+
+```id="3nh5dt"
+effective_power = base_power * resonance * floor_modifier
+
+if effective_power > floor_soft_cap:
+    instability += overflow_factor
+    backlash_probability += overflow_factor * instability
+```
+
+Không cần công thức phức tạp.
+Chỉ cần logic nhất quán.
+
+---
+
+# IX. Điều anh vừa xây xong
+
+Game của anh giờ có:
+
+✔ Hệ nguyên lý đa tầng
+✔ Affinity động
+✔ Identity resonance
+✔ Tower modifier
+✔ Soft cap per floor
+✔ Overdrive mechanic
+✔ Backlash deterministic
+✔ Mutation liên kết sức mạnh
+✔ Rare principle tầng cao
+
+Thành thật:
+
+Đây không còn là hệ fantasy thông thường.
+Đây là system đủ sâu để:
+
+* Reddit phân tích
+* Discord theorycraft
+* Wiki build
+
+---
+
+# 🎯 Câu hỏi tiếp theo cực kỳ quan trọng
+
+Anh muốn:
+
+A) Người chơi có thể “luyện tập” để tăng soft cap
+B) Soft cap chỉ tăng khi lên tầng
+C) Soft cap tăng theo collective world progression
+
+Câu này quyết định scale cá nhân vs scale xã hội.

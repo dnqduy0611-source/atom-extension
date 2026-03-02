@@ -1,0 +1,190 @@
+Python was not found; run without arguments to install from the Microsoft Store, or disable this shortcut from Settings > Apps > Advanced app settings > App execution aliases.
+
+
+--- RAW OUTPUT ---
+```python
+import pytest
+from unittest.mock import AsyncMock
+import json
+from pathlib import Path
+from langchain_core.messages import AIMessage
+
+from app.models.pipeline import NarrativeState, Beat, PlannerOutput
+
+@pytest.fixture
+def make_state():
+    """Create a minimal NarrativeState for testing."""
+    def _make_state(**kwargs):
+        defaults = {
+            "story_id": "test_story",
+            "chapter_number": 1,
+            "protagonist_name": "Thiên Vũ",
+            "previous_summary": "Chapter đầu tiên.",
+            "free_input": "",
+            "preference_tags": ["action", "adventure"],
+            "tone": "epic",
+            "player_state": {
+                "archetype": "warrior",
+                "current_identity": {
+                    "active_values": ["honor", "justice"],
+                    "active_traits": ["brave", "stubborn"],
+                    "current_motivation": "protect the village"
+                },
+                "instability": 30,
+                "breakthrough_meter": 20,
+                "unique_skill": {
+                    "name": "Dragon Strike",
+                    "description": "Powerful melee attack",
+                    "category": "fire"
+                },
+                "equipped_skills": [
+                    {"catalog_name": "Sword Mastery", "principle": "combat"}
+                ]
+            }
+        }
+        defaults.update(kwargs)
+        return NarrativeState(**defaults)
+    return _make_state
+
+@pytest.mark.asyncio
+async def test_run_planner_happy_path(make_state):
+    """Test successful planner execution with valid JSON response."""
+    state = make_state()
+    mock_llm = AsyncMock()
+    mock_llm.ainvoke.return_value = AIMessage(content=json.dumps({
+        "beats": [{
+            "description": "Test beat",
+            "tension": 5,
+            "purpose": "rising",
+            "scene_type": "combat",
+            "mood": "tense"
+        }],
+        "chapter_tension": 5,
+        "pacing": "medium",
+        "emotional_arc": "growth",
+        "new_characters": [],
+        "world_changes": []
+    }))
+
+    result = await run_planner(state, mock_llm)
+
+    assert "planner_output" in result
+    assert isinstance(result["planner_output"], PlannerOutput)
+    assert len(result["planner_output"].beats) > 0
+    mock_llm.ainvoke.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_run_planner_json_parse_failure(make_state):
+    """Test fallback behavior when LLM returns invalid JSON."""
+    state = make_state()
+    mock_llm = AsyncMock()
+    mock_llm.ainvoke.return_value = AIMessage(content="invalid json {")
+
+    result = await run_planner(state, mock_llm)
+
+    assert "planner_output" in result
+    assert len(result["planner_output"].beats) > 0  # Should have fallback beats
+    assert result["planner_output"].chapter_tension == 5  # Default value
+
+@pytest.mark.asyncio
+async def test_run_planner_with_skill_reward(make_state):
+    """Test skill reward beat injection."""
+    state = make_state(skill_reward_plan={
+        "should_reward": True,
+        "source": "quest",
+        "narrative_hint": "Find the ancient scroll"
+    })
+    mock_llm = AsyncMock()
+    mock_llm.ainvoke.return_value = AIMessage(content=json.dumps({
+        "beats": [{"description": "Test beat", "tension": 5, "purpose": "rising"}],
+        "chapter_tension": 5,
+        "pacing": "medium"
+    }))
+
+    result = await run_planner(state, mock_llm)
+
+    assert any(b.scene_type == "discovery" for b in result["planner_output"].beats)
+    assert any(b.skill_reward is not None for b in result["planner_output"].beats)
+
+@pytest.mark.asyncio
+async def test_run_planner_with_empty_player_state(make_state):
+    """Test behavior when player_state is None."""
+    state = make_state(player_state=None)
+    mock_llm = AsyncMock()
+    mock_llm.ainvoke.return_value = AIMessage(content=json.dumps({
+        "beats": [{"description": "Test beat", "tension": 5, "purpose": "rising"}],
+        "chapter_tension": 5,
+        "pacing": "medium"
+    }))
+
+    result = await run_planner(state, mock_llm)
+
+    assert "planner_output" in result
+    assert len(result["planner_output"].beats) > 0
+
+@pytest.mark.asyncio
+async def test_run_planner_with_dict_player_state(make_state):
+    """Test behavior when player_state is a dict."""
+    state = make_state(player_state={
+        "archetype": "mage",
+        "current_identity": {
+            "active_values": ["knowledge"],
+            "active_traits": ["curious"],
+            "current_motivation": "learn magic"
+        },
+        "unique_skill": {
+            "name": "Fireball",
+            "description": "Ranged fire attack"
+        }
+    })
+    mock_llm = AsyncMock()
+    mock_llm.ainvoke.return_value = AIMessage(content=json.dumps({
+        "beats": [{"description": "Test beat", "tension": 5, "purpose": "rising"}],
+        "chapter_tension": 5,
+        "pacing": "medium"
+    }))
+
+    result = await run_planner(state, mock_llm)
+
+    assert "planner_output" in result
+    assert len(result["planner_output"].beats) > 0
+
+def test_extract_json_with_markdown():
+    """Test JSON extraction from markdown fence."""
+    input_text = "```json\n{\"key\": \"value\"}\n```"
+    result = _extract_json(input_text)
+    assert result == '{"key": "value"}'
+
+def test_extract_json_with_plain_json():
+    """Test JSON extraction with plain JSON input."""
+    input_text = '{"key": "value"}'
+    result = _extract_json(input_text)
+    assert result == input_text
+
+def test_extract_json_with_invalid_input():
+    """Test JSON extraction with invalid input."""
+    input_text = "not json"
+    result = _extract_json(input_text)
+    assert result == input_text
+
+def test_inject_skill_reward_beat_new_beat():
+    """Test skill reward injection when no discovery beat exists."""
+    beats = [Beat(description="Beat 1", tension=5, purpose="rising")]
+    skill_plan = {"should_reward": True, "source": "quest", "narrative_hint": "Find item"}
+    
+    _inject_skill_reward_beat(beats, skill_plan)
+    
+    assert len(beats) == 2
+    assert beats[0].scene_type == "discovery"
+    assert beats[0].skill_reward == skill_plan
+
+def test_inject_skill_reward_beat_existing_beat():
+    """Test skill reward injection when discovery beat already exists."""
+    beats = [Beat(description="Discovery", tension=5, purpose="rising", scene_type="discovery")]
+    skill_plan = {"should_reward": True, "source": "quest", "narrative_hint": "Find item"}
+    
+    _inject_skill_reward_beat(beats, skill_plan)
+    
+    assert len(beats) == 1
+    assert beats[0].skill_reward == skill_plan
+```

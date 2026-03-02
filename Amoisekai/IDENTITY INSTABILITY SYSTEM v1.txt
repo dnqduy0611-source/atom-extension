@@ -1,0 +1,206 @@
+Anh đang chọn một hướng **rất táo bạo — và cực kỳ mạnh về mặt narrative**.
+
+> Unique Skill có thể mất ổn định nếu người chơi sống trái identity
+> Và người chơi **không hề biết cơ chế đó tồn tại**
+
+Nếu làm đúng → đây là thứ khiến game của anh khác hoàn toàn thị trường.
+
+Nhưng nếu làm sai → người chơi sẽ cảm thấy “game bug” hoặc “bị phạt vô lý”.
+
+Vì vậy ta phải thiết kế nó rất tinh tế.
+
+---
+
+# 🌌 IDENTITY INSTABILITY SYSTEM v1
+
+## I. Triết lý
+
+Unique Skill không phải hệ thống máy móc.
+
+Nó là:
+
+> Một thực thể sống cùng nhân vật.
+
+Nếu nhân vật thay đổi, nó thay đổi.
+
+Không phải hình phạt.
+Mà là hệ quả tự nhiên.
+
+---
+
+# II. Cơ chế ngầm (người chơi không biết)
+
+Mỗi Unique Skill có thêm một biến ẩn:
+
+```json
+{
+  "identity_coherence": 0-100,
+  "instability": 0-100
+}
+```
+
+### Identity Coherence
+
+Đo mức độ:
+
+* Hành vi hiện tại có khớp với “Seed Identity” không.
+
+### Instability
+
+Tăng khi:
+
+* Coherence giảm
+* Người chơi mâu thuẫn liên tục
+* Phản bội giá trị gốc
+* Ra quyết định trái với DNA quá nhiều
+
+---
+
+# III. Điều quan trọng: Không kích hoạt đột ngột
+
+Không bao giờ:
+
+> Bạn làm 1 việc trái → skill hỏng.
+
+Phải là:
+
+* Drift từ từ
+* Có dấu hiệu
+* Có cảnh báo narrative
+
+---
+
+# IV. Biểu hiện của Instability
+
+Không hiển thị con số.
+
+Chỉ thể hiện qua:
+
+### 1️⃣ Nhiễu nhẹ
+
+* Skill chậm hơn
+* Hiệu ứng không hoàn hảo
+* Lời mô tả mơ hồ
+
+Ví dụ:
+
+> “Hình ảnh tương lai thoáng qua… nhưng có điều gì đó không khớp.”
+
+---
+
+### 2️⃣ Sai lệch
+
+* Skill kích hoạt nhưng outcome lệch 20–30%
+* Tác dụng phụ nhỏ
+
+---
+
+### 3️⃣ Biến dị
+
+Skill bắt đầu:
+
+* Thêm yếu tố tối
+* Thay đổi logic hoạt động
+* Lệch triết lý ban đầu
+
+---
+
+# V. Điều cực kỳ quan trọng
+
+Người chơi KHÔNG được nghĩ:
+
+> Game đang nerf tôi.
+
+Mà phải cảm giác:
+
+> Có điều gì đó sai trong nhân vật của mình.
+
+Sự khác biệt này quyết định retention.
+
+---
+
+# VI. Cơ chế hồi phục (rất quan trọng)
+
+Nếu chỉ có decay → quá độc hại.
+
+Phải có:
+
+### Re-alignment Arcs
+
+Nếu người chơi:
+
+* Đối diện sai lầm
+* Hàn gắn mối quan hệ
+* Giữ một lời hứa lớn
+
+→ Identity Coherence tăng lại.
+
+Skill ổn định dần.
+
+Hoặc:
+
+→ Tiến hóa theo hướng mới (Dark Path / Redemption Path)
+
+---
+
+# VII. Tại sao cơ chế này cực mạnh?
+
+Vì:
+
+* Nó biến game thành hành trình nội tâm
+* Người chơi có thể “đánh mất bản thân”
+* Có thể “tìm lại bản thân”
+* Unique Skill trở thành gương phản chiếu
+
+Đây là đúng tinh thần A + C + D mà anh muốn.
+
+---
+
+# VIII. Rủi ro lớn nhất
+
+Nếu không tinh tế:
+
+* Người chơi nghĩ AI bug
+* Hoặc nghĩ hệ thống random
+* Hoặc cảm thấy bị phạt không công bằng
+
+---
+
+# IX. Cách tránh phản ứng tiêu cực
+
+1️⃣ Không thay đổi đột ngột
+2️⃣ Có narrative warning
+3️⃣ Có cơ hội sửa sai
+4️⃣ Không bao giờ vô hiệu hóa hoàn toàn chỉ vì mâu thuẫn
+
+Skill có thể:
+
+* Méo
+* Biến
+* Lệch
+
+Nhưng không “tắt”.
+
+---
+
+# X. Đây là lựa chọn của anh
+
+Anh đang chọn universe nơi:
+
+* Sức mạnh không chỉ đến từ build
+* Mà từ việc bạn sống như thế nào
+* Và bản ngã có thể rạn nứt
+
+Đây là hướng cực mature.
+Rất hợp MMO Narrative psychological.
+
+---
+
+Tôi hỏi câu cuối để hoàn thiện hệ:
+
+Anh có muốn:
+
+A) Identity có thể thay đổi hoàn toàn theo thời gian (tức là Seed ban đầu không phải định mệnh cuối cùng)?
+B) Identity gốc luôn tồn tại, dù có biến dị thế nào?
+
+Cái này sẽ quyết định độ “bi kịch” của universe anh.

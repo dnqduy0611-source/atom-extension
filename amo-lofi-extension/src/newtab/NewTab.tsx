@@ -8,6 +8,7 @@ import { TopSites } from '../components/TopSites';
 import { useTimerState } from '../hooks/useTimerState';
 import { useTimerSync } from '../hooks/useTimerSync';
 import { useScene } from '../hooks/useScene';
+import { trackProductEvent } from '../services/analytics';
 
 // ── Lazy-loaded components (not needed at first paint) ──
 const ParkingLot = lazy(() => import('../components/ParkingLot').then(m => ({ default: m.ParkingLot })));
@@ -71,9 +72,10 @@ export function NewTab() {
 
     const timerActive = timer.mode !== 'idle' || showTimer;
 
-    // Fade-in after mount
+    // Fade-in after mount + track app open
     useEffect(() => {
         requestAnimationFrame(() => setReady(true));
+        trackProductEvent('app_open');
     }, []);
 
     // Load persisted focus task from chrome.storage
@@ -107,7 +109,8 @@ export function NewTab() {
             const url = q.startsWith('http') ? q : `https://${q}`;
             window.location.href = url;
         } else {
-            window.location.href = `https://www.google.com/search?q=${encodeURIComponent(q)}`;
+            // Use Chrome Search API to respect user's default search engine
+            chrome.search.query({ text: q, disposition: 'CURRENT_TAB' });
         }
     };
 
@@ -190,7 +193,7 @@ export function NewTab() {
                                 <input
                                     type="text"
                                     className="search-bar-input"
-                                    placeholder="Search Google or type a URL"
+                                    placeholder="Search the web or type a URL"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     onKeyDown={(e) => {

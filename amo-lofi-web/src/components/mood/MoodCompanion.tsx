@@ -18,6 +18,7 @@ import { useFocusStore } from '../../store/useFocusStore';
 import { useCustomScenes } from '../../hooks/useCustomScenes';
 import { useLofiStore } from '../../store/useLofiStore';
 import { getDefaultChips } from '../../utils/intentDetector';
+import { trackProductEvent } from '../../utils/analytics';
 import { SuggestionChips } from './SuggestionChips';
 import { InlineTaskSteps } from './InlineTaskSteps';
 import { InlineJournal } from './InlineJournal';
@@ -106,6 +107,7 @@ export function MoodCompanion() {
         if (!input.trim() || phase === 'thinking') return;
         const text = input;
         setInput('');
+        trackProductEvent('chat_send');
         await sendMessage(text);
     };
 

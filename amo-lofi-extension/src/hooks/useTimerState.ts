@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getTimerState, type TimerState, DEFAULT_TIMER } from '../storage/timer';
+import { trackProductEvent } from '../services/analytics';
 
 /**
  * useTimerState — Reactive timer state hook.
@@ -51,7 +52,22 @@ export function useTimerState() {
 
 /**
  * Send a timer command to the Service Worker.
+ * Also fires product analytics events for focus tracking.
  */
 export function sendTimerCommand(action: string, payload?: any) {
+    // Track focus events
+    if (action === 'start') {
+        trackProductEvent('focus_start', {
+            timerMode: 'work',
+            workDuration: payload?.minutes ?? 25,
+        });
+    } else if (action === 'reset') {
+        trackProductEvent('focus_abort');
+    } else if (action === 'skip') {
+        trackProductEvent('focus_complete', {
+            completedVia: 'skip',
+        });
+    }
+
     chrome.runtime.sendMessage({ type: 'timer', action, payload });
 }

@@ -134,15 +134,16 @@ export function Popup() {
                             fontSize: '1rem',
                             fontWeight: 600,
                             letterSpacing: '0.02em',
-                            background: `linear-gradient(135deg, #e8eaf0, ${accentColor})`,
+                            background: `linear-gradient(135deg, #ffffff, ${accentColor})`,
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent',
+                            color: '#ffffff',
                         }}>
                             Amo Lofi
                         </div>
                         <div style={{
                             fontSize: '0.65rem',
-                            color: 'rgba(255,255,255,0.35)',
+                            color: 'rgba(255,255,255,0.6)',
                             letterSpacing: '0.15em',
                             textTransform: 'uppercase',
                             marginTop: 1,
@@ -230,7 +231,7 @@ export function Popup() {
                             )}
                             <div style={{
                                 fontSize: '0.65rem',
-                                color: 'rgba(255,255,255,0.25)',
+                                color: 'rgba(255,255,255,0.5)',
                                 marginTop: 2,
                             }}>
                                 {timer.isRunning ? 'Đang chạy' : (isActive ? 'Đã tạm dừng' : 'Bấm để bắt đầu')}
@@ -398,7 +399,7 @@ export function Popup() {
                         alignItems: 'center',
                         gap: 6,
                         fontSize: '0.65rem',
-                        color: 'rgba(255,255,255,0.3)',
+                        color: 'rgba(255,255,255,0.5)',
                     }}>
                         <UserIcon />
                         {user?.email
@@ -407,10 +408,10 @@ export function Popup() {
                     </div>
                     <div style={{
                         fontSize: '0.6rem',
-                        color: 'rgba(255,255,255,0.15)',
+                        color: 'rgba(255,255,255,0.4)',
                         letterSpacing: '0.05em',
                     }}>
-                        v1.0.0
+                        v1.5.0
                     </div>
                 </div>
             </div>

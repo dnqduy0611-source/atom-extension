@@ -1,0 +1,188 @@
+Tốt.
+Chọn **C – biết một phần, phần còn lại ẩn** là quyết định đúng nếu anh muốn:
+
+* Có meta phân tích
+* Nhưng không biến game thành spreadsheet simulator
+* Giữ được mystery + identity depth
+
+Giờ tôi sẽ formalize thành một hệ hiển thị hợp lý, vừa đủ cho diễn đàn bàn luận, nhưng vẫn giữ “ẩn số”.
+
+---
+
+# 🌌 RESONANCE VISIBILITY SYSTEM v1
+
+---
+
+# I. 3 TẦNG THÔNG TIN
+
+## 🟢 Tầng 1 – Public Signal (Hiển thị mềm)
+
+Người chơi thấy:
+
+* “Bạn có xu hướng ổn định mạnh mẽ.” (Order high)
+* “Flux trong bạn đang dao động.” (Flux rising)
+* “Void đang âm thầm cộng hưởng.” (Void latent)
+
+Không thấy số cụ thể.
+
+Chỉ thấy:
+
+* Mạnh
+* Yếu
+* Đang tăng
+* Đang suy
+
+---
+
+## 🔵 Tầng 2 – Measurable Indicator (Chỉ số tương đối)
+
+Hiển thị dạng thanh hoặc mức:
+
+* Order: ★★★★☆
+* Flux: ★★☆☆☆
+* Entropy: ★☆☆☆☆
+
+Hoặc:
+
+* Stable
+* Resonant
+* Turbulent
+* Dormant
+
+Không bao giờ hiển thị:
+
+> 0.73 resonance.
+
+---
+
+## 🟣 Tầng 3 – Hidden Layer (Backend)
+
+Backend có số thật:
+
+```json
+{
+  "Order": 0.82,
+  "Flux": 0.34,
+  "Entropy": 0.12
+}
+```
+
+Nhưng người chơi không thấy.
+
+Chỉ LLM + deterministic engine dùng.
+
+---
+
+# II. AWAKENING HINT SYSTEM
+
+Thức tỉnh không hiện:
+
+> “Entropy đã đạt 0.6”.
+
+Mà hiện:
+
+* “Bạn bắt đầu cảm thấy mọi thứ xung quanh phân rã rõ ràng hơn.”
+* “Những cấu trúc bền vững làm bạn khó chịu.”
+* “Void không còn im lặng.”
+
+Người chơi phải suy đoán.
+
+Meta diễn đàn sẽ kiểu:
+
+“Dấu hiệu này có phải sắp awaken Entropy không?”
+
+---
+
+# III. HỆ PERCEPTION (Cho skill đọc người khác)
+
+Có thể tồn tại skill:
+
+* Light-based perception
+* Void detection
+* Contract reading
+
+Nhưng chỉ lộ:
+
+* Nguyên lý trội
+* Không lộ full resonance
+* Không lộ latent affinity
+
+Trust vẫn là tài nguyên.
+
+---
+
+# IV. TẠI SAO CÁCH NÀY HOẠT ĐỘNG TỐT?
+
+Nếu hiển thị full số:
+
+→ Min-max
+→ Spreadsheet
+→ Meta chết sớm
+
+Nếu ẩn toàn bộ:
+
+→ Không ai phân tích nổi
+→ Build cảm tính
+
+Cách C tạo:
+
+* Mystery
+* Research
+* Theorycraft
+* Nhưng vẫn có tín hiệu logic
+
+---
+
+# V. TƯƠNG TÁC VỚI TẦNG THÁP
+
+Ở tầng cao:
+
+* Resonance có thể bị méo
+* UI hint có thể sai lệch
+* Light-based perception bị nhiễu
+
+Tạo cảm giác thực tại bất ổn.
+
+---
+
+# VI. CẢNH BÁO RẤT QUAN TRỌNG
+
+Anh phải giữ:
+
+* Deterministic backend
+* LLM không tự “bịa resonance”
+
+LLM chỉ đọc state và mô tả lại.
+
+Nếu không, consistency sẽ vỡ.
+
+---
+
+# VII. BÂY GIỜ HỆ SỨC MẠNH CỦA ANH GỒM:
+
+✔ 7 nguyên lý nền
+✔ 3 nguyên lý hiếm
+✔ 2 nguyên lý thường / skill
+✔ 3 nguyên lý mythic hiếm
+✔ Core affinity + awakened affinity
+✔ Resonance dynamic
+✔ Instability interaction
+✔ Tower modifier
+✔ Partial visibility
+✔ Unique skill bẻ cấu trúc
+
+Thành thật mà nói:
+
+Hệ này đã đủ để cộng đồng theorycraft 2–3 năm.
+
+---
+
+# 🎯 Câu hỏi tiếp theo – cực quan trọng về meta
+
+Anh muốn:
+
+A) Có cap trần sức mạnh theo tầng
+B) Không có cap trần, chỉ có instability giới hạn
+C) Có soft cap + có thể vượt bằng nguy cơ cực cao
+
+Câu này sẽ quyết định game anh có phá meta hay không.

@@ -1,0 +1,203 @@
+Tốt.
+
+Anh chọn **A + B cho Season 1**:
+
+> 🔥 Survival + Identity + Tiền tuyến Empire
+> 🔥 Đồng thời có chính trị + nation + chiến tranh khu vực
+
+Đây là hướng đúng nếu muốn:
+
+* Giữ người chơi solo
+* Giữ người thích chiến lược
+* Và vẫn gieo hạt cho cosmology lớn
+
+Nhưng phải cấu trúc Season 1 cực rõ, nếu không sẽ loạn.
+
+Tôi sẽ đóng khung lại thành blueprint Season 1 thực tế.
+
+---
+
+# 🌌 SEASON 1 – “Age of Awakening”
+
+## Mục tiêu Season 1
+
+1. Giới thiệu Unique Identity System
+2. Thiết lập Enemy Empire tiền tuyến
+3. Cho phép hình thành nation nhưng chưa full war
+4. Gieo hạt chu kỳ
+5. Tạo 1 World Event đỉnh điểm
+
+---
+
+# I. Giai đoạn 1 – Survival & Awakening (Early Season)
+
+### Trọng tâm:
+
+* Cá nhân
+* Unique skill
+* Instability
+* Fate buffer
+
+Nội dung:
+
+* Vùng tiền tuyến bị nhiễm
+* Dị biến nhỏ
+* Mini-boss cấp thấp
+* Quest khám phá artifact cổ
+
+Nation chưa mở.
+
+Đây là nơi:
+
+* Validate identity engine
+* Người chơi gắn bó với nhân vật
+
+---
+
+# II. Giai đoạn 2 – Regional Conflict (Mid Season)
+
+Khi đủ người chơi đạt influence:
+
+Mở:
+
+* Faction
+* Nhóm nhỏ
+* Territory nhỏ
+
+Empire bắt đầu:
+
+* Tấn công thành phố
+* Gửi tướng cấp khu vực
+* Thao túng chính trị
+
+Nation bắt đầu hình thành.
+
+Nhưng chưa full-scale war.
+
+---
+
+# III. Giai đoạn 3 – Warfront & Political Arc (Late Mid Season)
+
+Nation bắt đầu:
+
+* Tranh chấp lãnh thổ
+* Đàm phán
+* Phản bội
+* Ám sát
+
+Empire leo thang:
+
+* 1 Regional General xuất hiện
+* Anti-Unique zone lan rộng
+* Dị biến lớn
+
+Survival + chính trị giao nhau.
+
+---
+
+# IV. Giai đoạn 4 – World Calamity Event
+
+Toàn server:
+
+* Instability tăng mạnh
+* Mutation hàng loạt
+* Fate buffer gần như biến mất
+* Empire mở ritual
+
+Đây là lúc:
+
+* Nation phải hợp tác
+* Solo player clear tuyến đặc biệt
+* Strategist giải mã pattern
+
+Boss tầng 1 chưa phải Final Entity.
+Chỉ là “Executor”.
+
+---
+
+# V. End of Season 1
+
+Sau khi Executor bị đánh bại:
+
+* Thế giới rung chuyển
+* Artifact cổ thức tỉnh
+* Reveal chu kỳ
+* Lộ ra rằng đây không phải lần đầu
+
+Collective alignment được tính.
+
+Season 2 chuẩn bị mở.
+
+---
+
+# VI. Vì sao A + B kết hợp được?
+
+Survival giữ chân người chơi mới.
+Chính trị giữ chân người chơi dài hạn.
+
+Empire là chất xúc tác cho cả hai.
+
+---
+
+# VII. Điều cực kỳ quan trọng
+
+Season 1 KHÔNG nên:
+
+* Reveal full cosmology
+* Cho nation quá mạnh
+* Cho player quá overpower
+
+Season 1 chỉ:
+
+> Thiết lập thế giới.
+
+---
+
+# VIII. Scope thực tế nếu build
+
+Season 1 MVP chỉ cần:
+
+✔ Unique Skill Engine
+✔ Drift + Mutation basic
+✔ Fate Buffer
+✔ 1 vùng tiền tuyến
+✔ 1 Regional General
+✔ Faction system basic
+✔ World instability meter ẩn
+
+Chưa cần:
+
+* Capital Domain
+* Tầng 2 thực tại
+* Nation economy phức tạp
+* Multi-layer cosmology
+
+---
+
+# IX. Thành thật với anh
+
+Nếu anh cố build toàn bộ vision ngay từ đầu:
+
+→ 99% khả năng chết vì scope.
+
+Nếu anh build Season 1 đúng cách:
+
+→ Anh có thể test:
+
+* Người chơi có thích identity không?
+* Có thích chết có weight không?
+* Có thích chính trị không?
+
+Sau đó mới leo tầng.
+
+---
+
+# X. Câu hỏi thực dụng cuối cùng trước khi ta chuyển sang blueprint kỹ thuật
+
+Anh muốn MVP đầu tiên có:
+
+A) Text-only + minimal world interaction
+B) Text-first nhưng có shared world-state thật
+C) Có luôn PvP interaction cơ bản
+
+Chọn đúng cái này sẽ quyết định 6 tháng đầu của dự án.

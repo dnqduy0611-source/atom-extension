@@ -33,7 +33,16 @@
       "WebFetch(domain:beeziee.com)",
       "Bash(test:*)",
       "Bash(wc:*)",
-      "WebFetch(domain:chromewebstore.google.com)"
+      "WebFetch(domain:chromewebstore.google.com)",
+      "Bash(python3:*)",
+      "Bash(npm install)",
+      "Bash(npx vitest run output/unit/embedding_service_2026-02-28T02-50-08.test.js)",
+      "Bash(python -c \":*)",
+      "Bash(py -c \":*)",
+      "Bash(d:/Amo/ATOM_Extension_V2.8_public/amo-stories-engine/.venv/Scripts/python.exe -c \":*)",
+      "Bash(.venv/Scripts/python.exe -c \":*)",
+      "Bash(.venv/Scripts/python.exe -m py_compile app/memory/state.py)",
+      "Bash(py -3 -c \":*)"
     ]
   }
 }

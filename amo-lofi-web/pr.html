@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AmoLofi — Focus Sanctuary</title>
+  <meta name="description" content="AmoLofi biến trình duyệt thành không gian tập trung điện ảnh: nhạc lofi, timer, hard-block mềm mại, AI insight." />
+  <style>
+    :root{
+      --bg:#070911;
+      --card:rgba(255,255,255,.08);
+      --line:rgba(255,255,255,.18);
+      --text:#eef2ff;
+      --muted:#a7b0d1;
+      --brand:#6ee7ff;
+      --brand2:#8b5cf6;
+      --ok:#34d399;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      background:var(--bg);
+      line-height:1.45;
+    }
+    .hero{
+      min-height:90vh;
+      background:
+        linear-gradient(180deg, rgba(7,9,17,.65), rgba(7,9,17,.95)),
+        url('/scenes/cyberpunk_night.jpg') center/cover no-repeat;
+      padding:40px 20px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .hero-inner{max-width:980px;width:100%}
+    .badge{
+      display:inline-block;
+      padding:8px 14px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.25);
+      border-radius:999px;
+      font-size:13px;
+      color:#dbeafe;
+      backdrop-filter: blur(8px);
+    }
+    h1{font-size:clamp(32px,6vw,64px);margin:16px 0 10px;line-height:1.05}
+    .grad{
+      background:linear-gradient(90deg,var(--brand),#b794f4 55%,#fde68a);
+      -webkit-background-clip:text;background-clip:text;color:transparent;
+    }
+    .sub{max-width:760px;color:var(--muted);font-size:18px}
+    .cta{margin-top:24px;display:flex;gap:12px;flex-wrap:wrap}
+    .btn{
+      text-decoration:none;
+      padding:12px 18px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      color:#fff;
+      background:rgba(255,255,255,.08);
+      display:inline-block;
+      font-weight:600;
+    }
+    .btn.primary{background:linear-gradient(135deg,#06b6d4,#8b5cf6);border:none}
+
+    .wrap{max-width:1060px;margin:0 auto;padding:24px 20px 72px}
+    .grid{display:grid;gap:16px}
+    .grid.cols-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:18px;
+      backdrop-filter:blur(10px);
+    }
+    .card h3{margin:0 0 8px;font-size:18px}
+    .muted{color:var(--muted)}
+    .section-title{margin:28px 0 12px;font-size:26px}
+    .shot{
+      border-radius:16px;
+      border:1px solid var(--line);
+      overflow:hidden;
+      background:#111827;
+    }
+    .shot img{display:block;width:100%;height:auto}
+    .kpi{font-size:30px;font-weight:800;margin:0}
+    .tag{font-size:12px;color:#d1d5db;background:rgba(255,255,255,.09);padding:4px 8px;border-radius:999px;display:inline-block}
+    footer{padding:28px 20px;color:var(--muted);text-align:center;border-top:1px solid rgba(255,255,255,.12)}
+  </style>
+</head>
+<body>
+  <section class="hero">
+    <div class="hero-inner">
+      <span class="badge">🎧 AmoLofi — Focus Sanctuary</span>
+      <h1>Biến trình duyệt thành <span class="grad">không gian tập trung</span> điện ảnh</h1>
+      <p class="sub">
+        AmoLofi kết hợp timer, nhạc lofi, hard-block mềm mại và AI insight để giúp bạn vào flow state nhanh hơn và giữ nhịp làm việc bền hơn.
+      </p>
+      <div class="cta">
+        <a class="btn primary" href="#waitlist">Tham gia waitlist</a>
+        <a class="btn" href="#features">Xem tính năng</a>
+      </div>
+    </div>
+  </section>
+
+  <main class="wrap">
+    <h2 id="features" class="section-title">Tại sao AmoLofi khác biệt?</h2>
+    <div class="grid cols-3">
+      <article class="card">
+        <h3>🕒 Cinematic Focus Timer</h3>
+        <p class="muted">Đồng hồ tối giản, task rõ ràng, giao diện tự ẩn để giảm nhiễu.</p>
+      </article>
+      <article class="card">
+        <h3>🛡️ Teleport Blocking</h3>
+        <p class="muted">Thay vì màn hình “cấm truy cập”, tab xao nhãng được chuyển mềm mại về New Tab Sanctuary.</p>
+      </article>
+      <article class="card">
+        <h3>🧠 AI Weekly Insight (Pro)</h3>
+        <p class="muted">Phân tích thói quen tập trung theo tuần, gợi ý khung giờ/scene tối ưu cho từng người.</p>
+      </article>
+    </div>
+
+    <h2 class="section-title">Ảnh minh hoạ</h2>
+    <div class="grid cols-3">
+      <div class="shot"><img src="/scenes/cafe_day.jpg" alt="AmoLofi Cafe" /></div>
+      <div class="shot"><img src="/scenes/cyberpunk_night.jpg" alt="AmoLofi Cyberpunk" /></div>
+      <div class="shot"><img src="/scenes/ghibli_night.jpg" alt="AmoLofi Ghibli" /></div>
+    </div>
+
+    <h2 class="section-title">Mô hình Freemium rõ ràng</h2>
+    <div class="grid cols-3">
+      <article class="card">
+        <span class="tag">Free</span>
+        <p class="kpi">7 ngày</p>
+        <p class="muted">Báo cáo cơ bản + focus timer + scene/mixer cốt lõi</p>
+      </article>
+      <article class="card">
+        <span class="tag">Pro</span>
+        <p class="kpi">Month/Year</p>
+        <p class="muted">Heatmap, AI insight sâu, phân tích năng suất cá nhân</p>
+      </article>
+      <article class="card">
+        <span class="tag">Extension</span>
+        <p class="kpi">New Tab</p>
+        <p class="muted">Tách biệt khỏi AmoNexus để tối ưu trải nghiệm tập trung</p>
+      </article>
+    </div>
+
+    <h2 id="waitlist" class="section-title">CTA PR nhanh</h2>
+    <div class="card">
+      <p style="margin-top:0"><strong>Ready để thử AmoLofi?</strong></p>
+      <p class="muted">Điền form waitlist / để lại email / hoặc mời vào Telegram community của bạn tại đây.</p>
+      <div class="cta">
+        <a class="btn primary" href="#">Join Waitlist</a>
+        <a class="btn" href="#">Telegram Community</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    AmoLofi © 2026 · Focus harder, feel calmer.
+  </footer>
+</body>
+</html>

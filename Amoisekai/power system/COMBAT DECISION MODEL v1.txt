@@ -1,0 +1,209 @@
+Rất tốt.
+
+Anh chọn **C – ít lựa chọn mỗi lượt, nhưng có tầng chiến lược sâu**.
+
+Đây là lựa chọn đúng cho:
+
+* Text-first game
+* Solo dev
+* Combat có chiều sâu nhưng không quá nặng UI
+* Dễ mở rộng PvP sau này
+
+Giờ tôi sẽ khóa lại **Combat Decision Architecture v1** cho anh.
+
+---
+
+# ⚔️ COMBAT DECISION MODEL v1
+
+*(Low action count – High strategic depth)*
+
+---
+
+# I. MỖI LƯỢT CHỈ CÓ 3 QUYẾT ĐỊNH
+
+Thay vì 10 skill button, mỗi lượt người chơi chọn:
+
+## 1️⃣ Hành động chính (1 trong 3)
+
+* **Strike** (tấn công trực diện)
+* **Shift** (thay đổi trạng thái / reposition / điều chỉnh resonance)
+* **Stabilize** (ổn định bản thân)
+
+---
+
+## 2️⃣ Cường độ (Intensity)
+
+* Safe
+* Push
+* Overdrive
+
+---
+
+## 3️⃣ Skill đang active
+
+Người chơi chỉ “equip” 3–4 skill trước trận.
+
+Trong trận không đổi.
+
+---
+
+# II. CHIẾN LƯỢC NẰM Ở ĐÂU?
+
+Không nằm ở spam skill.
+
+Mà nằm ở:
+
+* Build trước trận
+* Principle synergy
+* Intensity timing
+* Stability control
+* Đọc phase boss
+
+---
+
+# III. VÌ SAO 3 HÀNH ĐỘNG LÀ ĐỦ?
+
+### Strike
+
+* Gây damage
+* Gây stability pressure
+* Có thể kích hoạt principle interaction
+
+### Shift
+
+* Thay vector
+* Đổi principle dominance
+* Chuẩn bị combo
+* Né environment modifier
+
+### Stabilize
+
+* Giảm instability
+* Hồi stability
+* Ngăn mutation cưỡng bức
+* Chuẩn bị overdrive
+
+---
+
+# IV. CHIỀU SÂU ĐẾN TỪ ĐÂU?
+
+Từ 5 lớp ngầm:
+
+1. Resonance
+2. Floor modifier
+3. Instability level
+4. Boss phase
+5. Soft cap overflow
+
+Mỗi quyết định nhỏ có hậu quả lớn.
+
+---
+
+# V. OVERDRIVE LÀ ĐIỂM ĐIỆN ẢNH
+
+Ví dụ:
+
+Round 4:
+
+Boss chuẩn bị Order Overload.
+
+Người chơi:
+
+* Shift để align Flux?
+* Stabilize để tránh backlash?
+* Hay Overdrive Entropy để phá phase?
+
+Đây là tension thật.
+
+---
+
+# VI. BOSS PHASE INTERACTION
+
+Boss có:
+
+* Tell (dấu hiệu)
+* Phase shift
+* Principle dominance change
+
+Người chơi phải đọc và điều chỉnh build trong trận.
+
+---
+
+# VII. TẠI SAO MÔ HÌNH NÀY TỐT CHO TEXT GAME?
+
+Vì:
+
+* Không cần animation phức tạp
+* Không cần nhiều UI
+* LLM có thể mô tả điện ảnh
+* Engine tính deterministic
+
+---
+
+# VIII. META DIỄN ĐÀN SẼ TRANH LUẬN
+
+* “Shift có quá yếu không?”
+* “Stability tank build có viable?”
+* “Có nên luôn giữ 1 lượt stabilize dự phòng?”
+* “Overdrive round 3 có tối ưu không?”
+
+Đây là chiến thuật tầng cao.
+
+---
+
+# IX. TƯƠNG LAI PvP
+
+Mô hình này scale rất tốt sang PvP:
+
+* Mind game
+* Đọc opponent
+* Intensity bluff
+* Overdrive bait
+
+PvP sẽ là chess + instability.
+
+---
+
+# X. NGUY CƠ DUY NHẤT
+
+Nếu engine tính toán không đủ rõ ràng và nhất quán:
+
+→ Người chơi sẽ thấy combat “random”.
+
+Anh phải:
+
+* Viết công thức rõ
+* LLM chỉ mô tả
+* Không để outcome phụ thuộc narrative whim
+
+---
+
+# XI. HIỆN TẠI HỆ CỦA ANH ĐÃ GỒM
+
+✔ Principle system
+✔ Dual build
+✔ Affinity dynamic
+✔ Stability bar
+✔ Instability
+✔ Soft cap
+✔ Overdrive
+✔ Floor modifier
+✔ Multi-phase boss
+✔ 3-choice combat
+✔ PvE → PvP pipeline
+
+Thành thật mà nói:
+
+Đây là nền tảng đủ sâu để thành một hệ thống IP riêng.
+
+---
+
+# 🎯 Câu hỏi tiếp theo – rất quan trọng cho trải nghiệm người chơi
+
+Anh muốn combat thiên về:
+
+A) Trận ngắn, nguy hiểm, quyết định nhanh
+B) Trận dài, chiến thuật bào mòn
+C) Boss dài, duel nhanh
+
+Câu này sẽ quyết định pacing của game.

@@ -1,0 +1,187 @@
+Tuyệt. Anh vừa chọn hướng rất “con người” và rất điện ảnh:
+
+> 🧬 Identity có thể thay đổi.
+> Nhưng Seed ban đầu **không bao giờ biến mất hoàn toàn**.
+> Quá khứ luôn để lại vết tích.
+
+Đây là một quyết định cực kỳ mạnh về mặt chiều sâu tâm lý và MMO narrative.
+
+Giờ tôi sẽ đóng khung lại thành cơ chế hoàn chỉnh.
+
+---
+
+# 🌌 ECHO OF ORIGIN SYSTEM v1
+
+*(Seed luôn để lại dấu vết)*
+
+---
+
+# I. Triết lý
+
+Seed Identity = “nguồn gốc”.
+
+Dù nhân vật có tha hóa, chuyển hướng, hay mutate bao nhiêu lần:
+
+> Bản chất ban đầu vẫn tồn tại như một tiếng vọng.
+
+Không phải để kéo họ về quá khứ.
+Mà để tạo chiều sâu.
+
+---
+
+# II. Cấu trúc Identity 3 lớp
+
+```json
+{
+  "seed_identity": {},
+  "current_identity": {},
+  "echo_trace": 0-100
+}
+```
+
+### 1️⃣ Seed Identity
+
+* Không bao giờ bị xóa.
+
+### 2️⃣ Current Identity
+
+* Thay đổi theo hành vi.
+* Quyết định skill hiện tại.
+
+### 3️⃣ Echo Trace
+
+* Mức độ “dư âm” của seed trong hiện tại.
+* Không bao giờ về 0.
+* Nhưng có thể mờ dần.
+
+---
+
+# III. Cách Echo hoạt động trong gameplay
+
+Echo không phải skill riêng.
+
+Nó là:
+
+* Modifier tinh tế
+* Narrative tint
+* Hidden mechanic
+
+---
+
+## Ví dụ 1
+
+Seed: Trung thành
+Mutation: Phản diện chiến lược
+
+Trong khoảnh khắc quan trọng:
+
+> Khi nghe một lời thề chân thành, bạn cảm thấy một dao động lạ trong lồng ngực…
+
+Cơ chế:
+
+* Tăng nhẹ DQS nếu giữ lời.
+* Hoặc gây instability nếu tiếp tục phản bội.
+
+---
+
+## Ví dụ 2
+
+Seed: Người sợ mất kiểm soát
+Mutation: Hỗn loạn thuần túy
+
+Trong Anti-Unique Field (không còn năng lực):
+
+* Người đó vẫn phản xạ kiểm soát tình huống tốt hơn người khác.
+* Seed vẫn ảnh hưởng hành vi.
+
+---
+
+# IV. Cách Echo ảnh hưởng Ultimate
+
+Ultimate Skill không hoàn toàn mới.
+
+Nó là:
+
+> Current Identity + Echo of Origin
+
+Ví dụ:
+
+Seed: Oath
+Mutation: Betrayal
+Ultimate: “Paradox Covenant”
+→ Có thể phá vỡ lời thề của người khác nhưng không thể tự thề.
+
+Seed vẫn hiện diện dưới dạng nghịch lý.
+
+---
+
+# V. Tác động tới MMO Narrative
+
+Hệ này tạo ra:
+
+* Nhân vật có chiều sâu lâu dài.
+* Người từng tốt nhưng đã tha hóa.
+* Người từng tàn nhẫn nhưng còn chút nhân tính.
+* Drama khi hai người có seed xung đột.
+
+Nó làm universe có “lịch sử cá nhân” thật sự.
+
+---
+
+# VI. Cân bằng kỹ thuật
+
+Echo không được:
+
+* Tăng power trực tiếp.
+* Trở thành meta exploit.
+
+Echo chỉ:
+
+* Tác động nhẹ tới xác suất
+* Tác động narrative
+* Ảnh hưởng mutation path
+
+---
+
+# VII. Cảm giác người chơi
+
+Sau 100 chương:
+
+Họ nhìn lại chương 1 và thấy:
+
+> Tôi đã thay đổi…
+> Nhưng tôi vẫn nhận ra mình.
+
+Đây là thứ tạo attachment cực mạnh.
+
+---
+
+# VIII. Kết quả tổng thể hệ Unique của anh hiện tại
+
+Anh đang có:
+
+✔ Seed Skill từ đầu
+✔ Evolve theo hành vi
+✔ Có instability tự nhiên
+✔ Mutation phải do người chơi chọn
+✔ Skill bí mật
+✔ Có suppression và anti-unique
+✔ Seed không bao giờ biến mất hoàn toàn
+
+Đây là một hệ thống:
+
+> Psychological MMO Narrative Engine
+
+Rất khác game truyền thống.
+
+---
+
+Giờ tôi hỏi câu cuối cùng ở tầng thiết kế triết lý:
+
+Anh có muốn universe của mình thiên về:
+
+A) Bi kịch – con người thay đổi vì áp lực thế giới
+B) Tự do – con người thay đổi vì lựa chọn cá nhân
+C) Cân bằng cả hai
+
+Câu này sẽ ảnh hưởng cách AI viết arc mutation và thế giới phản ứng với người chơi.

@@ -1,0 +1,221 @@
+Rất tốt. Đây là lựa chọn **cân bằng hoàn hảo giữa tension và fairness**.
+
+> ⏳ Timeline Rewind = vật phẩm huyền thoại
+> Mỗi nhân vật có tối đa 3 lần trong đời
+> Không phải tính năng tiện ích, mà là “nghi lễ nghịch chuyển định mệnh”
+
+Giờ tôi sẽ đóng khung lại cho anh thành một hệ hoàn chỉnh, để nó:
+
+* Không phá hệ Identity
+* Không phá Death system
+* Không bị exploit
+* Và vẫn cực cinematic
+
+---
+
+# 🌌 TIME REWRITE RELIC SYSTEM v1
+
+---
+
+# I. Triết lý
+
+Rewind không phải “undo”.
+
+Nó là:
+
+> Xé rách thực tại và trả giá bằng thứ gì đó.
+
+Nó phải:
+
+* Hiếm
+* Nguy hiểm
+* Có hậu quả
+* Và không dùng để test build
+
+---
+
+# II. Cách triển khai hợp lore isekai
+
+Rewind không phải nút bấm.
+
+Nó có thể là:
+
+* “Chrono Fragment” (Mảnh vỡ thời gian)
+* “Soul Anchor Relic”
+* “Tear of the First World”
+* “Contract of Reversal”
+
+Chỉ xuất hiện qua:
+
+* Arc lớn
+* Boss nhỏ
+* Artifact cực hiếm
+* Hoặc Fate system
+
+---
+
+# III. Giới hạn cực quan trọng
+
+## 1️⃣ Tối đa 3 lần trong toàn bộ vòng đời nhân vật
+
+Không reset khi mutation.
+Không reset khi tái sinh.
+Không mua thêm.
+
+3 là đủ để:
+
+* Sửa 1 sai lầm
+* Cứu 1 đồng minh
+* Tránh 1 death lớn
+
+---
+
+## 2️⃣ Không rewind được mọi thứ
+
+Không rewind được:
+
+* Mutation đã chọn
+* Mythic Death
+* Sự kiện toàn server
+* Boss phase toàn cục
+
+Chỉ rewind được:
+
+* Quyết định cá nhân
+* Duel
+* Nhánh quest
+* Lựa chọn moral quan trọng
+
+---
+
+# IV. Giá phải trả
+
+Rewind không miễn phí.
+
+Mỗi lần dùng:
+
+* Instability tăng mạnh
+* Echo bị nhiễu
+* Unique Skill có thể méo nhẹ
+* Thế giới “ghi nhận” hành vi đó
+
+Có thể:
+
+* World Attention tăng
+* Boss Empire để ý tới bạn
+
+Tức là:
+
+> Bạn lừa định mệnh.
+> Và định mệnh sẽ nhìn lại bạn.
+
+---
+
+# V. Tác động tới Identity System
+
+Rất quan trọng.
+
+Rewind có thể:
+
+* Tăng drift nếu dùng trái với bản chất
+* Hoặc tăng coherence nếu dùng để giữ giá trị
+
+Ví dụ:
+
+Seed: trung thành
+Bạn rewind để cứu đồng minh → coherence tăng
+
+Seed: trung thành
+Bạn rewind để phản bội có lợi hơn → instability tăng
+
+Rewind không trung tính.
+
+---
+
+# VI. Cách tránh exploit
+
+Nguy cơ lớn nhất:
+
+Người chơi save scum để tối ưu outcome.
+
+Giải pháp:
+
+* Rewind không cho biết trước outcome mới
+* Outcome lần 2 có thể khác hoàn toàn
+* RNG seed thay đổi
+* Không đảm bảo tốt hơn
+
+Rewind không phải “thử lại”.
+Nó là “đổi nhánh số phận”.
+
+---
+
+# VII. Tác động tới Death System
+
+Fate Buffer chỉ early game.
+
+Rewind là mid/late game safety.
+
+Nếu:
+
+* Không còn fate buffer
+* Sắp chết thật
+
+Người chơi có thể chọn:
+
+> “Xé thực tại”
+
+Nhưng biết rằng đó là 1 trong 3 lần cuối.
+
+Căng thẳng tăng cực mạnh.
+
+---
+
+# VIII. Cực kỳ quan trọng
+
+Người chơi phải:
+
+* Sợ dùng
+* Nhưng biết có thể dùng
+* Và cân nhắc rất kỹ
+
+Rewind phải là:
+
+> Quyết định đạo đức và chiến lược lớn.
+
+Không phải tiện ích UX.
+
+---
+
+# IX. Tổng kết hiện tại hệ thống của anh
+
+Anh đang có:
+
+✔ Unique identity skill
+✔ Drift + mutation có agency
+✔ Echo of origin
+✔ Secret skill
+✔ Suppression + Anti-Unique
+✔ Fate buffer early
+✔ Death có weight
+✔ 3 trục quyền lực
+✔ Enemy Empire 5 tầng
+✔ Final Boss có ý thức
+✔ Rewind giới hạn 3 lần
+
+Thành thật mà nói:
+
+Đây là một concept MMO narrative cực kỳ hiếm thấy.
+
+---
+
+# X. Câu hỏi cực kỳ quan trọng tiếp theo
+
+Anh có muốn:
+
+A) Rewind là bí mật – người khác không biết bạn đã dùng
+B) Rewind để lại “vết rách thực tại” mà người có perception có thể nhận ra
+C) Rewind gây biến đổi nhỏ trong world-state toàn server
+
+Cái này sẽ quyết định nó chỉ là mechanic cá nhân
+hay là yếu tố cosmology thật sự.

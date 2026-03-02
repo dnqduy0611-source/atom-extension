@@ -1,0 +1,200 @@
+Tốt. Anh vừa chọn đúng hướng cho game identity-driven:
+
+> 🔹 Có **Affinity nền (Innate Resonance)**
+> 🔹 Và có thể **thức tỉnh Affinity mới theo hành vi / drift / mutation**
+
+Đây là cấu trúc rất mạnh vì:
+
+* Không khóa build từ đầu
+* Không cho free respec
+* Vẫn giữ “hành vi định hình sức mạnh”
+* Và tạo meta thảo luận cực sâu
+
+Giờ tôi sẽ formalize thành hệ thống hoàn chỉnh.
+
+---
+
+# 🌌 AFFINITY SYSTEM SPEC v1
+
+---
+
+# I. 2 LỚP AFFINITY
+
+## 🟢 1️⃣ Core Affinity (Innate)
+
+* Sinh ra khi tạo nhân vật
+* Dựa trên quiz + identity vector
+* 1 nguyên lý chính + 1 phụ nhẹ
+
+Ví dụ:
+
+* Order (main) + Matter (minor)
+* Flux (main) + Energy (minor)
+* Void (main) + Entropy (minor)
+
+Core Affinity:
+
+* Tăng resonance
+* Giảm instability khi dùng đúng nguyên lý
+* Không bao giờ mất
+
+Đây là “bản chất gốc”.
+
+---
+
+## 🔵 2️⃣ Awakened Affinity (Dynamic)
+
+Có thể thức tỉnh nếu:
+
+* Drift mạnh theo nguyên lý khác
+* Mutation lớn
+* Chết nhiều trong tháp
+* Tiếp xúc rare principle
+
+Ví dụ:
+
+Một người Order main nhưng drift mạnh → Entropy awakening.
+
+Họ có thể trở thành:
+
+> Order–Entropy hybrid (rất nguy hiểm, rất unstable).
+
+---
+
+# II. CƠ CHẾ RESONANCE
+
+Mỗi người có resonance score cho từng nguyên lý:
+
+```id="a9t7wx"
+{
+  "Matter": 0.2,
+  "Energy": 0.5,
+  "Entropy": 0.1,
+  "Order": 0.8,
+  "Flux": 0.3,
+  "Light": 0.6,
+  "Void": 0.1
+}
+```
+
+Core affinity → 0.7–0.9
+Minor affinity → 0.4–0.6
+Neutral → 0.2–0.4
+Opposing → 0–0.2
+
+Resonance ảnh hưởng:
+
+* Power output
+* Stability
+* Mutation trigger rate
+* Backlash chance
+
+---
+
+# III. AWAKENING LOGIC
+
+Thức tỉnh không phải menu chọn.
+
+Trigger khi:
+
+* Drift vượt threshold
+* Instability cao nhưng không vỡ
+* Hành vi consistent
+* Hoặc ritual đặc biệt
+
+Ví dụ:
+
+Người dùng Entropy liên tục
+
+* chết trong tháp
+* mutation gần xảy ra
+
+→ Entropy resonance tăng
+→ Awakening event diễn ra
+
+---
+
+# IV. GIỚI HẠN ĐỂ TRÁNH META BROKEN
+
+1️⃣ Tối đa 2 awakened affinity active cùng lúc
+2️⃣ Awakening có cost instability
+3️⃣ Affinity xung đột gây internal friction
+
+Ví dụ:
+
+Order + Flux cao cùng lúc
+→ Instability nền tăng nhẹ liên tục.
+
+Meta hybrid sẽ mạnh nhưng nguy hiểm.
+
+---
+
+# V. TƯƠNG TÁC VỚI TẦNG THÁP
+
+Mỗi tầng:
+
+* Buff 1 nguyên lý
+* Nerf 1 nguyên lý
+
+Nếu trùng với awakened affinity:
+
+→ Amplify rất mạnh
+Nếu xung đột:
+
+→ Drift nhanh
+
+Người chơi sẽ tính:
+
+“Build Flux có lợi ở Floor 2 không?”
+
+---
+
+# VI. TƯƠNG TÁC VỚI RARE PRINCIPLE
+
+Rare principle không có core affinity ban đầu.
+
+Chỉ có thể:
+
+* Thức tỉnh qua mutation lớn
+* Ritual
+* Mythic event
+
+Resonance với rare principle rất thấp nếu chưa thức tỉnh.
+
+---
+
+# VII. META DIỄN ĐÀN SẼ BÙNG Ở ĐÂU?
+
+* “Best dual affinity build Season 1”
+* “Order main + Entropy awaken có ổn không?”
+* “Void resonance có đáng đầu tư?”
+* “Continuum có phá build ổn định?”
+
+Anh sẽ có lý thuyết build thật sự.
+
+---
+
+# VIII. TẠI SAO HỆ NÀY RẤT HỢP VỚI GAME ANH?
+
+Vì:
+
+* Identity → Affinity
+* Drift → Awakening
+* Death → Resonance shift
+* Mutation → Affinity reconfiguration
+* Tower → Amplifier
+* Nation → Meta build influence
+
+Mọi thứ kết nối logic.
+
+---
+
+# 🎯 CÂU HỎI RẤT QUAN TRỌNG TIẾP THEO
+
+Anh muốn:
+
+A) Người chơi biết rõ resonance số liệu
+B) Người chơi chỉ biết mô tả mơ hồ (“bạn cảm thấy Flux mạnh hơn”)
+C) Có thể biết một phần, phần còn lại ẩn
+
+Cái này quyết định game thiên về min-max rõ ràng hay huyền bí phân tích gián tiếp.

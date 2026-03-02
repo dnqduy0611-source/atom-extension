@@ -1,0 +1,246 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "neural-memory"
+version = "1.7.4"
+description = "Reflex-based memory system for AI agents - retrieval through activation, not search"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [
+    { name = "NeuralMemory Contributors" }
+]
+keywords = [
+    "ai",
+    "memory",
+    "agents",
+    "neural",
+    "graph",
+    "retrieval",
+    "llm",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+]
+dependencies = [
+    "pydantic>=2.0",
+    "networkx>=3.0",
+    "python-dateutil>=2.8",
+    "typer>=0.9.0",
+    "aiohttp>=3.9.0",
+    "aiosqlite>=0.19.0",
+    "rich>=13.0.0",
+    "typing_extensions>=4.0",
+    "tomli>=2.0; python_version < '3.11'",
+]
+
+[project.optional-dependencies]
+server = [
+    "fastapi>=0.100",
+    "uvicorn[standard]>=0.23",
+    "httpx>=0.24",
+]
+neo4j = [
+    "neo4j>=5.0",
+]
+nlp-en = [
+    "spacy>=3.6",
+]
+nlp-vi = [
+    "underthesea>=6.0",
+    "pyvi>=0.1",
+]
+nlp = [
+    "neural-memory[nlp-en,nlp-vi]",
+]
+chromadb = [
+    "chromadb>=0.4.0",
+]
+mem0 = [
+    "mem0ai>=0.1.0",
+]
+cognee = [
+    "cognee>=0.1.0",
+]
+graphiti = [
+    "graphiti-core>=0.1.0",
+]
+llamaindex = [
+    "llama-index-core>=0.10.0",
+]
+embeddings = [
+    "sentence-transformers>=2.0",
+]
+embeddings-openai = [
+    "openai>=1.0",
+]
+integration = [
+    "neural-memory[chromadb,mem0]",
+]
+all = [
+    "neural-memory[server,neo4j,nlp,integration]",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "pytest-cov>=4.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5",
+    "pre-commit>=3.0",
+    "httpx>=0.24",
+]
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.24",
+    "mike>=2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/nhadaututtheky/neural-memory"
+Documentation = "https://nhadaututtheky.github.io/neural-memory"
+Repository = "https://github.com/nhadaututtheky/neural-memory"
+Issues = "https://github.com/nhadaututtheky/neural-memory/issues"
+
+[project.scripts]
+neural-memory = "neural_memory.cli:main"
+nmem = "neural_memory.cli:main"
+nmem-mcp = "neural_memory.mcp:main"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/neural_memory"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "F",      # pyflakes
+    "I",      # isort
+    "N",      # pep8-naming
+    "W",      # pycodestyle warnings
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "SIM",    # flake8-simplify
+    "TC",     # flake8-type-checking
+    "RUF",    # ruff-specific
+    "S",      # flake8-bandit (security)
+    "A",      # flake8-builtins
+    "DTZ",    # flake8-datetimez
+    "T20",    # flake8-print
+    "PT",     # flake8-pytest-style
+    "PERF",   # perflint
+    "PIE",    # flake8-pie
+    "ERA",    # eradicate (commented-out code)
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "RUF022", # __all__ sorting (we use comments for organization)
+    "RUF012", # mutable class attributes (false positives on frozen sets)
+    "RUF005", # list concatenation (clearer in some cases)
+    "RUF059", # unused variable in unpacking (test fixtures)
+    "TC001",  # move app imports to type-checking block
+    "TC003",  # move stdlib imports to type-checking block
+    "SIM102", # nested if (clearer in some cases)
+    "SIM103", # return negated condition (clearer explicitly)
+    "SIM105", # contextlib.suppress (try-except clearer)
+    "SIM108", # ternary operator (if-else clearer)
+    "SIM117", # nested with statements (clearer in some cases)
+    "B904",   # raise from (not always needed)
+    "S101",   # assert usage (fine in tests, checked via per-file-ignores)
+    "S110",   # try-except-pass (used for graceful cleanup/fallback)
+    "S112",   # try-except-continue (used for graceful iteration)
+    "S311",   # pseudo-random (not used for crypto)
+    "S324",   # MD5 (used for simhash fingerprints, not crypto)
+    "A002",   # builtin shadowing (type param in public API is intentional)
+    "PERF401",# manual list comprehension (loop is often clearer)
+    "PT023",  # pytest mark parentheses (style preference)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S108", "DTZ001", "DTZ005", "T20", "ERA001", "PT001", "PT006", "PT011", "PT018"]
+"src/neural_memory/mcp/server.py" = ["T201"]    # stdio transport uses print
+"src/neural_memory/utils/config.py" = ["S104"]   # configurable bind address
+"src/neural_memory/utils/simhash.py" = ["S324"]  # MD5 for fingerprint, not crypto
+"src/neural_memory/storage/sqlite_*.py" = ["S608"] # SQL with hardcoded column names
+"src/neural_memory/cli/**" = ["T201", "S603", "S607", "S310"]  # CLI: print, subprocess, url open
+"src/neural_memory/safety/sensitive.py" = ["S105"] # pattern names, not actual secrets
+"src/neural_memory/engine/db_introspector.py" = ["S608"]  # identifier-validated SQL
+"src/neural_memory/git_context.py" = ["S603", "S607"]     # git subprocess calls
+
+[tool.ruff.lint.isort]
+known-first-party = ["neural_memory"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = [
+    "networkx.*",
+    "underthesea.*",
+    "pyvi.*",
+    "chromadb.*",
+    "mem0.*",
+    "cognee.*",
+    "graphiti_core.*",
+    "llama_index.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+    "neural_memory.server.app",
+    "neural_memory.server.routes.*",
+]
+disallow_untyped_decorators = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["src/neural_memory"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 67
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B101", "B311", "B324"]

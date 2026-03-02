@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { syncSceneFromCloud, pushSceneToCloud } from '../services/sceneSync';
+import { trackProductEvent } from '../services/analytics';
 
 const DEFAULT_SCENE_ID = 'cyberpunk_alley';
 
@@ -54,6 +55,7 @@ export function useScene() {
 
     /** Select a scene (resets wallpaper to default) */
     const selectScene = (id: string) => {
+        trackProductEvent('scene_change', { sceneId: id });
         setSceneId(id);
         setWallpaperId(undefined);
         setCloudBgUrl(undefined);

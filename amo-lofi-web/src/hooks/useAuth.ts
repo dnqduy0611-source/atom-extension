@@ -11,6 +11,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import type { User, Session } from '@supabase/supabase-js';
+import { trackProductEvent } from '../utils/analytics';
 
 export interface AuthState {
     user: User | null;
@@ -44,6 +45,13 @@ export function useAuth(): AuthState {
                 setSession(s);
                 setUser(s?.user ?? null);
                 setIsLoading(false);
+
+                // Track signup event for funnel analytics
+                if (_event === 'SIGNED_IN' && s?.user) {
+                    trackProductEvent('signup_success', {
+                        provider: s.user.app_metadata?.provider ?? 'unknown',
+                    });
+                }
             },
         );
 

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { Locale } from '../i18n';
+import { trackProductEvent } from '../utils/analytics';
 
 export type HeroStyle = 'minimal' | 'glassmorphism' | 'neon' | 'floating' | 'analog' | 'dashboard';
 
@@ -199,12 +200,14 @@ export const useLofiStore = create<LofiState>((set, get) => ({
         set({ masterVolume: Math.max(0, Math.min(1, volume)) }),
 
     // ── Scene ──
-    setScene: (sceneId) =>
+    setScene: (sceneId) => {
+        trackProductEvent('scene_change', { sceneId });
         set({
             activeSceneId: sceneId,
             activeWallpaperId: null,
             lastChangeTimestamp: Date.now(),
-        }),
+        });
+    },
 
     setVariant: (variant) =>
         set({
@@ -247,6 +250,7 @@ export const useLofiStore = create<LofiState>((set, get) => ({
             if (!state.musicTrack) return {};
             const idx = TRACK_ORDER.indexOf(state.musicTrack.id);
             const nextIdx = (idx + 1) % TRACK_ORDER.length;
+            trackProductEvent('track_change', { direction: 'next', trackId: TRACK_ORDER[nextIdx] });
             return {
                 musicTrack: { ...state.musicTrack, id: TRACK_ORDER[nextIdx] },
                 lastChangeTimestamp: Date.now(),
@@ -258,6 +262,7 @@ export const useLofiStore = create<LofiState>((set, get) => ({
             if (!state.musicTrack) return {};
             const idx = TRACK_ORDER.indexOf(state.musicTrack.id);
             const prevIdx = (idx - 1 + TRACK_ORDER.length) % TRACK_ORDER.length;
+            trackProductEvent('track_change', { direction: 'prev', trackId: TRACK_ORDER[prevIdx] });
             return {
                 musicTrack: { ...state.musicTrack, id: TRACK_ORDER[prevIdx] },
                 lastChangeTimestamp: Date.now(),
@@ -388,9 +393,11 @@ export const useLofiStore = create<LofiState>((set, get) => ({
         set({ activePanel: panel }),
 
     togglePanel: (panel) =>
-        set((state) => ({
-            activePanel: state.activePanel === panel ? null : panel,
-        })),
+        set((state) => {
+            const newPanel = state.activePanel === panel ? null : panel;
+            if (newPanel) trackProductEvent('panel_open', { panel: newPanel });
+            return { activePanel: newPanel };
+        }),
 
     setZenMode: (enabled) =>
         set({ zenMode: enabled, activePanel: enabled ? null : get().activePanel }),

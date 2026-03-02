@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { useAuth } from './useAuth';
 import { supabase } from '../lib/supabaseClient';
+import { trackProductEvent } from '../utils/analytics';
 
 /**
  * useProGate — Pro feature gate backed by real Supabase profile check.
@@ -92,6 +93,7 @@ export function useProGate() {
     }, [user]);
 
     const showUpsell = useCallback((_feature?: string) => {
+        trackProductEvent('upgrade_click', { feature: _feature ?? 'unknown' });
         setModalVisible(true);
     }, []);
 

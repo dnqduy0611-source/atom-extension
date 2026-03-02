@@ -1,0 +1,174 @@
+Tốt.
+Anh vừa chọn một hướng rất “AI-native nhưng vẫn tôn trọng agency”:
+
+> Identity có thể thay đổi,
+> nhưng **mutation luôn là một lựa chọn có ý thức của người chơi**.
+
+Đây là cách làm vừa sâu, vừa công bằng, vừa không gây ức chế.
+
+Giờ tôi sẽ đóng khung lại thành một **Identity Mutation Framework v1 – có quyền lựa chọn**.
+
+---
+
+# 🌌 IDENTITY MUTATION WITH AGENCY – SPEC v1
+
+---
+
+# I. Triết lý
+
+* Seed không phải định mệnh.
+* Drift xảy ra tự nhiên.
+* Instability tăng dần.
+* Nhưng mutation chỉ xảy ra khi người chơi **chọn chấp nhận nó**.
+
+Không có “game lén thay đổi bạn”.
+
+---
+
+# II. Cơ chế ngầm (không lộ cho user)
+
+Hệ thống theo dõi:
+
+* Identity Coherence
+* Instability
+* Latent Identity Growth
+
+Khi vượt ngưỡng:
+
+→ Trigger một **Narrative Confrontation Event**.
+
+Không phải popup kỹ thuật.
+Mà là một chương truyện đặc biệt.
+
+---
+
+# III. Narrative Confrontation Event
+
+Đây là phần cực quan trọng.
+
+AI sẽ viết một chương mà:
+
+* Nhân vật đối diện bản thân
+* Một NPC phản chiếu họ
+* Một sự kiện buộc phải quyết định
+* Hoặc một “giấc mơ / ảo giác / thực thể”
+
+Và ở cuối chương:
+
+Người chơi có lựa chọn.
+
+Ví dụ:
+
+1. Chấp nhận con người mình đang trở thành.
+2. Từ chối và giữ bản chất cũ.
+3. Tìm một con đường thứ ba (khó hơn).
+
+---
+
+# IV. Nếu người chơi chọn…
+
+## 1️⃣ Chấp nhận Mutation
+
+* Skill chuyển hóa
+* Mở nhánh tiến hóa mới
+* Có thể mạnh hơn
+* Có thể rủi ro hơn
+* Identity Vector reset theo hướng mới
+
+Cảm giác:
+
+> Tôi đã thay đổi.
+
+---
+
+## 2️⃣ Từ chối Mutation
+
+* Instability giảm nhẹ
+* Identity dần ổn định
+* Có thể mất cơ hội power lớn
+* Nhưng giữ consistency
+
+Cảm giác:
+
+> Tôi vẫn là tôi.
+
+---
+
+## 3️⃣ Con đường thứ ba
+
+* Rất hiếm
+* Rất khó
+* Rủi ro cao
+* Nhưng có thể tạo hybrid form
+
+---
+
+# V. Tại sao cơ chế này tốt hơn mutation tự động?
+
+1️⃣ Không gây cảm giác bị phạt
+2️⃣ Tăng attachment
+3️⃣ Tạo arc lớn tự nhiên
+4️⃣ Tăng chiều sâu MMO Narrative
+
+Quan trọng nhất:
+
+> Người chơi chịu trách nhiệm cho con người mình trở thành.
+
+---
+
+# VI. Tích hợp với hệ Secret Skill
+
+Vì skill bí mật:
+
+Mutation cũng là bí mật.
+
+Người khác chỉ thấy:
+
+* Hành vi thay đổi
+* Phong cách chiến đấu thay đổi
+* Aura khác
+* Nhưng không biết bạn đã chọn gì
+
+Tạo meta mindgame rất mạnh.
+
+---
+
+# VII. Cân bằng hệ thống
+
+Để tránh exploit:
+
+* Mutation không được spam
+* Phải có điều kiện threshold rõ
+* Không phải cứ muốn là mutate
+* Không phải cứ mutate là mạnh hơn
+
+---
+
+# VIII. Đây là nơi hệ thống của anh trở nên khác biệt
+
+Game truyền thống:
+
+* Build → mạnh
+* Sai → reset
+
+Hệ anh:
+
+* Build → thay đổi
+* Sai → cũng thay đổi
+* Không có reset sạch
+* Chỉ có tiến trình
+
+---
+
+# IX. Một câu hỏi chiến lược tiếp theo
+
+Anh có muốn:
+
+A) Mutation có thể làm mất hoàn toàn Seed Skill ban đầu?
+B) Seed Skill luôn để lại “vết tích” dù mutation xảy ra?
+
+Ví dụ:
+
+* Người từng trung thành dù tha hóa vẫn còn một chút resonance khi nghe lời thề.
+
+Câu này sẽ quyết định universe của anh thiên về “con người có thể đổi hoàn toàn” hay “quá khứ luôn để lại dấu vết”.

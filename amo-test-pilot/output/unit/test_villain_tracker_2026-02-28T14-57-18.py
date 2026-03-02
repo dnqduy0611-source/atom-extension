@@ -1,0 +1,144 @@
+```python
+import pytest
+from unittest.mock import AsyncMock
+from app.models.world_state import WorldState
+
+# Fixture for WorldState
+@pytest.fixture
+def world_state():
+    return WorldState(
+        empire_resonance=50,
+        identity_anchor=50,
+        empire_allegiance="none",
+        empire_route_unlocked=False,
+        active_general=None,
+        unresolved_tensions=[],
+        emissary_status={},
+        veiled_will_phase=0,
+        had_empire_encounter=False,
+        general_status={}
+    )
+
+# ──────────────────────────────────────────────
+# Resonance / Anchor tracking
+# ──────────────────────────────────────────────
+
+def test_track_empire_resonance_clamps_to_100(world_state):
+    result = track_empire_resonance(world_state, 60)
+    assert result == 100
+    assert world_state.empire_resonance == 100
+
+def test_track_empire_resonance_clamps_to_0(world_state):
+    result = track_empire_resonance(world_state, -60)
+    assert result == 0
+    assert world_state.empire_resonance == 0
+
+def test_track_empire_resonance_updates_allegiance(world_state):
+    track_empire_resonance(world_state, 40)
+    assert world_state.empire_allegiance == "sympathizer"
+    assert world_state.empire_route_unlocked is True
+
+def test_track_identity_anchor_clamps_to_100(world_state):
+    result = track_identity_anchor(world_state, 60)
+    assert result == 100
+    assert world_state.identity_anchor == 100
+
+def test_track_identity_anchor_clamps_to_0(world_state):
+    result = track_identity_anchor(world_state, -60)
+    assert result == 0
+    assert world_state.identity_anchor == 0
+
+# ──────────────────────────────────────────────
+# Threshold events
+# ──────────────────────────────────────────────
+
+def test_check_threshold_events_returns_empty_for_low_values(world_state):
+    world_state.empire_resonance = 10
+    world_state.identity_anchor = 10
+    events = check_threshold_events(world_state)
+    assert events == []
+
+def test_check_threshold_events_returns_multiple_events(world_state):
+    world_state.empire_resonance = 70
+    world_state.identity_anchor = 70
+    events = check_threshold_events(world_state)
+    assert "unique_skill_empire_aesthetic" in events
+    assert "identity_crystallized" in events
+
+def test_check_threshold_events_detects_gray_zone(world_state):
+    world_state.empire_resonance = 50
+    world_state.identity_anchor = 50
+    events = check_threshold_events(world_state)
+    assert "gray_zone_active" in events
+
+# ──────────────────────────────────────────────
+# Villain context for LLM
+# ──────────────────────────────────────────────
+
+def test_get_villain_context_returns_empty_for_no_activity(world_state):
+    world_state.empire_resonance = 10
+    world_state.identity_anchor = 10
+    context = get_villain_context(world_state)
+    assert context == ""
+
+def test_get_villain_context_includes_empire_resonance(world_state):
+    world_state.empire_resonance = 80
+    context = get_villain_context(world_state)
+    assert "Empire resonance: RẤT CAO" in context
+
+def test_get_villain_context_includes_identity_anchor(world_state):
+    world_state.identity_anchor = 70
+    context = get_villain_context(world_state)
+    assert "Identity anchor: RẤT VỮNG" in context
+
+def test_get_villain_context_includes_gray_zone(world_state):
+    world_state.empire_resonance = 50
+    world_state.identity_anchor = 50
+    context = get_villain_context(world_state)
+    assert "GRAY ZONE" in context
+
+# ──────────────────────────────────────────────
+# Heuristic prose detection
+# ──────────────────────────────────────────────
+
+def test_update_villain_from_prose_detects_empire_keywords(world_state):
+    prose = "I think the empire has a point"
+    update_villain_from_prose(world_state, prose)
+    assert world_state.empire_resonance == 55
+
+def test_update_villain_from_prose_detects_identity_keywords(world_state):
+    prose = "I will not surrender"
+    update_villain_from_prose(world_state, prose)
+    assert world_state.identity_anchor == 60
+
+def test_update_villain_from_prose_detects_general_encounter(world_state):
+    prose = "General Vorn approached"
+    update_villain_from_prose(world_state, prose)
+    assert world_state.had_empire_encounter is True
+
+def test_update_villain_from_prose_handles_empty_prose(world_state):
+    update_villain_from_prose(world_state, "")
+    assert world_state.empire_resonance == 50
+    assert world_state.identity_anchor == 50
+
+# Error path tests
+def test_track_empire_resonance_handles_none_state():
+    with pytest.raises(AttributeError):
+        track_empire_resonance(None, 10)
+
+def test_track_identity_anchor_handles_none_state():
+    with pytest.raises(AttributeError):
+        track_identity_anchor(None, 10)
+
+def test_check_threshold_events_handles_none_state():
+    with pytest.raises(AttributeError):
+        check_threshold_events(None)
+
+def test_get_villain_context_handles_none_state():
+    with pytest.raises(AttributeError):
+        get_villain_context(None)
+
+def test_update_villain_from_prose_handles_none_state():
+    with pytest.raises(AttributeError):
+        update_villain_from_prose(None, "test")
+```

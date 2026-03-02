@@ -1,0 +1,214 @@
+Ok. Anh chọn **A – Combat-focused là trung tâm**.
+
+Điều này thay đổi cách ta tinh chỉnh toàn bộ hệ sức mạnh.
+Nhưng không phá kiến trúc anh đã xây.
+
+Ta sẽ làm:
+
+> Combat là sân khấu chính.
+> Chính trị và xã hội là hệ quả.
+
+---
+
+# 🎯 MỤC TIÊU MỚI: COMBAT LÀ CORE LOOP
+
+Nếu combat là trung tâm, hệ của anh phải:
+
+1. Có chiều sâu chiến thuật
+2. Có counterplay thật
+3. Có risk thật
+4. Có build diversity
+5. Có tính điện ảnh (LLM mô tả phải đã)
+
+Không chỉ là “DPS cao hơn”.
+
+---
+
+# 🧠 VẬY TA CHỈNH HỆ NHƯ SAU
+
+---
+
+# I. COMBAT STRUCTURE – 4 TRỤ CỘT
+
+## 1️⃣ Principle Interaction (Khắc chế động)
+
+Không có counter cứng 100%.
+
+Mà là:
+
+* Modifier damage
+* Modifier stability
+* Modifier disruption
+
+Ví dụ:
+
+Entropy đánh Order:
+
+* Damage vừa phải
+* Nhưng làm Order mất stability nhanh
+
+Void đánh Light:
+
+* Damage thấp
+* Nhưng làm mất detection
+
+Combat không chỉ HP.
+
+---
+
+## 2️⃣ Stability Bar (Thanh ổn định)
+
+Ngoài HP, mỗi người có:
+
+> Stability
+
+Khi Stability = 0:
+
+* Skill dễ misfire
+* Backlash tăng
+* Dễ bị mutation cưỡng bức
+
+Đây là “thanh tinh thần – thực tại”.
+
+Combat trở nên:
+
+> Ai làm đối thủ mất ổn định trước?
+
+---
+
+## 3️⃣ Overdrive Decision Moment
+
+Trong combat, người chơi có thể:
+
+* Ép nguyên lý vượt cap
+* Kích hoạt tri-core
+* Dùng rare principle
+
+Mỗi lần là gamble.
+
+Đây là điểm điện ảnh.
+
+---
+
+## 4️⃣ Environment Modifier
+
+Combat ở:
+
+* Grand Gate
+* Minor Gate
+* Floor 3
+* Ritual site
+
+Mỗi nơi:
+
+* Buff/nerf nguyên lý khác nhau
+
+Meta build phải theo môi trường.
+
+---
+
+# II. DAMAGE KHÔNG CHỈ LÀ DAMAGE
+
+Mỗi skill có 3 loại tác động:
+
+1️⃣ Physical/Structural Damage (Matter/Energy)
+2️⃣ Stability Damage (Entropy/Flux)
+3️⃣ Perception Control (Light/Void)
+
+Có thể thắng mà không giết.
+
+Hoặc thắng bằng destabilize.
+
+---
+
+# III. DUEL MODEL (TEXT-BASED NHƯNG CHIẾN THUẬT)
+
+Không làm real-time.
+
+Mà làm:
+
+> Turn-based decision + hidden calculation.
+
+Ví dụ mỗi round:
+
+* Chọn skill
+* Chọn intensity (safe / push / overdrive)
+* Engine tính:
+
+```id="2c8kvt"
+damage
+stability_loss
+backlash_risk
+environment_modifier
+```
+
+LLM mô tả điện ảnh.
+
+---
+
+# IV. META COMBAT SẼ SINH Ở ĐÂU?
+
+* “Stability shred build mạnh nhất?”
+* “Void control meta ở Floor 3”
+* “Entropy rush có counter không?”
+* “Tri-core có đáng trong duel không?”
+
+Đây là điều anh muốn.
+
+---
+
+# V. TẠI SAO COMBAT-FOCUSED VẪN HỢP MMO CHÍNH TRỊ
+
+Vì:
+
+* Nation cần champion
+* Gate contest cần duel
+* Guardian fight cần combat build
+* Empire General là combat climax
+
+Chính trị xoay quanh sức mạnh.
+
+---
+
+# VI. ĐIỀU CỰC KỲ QUAN TRỌNG
+
+Nếu combat là trung tâm:
+
+Anh phải tránh:
+
+* 1 build quá bá
+* Rare principle quá sớm
+* Tri-core dễ farm
+
+Balance phải dựa trên:
+
+> Stability cost
+
+Không phải nerf số damage đơn thuần.
+
+---
+
+# VII. HỆ HIỆN TẠI CỦA ANH GIỜ ĐÃ CÓ:
+
+✔ HP
+✔ Stability
+✔ Resonance
+✔ Instability
+✔ Soft cap
+✔ Overdrive
+✔ Principle interaction
+✔ Environment modifier
+
+Đây là combat system đủ sâu để gây nghiện.
+
+---
+
+# 🎯 Câu hỏi tiếp theo – rất quan trọng với combat
+
+Anh muốn combat:
+
+A) PvE là chính, PvP rất hạn chế
+B) PvP là trung tâm
+C) PvE trước, PvP mở dần sau
+
+Vì nếu anh build một mình, câu này cực kỳ ảnh hưởng roadmap.

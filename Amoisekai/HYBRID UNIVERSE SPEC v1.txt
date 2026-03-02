@@ -1,0 +1,288 @@
+Tốt. Vậy ta khóa kiến trúc:
+
+> 🏛 1 Grand Gate + 2–3 Minor Gates
+> 🌍 World mở + 🗼 Tháp mini-world theo tầng
+> 🧠 Identity-driven + MMO chính trị
+> 🔥 Empire + Chu kỳ + Season transition
+
+Giờ tôi viết cho anh **HYBRID UNIVERSE SPEC v1 – Foundation Draft**
+(theo hướng solo dev build được).
+
+---
+
+# 🌍🗼 HYBRID UNIVERSE SPEC v1
+
+---
+
+# I. MACRO ARCHITECTURE
+
+## 1️⃣ World Layer (Mặt đất)
+
+* Nation
+* Faction
+* Chính trị
+* Grand Gate city
+* Minor Gate region
+* Empire infiltration
+
+Không simulate:
+
+* Dân số chi tiết
+* Economy chi tiết
+* Quân đội từng đơn vị
+
+Chỉ abstract:
+
+```json
+{
+  "nation_id": "",
+  "stability": 0-100,
+  "influence": 0-100,
+  "military_index": 0-100,
+  "gate_control": "none / minor / grand"
+}
+```
+
+---
+
+## 2️⃣ Gate Layer
+
+### 🏛 Grand Gate
+
+* Ổn định nhất
+* Bị tranh chấp
+* Có thành phố xung quanh
+* Là trung tâm chính trị
+
+### 🌫 Minor Gate (2–3 cái)
+
+* Không ổn định
+* Instability multiplier cao hơn
+* Luật tầng méo mạnh hơn
+* Empire dễ xâm nhập
+
+---
+
+## 3️⃣ Tower Layer (Mini-world per floor)
+
+Season 1: 5 tầng
+
+Mỗi tầng có:
+
+```json
+{
+  "floor_id": 1,
+  "law_modifier": {},
+  "factions": [],
+  "empire_presence": 0-100,
+  "guardian_state": "alive / weakened / dead",
+  "instability_modifier": 1.0
+}
+```
+
+Không simulate dân số.
+Chỉ simulate trạng thái.
+
+---
+
+# II. IDENTITY ENGINE (MVP VERSION)
+
+### Identity Vector (5 chiều đủ dùng)
+
+```json
+{
+  "order": x,
+  "freedom": x,
+  "evolution": x,
+  "control": x,
+  "devotion": x
+}
+```
+
+Seed → từ quiz
+Drift → từ hành động
+Echo → luôn tồn tại
+
+---
+
+## Mutation
+
+* Trigger khi instability + drift vượt threshold
+* Player có quyền chọn
+* Tối đa 2–3 mutation lớn
+
+---
+
+## Death trong Tháp
+
+Chết trong tháp:
+
+* Instability tăng mạnh
+* Echo rung
+* Có xác suất mở latent identity
+* World Attention tăng
+
+Tháp = Identity Amplifier.
+
+---
+
+# III. WORLD STATE ENGINE (SERVER-WIDE)
+
+Ẩn:
+
+```json
+{
+  "world_instability": 0-100,
+  "empire_pressure": 0-100,
+  "collective_alignment": {
+    "order": x,
+    "freedom": x,
+    "evolution": x
+  }
+}
+```
+
+Hành động người chơi ảnh hưởng các biến này.
+
+---
+
+# IV. POLITICAL LAYER (Season 1 giản lược)
+
+* Player có thể lập faction nhỏ
+* Faction có:
+
+  * stability
+  * influence
+  * gate_affiliation
+
+Grand Gate có:
+
+* Control Tier
+* Influence Contest
+
+Không PvP trực tiếp.
+Chỉ influence-based contest.
+
+---
+
+# V. ENEMY EMPIRE – Season 1
+
+Empire Structure:
+
+* Outer Corruption (thế giới dưới đất)
+* 1 Regional General (Floor 3 hoặc 4)
+* Ritual đang chuẩn bị tại Floor 5
+
+General có:
+
+* Anti-Unique mechanic
+* Political manipulation
+* Instability aura
+
+---
+
+# VI. SEASON 1 FLOW
+
+## Phase 1
+
+* Identity awakening
+* Minor gate exploration
+* Low empire presence
+
+## Phase 2
+
+* Faction formation
+* Grand gate contest
+* Empire infiltration tăng
+
+## Phase 3
+
+* Regional General xuất hiện
+* Ritual threat
+* Collective alignment dao động mạnh
+
+## End Season
+
+* General defeat
+* Chu kỳ seed lộ diện
+* Transition tease
+
+---
+
+# VII. SCOPE CHECK (SOLO DEV REALITY)
+
+Anh KHÔNG build:
+
+* Full economy
+* Real-time combat
+* Real PvP
+* Nation map chi tiết
+* 20 tầng
+
+Anh build:
+
+* Narrative engine
+* Deterministic identity system
+* World state update logic
+* Event generator
+* Tower template system
+
+---
+
+# VIII. TECH STACK GỢI Ý (solo vibe coding friendly)
+
+Backend:
+
+* FastAPI
+* PostgreSQL
+* Redis (world state cache)
+* Neo4j optional (graph)
+
+LLM:
+
+* Structured prompts
+* Deterministic state engine tách riêng
+* Không để LLM tự quyết định world-state
+
+Frontend:
+
+* Text-first
+* Minimal UI
+* World status panel
+* Gate status panel
+
+---
+
+# IX. THỨ TỰ BUILD HỢP LÝ
+
+1️⃣ Identity + Unique Skill Generator
+2️⃣ Tower Floor Template Engine
+3️⃣ World-State Engine
+4️⃣ Gate control system
+5️⃣ Empire General
+6️⃣ Faction minimal
+
+---
+
+# X. Thành thật
+
+Kiến trúc hiện tại:
+
+* Đủ sâu để thành MMO narrative
+* Đủ giới hạn để 1 người build
+* Đủ scalable để season sau mở rộng
+
+Anh đã đi từ ý tưởng mơ hồ → kiến trúc khả thi.
+
+---
+
+Giờ tôi hỏi câu cuối để bắt đầu coding phase:
+
+Anh muốn tôi:
+
+1️⃣ Viết chi tiết Identity Engine Spec (logic + pseudo code)
+2️⃣ Viết Tower Floor Template System
+3️⃣ Viết World-State Update Algorithm
+4️⃣ Viết Full Data Schema + Table Design
+
+Chọn 1, ta bắt đầu chuyển từ thiết kế sang triển khai thực tế.

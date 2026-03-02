@@ -1,6 +1,6 @@
 {
   "name": "amo-lofi-extension",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "description": "Amo Lofi — Cinematic focus sanctuary. Turn your New Tab into a beautiful focus environment.",
   "type": "module",
   "scripts": {

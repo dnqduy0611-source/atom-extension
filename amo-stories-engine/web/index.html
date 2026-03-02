@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Amoisekai — Isekai Narrative Engine</title>
+    <meta name="description" content="AI-driven interactive Isekai narrative — choose your fate, shape your identity" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body>
+    <div id="app">
+        <!-- Views injected by JS -->
+        <div id="view-loading" class="view active" data-testid="view-loading">
+            <div class="loading-screen">
+                <div class="logo-glow">異世界</div>
+                <h1>Amoisekai</h1>
+                <p class="tagline">Số phận nằm trong tay bạn</p>
+                <div class="loading-bar">
+                    <div class="loading-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-onboarding" class="view" data-testid="view-onboarding">
+            <div class="onboarding-container">
+                <div class="quiz-progress">
+                    <div class="quiz-progress-fill" id="quiz-progress-fill" data-testid="quiz-progress"></div>
+                </div>
+                <div class="quiz-card glass-card">
+                    <div class="quiz-step-indicator" id="quiz-step" data-testid="quiz-step">1 / 5</div>
+                    <h2 class="quiz-question" id="quiz-question" data-testid="quiz-question"></h2>
+                    <div class="quiz-answers" id="quiz-answers" data-testid="quiz-answers"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Soul Forge View -->
+        <div id="view-soul-forge" class="view" data-testid="view-soul-forge">
+            <!-- Ambient intro video — plays as background throughout Soul Forge -->
+            <video id="forge-bg-video" class="forge-bg-video" muted loop playsinline>
+                <source src="/assets/intro.mp4" type="video/mp4">
+            </video>
+
+            <div class="forge-container" id="forge-container">
+                <!-- Living Void crack layers (scene 3+) -->
+                <div class="forge-crack" aria-hidden="true"></div>
+                <div class="forge-crack-extra" aria-hidden="true"></div>
+
+                <div class="forge-progress">
+                    <div class="forge-progress-fill" id="forge-progress-fill" data-testid="forge-progress"></div>
+                </div>
+                <div class="forge-phase-label" id="forge-phase-label" data-testid="forge-phase">Phase 1 — The Void
+                    Between</div>
+
+                <!-- Gender Selection (pre-forge step 0) -->
+                <div class="forge-gender-step" id="forge-gender-step" style="display:none"
+                    data-testid="forge-gender-step">
+                    <p class="forge-gender-hint">Trước khi bước vào Hư Vô, linh hồn của bạn sẽ được nhận dạng là...</p>
+                    <div class="forge-gender-options">
+                        <button class="forge-gender-btn" data-gender="male" data-testid="gender-male">
+                            <span class="forge-gender-symbol">♂</span>
+                            <span class="forge-gender-label">Nam</span>
+                        </button>
+                        <button class="forge-gender-btn" data-gender="female" data-testid="gender-female">
+                            <span class="forge-gender-symbol">♀</span>
+                            <span class="forge-gender-label">Nữ</span>
+                        </button>
+                        <button class="forge-gender-btn" data-gender="neutral" data-testid="gender-neutral">
+                            <span class="forge-gender-symbol">◇</span>
+                            <span class="forge-gender-label">Không xác định</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Narrative Scene -->
+                <div class="forge-scene" id="forge-scene" data-testid="forge-scene">
+                    <h2 class="forge-scene-title" id="forge-scene-title" data-testid="forge-scene-title"></h2>
+                    <div class="forge-scene-text" id="forge-scene-text" data-testid="forge-scene-text"></div>
+                    <div class="forge-choices" id="forge-choices" data-testid="forge-choices"></div>
+                </div>
+
+                <!-- Soul Fragment (Phase 2) — Void Dialogue -->
+                <div class="void-dialogue" id="forge-fragment" style="display:none" data-testid="forge-fragment">
+
+                    <!-- Step 1: Main Soul Fragment -->
+                    <div id="void-fragment-step" class="void-step">
+                        <div class="void-question-text" id="forge-fragment-prompt" data-testid="forge-fragment-prompt">
+                        </div>
+                        <textarea id="forge-fragment-input" class="void-textarea" rows="4"
+                            placeholder="Ví dụ: Tôi không muốn ai phải đau khổ... hoặc: Sức mạnh để bảo vệ người tôi yêu"
+                            data-testid="forge-fragment-input"></textarea>
+                        <div class="void-fragment-actions">
+                            <span class="void-continue-hint">
+                                <kbd>Enter</kbd> để tiếp tục &nbsp;·&nbsp; <kbd>Shift+Enter</kbd> xuống dòng
+                            </span>
+                            <button class="void-submit-btn" id="btn-void-fragment-submit"
+                                data-testid="forge-submit-fragment">›</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2–4: Void Whispers (sequential) -->
+                    <div id="void-whisper-step" class="void-step" style="display:none">
+                        <div class="void-whisper-header">
+                            <span class="void-whisper-eye">◈</span>
+                            <span class="void-whisper-label">Hư Vô thì thầm...</span>
+                        </div>
+                        <p class="void-whisper-question" id="void-whisper-question"></p>
+                        <input type="text" id="void-whisper-input" class="void-input-line"
+                            placeholder="Ví dụ: Một người bạn cũ... hoặc: Không ai cả" data-testid="void-whisper-input">
+                        <div class="void-whisper-nav">
+                            <button class="void-btn-skip" id="btn-void-skip">Bỏ qua ›</button>
+                        </div>
+                    </div>
+
+                    <!-- Hidden backstory accumulator -->
+                    <textarea id="forge-backstory-input" style="display:none"></textarea>
+                </div>
+
+                <!-- Forging Animation -->
+                <div class="forge-animation" id="forge-animation" style="display:none">
+                    <!-- Phase 1+2: fire particles -->
+                    <div class="forge-fire" id="forge-fire">
+                        <div class="forge-fire-particle"></div>
+                        <div class="forge-fire-particle"></div>
+                        <div class="forge-fire-particle"></div>
+                    </div>
+                    <!-- Phase 3: category sigil -->
+                    <div class="forge-sigil" id="forge-sigil" style="display:none">
+                        <div class="forge-sigil-glyph" id="forge-sigil-glyph"></div>
+                    </div>
+                    <p class="forge-status" id="forge-status">Linh hồn đang được rèn...</p>
+                    <div class="forge-time-hint" id="forge-time-hint" style="display:none">
+                        <span class="forge-time-label">Thường mất 60–90 giây</span>
+                        <span class="forge-time-elapsed" id="forge-time-elapsed"></span>
+                    </div>
+                    <div class="form-group" id="forge-name-group" style="display:none">
+                        <label for="forge-name-input">Tên nhân vật</label>
+                        <input type="text" id="forge-name-input" placeholder="Đặt tên cho linh hồn mới..."
+                            class="glass-input" data-testid="forge-name-input" />
+                        <button class="btn-primary btn-glow" id="btn-forge-go" style="margin-top:1rem"
+                            data-testid="forge-submit-go">
+                            <span class="btn-icon">✦</span> Hoàn tất Soul Forge
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Forge Result -->
+                <div class="forge-result glass-card" id="forge-result" style="display:none" data-testid="forge-result">
+                    <div class="forge-result-glow"></div>
+                    <div class="forge-skill-name" id="forge-skill-name" data-testid="forge-skill-name"></div>
+                    <div class="forge-skill-desc" id="forge-skill-desc" data-testid="forge-skill-desc"></div>
+                    <div class="forge-skill-resonance" id="forge-skill-resonance"></div>
+                    <div class="forge-skill-meta" id="forge-skill-meta"></div>
+                    <button class="btn-primary btn-glow" id="btn-forge-continue" data-testid="forge-submit-continue">
+                        <span class="btn-icon">✦</span> Bước vào thế giới mới
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-story-setup" class="view" data-testid="view-story-setup">
+            <!-- Ambient background -->
+            <video class="setup-bg-video" id="setup-bg-video" muted loop playsinline>
+                <source src="/assets/portal.mp4" type="video/mp4">
+            </video>
+            <div class="setup-bg-overlay"></div>
+
+            <div class="setup-scroll">
+                <div class="setup-inner">
+
+                    <!-- Header -->
+                    <div class="setup-header">
+                        <div class="setup-header-glyph">◈</div>
+                        <h1 class="setup-title">Định hình câu chuyện</h1>
+                        <p class="setup-subtitle">Chọn những yếu tố sẽ dệt nên vận mệnh của bạn</p>
+                    </div>
+
+                    <!-- Identity summary -->
+                    <div class="setup-identity" id="setup-identity" data-testid="setup-identity"></div>
+
+                    <!-- Tags section -->
+                    <div class="setup-section">
+                        <div class="setup-section-header">
+                            <span class="setup-section-title">Preference Tags</span>
+                            <span class="setup-section-hint">chọn tối đa 3</span>
+                        </div>
+                        <div class="tags-grid" id="tags-grid" data-testid="setup-tags"></div>
+                    </div>
+
+                    <!-- Tone section -->
+                    <div class="setup-section">
+                        <div class="setup-section-header">
+                            <span class="setup-section-title">Tone truyện</span>
+                            <span class="setup-section-hint">chọn 1</span>
+                        </div>
+                        <div class="tone-grid" id="tone-grid" data-testid="setup-tones"></div>
+                    </div>
+
+                    <!-- Start -->
+                    <button class="btn-primary btn-glow setup-start-btn" id="btn-start" data-testid="setup-submit">
+                        <span class="btn-icon">✦</span> Bắt đầu hành trình
+                    </button>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Continue Screen -->
+        <div id="view-continue" class="view" data-testid="view-continue">
+            <div class="continue-container">
+                <div class="continue-logo">
+                    <div class="logo-glow">異世界</div>
+                    <h1>Amoisekai</h1>
+                </div>
+                <div class="continue-card glass-card">
+                    <div class="continue-character">
+                        <div class="soul-orb soul-orb-large" id="continue-orb">
+                            <div class="soul-orb-glow"></div>
+                        </div>
+                        <div class="continue-character-info">
+                            <h2 id="continue-name">—</h2>
+                            <span class="continue-archetype" id="continue-archetype"></span>
+                        </div>
+                    </div>
+                    <div class="continue-progress">
+                        <div class="continue-chapter" id="continue-chapter"></div>
+                        <div class="continue-scene" id="continue-scene"></div>
+                    </div>
+                    <div class="continue-recap" id="continue-recap"></div>
+                    <div class="continue-stats">
+                        <div class="continue-stat">
+                            <span class="continue-stat-label">Soul Coherence</span>
+                            <div class="continue-stat-bar">
+                                <div class="continue-stat-fill" id="continue-coherence"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn-primary btn-glow btn-continue" id="btn-continue" data-testid="continue-resume">
+                        <span class="btn-icon">✦</span> Tiếp tục hành trình
+                    </button>
+                    <button class="btn-ghost btn-new-game" id="btn-new-game" data-testid="continue-new">
+                        Tạo nhân vật mới
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-game" class="view" data-testid="view-game">
+            <!-- Portal ambient video — plays during loading/scene transitions -->
+            <video id="chapter-bg-video" class="chapter-bg-video" muted loop playsinline>
+                <source src="/assets/portal.mp4" type="video/mp4">
+            </video>
+
+            <!-- Game Header — minimal, sticky -->
+            <header class="game-header" id="game-header">
+                <div class="header-left">
+                    <span class="header-chapter" id="header-chapter">Chương 1</span>
+                    <span class="header-separator">·</span>
+                    <span class="header-scene" id="header-scene">Scene 1</span>
+                    <div class="scene-type-badge" id="scene-type-badge" style="display:none"
+                        data-testid="game-scene-type"></div>
+                </div>
+                <div class="header-right">
+                    <!-- Scene Progress (inline) -->
+                    <div class="header-progress" id="scene-progress" style="display:none"
+                        data-testid="game-scene-progress">
+                        <div class="header-progress-track">
+                            <div class="header-progress-fill" id="scene-progress-fill"></div>
+                        </div>
+                        <span class="header-progress-label" id="scene-progress-label"></span>
+                    </div>
+                    <!-- Novel Log button -->
+                    <button class="btn-novel-log" id="btn-novel-log" aria-label="Đọc lại hành trình">Nhật ký</button>
+                    <!-- Soul Orb -->
+                    <button class="soul-orb" id="soul-orb" aria-label="Identity Panel" data-testid="game-soul-orb">
+                        <div class="soul-orb-glow"></div>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Identity Panel — slide-in from right -->
+            <div class="identity-panel" id="identity-panel" aria-hidden="true">
+                <div class="identity-panel-backdrop" id="identity-panel-backdrop"></div>
+                <div class="identity-panel-content">
+                    <button class="identity-panel-close" id="identity-panel-close" aria-label="Close">✕</button>
+                    <div class="identity-panel-orb">
+                        <div class="soul-orb soul-orb-large" id="panel-soul-orb">
+                            <div class="soul-orb-glow"></div>
+                        </div>
+                    </div>
+                    <div class="identity-panel-header">
+                        <h3 class="identity-panel-name" id="panel-player-name" data-testid="game-player-name">—</h3>
+                        <span class="identity-panel-archetype" id="panel-archetype"
+                            data-testid="game-player-archetype"></span>
+                        <span class="identity-panel-skill-tag" id="panel-skill-tag"
+                            data-testid="game-player-skill"></span>
+                    </div>
+                    <div class="identity-panel-stats" id="panel-stat-bars" data-testid="game-stat-bars"></div>
+                    <div class="identity-panel-dna" id="panel-dna"></div>
+                    <div class="identity-panel-skill" id="panel-skill-profile" style="display:none"
+                        data-testid="game-skill-profile">
+                        <div class="skill-profile-header" id="panel-skill-toggle">
+                            <span>Unique Skill</span>
+                            <span class="skill-profile-arrow">▼</span>
+                        </div>
+                        <div class="skill-profile-body" id="panel-skill-body">
+                            <div class="skill-profile-name" id="panel-skill-name"></div>
+                            <div class="skill-profile-desc" id="panel-skill-desc"></div>
+                            <div class="skill-profile-details" id="panel-skill-details"></div>
+                        </div>
+                    </div>
+                    <div class="identity-panel-journal" id="panel-journal">
+                        <h4>Identity Journal</h4>
+                        <div class="journal-entries" id="panel-journal-entries"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Full-width prose area -->
+            <main class="game-main">
+                <div class="prose-container" id="prose-container" data-testid="game-prose">
+                    <div class="scene-history" id="scene-history"></div>
+                    <div class="prose-text" id="prose-text" data-testid="game-prose-text"></div>
+                    <div class="prose-loading" id="prose-loading" data-testid="game-loading">
+                        <div class="loading-whisper">
+                            <p class="loading-message" id="loading-message">
+                                Vận mệnh đang dệt những sợi chỉ mới...</p>
+                            <div class="loading-dots">
+                                <span></span><span></span><span></span>
+                            </div>
+                            <div class="loading-status-line" id="loading-status-line"></div>
+                            <div class="loading-time-hint" id="loading-time-hint" style="display:none">
+                                <span class="loading-time-label" id="loading-time-label"></span>
+                                <span class="loading-time-elapsed" id="loading-time-elapsed"></span>
+                            </div>
+                            <div class="loading-lore" id="loading-lore"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="choices-container" id="choices-container" style="display:none" data-testid="game-choices">
+                    <div class="choices-grid" id="choices-grid" data-testid="game-choices-grid"></div>
+                    <div class="free-input-wrapper">
+                        <input type="text" id="input-free" placeholder="Hoặc nhập hành động tự do..."
+                            class="glass-input" data-testid="game-free-input" />
+                        <button class="btn-send" id="btn-free-send" data-testid="game-free-send">➤</button>
+                    </div>
+                </div>
+
+                <!-- Combat Decision Panel -->
+                <div class="combat-panel glass-card" id="combat-panel" style="display:none"
+                    data-testid="game-combat-panel">
+                    <div class="combat-header">
+                        <span class="combat-icon">⚔</span>
+                        <h3 class="combat-title" id="combat-title" data-testid="game-combat-title">Chuẩn bị chiến
+                            đấu</h3>
+                        <span class="combat-phase-badge" id="combat-phase-badge"></span>
+                    </div>
+                    <div class="combat-phases" id="combat-phases" data-testid="game-combat-phases"></div>
+                    <div class="combat-preview" id="combat-preview">
+                        <div class="preview-label">Dự đoán rủi ro</div>
+                        <div class="preview-text" id="combat-preview-text" data-testid="game-combat-preview">Chọn
+                            hành động để xem dự đoán</div>
+                    </div>
+                    <button class="btn-primary btn-glow combat-submit" id="btn-combat-submit" disabled
+                        data-testid="game-combat-submit">
+                        <span class="btn-icon">✦</span> Chiến đấu!
+                    </button>
+                </div>
+
+                <!-- Defeat Notification -->
+                <div class="defeat-toast" id="defeat-toast" style="display:none" data-testid="game-defeat-toast">
+                    <div class="defeat-icon">•</div>
+                    <div class="defeat-content">
+                        <h4 class="defeat-title" id="defeat-title"></h4>
+                        <p class="defeat-desc" id="defeat-desc"></p>
+                    </div>
+                </div>
+
+                <!-- Soul Death Overlay -->
+                <div class="soul-death-overlay" id="soul-death-overlay" style="display:none"
+                    data-testid="game-soul-death">
+                    <div class="soul-death-content">
+                        <div class="soul-death-icon">☠</div>
+                        <h2>Linh Hồn Tan Rã</h2>
+                        <p class="soul-death-text">Câu chuyện của bạn kết thúc ở đây...</p>
+                        <button class="btn-primary" id="btn-new-character" data-testid="game-new-character">
+                            <span class="btn-icon">✦</span> Tạo nhân vật mới
+                        </button>
+                    </div>
+                </div>
+
+                <div class="identity-toast" id="identity-toast" style="display:none" data-testid="game-identity-toast">
+                </div>
+            </main>
+        </div>
+
+        <!-- Guest Banner (Layer 1) — non-blocking toast after Soul Forge -->
+        <div class="guest-banner" id="guest-banner" aria-live="polite">
+            <div class="guest-banner-body">
+                <span class="guest-banner-icon">◇</span>
+                <div class="guest-banner-text">
+                    <strong>Đang chơi với tư cách khách</strong>
+                    <span id="guest-banner-name"></span> sẽ bị mất nếu bạn đóng trang.
+                </div>
+            </div>
+            <div class="guest-banner-actions">
+                <button class="guest-banner-save-btn" id="btn-guest-save">Lưu ngay →</button>
+                <button class="guest-banner-dismiss" id="btn-guest-dismiss" aria-label="Đóng">✕</button>
+            </div>
+        </div>
+
+        <!-- Auth Save Card (Layer 2) — motivated save prompt after skill reveal -->
+        <div class="auth-save-overlay" id="auth-save-overlay">
+            <div class="auth-save-backdrop" id="auth-save-backdrop"></div>
+            <div class="auth-save-card">
+                <div class="auth-save-glyph" id="auth-save-glyph">✦</div>
+                <div class="auth-save-skill-name" id="auth-save-skill-name"></div>
+                <p class="auth-save-headline">Kỹ năng này sẽ không bao giờ thuộc về ai khác.</p>
+                <p class="auth-save-sub">Đăng nhập để giữ hành trình — miễn phí, không cần mật khẩu.</p>
+
+                <div class="auth-save-form" id="auth-save-form">
+                    <button class="btn-google-signin" id="btn-auth-google">
+                        <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
+                            <path
+                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+                                fill="#4285F4" />
+                            <path
+                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                fill="#34A853" />
+                            <path
+                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                                fill="#FBBC05" />
+                            <path
+                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                                fill="#EA4335" />
+                        </svg>
+                        Đăng nhập bằng Google
+                    </button>
+
+                    <div class="auth-divider">
+                        <span>hoặc</span>
+                    </div>
+
+                    <input type="email" id="auth-email-input" class="glass-input auth-email-input"
+                        placeholder="Email của bạn..." autocomplete="email" inputmode="email" />
+                    <button class="btn-primary btn-glow auth-submit-btn" id="btn-auth-submit">
+                        <span class="btn-icon">✦</span> Gửi link đăng nhập
+                    </button>
+                </div>
+
+                <!-- Sent state (swaps in after submit) -->
+                <div class="auth-save-sent" id="auth-save-sent" style="display:none">
+                    <div class="auth-sent-icon">✉</div>
+                    <p class="auth-sent-text">Link đã được gửi! Kiểm tra hộp thư của bạn.</p>
+                    <p class="auth-sent-sub">Bạn có thể tiếp tục chơi trong lúc chờ.</p>
+                </div>
+
+                <!-- Not configured state -->
+                <div class="auth-save-unavailable" id="auth-save-unavailable" style="display:none">
+                    <p class="auth-unavailable-text">Tính năng lưu chưa sẵn sàng. Vui lòng thử lại sau.</p>
+                </div>
+
+                <button class="auth-save-guest-btn" id="btn-auth-guest">
+                    Tiếp tục với tư cách khách →
+                </button>
+            </div>
+        </div>
+
+        <!-- Skill Phase 1 — First activation (minimal reveal, scene 2-3) -->
+        <div class="skill-phase1-overlay" id="skill-phase1-overlay">
+            <!-- Optional: swap src to actual video when asset is ready -->
+            <video class="sp1-video" id="sp1-video" muted playsinline>
+                <source src="/assets/skill-reveal.mp4" type="video/mp4">
+            </video>
+            <div class="sp1-content">
+                <div class="sp1-awakening-text">Một thứ gì đó thức giấc trong hồn ngươi...</div>
+                <div class="sp1-icon-wrap">
+                    <span class="sp1-icon">✦</span>
+                </div>
+                <div class="sp1-name"></div>
+                <div class="sp1-tap-hint">Chạm để tiếp tục</div>
+            </div>
+        </div>
+
+        <!-- Skill Reveal Overlay — Phase 2: full reveal at end of Chapter 1 -->
+        <div class="skill-reveal-overlay" id="skill-reveal-overlay" data-testid="skill-reveal-overlay">
+            <div class="skill-reveal-backdrop"></div>
+            <div class="skill-reveal-card">
+                <div class="skill-reveal-prelude">
+                    <p>Sau tất cả những gì đã xảy ra...</p>
+                    <p>một điều trở nên rõ ràng.</p>
+                </div>
+                <div class="skill-reveal-icon-wrap">
+                    <span class="skill-reveal-icon">✦</span>
+                </div>
+                <div class="skill-reveal-label">Kỹ Năng Độc Nhất — Toàn Bộ Bí Mật</div>
+                <div class="skill-reveal-name"></div>
+                <div class="skill-reveal-desc"></div>
+                <!-- Core block -->
+                <div class="skill-reveal-detail-rows">
+                    <div class="skill-reveal-row skill-reveal-mechanic-wrap">
+                        <span class="skill-reveal-row-label">Cơ chế</span>
+                        <span class="skill-reveal-mechanic"></span>
+                    </div>
+                    <div class="skill-reveal-row skill-reveal-activation-wrap">
+                        <span class="skill-reveal-row-label">Kích hoạt</span>
+                        <span class="skill-reveal-activation"></span>
+                    </div>
+                </div>
+
+                <!-- Domain Passive (SS0 — always active from Seed) -->
+                <div class="skill-reveal-domain-passive-block" id="skill-reveal-domain-block">
+                    <div class="skill-reveal-section-divider">
+                        <span>Domain Passive</span>
+                    </div>
+                    <div class="skill-reveal-domain-passive-name"></div>
+                    <div class="skill-reveal-domain-passive-mechanic"></div>
+                </div>
+
+                <!-- Unique Clause -->
+                <div class="skill-reveal-unique-block" id="skill-reveal-unique-block">
+                    <div class="skill-reveal-section-divider">
+                        <span>Đặc điểm độc nhất</span>
+                    </div>
+                    <div class="skill-reveal-unique-clause"></div>
+                </div>
+
+                <!-- Constraints block -->
+                <div class="skill-reveal-detail-rows skill-reveal-constraints">
+                    <div class="skill-reveal-section-divider">
+                        <span>Hạn chế</span>
+                    </div>
+                    <div class="skill-reveal-row skill-reveal-limitation-wrap">
+                        <span class="skill-reveal-row-label">Giới hạn</span>
+                        <span class="skill-reveal-limitation"></span>
+                    </div>
+                    <div class="skill-reveal-row skill-reveal-weakness-wrap">
+                        <span class="skill-reveal-row-label">Điểm yếu</span>
+                        <span class="skill-reveal-weakness"></span>
+                        <span class="skill-reveal-weakness-type-tag"></span>
+                    </div>
+                    <div class="skill-reveal-row skill-reveal-blind-spot-wrap">
+                        <span class="skill-reveal-row-label">Giới hạn trục năng lực</span>
+                        <span class="skill-reveal-blind-spot"></span>
+                    </div>
+                </div>
+                <button class="btn-primary btn-glow skill-reveal-close" id="btn-skill-reveal-close">
+                    <span class="btn-icon">✦</span> Tiếp tục hành trình
+                </button>
+            </div>
+        </div>
+
+        <!-- Archetype Cinematic Transition — fullscreen video before story-setup -->
+        <div class="archetype-transition-overlay" id="archetype-transition" style="display:none">
+            <video class="archetype-transition-video" id="archetype-transition-video" muted playsinline></video>
+            <div class="archetype-transition-title" id="archetype-transition-title"></div>
+        </div>
+    </div>
+
+    <!-- Novel Log Overlay — full-screen readable archive of all played scenes -->
+    <div class="novel-overlay" id="novel-overlay" aria-hidden="true">
+        <div class="novel-container">
+            <div class="novel-header">
+                <div class="novel-title-area">
+                    <span class="novel-icon">⟁</span>
+                    <h2 class="novel-title" id="novel-title">Nhật ký hành trình</h2>
+                </div>
+                <button class="novel-close" id="novel-close" aria-label="Đóng">✕</button>
+            </div>
+            <div class="novel-content" id="novel-content"></div>
+        </div>
+    </div>
+
+    <script type="module" src="/main.js"></script>
+</body>
+
+</html>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { Howl } from 'howler';
+import { Howl, Howler } from 'howler';
 import { useLofiStore } from '../store/useLofiStore';
 import { musicTracks } from '../data/musicTracks';
 import { ambienceSounds } from '../data/ambienceSounds';
@@ -51,7 +51,9 @@ export function useAudioEngine() {
     }, []);
 
     // ── Music: Load & play with crossfade ──
-    const loadMusic = useCallback((trackId: string) => {
+    // isUserAction: true when triggered by a click (track select, play button).
+    // html5 Audio elements require play() to be called during a user gesture.
+    const loadMusic = useCallback((trackId: string, isUserAction = false) => {
         const track = musicTracks.find((t) => t.id === trackId);
         if (!track) return;
 
@@ -60,6 +62,11 @@ export function useAudioEngine() {
 
         // If same track already loaded, skip
         if (musicRef.current?.id === trackId) return;
+
+        // Resume AudioContext (Web Audio fallback)
+        if (Howler.ctx && Howler.ctx.state === 'suspended') {
+            Howler.ctx.resume();
+        }
 
         // Fade out current music
         if (musicRef.current) {
@@ -77,10 +84,18 @@ export function useAudioEngine() {
 
         musicRef.current = { howl, id: trackId };
 
+        // For user-initiated actions, call play() IMMEDIATELY during the
+        // gesture's call-stack so the browser does not block the html5 <audio>.
+        // Howler internally queues the play if the source hasn't loaded yet.
+        const shouldAutoPlay = isUserAction || state.isPlaying;
+        if (shouldAutoPlay) {
+            howl.play();
+        }
+
         howl.once('load', () => {
             if (!isMountedRef.current) return;
-            if (getState().isPlaying) {
-                howl.play();
+            if (shouldAutoPlay || getState().isPlaying) {
+                // Fade in from 0 → target volume
                 howl.fade(0, targetVolume, MUSIC_FADE_MS);
             } else {
                 howl.volume(targetVolume);
@@ -160,15 +175,26 @@ export function useAudioEngine() {
     // ── Play / Pause all ──
     const syncPlayback = useCallback((isPlaying: boolean) => {
         if (isPlaying) {
-            // Only play if already loaded — if still loading, the onLoad callback handles it.
-            // Calling play() on an unloaded html5 Howl queues a play internally;
-            // combined with the onLoad callback it causes double playback.
+            // Resume AudioContext on user-initiated play
+            if (Howler.ctx && Howler.ctx.state === 'suspended') {
+                Howler.ctx.resume();
+            }
+
             if (musicRef.current) {
                 const { howl } = musicRef.current;
-                if (howl.state() === 'loaded') howl.play();
+                if (howl.state() === 'loaded') {
+                    howl.play();
+                } else {
+                    // Still loading — queue play for when load completes
+                    howl.once('load', () => howl.play());
+                }
             }
             ambienceMapRef.current.forEach((howl) => {
-                if (howl.state() === 'loaded') howl.play();
+                if (howl.state() === 'loaded') {
+                    howl.play();
+                } else {
+                    howl.once('load', () => howl.play());
+                }
             });
         } else {
             musicRef.current?.howl.pause();
@@ -190,12 +216,12 @@ export function useAudioEngine() {
         }
         syncAmbienceLayers();
 
-        // Subscribe to store changes
+        // Subscribe to store changes (these fire synchronously from user clicks)
         const unsub = useLofiStore.subscribe((curr, prev) => {
             // Music track changed
             if (curr.musicTrack?.id !== prev.musicTrack?.id) {
                 if (curr.musicTrack) {
-                    loadMusic(curr.musicTrack.id);
+                    loadMusic(curr.musicTrack.id, true);
                 } else {
                     // Music cleared
                     if (musicRef.current) {

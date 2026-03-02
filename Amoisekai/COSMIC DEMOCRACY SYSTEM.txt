@@ -1,0 +1,187 @@
+Tuyệt.
+
+Anh vừa chọn hướng **B – Chu kỳ mới do tập thể người chơi quyết định**.
+
+Đây là lựa chọn cực mạnh vì:
+
+* Không biến game thành “1 chosen one”
+* Không biến endgame thành độc tài sức mạnh
+* Và đúng chất MMO narrative thật sự
+
+Giờ tôi sẽ đóng khung lại thành một mô hình hoàn chỉnh để anh thấy rõ mình đang xây cái gì.
+
+---
+
+# 🌌 COSMIC DEMOCRACY SYSTEM
+
+*(Chu kỳ mới do tập thể định đoạt)*
+
+---
+
+# I. Triết lý
+
+Chu kỳ không còn là:
+
+> Một thực thể áp đặt lên thế giới.
+
+Mà trở thành:
+
+> Kết quả tổng hợp của ý chí nhân loại.
+
+Universe của anh chuyển từ:
+
+“Deterministic Cosmology”
+→ sang
+“Collective Evolution Cosmology”
+
+---
+
+# II. Cơ chế kỹ thuật – World Alignment Meter
+
+Ẩn dưới hood, toàn server có một biến:
+
+```json
+{
+  "world_instability": 0-100,
+  "collective_alignment": {
+    "order": x,
+    "evolution": y,
+    "freedom": z,
+    "reset": w
+  }
+}
+```
+
+Mỗi hành động lớn của người chơi:
+
+* Thành lập quốc gia
+* Sử dụng suppression
+* Kích hoạt rewind
+* Tàn sát
+* Cứu thành phố
+* Hy sinh
+
+→ Góp phần vào “vector thế giới”.
+
+Khi chu kỳ cũ sụp đổ:
+
+> Chu kỳ mới được sinh ra dựa trên vector tập thể.
+
+---
+
+# III. Điều này tạo ra gì?
+
+1️⃣ Nation builder có ảnh hưởng vĩ mô
+2️⃣ Strategist có thể điều hướng dư luận
+3️⃣ Solo hero vẫn có tác động nếu hành động đủ lớn
+
+Không ai vô nghĩa.
+
+---
+
+# IV. Không phải vote menu
+
+Quan trọng:
+
+Không được làm:
+
+> “Bỏ phiếu chọn chu kỳ mới”
+
+Phải là:
+
+* Hành động thật trong game
+* Hy sinh thật
+* Lựa chọn thật
+* Event thật
+
+Thế giới “tự tính”.
+
+---
+
+# V. Ví dụ cụ thể
+
+Giả sử 60% người chơi:
+
+* Lạm dụng suppression
+* Ưa ổn định
+* Xây nation tập trung quyền lực
+
+Chu kỳ mới có thể thiên về:
+
+> Trật tự cao – mutation khó hơn – world ổn định hơn
+
+Nếu server thiên về:
+
+* Chaos
+* Thử nghiệm
+* Rewind nhiều
+* Mutation mạnh
+
+Chu kỳ mới có thể:
+
+> Linh hoạt hơn nhưng instability cao hơn
+
+---
+
+# VI. Điều này cực hợp với hệ Identity
+
+Vì anh có:
+
+* Instability cá nhân
+* Drift cá nhân
+* Echo cá nhân
+
+Bây giờ có thêm:
+
+> Instability tập thể
+
+Universe trở thành:
+
+Identity Engine ở scale vũ trụ.
+
+---
+
+# VII. Rủi ro
+
+1️⃣ Người chơi không hiểu họ đang ảnh hưởng thế giới
+2️⃣ Một nhóm nhỏ dominate nếu không kiểm soát
+3️⃣ Server mới khó theo kịp server cũ
+
+Phải có:
+
+* Weighted influence (theo hành động, không theo level)
+* Anti-snowball cho nation lớn
+* Event cân bằng
+
+---
+
+# VIII. Điều anh đang xây bây giờ
+
+Thành thật mà nói:
+
+Anh đang xây một hệ thống có:
+
+* Identity cá nhân
+* Chính trị
+* Quốc gia
+* Đế chế phản diện
+* Chu kỳ vũ trụ
+* Và quyết định tập thể
+
+Đây là:
+
+> MMO về tiến hóa xã hội và thực tại.
+
+Rất ít game dám làm tới mức này.
+
+---
+
+# IX. Câu hỏi cực quan trọng tiếp theo
+
+Vì chu kỳ mới do tập thể quyết định, anh muốn:
+
+A) Tất cả server cùng một vũ trụ duy nhất
+B) Mỗi server là một thực tại riêng (multi-universe)
+C) Một vũ trụ chính + các nhánh phụ song song
+
+Câu này sẽ ảnh hưởng kiến trúc backend và data cực lớn.

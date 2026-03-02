@@ -1,0 +1,202 @@
+Chuẩn.
+
+Anh chọn:
+
+> 🟢 PvE trước
+> 🔵 PvP mở dần sau
+
+Đây là quyết định cực kỳ thông minh cho solo dev.
+
+Vì:
+
+* PvE giúp anh test hệ sức mạnh
+* Test balance soft cap
+* Test instability + overdrive
+* Test principle interaction
+* Không bị drama PvP phá meta sớm
+
+Giờ tôi sẽ thiết kế roadmap combat đúng theo hướng C.
+
+---
+
+# ⚔️ COMBAT ROADMAP – PvE → PvP EVOLUTION
+
+---
+
+# 🟢 PHASE 1 – PvE CORE (MVP)
+
+Tập trung vào:
+
+* Guardian tầng
+* Empire unit
+* Elite anomaly
+* Stability mechanic
+* Overdrive risk
+
+Chưa có PvP trực tiếp.
+
+---
+
+## 🎯 Mục tiêu Phase 1
+
+Test được:
+
+✔ Dual principle viability
+✔ Stability shred meta
+✔ Overdrive risk có đáng không
+✔ Rare principle có quá mạnh không
+✔ Floor modifier có đủ ảnh hưởng không
+
+Nếu PvE chưa ổn → PvP sẽ vỡ ngay.
+
+---
+
+# 🔵 PHASE 2 – Asynchronous PvP
+
+Chưa duel real-time.
+
+Mà là:
+
+* Arena simulation
+* Ghost combat
+* Influence duel
+* Gate contest
+
+Ví dụ:
+
+Hai người tranh influence tại Minor Gate
+→ Engine simulate duel dựa trên build.
+
+Không có toxic spam skill.
+
+---
+
+# 🔴 PHASE 3 – Controlled PvP
+
+Khi hệ đã ổn:
+
+* Duel có điều kiện
+* Không full loot
+* Không perma death
+* Stability penalty
+
+PvP là showcase build, không phải griefing tool.
+
+---
+
+# ⚔️ COMBAT STRUCTURE CHI TIẾT CHO PvE
+
+---
+
+# I. 3 LOẠI KẺ ĐỊCH
+
+## 1️⃣ Structural Enemy (Matter/Energy)
+
+* Tanky
+* Đòi build xuyên cấu trúc
+
+## 2️⃣ Instability Entity (Entropy/Flux)
+
+* Làm mất stability nhanh
+* Ép người chơi overdrive
+
+## 3️⃣ Perception Control Entity (Light/Void)
+
+* Gây ảo giác
+* Làm misread skill
+
+Guardian tầng là mix.
+
+---
+
+# II. COMBAT LOOP (Text-based)
+
+Mỗi lượt:
+
+1️⃣ Chọn skill
+2️⃣ Chọn intensity
+3️⃣ Engine tính toán deterministic
+4️⃣ LLM mô tả cinematic
+
+Không cho LLM quyết outcome.
+
+---
+
+# III. META TIẾN HÓA THEO TẦNG
+
+Floor 1:
+
+* Combat cơ bản
+* Ít rare principle
+
+Floor 2:
+
+* Stability pressure tăng
+* Instability entity nhiều
+
+Floor 3:
+
+* Rare principle bắt đầu xuất hiện
+* Combat phức tạp
+
+PvP nên chỉ mở sau Floor 3.
+
+---
+
+# IV. TẠI SAO PvE TRƯỚC LÀ BẮT BUỘC
+
+Vì anh cần biết:
+
+* Build nào broken
+* Tri-core có phá hệ không
+* Overdrive có quá mạnh không
+* Stability có meaningful không
+
+Nếu vào PvP ngay:
+
+→ Cộng đồng tìm exploit trước khi anh hiểu hệ của mình.
+
+---
+
+# V. TÍCH HỢP VỚI CHÍNH TRỊ
+
+PvE ảnh hưởng:
+
+* Empire pressure
+* World cap
+* Gate stability
+* Nation influence
+
+Combat không phải chỉ để giết.
+Mà để thay đổi thế giới.
+
+---
+
+# VI. NGUY CƠ LỚN NHẤT HIỆN TẠI
+
+Hệ anh giờ rất sâu.
+
+Nguy cơ:
+
+* Overdesign
+* Quá nhiều layer sớm
+* Không kịp build MVP
+
+Anh cần khóa:
+
+> Season 1 chỉ dùng 7 nguyên lý core
+> Rare principle chỉ xuất hiện cuối Floor 3
+
+Không mở 3 nguyên lý hiếm ngay.
+
+---
+
+# 🎯 Giờ câu hỏi chiến lược tiếp theo
+
+Anh muốn combat thiên về:
+
+A) 1v1 duel nặng chiến thuật
+B) 1vN boss fight cinematic
+C) Cân bằng cả 2 nhưng boss là trung tâm
+
+Vì điều này sẽ quyết định AI combat engine của anh thiết kế ra sao.

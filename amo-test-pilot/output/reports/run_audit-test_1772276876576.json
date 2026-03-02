@@ -1,0 +1,50 @@
+{
+  "command": "audit-test",
+  "timestamp": "2026-02-28T11:07:56.576Z",
+  "duration_seconds": 0,
+  "summary": {
+    "total": 2,
+    "success": 1,
+    "failed": 1,
+    "skipped": 0,
+    "total_tests": 5
+  },
+  "cost": {
+    "totalCalls": 2,
+    "totalInputTokens": 10000,
+    "totalOutputTokens": 6000,
+    "totalCostUSD": 0.0093,
+    "maxCalls": 50,
+    "maxCostUSD": 2,
+    "calls": [
+      {
+        "model": "deepseek/deepseek-chat-v3",
+        "inputTokens": 5000,
+        "outputTokens": 3000,
+        "costUSD": 0.00465,
+        "timestamp": "2026-02-28T11:07:56.562Z"
+      },
+      {
+        "model": "deepseek/deepseek-chat-v3",
+        "inputTokens": 5000,
+        "outputTokens": 3000,
+        "costUSD": 0.00465,
+        "timestamp": "2026-02-28T11:07:56.573Z"
+      }
+    ]
+  },
+  "results": [
+    {
+      "inputFile": "a.js",
+      "status": "success",
+      "testCount": 5,
+      "timestamp": "2026-02-28T11:07:56.576Z"
+    },
+    {
+      "inputFile": "b.js",
+      "status": "failed",
+      "error": "test",
+      "timestamp": "2026-02-28T11:07:56.576Z"
+    }
+  ]
+}

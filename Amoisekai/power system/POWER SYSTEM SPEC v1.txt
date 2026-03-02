@@ -1,0 +1,218 @@
+Tuyệt.
+
+Anh vừa chốt một cấu trúc cực kỳ đẹp về mặt thiết kế:
+
+> 🔹 Mỗi skill thông thường: tối đa **2 nguyên lý nền**
+> 🔹 Late game: có thể thêm **1 nguyên lý hiếm**
+> 🔥 Và tồn tại một số **skill huyền thoại 3 nguyên lý nền (rất hiếm)**
+
+Cái này tạo ra **3 tầng meta rõ ràng**, rất tốt cho diễn đàn phân tích.
+
+Giờ tôi sẽ formalize lại thành **Power System Spec v1 – Structured & Deterministic** để anh có nền tảng code được.
+
+---
+
+# 🌌 POWER SYSTEM SPEC v1
+
+---
+
+# I. PHÂN TẦNG KỸ NĂNG
+
+## 🟢 Tier 1 – Common Structure
+
+```
+[Principle A] + [Vector] + [Constraint]
+```
+
+Ví dụ:
+Energy + Direct + Proximity
+Order + Persistent + Contract-bound
+
+→ Skill cơ bản.
+
+---
+
+## 🔵 Tier 2 – Dual Principle
+
+```
+[Principle A + Principle B] + [Vector] + [Constraint]
+```
+
+Ví dụ:
+Entropy + Void + Area + Accumulative
+Order + Matter + Persistent + Structural
+
+Đây là meta build chính.
+
+---
+
+## 🟣 Tier 3 – Rare Augmented (Late Game)
+
+```
+[Principle A + Principle B] + [Rare Principle C] + [Vector] + [Constraint]
+```
+
+Ví dụ:
+Order + Light + Causality
+Flux + Energy + Continuum
+
+Đây là build tầng cao.
+
+Instability cao hơn nhiều.
+
+---
+
+## 🔴 Mythic Tier – Ancient Tri-Core
+
+Chỉ một số skill cực hiếm mới có:
+
+```
+[Principle A + Principle B + Principle C]
+```
+
+Nhưng:
+
+* Không được dùng Rare Principle trong bộ 3 này (trừ cực đặc biệt)
+* Có constraint cực nặng
+* Có cost lớn
+* Có instability spike
+
+Ví dụ:
+Matter + Order + Energy
+Entropy + Void + Flux
+
+Đây sẽ là thứ gây “wow”.
+
+---
+
+# II. GIỚI HẠN LOGIC (ĐỂ TRÁNH BROKEN META)
+
+## 1️⃣ Không phải mọi nguyên lý kết hợp đều hợp lệ
+
+Anh nên định nghĩa:
+
+* Compatibility score giữa các nguyên lý
+* Nếu compatibility thấp → instability tăng mạnh
+
+Ví dụ:
+
+Order + Flux = xung đột tự nhiên
+Void + Light = đối nghịch
+
+Có thể kết hợp, nhưng rủi ro cao.
+
+---
+
+## 2️⃣ Nguyên lý hiếm không stack dễ
+
+Rare principle:
+
+* Không hoạt động tối đa nếu identity resonance thấp
+* Có thể gây mutation cưỡng bức
+* Có thể méo skill
+
+---
+
+# III. CÔNG THỨC CÂN BẰNG CƠ BẢN (backend deterministic)
+
+Power Output có thể tính như:
+
+```
+Base = f(Principle_A, Principle_B)
+
+Modifier = Resonance * Floor_Law_Modifier * Stability
+
+Final Output = Base * Modifier
+```
+
+Instability ảnh hưởng:
+
+* Cooldown
+* Accuracy
+* Backlash chance
+* Drift acceleration
+
+LLM chỉ mô tả.
+Backend tính logic.
+
+---
+
+# IV. META SẼ SINH RA Ở ĐÂU?
+
+1️⃣ Build song nguyên lý tối ưu cho từng tầng
+2️⃣ Rare principle exploit
+3️⃣ Tri-core huyền thoại
+4️⃣ Identity alignment tối ưu
+5️⃣ Gate control + floor modifier synergy
+
+Diễn đàn sẽ tranh luận:
+
+* “Order–Entropy có viable không?”
+* “Void–Light hybrid có quá rủi ro?”
+* “Continuum có phá meta Season 1 không?”
+
+---
+
+# V. TÍCH HỢP VỚI UNIQUE SKILL
+
+Unique skill không phải nguyên lý.
+
+Nó là:
+
+> Quyền bẻ cong cấu trúc.
+
+Ví dụ:
+
+Unique: Constraint Override
+→ Cho phép bỏ qua 1 constraint.
+
+Unique: Vector Inversion
+→ Đảo hướng nguyên lý.
+
+Unique: Echo Stabilizer
+→ Giảm instability khi dùng nguyên lý xung đột.
+
+Ultimate skill có thể:
+
+* Viết lại compatibility
+* Giảm xung đột
+* Hoặc mở khóa tri-core
+
+---
+
+# VI. CẢNH BÁO QUAN TRỌNG
+
+Đừng cho phép:
+
+* 3 nguyên lý hiếm cùng lúc
+* Stack vô hạn nguyên lý
+* Free combination
+
+Càng hiếm → càng có cost.
+
+---
+
+# VII. TẠI SAO HỆ NÀY SẼ SỐNG LÂU?
+
+Vì nó:
+
+* Có tầng phân tích
+* Có giới hạn rõ
+* Có luật chặt
+* Có meta emergent
+* Có scale theo season
+* Có kết nối identity
+
+Không phải hệ “lửa > cỏ”.
+
+---
+
+# 🎯 Câu hỏi tiếp theo rất quan trọng
+
+Anh muốn:
+
+A) Mỗi người có affinity cố định từ đầu (khó đổi)
+B) Affinity thay đổi theo identity drift
+C) Có affinity nền + có thể thức tỉnh affinity mới
+
+Câu này quyết định meta build có cố định hay tiến hóa theo hành vi.
